@@ -519,7 +519,7 @@ pnpm dev
 ## File Structure Created
 
 ```
-hrm_backend/hrm/src/main/java/com/affin/hrm/
+hrm_backend/hrm/src/main/java/com/airella/hrm/
 ├── Config/
 │   ├── CustomUserDetailsService.java
 │   ├── JwtAuthenticationFilter.java

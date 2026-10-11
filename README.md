@@ -125,7 +125,7 @@ HRM/
 │   ├── .env                    # Environment variables (git-ignored)
 │   ├── .env.example            # Template for env vars
 │   ├── Admin_Backend/          # Admin management service
-│   │   └── src/main/java/com/affin/hrm/
+│   │   └── src/main/java/com/airella/hrm/
 │   │       ├── config/         # Security, JWT, ModelMapper config
 │   │       ├── controller/     # REST API controllers
 │   │       ├── dto/            # Data Transfer Objects
@@ -134,7 +134,7 @@ HRM/
 │   │       ├── repository/     # Spring Data JPA repositories
 │   │       └── service/        # Business logic services
 │   ├── Employee_Backend/       # Employee self-service
-│   │   └── src/main/java/com/affin/hrm/
+│   │   └── src/main/java/com/airella/hrm/
 │   │       ├── config/         # Security, JWT, ModelMapper config
 │   │       ├── controller/     # REST API controllers
 │   │       ├── dto/            # Data Transfer Objects

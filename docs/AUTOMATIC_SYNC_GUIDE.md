@@ -51,7 +51,7 @@ New employees created in **User_Backend** are now **automatically synced** to **
 ### Code Changes
 
 #### 1. **SyncService** (New in User_Backend)
-**File:** `User_Backend/src/main/java/com/affin/hrm/Service/SyncService.java`
+**File:** `User_Backend/src/main/java/com/airella/hrm/Service/SyncService.java`
 
 ```java
 @Service
@@ -71,7 +71,7 @@ public class SyncService {
 ```
 
 #### 2. **EmployeeService Updated** (User_Backend)
-**File:** `User_Backend/src/main/java/com/affin/hrm/Service/EmployeeService.java`
+**File:** `User_Backend/src/main/java/com/airella/hrm/Service/EmployeeService.java`
 
 ```java
 @Service
@@ -103,7 +103,7 @@ public class EmployeeService {
 ```
 
 #### 3. **SyncController** (Already exists in Employee_Backend)
-**File:** `Employee_Backend/src/main/java/com/affin/hrm/Controller/SyncController.java`
+**File:** `Employee_Backend/src/main/java/com/airella/hrm/Controller/SyncController.java`
 
 ```java
 @RestController
@@ -333,7 +333,7 @@ These are hardcoded in `SyncService.java`:
 | HR_Backend | `http://localhost:5004/api/sync/employee` | 5004 |
 
 To change ports, edit:
-- `User_Backend/src/main/java/com/affin/hrm/Service/SyncService.java`
+- `User_Backend/src/main/java/com/airella/hrm/Service/SyncService.java`
 
 ### Timeouts
 ```java

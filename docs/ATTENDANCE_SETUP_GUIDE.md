@@ -43,12 +43,12 @@ CREATE TABLE attendance (
 
 ## Backend Implementation
 
-### 1. Attendance Model (`com.affin.hrm.Model.Attendance`)
+### 1. Attendance Model (`com.airella.hrm.Model.Attendance`)
 - Already implemented with all required fields
 - Enum types: AttendanceType, AttendanceStatus, AdjustmentStatus
 - Mapped to PostgreSQL using JPA/Hibernate
 
-### 2. AttendanceService (`com.affin.hrm.Service.AttendanceService`)
+### 2. AttendanceService (`com.airella.hrm.Service.AttendanceService`)
 Features:
 - `clockIn()` - Record clock in time
 - `clockOut()` - Record clock out time  
@@ -59,7 +59,7 @@ Features:
 - `getDailyAttendance()` - Fetch company-wide attendance for a date
 - `requestAdjustment()` - Request attendance adjustment
 
-### 3. EmployeeController Endpoints (`com.affin.hrm.Controller.EmployeeController`)
+### 3. EmployeeController Endpoints (`com.airella.hrm.Controller.EmployeeController`)
 
 **Running on**: `http://localhost:5003`
 

@@ -234,7 +234,7 @@ Authorization: Bearer YOUR_TOKEN
 ```
 d:\Projects\HRM\
 ├── hrm_backend/hrm/
-│   ├── src/main/java/com/affin/hrm/
+│   ├── src/main/java/com/airella/hrm/
 │   │   ├── Config/          ✅ Security, JWT, ModelMapper
 │   │   ├── Controller/      ✅ Auth, Employee, HRManager
 │   │   ├── DTO/             ✅ 14 DTOs

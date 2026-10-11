@@ -144,7 +144,7 @@ sequenceDiagram
 
 ## Key Design Decisions
 
-1. **Package naming**: `com.affin.hrm.{config,controller,dto,model,repository,service,exception}` (lowercase, Java convention)
+1. **Package naming**: `com.airella.hrm.{config,controller,dto,model,repository,service,exception}` (lowercase, Java convention)
 2. **Constructor injection** throughout — no `@Autowired` field injection
 3. **Global exception handler** (`@RestControllerAdvice`) — controllers never use try-catch
 4. **SLF4J logging** — no `System.out.println`

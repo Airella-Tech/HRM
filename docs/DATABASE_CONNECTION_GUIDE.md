@@ -164,7 +164,7 @@ SELECT id, email, full_name, role FROM employees;
 
 ### Automatic Sync on Create/Update
 
-**File:** `User_Backend/src/main/java/com/affin/hrm/Service/SyncService.java`
+**File:** `User_Backend/src/main/java/com/airella/hrm/Service/SyncService.java`
 
 ```java
 @Service
@@ -331,7 +331,7 @@ private static final long RETRY_DELAY_MS = 1000;
 ```
 
 To change:
-1. Edit: `User_Backend/src/main/java/com/affin/hrm/Service/SyncService.java`
+1. Edit: `User_Backend/src/main/java/com/airella/hrm/Service/SyncService.java`
 2. Update URLs if ports change
 3. Rebuild: `.\gradlew.bat clean build -x test`
 

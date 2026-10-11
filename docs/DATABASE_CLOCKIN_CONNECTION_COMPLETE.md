@@ -45,7 +45,7 @@ All 5 existing employees synced from hrm_db_user → hrm_db_employee:
 **Status: ✓ COMPLETE**
 
 **New SyncService Created:**
-`User_Backend/src/main/java/com/affin/hrm/Service/SyncService.java`
+`User_Backend/src/main/java/com/airella/hrm/Service/SyncService.java`
 
 **Features:**
 - ✓ Automatic sync on employee create
@@ -82,7 +82,7 @@ Employee can immediately clock in ✓
 
 1. **Created SyncService** (NEW FILE)
    ```
-   User_Backend/src/main/java/com/affin/hrm/Service/SyncService.java
+   User_Backend/src/main/java/com/airella/hrm/Service/SyncService.java
    ```
    - HTTP POST sync to other backends
    - Retry logic with exponential backoff
@@ -90,7 +90,7 @@ Employee can immediately clock in ✓
 
 2. **Updated EmployeeService** (MODIFIED)
    ```
-   User_Backend/src/main/java/com/affin/hrm/Service/EmployeeService.java
+   User_Backend/src/main/java/com/airella/hrm/Service/EmployeeService.java
    ```
    - Added `@Autowired private SyncService syncService;`
    - Added `syncService.syncToAllBackends(savedEmployee);` after create
@@ -98,7 +98,7 @@ Employee can immediately clock in ✓
 
 3. **Existing SyncController** (UNCHANGED - Already Present)
    ```
-   Employee_Backend/src/main/java/com/affin/hrm/Controller/SyncController.java
+   Employee_Backend/src/main/java/com/airella/hrm/Controller/SyncController.java
    ```
    - Receives synced employees via POST /api/sync/employee
    - Saves to hrm_db_employee
@@ -238,7 +238,7 @@ netstat -an | findstr :5003
 ## Files Created/Modified
 
 ### New Files
-1. `User_Backend/src/main/java/com/affin/hrm/Service/SyncService.java`
+1. `User_Backend/src/main/java/com/airella/hrm/Service/SyncService.java`
 2. `sync_employees.sql` - Manual sync script
 3. `complete_sync_employees.sql` - Complete 5-employee sync
 4. `sync_all_employees.sql` - Backup sync script
@@ -247,14 +247,14 @@ netstat -an | findstr :5003
 7. `DATABASE_CLOCKIN_CONNECTION.md` - This file
 
 ### Modified Files
-1. `User_Backend/src/main/java/com/affin/hrm/Service/EmployeeService.java`
+1. `User_Backend/src/main/java/com/airella/hrm/Service/EmployeeService.java`
    - Added SyncService autowire
    - Added sync calls in createEmployee()
    - Added sync calls in updateEmployee()
 
 ### Existing Files (Already Present)
-1. `Employee_Backend/src/main/java/com/affin/hrm/Controller/SyncController.java`
-2. `HR_Backend/src/main/java/com/affin/hrm/Controller/SyncController.java`
+1. `Employee_Backend/src/main/java/com/airella/hrm/Controller/SyncController.java`
+2. `HR_Backend/src/main/java/com/airella/hrm/Controller/SyncController.java`
 
 ---
 

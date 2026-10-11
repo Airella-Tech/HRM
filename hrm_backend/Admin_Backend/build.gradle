@@ -4,7 +4,7 @@ plugins {
     id 'java'
 }
 
-group = 'com.affin'
+group = 'com.airella'
 version = '1.0.0'
 
 java {

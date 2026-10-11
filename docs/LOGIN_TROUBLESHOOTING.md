@@ -124,7 +124,7 @@ $2a$10$XptfskKXKa0NKbLyskJ92OjD7jHFbrdRgSDqX6d5jb3CtN9vXHQ5W
 To generate new passwords, run the `PasswordUtil` class:
 ```bash
 cd hrm_backend/hrm
-./gradlew run --args="com.affin.hrm.Util.PasswordUtil"
+./gradlew run --args="com.airella.hrm.Util.PasswordUtil"
 ```
 
 ## Quick Checklist

@@ -48,7 +48,7 @@ cors:
 logging:
   level:
     root: INFO
-    com.affin.hrm: ${LOG_LEVEL:INFO}
+    com.airella.hrm: ${LOG_LEVEL:INFO}
 
 # ── Inter-Service URLs ─────────────────────
 service:

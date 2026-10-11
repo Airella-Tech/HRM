@@ -271,10 +271,10 @@ SELECT * FROM public.employees WHERE email = 'user@example.com';
 
 ## Files Modified
 
-1. **Created**: `Employee_Backend/src/main/java/com/affin/hrm/Controller/SyncController.java`
-2. **Created**: `HR_Backend/src/main/java/com/affin/hrm/Controller/SyncController.java`
-3. **Modified**: `User_Backend/src/main/java/com/affin/hrm/Service/AuthService.java`
-4. **Modified**: `Employee_Backend/src/main/java/com/affin/hrm/Controller/EmployeeController.java`
+1. **Created**: `Employee_Backend/src/main/java/com/airella/hrm/Controller/SyncController.java`
+2. **Created**: `HR_Backend/src/main/java/com/airella/hrm/Controller/SyncController.java`
+3. **Modified**: `User_Backend/src/main/java/com/airella/hrm/Service/AuthService.java`
+4. **Modified**: `Employee_Backend/src/main/java/com/airella/hrm/Controller/EmployeeController.java`
 
 ---
 

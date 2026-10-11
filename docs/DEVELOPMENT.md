@@ -67,7 +67,7 @@ Open http://localhost:5173
 
 | Convention | Standard |
 |------------|----------|
-| Package naming | `com.affin.hrm.{layer}` (lowercase) |
+| Package naming | `com.airella.hrm.{layer}` (lowercase) |
 | Dependency injection | **Constructor injection** (never `@Autowired`) |
 | Logging | **SLF4J** (`Logger log = LoggerFactory.getLogger(...)`) |
 | Exception handling | Custom exceptions + `GlobalExceptionHandler` |

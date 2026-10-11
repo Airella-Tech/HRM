@@ -68,7 +68,7 @@ cors:
 logging:
   level:
     root: INFO
-    com.affin.hrm: ${LOG_LEVEL:INFO}
+    com.airella.hrm: ${LOG_LEVEL:INFO}
     org.springframework.security: INFO
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
