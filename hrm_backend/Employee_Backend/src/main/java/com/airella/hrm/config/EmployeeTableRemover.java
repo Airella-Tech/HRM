@@ -43,10 +43,10 @@ public class EmployeeTableRemover implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
-        if (!tableExists("employees")) {
-            return;
-        }
         try {
+            if (!tableExists("employees")) {
+                return;
+            }
             for (Object[] link : LINKS) {
                 relink((String) link[0], (String) link[1], (String) link[2], (Boolean) link[3]);
             }

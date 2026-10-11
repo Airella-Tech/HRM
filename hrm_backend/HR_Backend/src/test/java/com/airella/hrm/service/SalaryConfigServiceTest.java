@@ -24,7 +24,7 @@ class SalaryConfigServiceTest {
     private AdditionalPaymentRepository additionalRepo;
     private JobRoleRepository jobRoleRepo;
     private EmploymentTypeRepository employmentTypeRepo;
-    private EmployeeRepository employeeRepo;
+    private EmployeeDirectory employeeDirectory;
     private SalaryConfigService service;
 
     private Company company;
@@ -40,9 +40,9 @@ class SalaryConfigServiceTest {
         additionalRepo = mock(AdditionalPaymentRepository.class);
         jobRoleRepo = mock(JobRoleRepository.class);
         employmentTypeRepo = mock(EmploymentTypeRepository.class);
-        employeeRepo = mock(EmployeeRepository.class);
+        employeeDirectory = mock(EmployeeDirectory.class);
         service = new SalaryConfigService(basicRepo, additionalRepo, jobRoleRepo, employmentTypeRepo,
-                employeeRepo, mock(AuditService.class));
+                employeeDirectory, mock(AuditService.class));
 
         company = new Company();
         company.setId(1L);
@@ -162,9 +162,9 @@ class SalaryConfigServiceTest {
         when(basicRepo.findByCompanyIdOrderByUpdatedAtDesc(1L)).thenReturn(List.of(
                 payment(1L, fullTime, "100000", "10000", "5000"),
                 payment(2L, intern, "30000", "0", "0")));
-        AdditionalPayment fuel = new AdditionalPayment(1L, company, "ann@acme.test", "SE001", "Ann", "Fuel",
+        AdditionalPayment fuel = new AdditionalPayment(1L, company, "ann@acme.test", "SE001", "Ann", null, "Fuel",
                 AdditionalPayment.Type.ALLOWANCE, new BigDecimal("8000"), null, null, null, null);
-        AdditionalPayment advance = new AdditionalPayment(2L, company, "ann@acme.test", "SE001", "Ann", "Advance",
+        AdditionalPayment advance = new AdditionalPayment(2L, company, "ann@acme.test", "SE001", "Ann", null, "Advance",
                 AdditionalPayment.Type.DEDUCTION, new BigDecimal("3000"), null, null, null, null);
         when(additionalRepo.findByCompanyIdOrderByIdAsc(1L)).thenReturn(List.of(fuel, advance));
 
@@ -192,14 +192,15 @@ class SalaryConfigServiceTest {
     }
 
     @Test
-    void paySheet_ignoresSameTitleInOtherDepartment() {
+    void paySheet_fallsBackToSameTitleInOtherDepartmentWhenNoExactDepartmentMatch() {
         when(basicRepo.findByCompanyIdOrderByUpdatedAtDesc(1L)).thenReturn(List.of(payment(1L, fullTime, "100000", "0", "0")));
         when(additionalRepo.findByCompanyIdOrderByIdAsc(1L)).thenReturn(List.of());
 
         PaySheetDTO sheet = service.getPaySheets(1L,
                 List.of(ref("x@acme.test", "Finance", "Software Engineer", "Full-Time"))).get(0);
 
-        assertFalse(sheet.isConfigured());
+        assertTrue(sheet.isConfigured());
+        assertEquals(1L, sheet.getBasicPaymentId());
     }
 
     @Test
@@ -215,7 +216,7 @@ class SalaryConfigServiceTest {
 
         List<AdditionalPaymentDTO> saved = service.saveAdditionalPayments(req, hr);
 
-        verify(additionalRepo).deleteByCompanyIdAndEmployeeEmailIgnoreCase(1L, "ann@acme.test");
+        verify(additionalRepo).saveAll(anyList());
         assertEquals(1, saved.size());
         assertEquals("Fuel allowance", saved.get(0).getName());
         assertEquals("ALLOWANCE", saved.get(0).getType());
@@ -224,10 +225,20 @@ class SalaryConfigServiceTest {
 
     @Test
     void saveAdditionalPayments_emptyListClearsAndInvalidRowsAreRejected() {
+        AdditionalPayment existing = new AdditionalPayment();
+        existing.setId(5L);
+        existing.setCompany(company);
+        existing.setEmployeeEmail("ann@acme.test");
+        existing.setName("Old allowance");
+        existing.setType(AdditionalPayment.Type.ALLOWANCE);
+        existing.setAmount(BigDecimal.TEN);
+        when(additionalRepo.findByCompanyIdAndEmployeeEmailIgnoreCaseOrderByIdAsc(1L, "ann@acme.test"))
+                .thenReturn(List.of(existing));
+
         AdditionalPaymentDTO.SaveRequest clear = new AdditionalPaymentDTO.SaveRequest();
         clear.setEmployeeEmail("ann@acme.test");
         assertTrue(service.saveAdditionalPayments(clear, hr).isEmpty());
-        verify(additionalRepo).deleteByCompanyIdAndEmployeeEmailIgnoreCase(1L, "ann@acme.test");
+        verify(additionalRepo).deleteAll(List.of(existing));
 
         AdditionalPaymentDTO bad = new AdditionalPaymentDTO();
         bad.setName("Bonus");

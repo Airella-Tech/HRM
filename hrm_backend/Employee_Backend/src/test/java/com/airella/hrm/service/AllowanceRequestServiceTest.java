@@ -4,6 +4,7 @@ import com.airella.hrm.dto.AllowanceRequestDTO;
 import com.airella.hrm.exception.BusinessException;
 import com.airella.hrm.model.AllowanceRequest;
 import com.airella.hrm.model.AllowanceRequestDocument;
+import com.airella.hrm.model.Company;
 import com.airella.hrm.model.Employee;
 import com.airella.hrm.repository.AllowanceRequestDocumentRepository;
 import com.airella.hrm.repository.AllowanceRequestRepository;
@@ -34,8 +35,11 @@ class AllowanceRequestServiceTest {
         requestRepo = mock(AllowanceRequestRepository.class);
         documentRepo = mock(AllowanceRequestDocumentRepository.class);
         service = new AllowanceRequestService(requestRepo, documentRepo, mock(NotificationService.class));
+        Company company = new Company();
+        company.setId(1L);
         employee = new Employee();
         employee.setId(3L);
+        employee.setCompany(company);
         employee.setEmail(" Ann@Acme.Test ");
         employee.setEmployeeId("SE001");
         employee.setFullName("Ann");
@@ -53,7 +57,6 @@ class AllowanceRequestServiceTest {
     private AllowanceRequest pending() {
         AllowanceRequest r = new AllowanceRequest();
         r.setId(10L);
-        r.setEmployee(employee);
         r.setEmployeeEmail("ann@acme.test");
         r.setName("Medical");
         r.setAmount(new BigDecimal("1000.00"));
