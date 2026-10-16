@@ -10,7 +10,7 @@ spring:
   application:
     name: recruitment-service
 
-  # ── PostgreSQL Database (Credentials loaded from .env) ──
+  # ── PostgreSQL Database ──────────────────
   datasource:
     driver-class-name: org.postgresql.Driver
     url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${RECRUITMENT_DB_NAME:hrm_db_recruitment}
@@ -33,29 +33,49 @@ spring:
         format_sql: true
     open-in-view: false
 
-  # ── File Upload (Resumes) ────────────────
+  # ── Resume uploads (Spring default is only 1MB) ──
   servlet:
     multipart:
       max-file-size: 5MB
-      max-request-size: 5MB
+      max-request-size: 6MB
+
+  # ── Mail (same pattern as Admin_Backend) ──
+  mail:
+    host: ${MAIL_HOST:smtp.gmail.com}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
 
 # ── Server ─────────────────────────────────
 server:
   port: ${RECRUITMENT_SERVICE_PORT:5008}
 
-# ── JWT (Loaded from .env) ─────────────────
+# ── App settings ───────────────────────────
+app:
+  frontend:
+    url: ${FRONTEND_URL:http://localhost:5173}
+  resume:
+    upload-dir: ${RESUME_UPLOAD_DIR:./uploads/resumes}
+
+# ── JWT (must be the same secret as the other services) ──
 jwt:
-  secret: ${JWT_SECRET:}
+  secret: ${JWT_SECRET:hrm-dev-secret-key-change-this-in-production-must-be-at-least-256-bits-long-for-hs256}
   expiration: ${JWT_EXPIRATION:86400000}
+
+# ── Inter-Service URLs ─────────────────────
+service:
+  user-url: ${USER_SERVICE_URL:http://localhost:5004}
 
 # ── CORS ───────────────────────────────────
 cors:
   allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173,http://localhost:5174,http://localhost:3000}
-
-# ── Upload directory for resumes ───────────
-app:
-  upload:
-    dir: uploads/resumes
 
 # ── Logging ────────────────────────────────
 logging:
@@ -63,3 +83,5 @@ logging:
     root: INFO
     com.airella.hrm: ${LOG_LEVEL:INFO}
     org.springframework.security: INFO
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"

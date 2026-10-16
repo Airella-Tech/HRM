@@ -3,4 +3,4 @@
 .vscode
 bin
 build
-!build/libs/hrm-1.0.0.jar
+!build/libs/Recruitment_Backend-1.0.0.jar
