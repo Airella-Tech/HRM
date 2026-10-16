@@ -23,8 +23,8 @@ import java.util.stream.Collectors;
  * everyone else gets only the permissions of the recruitment roles assigned to them.
  * Nothing is cached, so changing someone's role takes effect on their next request.
  *
- * Use on endpoints:  @PreAuthorize("@perm.has('VACANCY_MANAGE')")
- * Several allowed:   @PreAuthorize("@perm.has('VACANCY_MANAGE') or @perm.has('VACANCY_VIEW')")
+ * Use on endpoints:  @PreAuthorize("@perm.has('VACANCY_CREATE')")
+ * Several allowed:   @PreAuthorize("@perm.has('VACANCY_CREATE') or @perm.has('VACANCY_VIEW')")
  * Assigned only:     @PreAuthorize("@perm.has('INTERVIEW_EVALUATE') and @perm.isAssignedToInterview(#interviewId)")
  */
 @Service("perm")
