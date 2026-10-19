@@ -1,36 +1,76 @@
 package com.airella.hrm.model;
 
-public enum RecruitmentPermission {
+import jakarta.persistence.*;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
 
-    // Vacancies (Member 1)
-    VACANCY_VIEW("View vacancies", "See all vacancies, including drafts"),
-    VACANCY_CREATE("Create vacancies", "Create and edit vacancy drafts"),
-    VACANCY_APPROVE("Approve vacancies", "Approve or reject vacancies"),
-    VACANCY_PUBLISH("Publish vacancies", "Publish approved vacancies and close them"),
+@Entity
+@Table(name = "recruitment_permissions")
+@Getter
+@Setter
+@NoArgsConstructor
+@ToString
+@EqualsAndHashCode(of = "id")
+public class RecruitmentPermission {
 
-    // Applications and screening (Member 2)
-    APPLICATION_VIEW("View applications", "See candidates and their resumes"),
-    APPLICATION_SCREEN("Screen candidates", "Score and review candidates"),
-    APPLICATION_SHORTLIST("Shortlist candidates", "Move candidates between stages"),
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
-    // Interviews and offers (Member 3)
-    INTERVIEW_SCHEDULE("Schedule interviews", "Create interviews and assign interviewers"),
-    INTERVIEW_EVALUATE("Evaluate interviews", "Submit feedback for assigned interviews"),
-    OFFER_MANAGE("Manage offers", "Create and track job offers");
+    @Column(name = "permission_code", unique = true, nullable = false, length = 60)
+    private String permissionCode;
 
-    private final String label;
-    private final String description;
+    @Column(nullable = false, length = 30)
+    private String category;
 
-    RecruitmentPermission(String label, String description) {
-        this.label = label;
+    @Column(nullable = false, length = 255)
+    private String description;
+
+    public RecruitmentPermission(String permissionCode, String category, String description) {
+        this.permissionCode = permissionCode;
+        this.category = category;
         this.description = description;
     }
 
-    public String getLabel() {
-        return label;
+    public RecruitmentPermission(Long id, String permissionCode, String category, String description) {
+        this.id = id;
+        this.permissionCode = permissionCode;
+        this.category = category;
+        this.description = description;
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public String getPermissionCode() {
+        return permissionCode;
+    }
+
+    public void setPermissionCode(String permissionCode) {
+        this.permissionCode = permissionCode;
+    }
+
+    public String getCategory() {
+        return category;
+    }
+
+    public void setCategory(String category) {
+        this.category = category;
     }
 
     public String getDescription() {
         return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
     }
 }

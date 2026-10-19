@@ -18,16 +18,6 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import java.util.Arrays;
 import java.util.List;
 
-/**
- * Spring Security configuration — JWT-based stateless authentication.
- * Tokens are issued by User_Backend (the only service that stores credentials);
- * this service just validates them.
- *
- *   /api/careers/**     -> PUBLIC (candidates apply without an account)
- *   /api/recruitment/** -> any logged-in user; each endpoint then checks its own
- *                          permission with @PreAuthorize("@perm.has('...')").
- *                          ADMIN and HR_MANAGER pass every permission check.
- */
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity(prePostEnabled = true)
@@ -42,7 +32,6 @@ public class SecurityConfig {
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
     }
 
-    /** No local user store — stops Spring Boot from creating a default in-memory user. */
     @Bean
     public UserDetailsService userDetailsService() {
         return username -> {
@@ -60,8 +49,8 @@ public class SecurityConfig {
                 .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
                 .requestMatchers("/actuator/**").permitAll()
                 .requestMatchers("/api/careers/**").permitAll()
-                                .requestMatchers("/api/recruitment/**").authenticated()
-                .anyRequest().authenticated()
+                .requestMatchers("/api/recruitment/**").authenticated()
+                .anyRequest().permitAll()
             );
 
         http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
