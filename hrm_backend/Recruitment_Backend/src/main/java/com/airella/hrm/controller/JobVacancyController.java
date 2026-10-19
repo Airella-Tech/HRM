@@ -1,6 +1,7 @@
 package com.airella.hrm.controller;
 
 import com.airella.hrm.dto.ApiResponse;
+import com.airella.hrm.dto.RejectRequestDTO;
 import com.airella.hrm.dto.VacancyDTO;
 import com.airella.hrm.dto.VacancyRequestDTO;
 import com.airella.hrm.model.VacancyStatus;
@@ -57,5 +58,28 @@ public class JobVacancyController {
     public ResponseEntity<ApiResponse<Void>> deleteDraft(@PathVariable Long id) {
         vacancyService.deleteDraft(id);
         return ResponseEntity.ok(ApiResponse.success(null, "Vacancy draft deleted"));
+    }
+
+    // ── Approval flow ────────────────────────────────────
+
+    @PostMapping("/{id}/submit")
+    @PreAuthorize("@perm.has('VACANCY_CREATE')")
+    public ResponseEntity<ApiResponse<VacancyDTO>> submit(@PathVariable Long id) {
+        return ResponseEntity.ok(ApiResponse.success(vacancyService.submitForApproval(id),
+                "Vacancy submitted for approval"));
+    }
+
+    @PostMapping("/{id}/approve")
+    @PreAuthorize("@perm.has('VACANCY_APPROVE')")
+    public ResponseEntity<ApiResponse<VacancyDTO>> approve(@PathVariable Long id) {
+        return ResponseEntity.ok(ApiResponse.success(vacancyService.approve(id), "Vacancy approved"));
+    }
+
+    @PostMapping("/{id}/reject")
+    @PreAuthorize("@perm.has('VACANCY_APPROVE')")
+    public ResponseEntity<ApiResponse<VacancyDTO>> reject(@PathVariable Long id,
+                                                          @Valid @RequestBody RejectRequestDTO request) {
+        return ResponseEntity.ok(ApiResponse.success(vacancyService.reject(id, request.reason()),
+                "Vacancy sent back to draft"));
     }
 }

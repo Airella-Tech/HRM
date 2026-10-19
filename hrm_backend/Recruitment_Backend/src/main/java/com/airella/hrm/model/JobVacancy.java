@@ -69,6 +69,16 @@ public class JobVacancy {
     /** User_Backend id of the person who created it. */
     @Column(name = "created_by")
     private Long createdBy;
+        /** Why the approver sent it back (cleared when it is submitted again). */
+    @Column(name = "rejection_reason", length = 500)
+    private String rejectionReason;
+
+    /** User_Backend id of the person who approved or rejected it. */
+    @Column(name = "reviewed_by")
+    private Long reviewedBy;
+
+    @Column(name = "reviewed_at")
+    private LocalDateTime reviewedAt;
 
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;

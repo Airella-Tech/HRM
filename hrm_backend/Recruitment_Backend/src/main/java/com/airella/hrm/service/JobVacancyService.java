@@ -12,6 +12,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -94,6 +96,71 @@ public class JobVacancyService {
                 "Deleted vacancy draft: " + vacancy.getTitle(), companyRef);
     }
 
+    // ── Approval flow (JVA) ──────────────────────────────
+
+    /** DRAFT -> PENDING_APPROVAL */
+    public VacancyDTO submitForApproval(Long id) {
+        String companyRef = authService.getCurrentCompanyRef();
+        JobVacancy vacancy = find(id, companyRef);
+
+        if (vacancy.getStatus() != VacancyStatus.DRAFT) {
+            throw new BusinessException("Only draft vacancies can be submitted for approval.");
+        }
+        if (!vacancy.getDeadline().isAfter(LocalDate.now())) {
+            throw new BusinessException("The application deadline has passed. Edit the deadline before submitting.");
+        }
+
+        vacancy.setStatus(VacancyStatus.PENDING_APPROVAL);
+        vacancy.setRejectionReason(null);
+        vacancy.setReviewedBy(null);
+        vacancy.setReviewedAt(null);
+
+        vacancy = vacancyRepo.save(vacancy);
+        auditService.logAction("VACANCY_SUBMITTED", "JobVacancy", vacancy.getId(),
+                "Submitted vacancy for approval: " + vacancy.getTitle(), companyRef);
+        return toDto(vacancy);
+    }
+
+    /** PENDING_APPROVAL -> APPROVED */
+    public VacancyDTO approve(Long id) {
+        String companyRef = authService.getCurrentCompanyRef();
+        JobVacancy vacancy = find(id, companyRef);
+
+        if (vacancy.getStatus() != VacancyStatus.PENDING_APPROVAL) {
+            throw new BusinessException("Only vacancies waiting for approval can be approved.");
+        }
+
+        vacancy.setStatus(VacancyStatus.APPROVED);
+        vacancy.setReviewedBy(permissionService.currentUserId());
+        vacancy.setReviewedAt(LocalDateTime.now());
+        vacancy.setRejectionReason(null);
+
+        vacancy = vacancyRepo.save(vacancy);
+        auditService.logAction("VACANCY_APPROVED", "JobVacancy", vacancy.getId(),
+                "Approved vacancy: " + vacancy.getTitle(), companyRef);
+        return toDto(vacancy);
+    }
+
+    /** PENDING_APPROVAL -> DRAFT (with a reason, so the creator can fix and resubmit) */
+    public VacancyDTO reject(Long id, String reason) {
+        String companyRef = authService.getCurrentCompanyRef();
+        JobVacancy vacancy = find(id, companyRef);
+
+        if (vacancy.getStatus() != VacancyStatus.PENDING_APPROVAL) {
+            throw new BusinessException("Only vacancies waiting for approval can be rejected.");
+        }
+
+        vacancy.setStatus(VacancyStatus.DRAFT);
+        vacancy.setRejectionReason(reason.trim());
+        vacancy.setReviewedBy(permissionService.currentUserId());
+        vacancy.setReviewedAt(LocalDateTime.now());
+
+        vacancy = vacancyRepo.save(vacancy);
+        auditService.logAction("VACANCY_REJECTED", "JobVacancy", vacancy.getId(),
+                "Rejected vacancy: " + vacancy.getTitle() + " — " + reason.trim(), companyRef);
+        return toDto(vacancy);
+    }
+
     // ── helpers ──────────────────────────────────────────
 
     private JobVacancy find(Long id, String companyRef) {
@@ -135,6 +202,7 @@ public class JobVacancyService {
                 v.getId(), v.getTitle(), v.getDepartment(), v.getJobType(), v.getVacancyCount(),
                 v.getDescription(), v.getQualifications(), List.copyOf(v.getRequiredSkills()),
                 v.getExperienceLevel(), v.getSalaryMin(), v.getSalaryMax(), v.getDeadline(),
-                v.getStatus(), v.getCreatedBy(), v.getCreatedAt(), v.getUpdatedAt());
+                v.getStatus(), v.getRejectionReason(), v.getReviewedBy(), v.getReviewedAt(),
+                v.getCreatedBy(), v.getCreatedAt(), v.getUpdatedAt());
     }
 }
