@@ -1,7 +1,10 @@
 # ============================================
 # Recruitment Service — Application Configuration
 # ============================================
-
+management:
+  health:
+    mail:
+      enabled: false
 # ── .env file location (spring-dotenv reads this at root level) ──
 env:
   directory: ../

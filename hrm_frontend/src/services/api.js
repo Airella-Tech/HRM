@@ -383,4 +383,16 @@ export const recruitmentApi = {
   getMyAccess: () => request("GET", `${RECRUITMENT_URL}/recruitment/roles/my-access`),
   checkPermission: (permission) =>
     request("GET", `${RECRUITMENT_URL}/recruitment/roles/check?permission=${encodeURIComponent(permission)}`),
+
+  // ── Vacancies (Member 1) ──
+  getVacancies: (status) =>
+    request("GET", `${RECRUITMENT_URL}/recruitment/jobs${status ? `?status=${encodeURIComponent(status)}` : ""}`),
+  getVacancy: (id) => request("GET", `${RECRUITMENT_URL}/recruitment/jobs/${id}`),
+  createVacancy: (data) => request("POST", `${RECRUITMENT_URL}/recruitment/jobs`, data),
+  updateVacancy: (id, data) => request("PUT", `${RECRUITMENT_URL}/recruitment/jobs/${id}`, data),
+  deleteVacancy: (id) => request("DELETE", `${RECRUITMENT_URL}/recruitment/jobs/${id}`),
+
+  // ── Applications & roles (Member 2) ──
+
+  // ── Interviews, offers, reports (Member 3) ──
 };
