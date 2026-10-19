@@ -13,6 +13,7 @@ export const BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5
 export const AUTH_URL = import.meta.env.VITE_AUTH_URL || "http://localhost:5004/api";
 export const EMPLOYEE_URL = import.meta.env.VITE_EMPLOYEE_URL || "http://localhost:5006/api";
 export const ADMIN_URL = import.meta.env.VITE_ADMIN_URL || "http://localhost:5007/api";
+export const RECRUITMENT_URL = import.meta.env.VITE_RECRUITMENT_URL || "http://localhost:5008/api";
 
 async function parseErrorMessage(res) {
   let errMsg = "";
@@ -346,4 +347,19 @@ export const adminApi = {
 
   // Auth (admin-specific login)
   login: (email, password) => request("POST", `${ADMIN_URL}/auth/login`, { email, password }),
+};
+
+// ─── RECRUITMENT ──────────────────────────────────────────────
+export const recruitmentApi = {
+  // ── Vacancies (Member 1) ──
+  getVacancies: (status) =>
+    request("GET", `${RECRUITMENT_URL}/recruitment/jobs${status ? `?status=${encodeURIComponent(status)}` : ""}`),
+  getVacancy: (id) => request("GET", `${RECRUITMENT_URL}/recruitment/jobs/${id}`),
+  createVacancy: (data) => request("POST", `${RECRUITMENT_URL}/recruitment/jobs`, data),
+  updateVacancy: (id, data) => request("PUT", `${RECRUITMENT_URL}/recruitment/jobs/${id}`, data),
+  deleteVacancy: (id) => request("DELETE", `${RECRUITMENT_URL}/recruitment/jobs/${id}`),
+
+  // ── Applications & roles (Member 2) ──
+
+  // ── Interviews, offers, reports (Member 3) ──
 };
