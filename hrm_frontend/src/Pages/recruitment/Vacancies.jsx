@@ -4,9 +4,9 @@
  */
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, Pencil, Trash2, BriefcaseBusiness, Loader2, X, Save } from "lucide-react";
 import { PageLayout } from "../../components/PageLayout";
 import { recruitmentApi } from "../../services/api";
+import { Plus, Pencil, Trash2, BriefcaseBusiness, Loader2, X, Save, AlertTriangle } from "lucide-react";
 
 const FILTERS = ["ALL", "DRAFT", "PENDING_APPROVAL", "APPROVED", "PUBLISHED", "CLOSED"];
 const JOB_TYPES = ["Full-time", "Part-time", "Contract", "Internship"];
@@ -204,7 +204,42 @@ const VacancyModal = ({ vacancy, onClose, onSaved }) => {
     </div>
   );
 };
-
+// ─── Delete confirmation pop-up ───────────────────────────────
+const DeleteConfirmModal = ({ vacancy, busy, onCancel, onConfirm }) => (
+  <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
+    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
+      <div className="flex items-start gap-4">
+        <div className="h-11 w-11 shrink-0 rounded-full bg-red-100 text-red-600 flex items-center justify-center">
+          <AlertTriangle size={22} />
+        </div>
+        <div>
+          <h3 className="text-lg font-bold text-slate-900">Delete this draft?</h3>
+          <p className="text-sm text-slate-500 mt-1">
+            <span className="font-semibold text-slate-700">"{vacancy.title}"</span> will be removed permanently.
+            This can't be undone.
+          </p>
+        </div>
+      </div>
+      <div className="flex justify-end gap-3 mt-6">
+        <button
+          onClick={onCancel}
+          disabled={busy}
+          className="px-5 py-2.5 rounded-xl border border-slate-200 text-slate-700 text-sm font-semibold hover:bg-slate-50 disabled:opacity-60"
+        >
+          Cancel
+        </button>
+        <button
+          onClick={onConfirm}
+          disabled={busy}
+          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 disabled:opacity-60 text-white text-sm font-semibold shadow-sm"
+        >
+          {busy ? <Loader2 size={16} className="animate-spin" /> : <Trash2 size={16} />}
+          Delete
+        </button>
+      </div>
+    </div>
+  </div>
+);
 // ─── Page ─────────────────────────────────────────────────────
 export default function RecruitmentVacancies() {
   const navigate = useNavigate();
@@ -215,6 +250,7 @@ export default function RecruitmentVacancies() {
   const [busyId, setBusyId] = useState(null);
   // null = closed, { vacancy: null } = create, { vacancy } = edit
   const [modal, setModal] = useState(null);
+    const [deleting, setDeleting] = useState(null); // vacancy waiting for delete confirmation
 
   const load = async (status = filter) => {
     setLoading(true);
@@ -238,13 +274,15 @@ export default function RecruitmentVacancies() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filter]);
 
-  const handleDelete = async (v) => {
-    if (!window.confirm(`Delete the draft "${v.title}"?`)) return;
+   const confirmDelete = async () => {
+    const v = deleting;
     setBusyId(v.id);
     try {
       await recruitmentApi.deleteVacancy(v.id);
+      setDeleting(null);
       await load();
     } catch (e) {
+      setDeleting(null);
       setError(errorText(e, "Failed to delete vacancy"));
     } finally {
       setBusyId(null);
@@ -347,7 +385,7 @@ export default function RecruitmentVacancies() {
                       <button
                         title="Delete"
                         disabled={busyId === v.id}
-                        onClick={() => handleDelete(v)}
+                        onClick={() => setDeleting(v)}
                         className="p-2 rounded-lg text-slate-500 hover:text-red-600 hover:bg-red-50 disabled:opacity-50"
                       >
                         {busyId === v.id ? <Loader2 size={16} className="animate-spin" /> : <Trash2 size={16} />}
@@ -365,6 +403,14 @@ export default function RecruitmentVacancies() {
 
       {modal && (
         <VacancyModal vacancy={modal.vacancy} onClose={() => setModal(null)} onSaved={handleSaved} />
+      )}
+            {deleting && (
+        <DeleteConfirmModal
+          vacancy={deleting}
+          busy={busyId === deleting.id}
+          onCancel={() => setDeleting(null)}
+          onConfirm={confirmDelete}
+        />
       )}
     </PageLayout>
   );
