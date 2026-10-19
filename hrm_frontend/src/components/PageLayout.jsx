@@ -20,6 +20,8 @@ import {
   Users, Building2, CalendarCheck, FileText, BarChart3, Bell as BellIcon,
   // Admin icons
   Settings, Activity,
+    // Recruitment icons
+  BriefcaseBusiness, CalendarClock,ClipboardCheck,ChartNoAxesCombined,Handshake,ShieldCheck,
 } from "lucide-react";
 import logo from "../assets/logo.jpg";
 import NotificationPopup from "./NotificationPopup";
@@ -43,6 +45,8 @@ const NAV = {
     { name: "Payroll", icon: DollarSign, path: "/hr/payslip" },
     { name: "Reports", icon: BarChart3, path: "/hr/report" },
     { name: "Notifications", icon: BellIcon, path: "/hr/notifications" },
+    // Recruitment role management
+    {name: "Roles & Permissions",icon: ShieldCheck,path: "/hr/roles-permissions",},
     { name: "Profile", icon: User, path: "/hr/profile" },
   ],
   admin: [
@@ -55,6 +59,52 @@ const NAV = {
     { name: "System Config", icon: Settings, path: "/admin/system-config" },
     { name: "Profile", icon: User, path: "/admin/profile" },
   ],
+
+  
+  recruiter: [
+    {
+      name: "Overview",
+      icon: LayoutDashboard,
+      path: "/recruitment/dashboard",
+    },
+    {
+      name: "Job Vacancies",
+      icon: BriefcaseBusiness,
+      path: "/recruitment/vacancies",
+    },
+    {
+      name: "Applications",
+      icon: FileText,
+      path: "/recruitment/applications",
+    },
+    {
+      name: "Candidate Records",
+      icon: Users,
+      path: "/recruitment/candidates",
+    },
+    {
+      name: "Interviews",
+      icon: CalendarClock,
+      path: "/recruitment/interviews",
+    },
+    {
+      name: "Evaluations",
+      icon: ClipboardCheck,
+      path: "/recruitment/evaluations",
+    },
+    {
+      name: "Job Offers",
+      icon: Handshake,
+      path: "/recruitment/offers",
+    },
+  
+    {
+      name: "Reports & Statistics",
+      icon: ChartNoAxesCombined,
+      path: "/recruitment/reports",
+    },
+  ],
+
 };
 
 // ─── Role accent colours ──────────────────────────────────────────────────────
@@ -62,6 +112,7 @@ const ACCENT = {
   employee: { from: "rgba(14,165,233,0.7)", to: "rgba(6,182,212,0.5)", shadow: "rgba(14,165,233,0.3)", avatarFrom: "from-sky-400", avatarTo: "to-blue-500", label: "Employee", surface: "bg-slate-50", topbar: "border-slate-200", title: "text-slate-900", hover: "hover:bg-employee-50" },
   hr: { from: "rgba(20,184,166,0.75)", to: "rgba(13,148,136,0.55)", shadow: "rgba(20,184,166,0.3)", avatarFrom: "from-teal-400", avatarTo: "to-emerald-500", label: "HR Manager", surface: "bg-gray-50", topbar: "border-gray-100", title: "text-gray-900", hover: "hover:bg-gray-100" },
   admin: { from: "rgba(99,102,241,0.8)", to: "rgba(79,70,229,0.6)", shadow: "rgba(99,102,241,0.35)", avatarFrom: "from-indigo-500", avatarTo: "to-violet-600", label: "Administrator", surface: "bg-gray-50", topbar: "border-gray-100", title: "text-gray-900", hover: "hover:bg-gray-100" },
+  recruiter: {from: "rgba(99,102,241,0.8)",to: "rgba(139,92,246,0.6)",shadow: "rgba(99,102,241,0.3)",avatarFrom: "from-indigo-500",avatarTo: "to-violet-600",label: "Recruiter",surface: "bg-slate-50",topbar: "border-indigo-100",title: "text-slate-900",hover: "hover:bg-indigo-50",},
 };
 
 export const PageLayout = ({ role = "employee", activePage, title, subtitle, actions, children }) => {
@@ -71,6 +122,8 @@ export const PageLayout = ({ role = "employee", activePage, title, subtitle, act
   const navigate = useNavigate();
   const accent = ACCENT[role];
   const navItems = NAV[role] || [];
+
+
 
   const storedUser = localStorage.getItem("user");
   const user = storedUser ? JSON.parse(storedUser) : {};
@@ -178,10 +231,11 @@ export const PageLayout = ({ role = "employee", activePage, title, subtitle, act
                 </span>
               )}
             </button>
-            {role === "hr" || role === "employee" ? (
+            {role === "hr" || role === "employee"  || role === "recruiter" ? (
               <button
                 type="button"
-                onClick={() => navigate(role === "hr" ? "/hr/profile" : "/employee/profile")}
+                onClick={() => navigate(role === "hr" ? "/hr/profile" : role === "recruiter"
+            ? "/recruitment/profile" : "/employee/profile")}
                 title="My Profile"
                 aria-label="Open my profile"
                 className={`w-8 h-8 rounded-lg bg-gradient-to-br ${accent.avatarFrom} ${accent.avatarTo} flex items-center justify-center text-white text-xs font-bold shadow cursor-pointer hover:shadow-md hover:scale-105 transition-all`}
