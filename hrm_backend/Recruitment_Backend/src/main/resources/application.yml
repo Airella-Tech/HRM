@@ -1,7 +1,10 @@
 # ============================================
 # Recruitment Service — Application Configuration
 # ============================================
-
+management:
+  health:
+    mail:
+      enabled: false
 # ── .env file location (spring-dotenv reads this at root level) ──
 env:
   directory: ../
@@ -15,7 +18,7 @@ spring:
     driver-class-name: org.postgresql.Driver
     url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${RECRUITMENT_DB_NAME:hrm_db_recruitment}
     username: ${RECRUITMENT_DB_USERNAME:postgres}
-    password: ${RECRUITMENT_DB_PASSWORD:newpassword123}
+    password: ${RECRUITMENT_DB_PASSWORD:}
     hikari:
       connection-timeout: 20000
       maximum-pool-size: 10

@@ -1,24 +1,23 @@
 package com.airella.hrm.model;
 
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
 import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
 
-/**
- * A custom recruitment role created by a company's HR manager
- * (e.g. "Technical Evaluator") with the permissions it grants.
- */
 @Entity
-@Table(name = "recruitment_roles",
-        uniqueConstraints = @UniqueConstraint(columnNames = {"company_ref", "name"}))
+@Table(name = "recruitment_roles", uniqueConstraints = @UniqueConstraint(name = "uk_company_role", columnNames = {
+        "company_id", "role_name" }))
 @Getter
 @Setter
-@NoArgsConstructor
+@ToString(exclude = "permissions")
 @EqualsAndHashCode(of = "id")
 public class RecruitmentRole {
 
@@ -26,25 +25,104 @@ public class RecruitmentRole {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "company_ref", nullable = false)
-    private String companyRef;
+    @Column(name = "company_id", nullable = false)
+    private Long companyId;
 
-    @Column(nullable = false, length = 100)
-    private String name;
+    @Column(name = "role_name", nullable = false, length = 50)
+    private String roleName;
 
-    @Column(length = 500)
+    @Column(length = 255)
     private String description;
 
-    @ElementCollection(fetch = FetchType.EAGER)
-    @CollectionTable(name = "recruitment_role_permissions", joinColumns = @JoinColumn(name = "role_id"))
-    @Enumerated(EnumType.STRING)
-    @Column(name = "permission", nullable = false)
-    private Set<RecruitmentPermission> permissions = new HashSet<>();
+    @Column(name = "is_system_default")
+    private Boolean isSystemDefault;
 
     @CreationTimestamp
-    @Column(nullable = false, updatable = false)
+    @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
-    @UpdateTimestamp
-    private LocalDateTime updatedAt;
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(name = "recruitment_role_permissions", joinColumns = @JoinColumn(name = "role_id"), inverseJoinColumns = @JoinColumn(name = "permission_id"))
+    private Set<RecruitmentPermission> permissions;
+
+    public RecruitmentRole() {
+        this.isSystemDefault = false;
+        this.permissions = new HashSet<>();
+    }
+
+    public RecruitmentRole(Long companyId, String roleName, String description) {
+        this();
+        this.companyId = companyId;
+        this.roleName = roleName;
+        this.description = description;
+    }
+
+    public RecruitmentRole(Long id, Long companyId, String roleName, String description, Boolean isSystemDefault, LocalDateTime createdAt, Set<RecruitmentPermission> permissions) {
+        this.id = id;
+        this.companyId = companyId;
+        this.roleName = roleName;
+        this.description = description;
+        this.isSystemDefault = isSystemDefault != null ? isSystemDefault : false;
+        this.createdAt = createdAt;
+        this.permissions = permissions != null ? permissions : new HashSet<>();
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public Long getCompanyId() {
+        return companyId;
+    }
+
+    public void setCompanyId(Long companyId) {
+        this.companyId = companyId;
+    }
+
+    public String getRoleName() {
+        return roleName;
+    }
+
+    public void setRoleName(String roleName) {
+        this.roleName = roleName;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public Boolean getIsSystemDefault() {
+        return isSystemDefault;
+    }
+
+    public void setIsSystemDefault(Boolean isSystemDefault) {
+        this.isSystemDefault = isSystemDefault;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public Set<RecruitmentPermission> getPermissions() {
+        if (permissions == null) {
+            permissions = new HashSet<>();
+        }
+        return permissions;
+    }
+
+    public void setPermissions(Set<RecruitmentPermission> permissions) {
+        this.permissions = permissions;
+    }
 }
