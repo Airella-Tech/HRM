@@ -358,6 +358,9 @@ export const recruitmentApi = {
   createVacancy: (data) => request("POST", `${RECRUITMENT_URL}/recruitment/jobs`, data),
   updateVacancy: (id, data) => request("PUT", `${RECRUITMENT_URL}/recruitment/jobs/${id}`, data),
   deleteVacancy: (id) => request("DELETE", `${RECRUITMENT_URL}/recruitment/jobs/${id}`),
+    submitVacancy: (id) => request("POST", `${RECRUITMENT_URL}/recruitment/jobs/${id}/submit`),
+  approveVacancy: (id) => request("POST", `${RECRUITMENT_URL}/recruitment/jobs/${id}/approve`),
+  rejectVacancy: (id, reason) => request("POST", `${RECRUITMENT_URL}/recruitment/jobs/${id}/reject`, { reason }),
 
   // ── Applications & roles (Member 2) ──
 
