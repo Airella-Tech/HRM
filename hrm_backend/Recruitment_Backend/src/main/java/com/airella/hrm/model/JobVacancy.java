@@ -79,6 +79,11 @@ public class JobVacancy {
 
     @Column(name = "reviewed_at")
     private LocalDateTime reviewedAt;
+        @Column(name = "published_at")
+    private LocalDateTime publishedAt;
+
+    @Column(name = "closed_at")
+    private LocalDateTime closedAt;
 
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;

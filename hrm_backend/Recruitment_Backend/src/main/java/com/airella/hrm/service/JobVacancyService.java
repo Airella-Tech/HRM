@@ -161,6 +161,70 @@ public class JobVacancyService {
         return toDto(vacancy);
     }
 
+    // ── Publish and close (JVP) ──────────────────────────
+
+    /** APPROVED -> PUBLISHED */
+    public VacancyDTO publish(Long id) {
+        String companyRef = authService.getCurrentCompanyRef();
+        JobVacancy vacancy = find(id, companyRef);
+
+        if (vacancy.getStatus() != VacancyStatus.APPROVED) {
+            throw new BusinessException("Only approved vacancies can be published.");
+        }
+        if (vacancy.getDeadline().isBefore(LocalDate.now())) {
+            throw new BusinessException("The application deadline has passed, so this vacancy cannot be published.");
+        }
+
+        vacancy.setStatus(VacancyStatus.PUBLISHED);
+        vacancy.setPublishedAt(LocalDateTime.now());
+
+        vacancy = vacancyRepo.save(vacancy);
+        auditService.logAction("VACANCY_PUBLISHED", "JobVacancy", vacancy.getId(),
+                "Published vacancy: " + vacancy.getTitle(), companyRef);
+        return toDto(vacancy);
+    }
+
+    /** PUBLISHED -> CLOSED (closed by hand) */
+    public VacancyDTO close(Long id) {
+        String companyRef = authService.getCurrentCompanyRef();
+        JobVacancy vacancy = find(id, companyRef);
+
+        if (vacancy.getStatus() != VacancyStatus.PUBLISHED) {
+            throw new BusinessException("Only published vacancies can be closed.");
+        }
+
+        vacancy.setStatus(VacancyStatus.CLOSED);
+        vacancy.setClosedAt(LocalDateTime.now());
+
+        vacancy = vacancyRepo.save(vacancy);
+        auditService.logAction("VACANCY_CLOSED", "JobVacancy", vacancy.getId(),
+                "Closed vacancy: " + vacancy.getTitle(), companyRef);
+        return toDto(vacancy);
+    }
+
+    /**
+     * Closes every published vacancy whose deadline has passed, for all companies.
+     * Called by the scheduler (no logged-in user, so the audit log shows a system action).
+     */
+    public int autoCloseExpired() {
+        List<JobVacancy> expired =
+                vacancyRepo.findByStatusAndDeadlineBefore(VacancyStatus.PUBLISHED, LocalDate.now());
+
+        for (JobVacancy vacancy : expired) {
+            vacancy.setStatus(VacancyStatus.CLOSED);
+            vacancy.setClosedAt(LocalDateTime.now());
+            vacancyRepo.save(vacancy);
+            auditService.logAction("VACANCY_AUTO_CLOSED", "JobVacancy", vacancy.getId(),
+                    "Auto-closed after deadline " + vacancy.getDeadline() + ": " + vacancy.getTitle(),
+                    vacancy.getCompanyRef());
+        }
+
+        if (!expired.isEmpty()) {
+            log.info("Auto-closed {} expired vacancies", expired.size());
+        }
+        return expired.size();
+    }
+
     // ── helpers ──────────────────────────────────────────
 
     private JobVacancy find(Long id, String companyRef) {
@@ -203,6 +267,7 @@ public class JobVacancyService {
                 v.getDescription(), v.getQualifications(), List.copyOf(v.getRequiredSkills()),
                 v.getExperienceLevel(), v.getSalaryMin(), v.getSalaryMax(), v.getDeadline(),
                 v.getStatus(), v.getRejectionReason(), v.getReviewedBy(), v.getReviewedAt(),
+                v.getPublishedAt(), v.getClosedAt(),
                 v.getCreatedBy(), v.getCreatedAt(), v.getUpdatedAt());
     }
 }

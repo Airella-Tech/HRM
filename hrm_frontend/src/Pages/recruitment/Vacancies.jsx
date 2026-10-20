@@ -6,7 +6,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { PageLayout } from "../../components/PageLayout";
 import { recruitmentApi } from "../../services/api";
-import { Plus, Pencil, Trash2, BriefcaseBusiness, Loader2, X, Save, AlertTriangle } from "lucide-react";
+import { Plus, Pencil, Trash2, BriefcaseBusiness, Loader2, X, Save, AlertTriangle, Send, CheckCircle2, XCircle } from "lucide-react";
 
 const FILTERS = ["ALL", "DRAFT", "PENDING_APPROVAL", "APPROVED", "PUBLISHED", "CLOSED"];
 const JOB_TYPES = ["Full-time", "Part-time", "Contract", "Internship"];
@@ -240,6 +240,57 @@ const DeleteConfirmModal = ({ vacancy, busy, onCancel, onConfirm }) => (
     </div>
   </div>
 );
+// ─── Reject pop-up (asks for a reason) ────────────────────────
+const RejectModal = ({ vacancy, busy, onCancel, onConfirm }) => {
+  const [reason, setReason] = useState("");
+  const [error, setError] = useState("");
+
+  const submit = () => {
+    if (!reason.trim()) {
+      setError("Please give a reason so the creator knows what to fix.");
+      return;
+    }
+    onConfirm(reason.trim());
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
+        <h3 className="text-lg font-bold text-slate-900">Reject this vacancy?</h3>
+        <p className="text-sm text-slate-500 mt-1">
+          <span className="font-semibold text-slate-700">"{vacancy.title}"</span> goes back to draft
+          with your reason attached.
+        </p>
+        <textarea
+          rows={4}
+          maxLength={500}
+          value={reason}
+          onChange={(e) => { setReason(e.target.value); setError(""); }}
+          placeholder="e.g. Please add a salary range"
+          className="mt-4 w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm text-slate-800 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+        />
+        {error && <p className="text-xs text-red-600 mt-1">{error}</p>}
+        <div className="flex justify-end gap-3 mt-5">
+          <button
+            onClick={onCancel}
+            disabled={busy}
+            className="px-5 py-2.5 rounded-xl border border-slate-200 text-slate-700 text-sm font-semibold hover:bg-slate-50 disabled:opacity-60"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={submit}
+            disabled={busy}
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 disabled:opacity-60 text-white text-sm font-semibold shadow-sm"
+          >
+            {busy ? <Loader2 size={16} className="animate-spin" /> : <XCircle size={16} />}
+            Reject
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
 // ─── Page ─────────────────────────────────────────────────────
 export default function RecruitmentVacancies() {
   const navigate = useNavigate();
@@ -251,6 +302,7 @@ export default function RecruitmentVacancies() {
   // null = closed, { vacancy: null } = create, { vacancy } = edit
   const [modal, setModal] = useState(null);
     const [deleting, setDeleting] = useState(null); // vacancy waiting for delete confirmation
+      const [rejecting, setRejecting] = useState(null); // vacancy waiting for a rejection reason
 
   const load = async (status = filter) => {
     setLoading(true);
@@ -289,6 +341,34 @@ export default function RecruitmentVacancies() {
     }
   };
 
+    // Submit for approval / approve — one call, then reload
+  const runAction = async (v, call, fallback) => {
+    setBusyId(v.id);
+    setError("");
+    try {
+      await call(v.id);
+      await load();
+    } catch (e) {
+      setError(errorText(e, fallback));
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  const confirmReject = async (reason) => {
+    const v = rejecting;
+    setBusyId(v.id);
+    try {
+      await recruitmentApi.rejectVacancy(v.id, reason);
+      setRejecting(null);
+      await load();
+    } catch (e) {
+      setRejecting(null);
+      setError(errorText(e, "Failed to reject vacancy"));
+    } finally {
+      setBusyId(null);
+    }
+  };
   const handleSaved = () => {
     setModal(null);
     load();
@@ -334,7 +414,7 @@ export default function RecruitmentVacancies() {
         )}
 
         <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-          <div className="hidden md:grid grid-cols-[2.2fr_1.2fr_1fr_0.7fr_1fr_1.1fr_90px] gap-4 px-6 py-3.5 bg-gradient-to-r from-indigo-500 to-violet-600 text-white text-xs font-semibold uppercase tracking-wide">
+          <div className="hidden md:grid grid-cols-[2.2fr_1.2fr_1fr_0.7fr_1fr_1.1fr_130px] gap-4 px-6 py-3.5 bg-gradient-to-r from-indigo-500 to-violet-600 text-white text-xs font-semibold uppercase tracking-wide">
             <span>Title</span>
             <span>Department</span>
             <span>Type</span>
@@ -360,9 +440,14 @@ export default function RecruitmentVacancies() {
             vacancies.map((v) => (
               <div
                 key={v.id}
-                className="grid grid-cols-1 md:grid-cols-[2.2fr_1.2fr_1fr_0.7fr_1fr_1.1fr_90px] gap-2 md:gap-4 px-6 py-4 border-t border-slate-100 items-center text-sm"
+                className="grid grid-cols-1 md:grid-cols-[2.2fr_1.2fr_1fr_0.7fr_1fr_1.1fr_130px] gap-2 md:gap-4 px-6 py-4 border-t border-slate-100 items-center text-sm"
               >
-                <span className="font-semibold text-slate-900">{v.title}</span>
+                                <div>
+                  <span className="font-semibold text-slate-900">{v.title}</span>
+                  {v.status === "DRAFT" && v.rejectionReason && (
+                    <p className="mt-1 text-xs text-red-600">Sent back: {v.rejectionReason}</p>
+                  )}
+                </div>
                 <span className="text-slate-600">{v.department}</span>
                 <span className="text-slate-600">{v.jobType}</span>
                 <span className="text-slate-600">{v.vacancyCount}</span>
@@ -372,9 +457,17 @@ export default function RecruitmentVacancies() {
                     {statusLabel(v.status)}
                   </span>
                 </span>
-                <span className="flex md:justify-end gap-1">
-                  {v.status === "DRAFT" ? (
+                               <span className="flex md:justify-end gap-1">
+                  {v.status === "DRAFT" && (
                     <>
+                      <button
+                        title="Submit for approval"
+                        disabled={busyId === v.id}
+                        onClick={() => runAction(v, recruitmentApi.submitVacancy, "Failed to submit vacancy")}
+                        className="p-2 rounded-lg text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 disabled:opacity-50"
+                      >
+                        {busyId === v.id ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
+                      </button>
                       <button
                         title="Edit"
                         onClick={() => setModal({ vacancy: v })}
@@ -388,10 +481,31 @@ export default function RecruitmentVacancies() {
                         onClick={() => setDeleting(v)}
                         className="p-2 rounded-lg text-slate-500 hover:text-red-600 hover:bg-red-50 disabled:opacity-50"
                       >
-                        {busyId === v.id ? <Loader2 size={16} className="animate-spin" /> : <Trash2 size={16} />}
+                        <Trash2 size={16} />
                       </button>
                     </>
-                  ) : (
+                  )}
+                  {v.status === "PENDING_APPROVAL" && (
+                    <>
+                      <button
+                        title="Approve"
+                        disabled={busyId === v.id}
+                        onClick={() => runAction(v, recruitmentApi.approveVacancy, "Failed to approve vacancy")}
+                        className="p-2 rounded-lg text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 disabled:opacity-50"
+                      >
+                        {busyId === v.id ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle2 size={16} />}
+                      </button>
+                      <button
+                        title="Reject"
+                        disabled={busyId === v.id}
+                        onClick={() => setRejecting(v)}
+                        className="p-2 rounded-lg text-slate-500 hover:text-red-600 hover:bg-red-50 disabled:opacity-50"
+                      >
+                        <XCircle size={16} />
+                      </button>
+                    </>
+                  )}
+                  {v.status !== "DRAFT" && v.status !== "PENDING_APPROVAL" && (
                     <span className="text-slate-300">—</span>
                   )}
                 </span>
@@ -410,6 +524,14 @@ export default function RecruitmentVacancies() {
           busy={busyId === deleting.id}
           onCancel={() => setDeleting(null)}
           onConfirm={confirmDelete}
+        />
+      )}
+            {rejecting && (
+        <RejectModal
+          vacancy={rejecting}
+          busy={busyId === rejecting.id}
+          onCancel={() => setRejecting(null)}
+          onConfirm={confirmReject}
         />
       )}
     </PageLayout>
