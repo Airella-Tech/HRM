@@ -394,6 +394,8 @@ export const recruitmentApi = {
     submitVacancy: (id) => request("POST", `${RECRUITMENT_URL}/recruitment/jobs/${id}/submit`),
   approveVacancy: (id) => request("POST", `${RECRUITMENT_URL}/recruitment/jobs/${id}/approve`),
   rejectVacancy: (id, reason) => request("POST", `${RECRUITMENT_URL}/recruitment/jobs/${id}/reject`, { reason }),
+    publishVacancy: (id) => request("POST", `${RECRUITMENT_URL}/recruitment/jobs/${id}/publish`),
+  closeVacancy: (id) => request("POST", `${RECRUITMENT_URL}/recruitment/jobs/${id}/close`),
 
   // ── Applications & roles (Member 2) ──
 
