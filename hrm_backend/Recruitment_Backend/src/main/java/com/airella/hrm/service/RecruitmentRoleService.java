@@ -29,19 +29,24 @@ public class RecruitmentRoleService {
     private final EmployeeDirectory employeeDirectory;
     private final AuthService authService;
     private final AuditService auditService;
+    private final org.springframework.transaction.support.TransactionTemplate transactionTemplate;
+    private static final Object SEED_LOCK = new Object();
 
     public RecruitmentRoleService(RecruitmentRoleRepository roleRepo,
                                   UserRecruitmentRoleRepository userRoleRepo,
                                   RecruitmentPermissionRepository permissionRepo,
                                   EmployeeDirectory employeeDirectory,
                                   AuthService authService,
-                                  AuditService auditService) {
+                                  AuditService auditService,
+                                  org.springframework.transaction.PlatformTransactionManager transactionManager) {
         this.roleRepo = roleRepo;
         this.userRoleRepo = userRoleRepo;
         this.permissionRepo = permissionRepo;
         this.employeeDirectory = employeeDirectory;
         this.authService = authService;
         this.auditService = auditService;
+        this.transactionTemplate = new org.springframework.transaction.support.TransactionTemplate(transactionManager);
+        this.transactionTemplate.setPropagationBehavior(org.springframework.transaction.TransactionDefinition.PROPAGATION_REQUIRES_NEW);
     }
 
     // ── Permissions ──────────────────────────────────────────────
@@ -73,7 +78,9 @@ public class RecruitmentRoleService {
     @Transactional
     public List<RecruitmentRoleDTO> getRolesForCurrentCompany(String search, Boolean customOnly) {
         Long companyId = authService.getCurrentCompanyId();
-        ensureDefaultRolesForCompany(companyId);
+        if (!Boolean.TRUE.equals(customOnly)) {
+            ensureDefaultRolesForCompany(companyId);
+        }
 
         List<RecruitmentRole> roles = roleRepo.findByCompanyIdOrderByRoleNameAsc(companyId);
         if (Boolean.TRUE.equals(customOnly)) {
@@ -362,44 +369,58 @@ public class RecruitmentRoleService {
     record DefaultRoleSeed(String roleName, String description, List<String> permissions) {}
 
     private void ensureDefaultRolesForCompany(Long companyId) {
-        List<DefaultRoleSeed> defaultRoles = List.of(
-                new DefaultRoleSeed(
-                        "Job Vacancy Creator",
-                        "Creates job vacancy requests and enters vacancy details for review and approval.",
-                        List.of("VACANCY_CREATE")
-                ),
-                new DefaultRoleSeed(
-                        "Recruitment Approver",
-                        "Reviews vacancy requests and approves or rejects them before publication.",
-                        List.of("VACANCY_APPROVE", "VACANCY_PUBLISH")
-                ),
-                new DefaultRoleSeed(
-                        "Recruitment Officer",
-                        "Manages recruitment activities, reviews applications, and supports candidate screening and shortlisting.",
-                        List.of("APPLICATION_VIEW", "APPLICATION_SCREEN", "APPLICATION_SHORTLIST", "RESUME_DOWNLOAD", "INTERVIEW_SCHEDULE")
-                ),
-                new DefaultRoleSeed(
-                        "Interviewer / Evaluator",
-                        "Reviews assigned candidates, conducts interviews, and submits interview feedback and evaluations.",
-                        List.of("APPLICATION_VIEW", "RESUME_DOWNLOAD", "INTERVIEW_EVALUATE")
-                ),
-                new DefaultRoleSeed(
-                        "Recruitment Manager",
-                        "Oversees recruitment activities and manages recruitment responsibilities according to assigned permissions.",
-                        List.of("VACANCY_CREATE", "VACANCY_APPROVE", "VACANCY_PUBLISH", "APPLICATION_VIEW", "APPLICATION_SCREEN",
-                                "APPLICATION_SHORTLIST", "RESUME_DOWNLOAD", "INTERVIEW_SCHEDULE", "INTERVIEW_ASSIGN",
-                                "INTERVIEW_EVALUATE", "OFFER_MANAGE", "RECRUITMENT_ROLE_ADMIN")
-                )
-        );
+        if (companyId == null) return;
+        synchronized (SEED_LOCK) {
+            try {
+                transactionTemplate.execute(status -> {
+                    List<DefaultRoleSeed> defaultRoles = List.of(
+                            new DefaultRoleSeed(
+                                    "Job Vacancy Creator",
+                                    "Creates job vacancy requests and enters vacancy details for review and approval.",
+                                    List.of("VACANCY_CREATE")
+                            ),
+                            new DefaultRoleSeed(
+                                    "Recruitment Approver",
+                                    "Reviews vacancy requests and approves or rejects them before publication.",
+                                    List.of("VACANCY_APPROVE", "VACANCY_PUBLISH")
+                            ),
+                            new DefaultRoleSeed(
+                                    "Recruitment Officer",
+                                    "Manages recruitment activities, reviews applications, and supports candidate screening and shortlisting.",
+                                    List.of("APPLICATION_VIEW", "APPLICATION_SCREEN", "APPLICATION_SHORTLIST", "RESUME_DOWNLOAD", "INTERVIEW_SCHEDULE")
+                            ),
+                            new DefaultRoleSeed(
+                                    "Interviewer / Evaluator",
+                                    "Reviews assigned candidates, conducts interviews, and submits interview feedback and evaluations.",
+                                    List.of("APPLICATION_VIEW", "RESUME_DOWNLOAD", "INTERVIEW_EVALUATE")
+                            ),
+                            new DefaultRoleSeed(
+                                    "Recruitment Manager",
+                                    "Oversees recruitment activities and manages recruitment responsibilities according to assigned permissions.",
+                                    List.of("VACANCY_CREATE", "VACANCY_APPROVE", "VACANCY_PUBLISH", "APPLICATION_VIEW", "APPLICATION_SCREEN",
+                                            "APPLICATION_SHORTLIST", "RESUME_DOWNLOAD", "INTERVIEW_SCHEDULE", "INTERVIEW_ASSIGN",
+                                            "INTERVIEW_EVALUATE", "OFFER_MANAGE", "RECRUITMENT_ROLE_ADMIN")
+                            )
+                    );
 
-        for (DefaultRoleSeed seed : defaultRoles) {
-            if (!roleRepo.existsByCompanyIdAndRoleNameIgnoreCase(companyId, seed.roleName())) {
-                List<RecruitmentPermission> perms = permissionRepo.findByPermissionCodeIn(seed.permissions());
-                RecruitmentRole r = new RecruitmentRole(companyId, seed.roleName(), seed.description());
-                r.setIsSystemDefault(true);
-                r.setPermissions(new HashSet<>(perms));
-                roleRepo.save(r);
-                log.info("[COMPANY_SEED] Created default role '{}' for company ID {}", seed.roleName(), companyId);
+                    for (DefaultRoleSeed seed : defaultRoles) {
+                        if (!roleRepo.existsByCompanyIdAndRoleNameIgnoreCase(companyId, seed.roleName())) {
+                            List<RecruitmentPermission> perms = permissionRepo.findByPermissionCodeIn(seed.permissions());
+                            RecruitmentRole r = new RecruitmentRole(companyId, seed.roleName(), seed.description());
+                            r.setIsSystemDefault(true);
+                            r.setPermissions(new HashSet<>(perms));
+                            try {
+                                roleRepo.save(r);
+                                log.info("[COMPANY_SEED] Created default role '{}' for company ID {}", seed.roleName(), companyId);
+                            } catch (org.springframework.dao.DataIntegrityViolationException dive) {
+                                log.debug("[COMPANY_SEED] Role '{}' already exists for company ID {}", seed.roleName(), companyId);
+                            }
+                        }
+                    }
+                    return null;
+                });
+            } catch (Exception e) {
+                log.warn("[COMPANY_SEED] Default role verification completed with note: {}", e.getMessage());
             }
         }
     }
