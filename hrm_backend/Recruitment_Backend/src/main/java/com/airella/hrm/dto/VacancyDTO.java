@@ -24,6 +24,8 @@ public record VacancyDTO(
         String rejectionReason,
         Long reviewedBy,
         LocalDateTime reviewedAt,
+        LocalDateTime publishedAt,
+        LocalDateTime closedAt,
         Long createdBy,
         LocalDateTime createdAt,
         LocalDateTime updatedAt

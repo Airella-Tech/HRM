@@ -472,7 +472,13 @@ const RecruitmentRolesPermissions = () => {
     try {
       const [customRolesRes, defaultTemplatesRes, permsRes, usersRes, myAccessRes] = await Promise.all([
         recruitmentApi.getRoles("", true), // customOnly = true: only company custom roles
-        recruitmentApi.getDefaultRoleTemplates(), // returns system default templates
+        recruitmentApi.getDefaultRoleTemplates().catch(async (err) => {
+          // If a race condition occurred during initial role template seeding, retry once
+          if (String(err?.message || "").includes("409") || String(err?.message || "").includes("conflict")) {
+            return await recruitmentApi.getDefaultRoleTemplates();
+          }
+          throw err;
+        }),
         recruitmentApi.getPermissionsByCategory(),
         recruitmentApi.getCompanyUsersWithRoles(),
         recruitmentApi.getMyAccess().catch(() => null),

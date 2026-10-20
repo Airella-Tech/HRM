@@ -82,4 +82,18 @@ public class JobVacancyController {
         return ResponseEntity.ok(ApiResponse.success(vacancyService.reject(id, request.reason()),
                 "Vacancy sent back to draft"));
     }
+
+    // ── Publish and close ────────────────────────────────
+
+    @PostMapping("/{id}/publish")
+    @PreAuthorize("@perm.has('VACANCY_PUBLISH')")
+    public ResponseEntity<ApiResponse<VacancyDTO>> publish(@PathVariable Long id) {
+        return ResponseEntity.ok(ApiResponse.success(vacancyService.publish(id), "Vacancy published"));
+    }
+
+    @PostMapping("/{id}/close")
+    @PreAuthorize("@perm.has('VACANCY_PUBLISH')")
+    public ResponseEntity<ApiResponse<VacancyDTO>> close(@PathVariable Long id) {
+        return ResponseEntity.ok(ApiResponse.success(vacancyService.close(id), "Vacancy closed"));
+    }
 }
