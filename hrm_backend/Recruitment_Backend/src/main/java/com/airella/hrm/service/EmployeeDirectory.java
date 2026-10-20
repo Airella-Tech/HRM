@@ -37,27 +37,31 @@ public class EmployeeDirectory {
 
     public Optional<UserSummaryDTO> findById(Long userId) {
         if (userId == null) return Optional.empty();
-        return fetchOne(url("/" + userId).toUriString());
+        return fetchOne(url("/" + userId).build().toUri());
     }
 
     public Optional<UserSummaryDTO> findByEmailIgnoreCase(String email) {
         if (email == null || email.isBlank()) return Optional.empty();
-        return fetchOne(url("/by-email").queryParam("email", email.trim()).encode().toUriString());
+        return fetchOne(url("/by-email").queryParam("email", email.trim()).build().toUri());
     }
 
     /** userId -> user for the given ids (missing users are simply absent). Handy for showing interviewer names. */
     public Map<Long, UserSummaryDTO> mapByIds(Collection<Long> userIds) {
         List<Long> ids = userIds.stream().filter(Objects::nonNull).distinct().toList();
         if (ids.isEmpty()) return Map.of();
-        String uri = url("/by-ids").queryParam("ids", ids.toArray()).toUriString();
+        java.net.URI uri = url("/by-ids").queryParam("ids", ids.toArray()).build().toUri();
         return fetchList(uri).stream()
                 .collect(Collectors.toMap(UserSummaryDTO::getId, Function.identity(), (a, b) -> a));
     }
 
-    /** Everyone in one company, identified by its registration number (the companyRef). */
+    /** Everyone in one company, identified by its registration number (the companyRef) or company name. */
     public List<UserSummaryDTO> findByCompanyRef(String companyRef) {
         if (companyRef == null || companyRef.isBlank()) return List.of();
-        String uri = url("/by-company").queryParam("registrationNumber", companyRef).encode().toUriString();
+        java.net.URI uri = url("/by-company")
+                .queryParam("registrationNumber", companyRef.trim())
+                .queryParam("companyName", companyRef.trim())
+                .build()
+                .toUri();
         return fetchList(uri);
     }
 
@@ -67,7 +71,7 @@ public class EmployeeDirectory {
         return UriComponentsBuilder.fromHttpUrl(userServiceUrl + "/api/internal/users" + path);
     }
 
-    private Optional<UserSummaryDTO> fetchOne(String uri) {
+    private Optional<UserSummaryDTO> fetchOne(java.net.URI uri) {
         try {
             return Optional.ofNullable(restTemplate.getForObject(uri, UserSummaryDTO.class));
         } catch (HttpClientErrorException.NotFound e) {
@@ -78,7 +82,7 @@ public class EmployeeDirectory {
         }
     }
 
-    private List<UserSummaryDTO> fetchList(String uri) {
+    private List<UserSummaryDTO> fetchList(java.net.URI uri) {
         try {
             List<UserSummaryDTO> body = restTemplate.exchange(uri, HttpMethod.GET, null, USER_LIST).getBody();
             return body != null ? body : List.of();
