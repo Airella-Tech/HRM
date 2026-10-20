@@ -47,6 +47,7 @@ import RecruitmentEvaluations from "./Pages/recruitment/Evaluations.jsx";
 import RecruitmentOffers from "./Pages/recruitment/Offers.jsx";
 import RecruitmentReports from "./Pages/recruitment/Reports.jsx";
 import RecruitmentRolesPermissions from "./Pages/hr/RecruitmentRolesPermissions.jsx";
+import RecruitmentRouteGuard from "./Pages/recruitment/RecruitmentRouteGuard";
 
 function App() {
   return (
@@ -100,8 +101,9 @@ function App() {
       <Route path="/recruitment/evaluations" element={<RecruitmentEvaluations />} />
       <Route path="/recruitment/offers" element={<RecruitmentOffers />} />
       <Route path="/recruitment/reports" element={<RecruitmentReports />} />
-      <Route path="/hr/roles-permissions" element={<RecruitmentRolesPermissions />}
-/>
+      <Route path="/recruitment/offers" element={<RecruitmentRouteGuard requiredAny={["OFFER_MANAGE"]}><RecruitmentOffers /></RecruitmentRouteGuard>}/>
+
+      <Route path="/hr/roles-permissions" element={<RecruitmentRolesPermissions />}/>
     </Routes>
   );
 }
