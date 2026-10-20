@@ -46,4 +46,27 @@ public class AuthService {
         }
         throw new BusinessException("Your account is not linked to a company.");
     }
+
+    public Long getCurrentCompanyId() {
+        return resolveCompanyId(null);
+    }
+
+    public boolean isSystemAdmin() {
+        UserSummaryDTO user = getCurrentUser();
+        return "ADMIN".equalsIgnoreCase(user.getRole());
+    }
+
+    public Long resolveCompanyId(Long requestedCompanyId) {
+        UserSummaryDTO user = getCurrentUser();
+        if ("ADMIN".equalsIgnoreCase(user.getRole()) && requestedCompanyId != null) {
+            return requestedCompanyId;
+        }
+        if (user.getCompanyId() != null) {
+            return user.getCompanyId();
+        }
+        if (requestedCompanyId != null) {
+            return requestedCompanyId;
+        }
+        throw new BusinessException("Your account is not linked to a company.");
+    }
 }

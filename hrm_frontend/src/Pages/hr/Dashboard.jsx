@@ -7,6 +7,7 @@ import {
   Loader, RefreshCw, Save, AlertCircle, Plus, Trash2, Pencil,
   Eye, ChevronRight, Briefcase, ArrowLeft, Tag, User,
   Download, Filter, Calendar, UserX, ArrowUpDown, ChevronUp, ChevronDown,
+  ShieldCheck,
 } from "lucide-react";
 import logo from "../../assets/logo.jpg";
 import { BASE_URL, AUTH_URL, hrApi } from "../../services/api";
@@ -1316,6 +1317,7 @@ const HRDashboard = () => {
     { name: "Payroll", icon: DollarSign, path: "/hr/payslip" },
     { name: "Reports", icon: BarChart3, path: "/hr/report" },
     { name: "Notifications", icon: Bell, path: "/hr/notifications" },
+    { name: "Roles & Permissions", icon: ShieldCheck, path: "/hr/roles-permissions" },
     { name: "Profile", icon: User, path: "/hr/profile" },
   ];
 

@@ -22,6 +22,7 @@ public class UserSummaryDTO {
     private LocalDate joiningDate;
     private LocalDate terminationDate;
     private String departmentName;
+    private Long companyId;
     private String companyName;
     private String companyRegistrationNumber;
 }

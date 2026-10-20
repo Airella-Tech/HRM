@@ -154,6 +154,7 @@ public class InternalUserController {
         dto.setTerminationDate(e.getTerminationDate());
         if (e.getDepartment() != null) dto.setDepartmentName(e.getDepartment().getName());
         if (e.getCompany() != null) {
+            dto.setCompanyId(e.getCompany().getId());
             dto.setCompanyName(e.getCompany().getCompanyName());
             dto.setCompanyRegistrationNumber(e.getCompany().getRegistrationNumber());
         }
