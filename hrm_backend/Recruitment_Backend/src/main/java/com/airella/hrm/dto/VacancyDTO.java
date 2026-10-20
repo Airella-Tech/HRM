@@ -21,6 +21,9 @@ public record VacancyDTO(
         BigDecimal salaryMax,
         LocalDate deadline,
         VacancyStatus status,
+        String rejectionReason,
+        Long reviewedBy,
+        LocalDateTime reviewedAt,
         Long createdBy,
         LocalDateTime createdAt,
         LocalDateTime updatedAt

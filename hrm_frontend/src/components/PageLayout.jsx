@@ -46,6 +46,7 @@ const NAV = {
     { name: "Reports", icon: BarChart3, path: "/hr/report" },
     { name: "Notifications", icon: BellIcon, path: "/hr/notifications" },
     // Recruitment role management
+        { name: "Recruitment", icon: BriefcaseBusiness, path: "/recruitment/vacancies" },
     {name: "Roles & Permissions",icon: ShieldCheck,path: "/hr/roles-permissions",},
     { name: "Profile", icon: User, path: "/hr/profile" },
   ],

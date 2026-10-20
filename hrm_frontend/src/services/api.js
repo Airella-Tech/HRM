@@ -349,8 +349,41 @@ export const adminApi = {
   login: (email, password) => request("POST", `${ADMIN_URL}/auth/login`, { email, password }),
 };
 
-// ─── RECRUITMENT ──────────────────────────────────────────────
+// ─── RECRUITMENT ROLES & PERMISSIONS DATA ─────────────────────
 export const recruitmentApi = {
+  // Roles
+  getRoles: (search, customOnly = false) => {
+    const query = new URLSearchParams();
+    if (search) query.set("search", search);
+    if (customOnly) query.set("customOnly", "true");
+    const qs = query.toString() ? `?${query.toString()}` : "";
+    return request("GET", `${RECRUITMENT_URL}/recruitment/roles${qs}`);
+  },
+  getDefaultRoleTemplates: () => request("GET", `${RECRUITMENT_URL}/recruitment/roles/defaults`),
+  getRoleById: (id) => request("GET", `${RECRUITMENT_URL}/recruitment/roles/${id}`),
+  createRole: (data) => request("POST", `${RECRUITMENT_URL}/recruitment/roles`, data),
+  updateRole: (id, data) => request("PUT", `${RECRUITMENT_URL}/recruitment/roles/${id}`, data),
+  deleteRole: (id) => request("DELETE", `${RECRUITMENT_URL}/recruitment/roles/${id}`),
+
+  // Permissions
+  getAllPermissions: () => request("GET", `${RECRUITMENT_URL}/recruitment/roles/permissions`),
+  getPermissionsByCategory: () => request("GET", `${RECRUITMENT_URL}/recruitment/roles/permissions/by-category`),
+
+  // User role assignments
+  getCompanyUsersWithRoles: () => request("GET", `${RECRUITMENT_URL}/recruitment/roles/users`),
+  getUserRoleAssignments: (userId) => request("GET", `${RECRUITMENT_URL}/recruitment/roles/users/${userId}`),
+  assignRoleToUser: (userId, roleIds) =>
+    request("POST", `${RECRUITMENT_URL}/recruitment/roles/users/assign`, { userId, roleIds }),
+  removeRoleFromUser: (userId, roleId) =>
+    request("DELETE", `${RECRUITMENT_URL}/recruitment/roles/users/${userId}/roles/${roleId}`),
+  updateUserRoles: (userId, roleIds) =>
+    request("PUT", `${RECRUITMENT_URL}/recruitment/roles/users/${userId}`, roleIds),
+
+  // Current user access
+  getMyAccess: () => request("GET", `${RECRUITMENT_URL}/recruitment/roles/my-access`),
+  checkPermission: (permission) =>
+    request("GET", `${RECRUITMENT_URL}/recruitment/roles/check?permission=${encodeURIComponent(permission)}`),
+
   // ── Vacancies (Member 1) ──
   getVacancies: (status) =>
     request("GET", `${RECRUITMENT_URL}/recruitment/jobs${status ? `?status=${encodeURIComponent(status)}` : ""}`),
