@@ -20,4 +20,8 @@ public interface JobVacancyRepository extends JpaRepository<JobVacancy, Long> {
 
     /** Used by the auto-close job: vacancies in this status whose deadline is before the given date. */
     List<JobVacancy> findByStatusAndDeadlineBefore(VacancyStatus status, LocalDate date);
+
+    /** Used by the public Careers page: a company's vacancies in this status that are still open. */
+    List<JobVacancy> findByCompanyRefAndStatusAndDeadlineGreaterThanEqualOrderByPublishedAtDesc(
+            String companyRef, VacancyStatus status, LocalDate today);
 }
