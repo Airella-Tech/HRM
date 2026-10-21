@@ -4,14 +4,34 @@
  */
 import React, { useEffect, useState } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
-import { ArrowLeft, Building2, Clock, CalendarDays, Users, Loader2, Banknote } from "lucide-react";
+import { ArrowLeft, Building2, Clock, Users, Banknote, Award } from "lucide-react";
 import { careersApi } from "../../services/api";
-import { CareersLayout, Notice, errorText, formatDate, formatSalary } from "./careersShared";
+import { CareersLayout, DeadlineMeter, Notice, errorText, formatSalary } from "./careersShared";
+
+const focusRing =
+  "focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2";
+
+const Chip = ({ icon: Icon, children }) => (
+  <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-sm text-indigo-50">
+    <Icon size={14} />
+    {children}
+  </span>
+);
+
+const Fact = ({ icon: Icon, label, children }) => (
+  <div className="flex items-start gap-3">
+    <Icon size={16} className="mt-0.5 text-slate-400 shrink-0" />
+    <div>
+      <p className="text-xs text-slate-500">{label}</p>
+      <p className="text-sm font-medium text-slate-800">{children}</p>
+    </div>
+  </div>
+);
 
 const Section = ({ title, children }) => (
-  <section className="mt-6">
-    <h2 className="text-base font-bold text-slate-900 mb-2">{title}</h2>
-    <p className="text-sm text-slate-600 whitespace-pre-line leading-relaxed">{children}</p>
+  <section className="mt-8 first:mt-0">
+    <h2 className="text-lg font-bold text-slate-900 tracking-tight mb-2">{title}</h2>
+    <p className="text-[15px] leading-7 text-slate-600 whitespace-pre-line max-w-prose">{children}</p>
   </section>
 );
 
@@ -33,7 +53,7 @@ export default function CareerJob() {
     careersApi
       .getJob(id, company)
       .then((res) => !cancelled && setJob(res.data))
-      .catch((e) => !cancelled && setError(errorText(e, "Could not load this position")))
+      .catch((e) => !cancelled && setError(errorText(e, "Could not load this role")))
       .finally(() => !cancelled && setLoading(false));
     return () => {
       cancelled = true;
@@ -45,77 +65,108 @@ export default function CareerJob() {
   if (!company) {
     return (
       <CareersLayout>
-        <Notice title="This careers link is incomplete" text="Please use the full careers link provided by the company." />
+        <Notice title="This careers link is incomplete" text="Please open the full careers link shared by the company." />
       </CareersLayout>
     );
   }
 
-  return (
-    <CareersLayout>
-      <Link to={backTo} className="inline-flex items-center gap-1.5 text-sm font-medium text-indigo-600 hover:text-indigo-800 mb-5">
-        <ArrowLeft size={16} /> All positions
+  const hero = (
+    <div className="pt-2 pb-8 sm:pb-10">
+      <Link
+        to={backTo}
+        className={`inline-flex items-center gap-1.5 text-sm text-indigo-200 hover:text-white rounded ${focusRing} focus-visible:ring-offset-[#0F1B3D]`}
+      >
+        <ArrowLeft size={16} /> All open roles
       </Link>
+      {job && (
+        <>
+          <h1 className="mt-5 text-3xl sm:text-4xl font-bold tracking-tight leading-tight max-w-3xl">{job.title}</h1>
+          <div className="mt-4 flex flex-wrap gap-2">
+            <Chip icon={Building2}>{job.department}</Chip>
+            <Chip icon={Clock}>{job.jobType}</Chip>
+          </div>
+        </>
+      )}
+    </div>
+  );
 
-      {loading ? (
-        <div className="flex items-center justify-center gap-2 py-16 text-slate-500 text-sm">
-          <Loader2 size={18} className="animate-spin" /> Loading...
+  if (loading) {
+    return (
+      <CareersLayout hero={hero}>
+        <div className="bg-white rounded-2xl border border-slate-200 p-8 animate-pulse motion-reduce:animate-none">
+          <div className="h-5 w-1/4 rounded bg-slate-200" />
+          <div className="h-4 w-full rounded bg-slate-100 mt-4" />
+          <div className="h-4 w-5/6 rounded bg-slate-100 mt-2" />
+          <div className="h-4 w-2/3 rounded bg-slate-100 mt-2" />
         </div>
-      ) : error || !job ? (
-        <Notice
-          title="This position is no longer available"
-          text="It may have been filled or closed. Have a look at our other open positions."
-        />
-      ) : (
-        <article className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 sm:p-8">
-          <h1 className="text-2xl font-bold text-slate-900">{job.title}</h1>
+      </CareersLayout>
+    );
+  }
 
-          <div className="flex flex-wrap gap-x-5 gap-y-2 mt-3 text-sm text-slate-500">
-            <span className="inline-flex items-center gap-1.5"><Building2 size={15} /> {job.department}</span>
-            <span className="inline-flex items-center gap-1.5"><Clock size={15} /> {job.jobType}</span>
-            <span className="inline-flex items-center gap-1.5"><Users size={15} /> {job.vacancyCount} {job.vacancyCount === 1 ? "opening" : "openings"}</span>
-            <span className="inline-flex items-center gap-1.5"><CalendarDays size={15} /> Apply by {formatDate(job.deadline)}</span>
-            {formatSalary(job.salaryMin, job.salaryMax) && (
-              <span className="inline-flex items-center gap-1.5"><Banknote size={15} /> {formatSalary(job.salaryMin, job.salaryMax)}</span>
-            )}
+  if (error || !job) {
+    return (
+      <CareersLayout hero={hero}>
+        <Notice
+          title="This role is no longer open"
+          text="It may have been filled or closed. Have a look at the other open roles."
+        >
+          <Link
+            to={backTo}
+            className={`inline-block px-4 py-2 rounded-xl bg-[#0F1B3D] text-white text-sm font-semibold hover:bg-[#1a2a55] ${focusRing}`}
+          >
+            See open roles
+          </Link>
+        </Notice>
+      </CareersLayout>
+    );
+  }
+
+  const salary = formatSalary(job.salaryMin, job.salaryMax);
+
+  return (
+    <CareersLayout hero={hero}>
+      <div className="grid lg:grid-cols-[1fr_320px] gap-6 lg:gap-8 items-start">
+        {/* Summary and apply: shown first on small screens, sticky on large ones */}
+        <aside className="order-first lg:order-last lg:sticky lg:top-6 bg-white rounded-2xl border border-slate-200 p-5">
+          <DeadlineMeter deadline={job.deadline} publishedAt={job.publishedAt} />
+
+          <div className="mt-5 pt-5 border-t border-slate-100 space-y-4">
+            <Fact icon={Users} label="Openings">{job.vacancyCount}</Fact>
+            {job.experienceLevel && <Fact icon={Award} label="Experience">{job.experienceLevel}</Fact>}
+            {salary && <Fact icon={Banknote} label="Salary">{salary}</Fact>}
           </div>
 
-          {job.experienceLevel && (
-            <p className="mt-3 text-sm text-slate-600">
-              <span className="font-semibold text-slate-800">Experience:</span> {job.experienceLevel}
+          <button
+            onClick={() => setShowApplyNote(true)}
+            className={`mt-6 w-full px-5 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold shadow-sm ${focusRing}`}
+          >
+            Apply for this role
+          </button>
+          {showApplyNote && (
+            <p className="mt-3 text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3">
+              Online applications will open soon. Please check back shortly.
             </p>
           )}
+        </aside>
 
+        <article className="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8">
           <Section title="About the role">{job.description}</Section>
           <Section title="Minimum qualifications">{job.qualifications}</Section>
 
           {(job.requiredSkills || []).length > 0 && (
-            <section className="mt-6">
-              <h2 className="text-base font-bold text-slate-900 mb-2">Skills</h2>
+            <section className="mt-8">
+              <h2 className="text-lg font-bold text-slate-900 tracking-tight mb-3">Skills we are looking for</h2>
               <div className="flex flex-wrap gap-2">
                 {job.requiredSkills.map((s) => (
-                  <span key={s} className="px-3 py-1 rounded-full bg-indigo-50 text-indigo-700 text-xs font-medium">
+                  <span key={s} className="px-3 py-1 rounded-md bg-slate-100 text-slate-700 text-sm font-medium">
                     {s}
                   </span>
                 ))}
               </div>
             </section>
           )}
-
-          <div className="mt-8 pt-6 border-t border-slate-100">
-            <button
-              onClick={() => setShowApplyNote(true)}
-              className="px-6 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold shadow-sm"
-            >
-              Apply for this position
-            </button>
-            {showApplyNote && (
-              <p className="mt-3 text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3">
-                Online applications will open soon. Please check back shortly.
-              </p>
-            )}
-          </div>
         </article>
-      )}
+      </div>
     </CareersLayout>
   );
 }
