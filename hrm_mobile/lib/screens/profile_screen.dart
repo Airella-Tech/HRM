@@ -151,7 +151,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   const SizedBox(height: 8),
                   Chip(
                     label: Text(role),
-                    backgroundColor: const Color(0xFF3F51B5).withOpacity(0.1),
+                    backgroundColor: const Color(
+                      0xFF3F51B5,
+                    ).withValues(alpha: 0.1),
                     labelStyle: const TextStyle(
                       color: Color(0xFF3F51B5),
                       fontWeight: FontWeight.bold,
