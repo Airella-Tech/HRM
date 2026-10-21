@@ -401,3 +401,11 @@ export const recruitmentApi = {
 
   // ── Interviews, offers, reports (Member 3) ──
 };
+
+// ─── PUBLIC CAREERS (no login) ────────────────────────────────
+export const careersApi = {
+  getJobs: (company) =>
+    request("GET", `${RECRUITMENT_URL}/careers/jobs?company=${encodeURIComponent(company)}`),
+  getJob: (id, company) =>
+    request("GET", `${RECRUITMENT_URL}/careers/jobs/${id}?company=${encodeURIComponent(company)}`),
+};
