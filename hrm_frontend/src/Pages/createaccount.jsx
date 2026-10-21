@@ -128,14 +128,6 @@ const CreateAccount = () => {
     }
   ];
 
-  const passwordRequirements = [
-    { id: 1, text: "At least 8 characters", met: false },
-    { id: 2, text: "One uppercase letter", met: false },
-    { id: 3, text: "One lowercase letter", met: false },
-    { id: 4, text: "One number", met: false },
-    { id: 5, text: "One special character", met: false }
-  ];
-
   // Validation functions for each step
   const validateStep = (step) => {
     const newErrors = {};

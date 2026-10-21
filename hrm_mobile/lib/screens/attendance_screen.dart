@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../services/api_service.dart';
 
 class AttendanceScreen extends StatefulWidget {
@@ -32,7 +33,8 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
       if (todayResult['success'] == true && todayResult['data'] != null) {
         final data = todayResult['data'];
         setState(() {
-          _isClockedIn = data['clockInTime'] != null && data['clockOutTime'] == null;
+          _isClockedIn =
+              data['clockInTime'] != null && data['clockOutTime'] == null;
           _clockInTime = data['clockInTime'];
           _clockOutTime = data['clockOutTime'];
         });
@@ -112,8 +114,18 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
     try {
       final dt = DateTime.parse(dateStr);
       final months = [
-        'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+        'Jan',
+        'Feb',
+        'Mar',
+        'Apr',
+        'May',
+        'Jun',
+        'Jul',
+        'Aug',
+        'Sep',
+        'Oct',
+        'Nov',
+        'Dec',
       ];
       return '${dt.day.toString().padLeft(2, '0')} ${months[dt.month - 1]} ${dt.year}';
     } catch (_) {
@@ -131,11 +143,17 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
     return timeStr;
   }
 
-  String _calculateDuration(String? dateStr, String? startTimeStr, String? endTimeStr) {
+  String _calculateDuration(
+    String? dateStr,
+    String? startTimeStr,
+    String? endTimeStr,
+  ) {
     if (dateStr == null || startTimeStr == null) return '0h 0m';
     try {
       final startTime = DateTime.parse('${dateStr}T$startTimeStr');
-      final endTime = endTimeStr != null ? DateTime.parse('${dateStr}T$endTimeStr') : DateTime.now();
+      final endTime = endTimeStr != null
+          ? DateTime.parse('${dateStr}T$endTimeStr')
+          : DateTime.now();
       final diff = endTime.difference(startTime);
       final hours = diff.inHours;
       final minutes = diff.inMinutes % 60;
@@ -160,17 +178,23 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                   // Clock In/Out card
                   Card(
                     elevation: 4,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
                     child: Padding(
                       padding: const EdgeInsets.all(20.0),
                       child: Column(
                         children: [
                           Text(
-                            _isClockedIn ? 'YOU ARE CLOCKED IN' : 'YOU ARE CLOCKED OUT',
+                            _isClockedIn
+                                ? 'YOU ARE CLOCKED IN'
+                                : 'YOU ARE CLOCKED OUT',
                             style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
-                              color: _isClockedIn ? Colors.green[800] : Colors.amber[800],
+                              color: _isClockedIn
+                                  ? Colors.green[800]
+                                  : Colors.amber[800],
                             ),
                           ),
                           const SizedBox(height: 8),
@@ -178,7 +202,10 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                             _isClockedIn
                                 ? 'Active Shift Started At: ${_formatTime(_clockInTime)}'
                                 : 'Start your workday by clocking in',
-                            style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Colors.grey[600],
+                            ),
                           ),
                           const SizedBox(height: 20),
                           Row(
@@ -188,24 +215,45 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                                 children: [
                                   Text(
                                     _formatTime(_clockInTime),
-                                    style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                                    style: const TextStyle(
+                                      fontSize: 22,
+                                      fontWeight: FontWeight.bold,
+                                    ),
                                   ),
                                   const SizedBox(height: 4),
-                                  Text('Clock In', style: TextStyle(color: Colors.grey[500], fontSize: 12)),
+                                  Text(
+                                    'Clock In',
+                                    style: TextStyle(
+                                      color: Colors.grey[500],
+                                      fontSize: 12,
+                                    ),
+                                  ),
                                 ],
                               ),
                               const Padding(
                                 padding: EdgeInsets.symmetric(horizontal: 24),
-                                child: Icon(Icons.arrow_forward, color: Colors.grey),
+                                child: Icon(
+                                  Icons.arrow_forward,
+                                  color: Colors.grey,
+                                ),
                               ),
                               Column(
                                 children: [
                                   Text(
                                     _formatTime(_clockOutTime),
-                                    style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                                    style: const TextStyle(
+                                      fontSize: 22,
+                                      fontWeight: FontWeight.bold,
+                                    ),
                                   ),
                                   const SizedBox(height: 4),
-                                  Text('Clock Out', style: TextStyle(color: Colors.grey[500], fontSize: 12)),
+                                  Text(
+                                    'Clock Out',
+                                    style: TextStyle(
+                                      color: Colors.grey[500],
+                                      fontSize: 12,
+                                    ),
+                                  ),
                                 ],
                               ),
                             ],
@@ -214,20 +262,32 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                           ElevatedButton(
                             onPressed: _isLoading ? null : _handleClockInOut,
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: _isClockedIn ? Colors.orange[800] : const Color(0xFF3F51B5),
+                              backgroundColor: _isClockedIn
+                                  ? Colors.orange[800]
+                                  : const Color(0xFF3F51B5),
                               foregroundColor: Colors.white,
                               minimumSize: const Size(double.infinity, 50),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
                             ),
                             child: _isLoading
                                 ? const SizedBox(
                                     height: 20,
                                     width: 20,
-                                    child: CircularProgressIndicator(strokeWidth: 2, valueColor: AlwaysStoppedAnimation(Colors.white)),
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      valueColor: AlwaysStoppedAnimation(
+                                        Colors.white,
+                                      ),
+                                    ),
                                   )
                                 : Text(
                                     _isClockedIn ? 'CLOCK OUT' : 'CLOCK IN',
-                                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                                    style: const TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                    ),
                                   ),
                           ),
                         ],
@@ -254,11 +314,18 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                       ),
                       child: Column(
                         children: [
-                          Icon(Icons.history, size: 48, color: Colors.grey[400]),
+                          Icon(
+                            Icons.history,
+                            size: 48,
+                            color: Colors.grey[400],
+                          ),
                           const SizedBox(height: 12),
                           Text(
                             'No logs found for the last 30 days',
-                            style: TextStyle(color: Colors.grey[500], fontWeight: FontWeight.w500),
+                            style: TextStyle(
+                              color: Colors.grey[500],
+                              fontWeight: FontWeight.w500,
+                            ),
                           ),
                         ],
                       ),
@@ -268,7 +335,8 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
                       itemCount: _history.length,
-                      separatorBuilder: (context, index) => const SizedBox(height: 10),
+                      separatorBuilder: (context, index) =>
+                          const SizedBox(height: 10),
                       itemBuilder: (context, index) {
                         final log = _history[index];
                         final dateStr = log['date'];
@@ -298,38 +366,70 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                                 children: [
                                   Text(
                                     _formatDate(dateStr),
-                                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 14,
+                                    ),
                                   ),
                                   const SizedBox(height: 6),
                                   Row(
                                     children: [
-                                      Icon(Icons.login, size: 12, color: Colors.green[700]),
+                                      Icon(
+                                        Icons.login,
+                                        size: 12,
+                                        color: Colors.green[700],
+                                      ),
                                       const SizedBox(width: 4),
                                       Text(
                                         _formatTime(clockIn),
-                                        style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: Colors.grey[600],
+                                        ),
                                       ),
                                       const SizedBox(width: 12),
-                                      Icon(Icons.logout, size: 12, color: hasClockedOut ? Colors.red[700] : Colors.grey),
+                                      Icon(
+                                        Icons.logout,
+                                        size: 12,
+                                        color: hasClockedOut
+                                            ? Colors.red[700]
+                                            : Colors.grey,
+                                      ),
                                       const SizedBox(width: 4),
                                       Text(
-                                        hasClockedOut ? _formatTime(clockOut) : '--:--',
-                                        style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                                        hasClockedOut
+                                            ? _formatTime(clockOut)
+                                            : '--:--',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: Colors.grey[600],
+                                        ),
                                       ),
                                     ],
                                   ),
                                 ],
                               ),
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 6,
+                                ),
                                 decoration: BoxDecoration(
-                                  color: hasClockedOut ? Colors.green[50] : Colors.orange[50],
+                                  color: hasClockedOut
+                                      ? Colors.green[50]
+                                      : Colors.orange[50],
                                   borderRadius: BorderRadius.circular(20),
                                 ),
                                 child: Text(
-                                  _calculateDuration(dateStr, clockIn, clockOut),
+                                  _calculateDuration(
+                                    dateStr,
+                                    clockIn,
+                                    clockOut,
+                                  ),
                                   style: TextStyle(
-                                    color: hasClockedOut ? Colors.green[800] : Colors.orange[800],
+                                    color: hasClockedOut
+                                        ? Colors.green[800]
+                                        : Colors.orange[800],
                                     fontWeight: FontWeight.bold,
                                     fontSize: 12,
                                   ),

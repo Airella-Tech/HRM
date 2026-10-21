@@ -198,6 +198,7 @@ export const NameListModal = ({
           {message && <div className="p-3 rounded-lg text-white bg-green-500 text-sm">{message}</div>}
 
           <form onSubmit={handleSave} className="space-y-3">
+            {heading && <h3 className="text-sm font-semibold text-gray-700">{heading}</h3>}
             {hint && <p className="text-xs text-gray-500">{hint}</p>}
 
             {rows.map((row, i) => (

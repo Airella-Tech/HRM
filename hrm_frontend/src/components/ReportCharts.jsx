@@ -4,12 +4,7 @@
  */
 import React, { useEffect, useId, useMemo, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight, ChevronUp, ChevronDown, Search, TrendingUp, TrendingDown } from "lucide-react";
-
-export const COLORS = {
-    teal: "#0d9488", emerald: "#10b981", sky: "#0ea5e9", indigo: "#6366f1",
-    amber: "#f59e0b", rose: "#f43f5e", violet: "#8b5cf6", slate: "#94a3b8",
-};
-export const PALETTE = [COLORS.teal, COLORS.indigo, COLORS.amber, COLORS.sky, COLORS.rose, COLORS.violet, COLORS.emerald, COLORS.slate];
+import { COLORS, PALETTE, niceScale } from "../utils/chartTheme";
 
 // ─── helpers ──────────────────────────────────────────────────────────────────
 const useWidth = (fallback = 560) => {
@@ -25,18 +20,6 @@ const useWidth = (fallback = 560) => {
         return () => ro.disconnect();
     }, [fallback]);
     return [ref, w];
-};
-
-export const niceScale = (rawMax, target = 4) => {
-    if (!isFinite(rawMax) || rawMax <= 0) return { max: 1, ticks: [0, 1], step: 1 };
-    const rough = rawMax / target;
-    const pow = Math.pow(10, Math.floor(Math.log10(rough)));
-    const f = rough / pow;
-    const step = (f <= 1 ? 1 : f <= 2 ? 2 : f <= 5 ? 5 : 10) * pow;
-    const max = Math.ceil(rawMax / step - 1e-9) * step;
-    const ticks = [];
-    for (let v = 0; v <= max + step / 1000; v += step) ticks.push(Number(v.toFixed(6)));
-    return { max, ticks, step };
 };
 
 const truncate = (s, n) => (String(s).length > n ? `${String(s).slice(0, Math.max(1, n - 1))}…` : String(s));
@@ -243,7 +226,7 @@ export const HBars = ({ items = [], format = (v) => v, max, color = COLORS.teal,
     const top = max ?? Math.max(...data.map((d) => d.value), 1);
     return (
         <ul className="space-y-3">
-            {data.map((d, i) => (
+            {data.map((d) => (
                 <li key={d.label} className="grid items-center gap-3" style={{ gridTemplateColumns: `minmax(0,${labelWidth}) 1fr auto` }}>
                     <span className="text-xs text-gray-600 truncate" title={d.label}>{d.label}</span>
                     <div className="h-2.5 rounded-full bg-gray-100 overflow-hidden">

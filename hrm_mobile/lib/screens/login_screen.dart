@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../services/api_service.dart';
 import 'dashboard_screen.dart';
 
@@ -35,9 +36,9 @@ class _LoginScreenState extends State<LoginScreen> {
     try {
       final email = _emailController.text.trim();
       final password = _passwordController.text;
-      
+
       final result = await ApiService.login(email, password);
-      
+
       if (mounted) {
         if (result['success'] == true) {
           Navigator.pushReplacement(
@@ -93,7 +94,10 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 color: Colors.white.withOpacity(0.95),
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 36),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 36,
+                  ),
                   child: Form(
                     key: _formKey,
                     child: Column(
@@ -142,7 +146,10 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                             child: Row(
                               children: [
-                                Icon(Icons.error_outline, color: Colors.red[700]),
+                                Icon(
+                                  Icons.error_outline,
+                                  color: Colors.red[700],
+                                ),
                                 const SizedBox(width: 12),
                                 Expanded(
                                   child: Text(
@@ -176,7 +183,8 @@ class _LoginScreenState extends State<LoginScreen> {
                             if (value == null || value.isEmpty) {
                               return 'Please enter your email';
                             }
-                            if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(value)) {
+                            if (!RegExp(r'^[^@]+@[^@]+\.[^@]+')
+                                .hasMatch(value)) {
                               return 'Please enter a valid email';
                             }
                             return null;
@@ -235,8 +243,9 @@ class _LoginScreenState extends State<LoginScreen> {
                                   width: 20,
                                   child: CircularProgressIndicator(
                                     strokeWidth: 2,
-                                    valueColor:
-                                        AlwaysStoppedAnimation<Color>(Colors.white),
+                                    valueColor: AlwaysStoppedAnimation<Color>(
+                                      Colors.white,
+                                    ),
                                   ),
                                 )
                               : const Text(

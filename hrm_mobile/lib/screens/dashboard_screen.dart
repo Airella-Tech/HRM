@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../services/api_service.dart';
 import 'attendance_screen.dart';
 import 'leave_screen.dart';
@@ -61,7 +62,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
       if (todayAtt['success'] == true && todayAtt['data'] != null) {
         final data = todayAtt['data'];
         setState(() {
-          _isClockedIn = data['clockInTime'] != null && data['clockOutTime'] == null;
+          _isClockedIn =
+              data['clockInTime'] != null && data['clockOutTime'] == null;
           _clockInTime = data['clockInTime'];
         });
       }

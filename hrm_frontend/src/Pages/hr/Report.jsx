@@ -8,8 +8,9 @@ import {
 import { PageLayout } from "../../components/PageLayout";
 import { hrApi, userHrApi } from "../../services/api";
 import {
-  BarChart, Badge, ChartCard, COLORS, DataTable, DonutChart, EmptyState, HBars, KpiCard, Legend, RateBar, TrendChart, Delta,
+  BarChart, Badge, ChartCard, DataTable, DonutChart, EmptyState, HBars, KpiCard, Legend, RateBar, TrendChart, Delta,
 } from "../../components/ReportCharts";
+import { COLORS } from "../../utils/chartTheme";
 import {
   ARRIVAL_BINS, DEFAULT_RULES, PERIODS, bucketize, computeAttendance, computeLeave, computePayroll, computeToday,
   computeWorkforce, downloadCsv, fmtDate, fmtDayMonth, fmtHours, fmtMoney, fmtMoneyShort, fmtNum, fmtPct, normEmployees,

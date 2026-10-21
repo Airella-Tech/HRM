@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../services/api_service.dart';
 
 class LeaveScreen extends StatefulWidget {
@@ -592,9 +593,8 @@ class _LeaveScreenState extends State<LeaveScreen> {
                           child: Row(
                             children: [
                               CircleAvatar(
-                                backgroundColor: const Color(
-                                  0xFF3F51B5,
-                                ).withOpacity(0.1),
+                                backgroundColor: const Color(0xFF3F51B5)
+                                    .withOpacity(0.1),
                                 child: const Icon(
                                   Icons.add,
                                   color: Color(0xFF3F51B5),

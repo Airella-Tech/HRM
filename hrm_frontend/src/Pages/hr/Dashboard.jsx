@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   LayoutDashboard, Users, CalendarCheck, FileText, DollarSign,
@@ -92,7 +92,7 @@ const useToast = () => {
 const newRole = () => ({ _k: `${Date.now()}-${Math.random()}`, title: "", description: "" });
 
 // ─── DEPARTMENT FORM MODAL ────────────────────────────────────────────────────
-const DeptFormModal = ({ open, onClose, onSave, initDept, initRoles, employees }) => {
+const DeptFormModal = ({ open, onClose, onSave, initDept, initRoles }) => {
   const [dept, setDept] = useState({ name: "", description: "", managerId: "", active: true });
   const [roles, setRoles] = useState([newRole()]);
   const [errs, setErrs] = useState({});
@@ -467,7 +467,7 @@ const DepartmentSection = ({ employees, addToast }) => {
       setLoading(true);
       const r = await api.get("/departments");
       setDepts(r.data || []);
-    } catch (e) { addToast("Failed to load departments", "error"); }
+    } catch { addToast("Failed to load departments", "error"); }
     finally { setLoading(false); }
   }, [addToast]);
 
@@ -1272,7 +1272,9 @@ const HRDashboard = () => {
         todayPresent: presentToday,
         pendingLeaves: leaveList.length,
       });
-    } catch { }
+    } catch {
+      // Ignore — widgets keep their last-known values if the refresh fails
+    }
   };
 
   const handleApproveLeave = async (id) => { try { await hrApi.approveLeave(id); toast.addToast("Leave approved", "success"); fetchDashboardData(); } catch { toast.addToast("Failed to approve", "error"); } };
