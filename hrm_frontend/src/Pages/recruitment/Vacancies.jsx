@@ -6,7 +6,8 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { PageLayout } from "../../components/PageLayout";
 import { recruitmentApi } from "../../services/api";
-import { Plus, Pencil, Trash2, BriefcaseBusiness, Loader2, X, Save, AlertTriangle, Send, CheckCircle2, XCircle } from "lucide-react";
+import { Plus, Pencil, Trash2, BriefcaseBusiness, Loader2, X, Save, AlertTriangle, Send, CheckCircle2, XCircle, Megaphone, Ban } from "lucide-react";
+
 
 const FILTERS = ["ALL", "DRAFT", "PENDING_APPROVAL", "APPROVED", "PUBLISHED", "CLOSED"];
 const JOB_TYPES = ["Full-time", "Part-time", "Contract", "Internship"];
@@ -291,6 +292,42 @@ const RejectModal = ({ vacancy, busy, onCancel, onConfirm }) => {
     </div>
   );
 };
+// ─── Close confirmation pop-up ────────────────────────────────
+const CloseConfirmModal = ({ vacancy, busy, onCancel, onConfirm }) => (
+  <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
+    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
+      <div className="flex items-start gap-4">
+        <div className="h-11 w-11 shrink-0 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center">
+          <Ban size={22} />
+        </div>
+        <div>
+          <h3 className="text-lg font-bold text-slate-900">Close this vacancy?</h3>
+          <p className="text-sm text-slate-500 mt-1">
+            <span className="font-semibold text-slate-700">"{vacancy.title}"</span> will stop accepting
+            applications. This can't be undone.
+          </p>
+        </div>
+      </div>
+      <div className="flex justify-end gap-3 mt-6">
+        <button
+          onClick={onCancel}
+          disabled={busy}
+          className="px-5 py-2.5 rounded-xl border border-slate-200 text-slate-700 text-sm font-semibold hover:bg-slate-50 disabled:opacity-60"
+        >
+          Cancel
+        </button>
+        <button
+          onClick={onConfirm}
+          disabled={busy}
+          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 disabled:opacity-60 text-white text-sm font-semibold shadow-sm"
+        >
+          {busy ? <Loader2 size={16} className="animate-spin" /> : <Ban size={16} />}
+          Close vacancy
+        </button>
+      </div>
+    </div>
+  </div>
+);
 // ─── Page ─────────────────────────────────────────────────────
 export default function RecruitmentVacancies() {
   const navigate = useNavigate();
@@ -303,6 +340,7 @@ export default function RecruitmentVacancies() {
   const [modal, setModal] = useState(null);
     const [deleting, setDeleting] = useState(null); // vacancy waiting for delete confirmation
       const [rejecting, setRejecting] = useState(null); // vacancy waiting for a rejection reason
+        const [closing, setClosing] = useState(null); // vacancy waiting for close confirmation
 
   const load = async (status = filter) => {
     setLoading(true);
@@ -365,6 +403,20 @@ export default function RecruitmentVacancies() {
     } catch (e) {
       setRejecting(null);
       setError(errorText(e, "Failed to reject vacancy"));
+    } finally {
+      setBusyId(null);
+    }
+  };
+    const confirmClose = async () => {
+    const v = closing;
+    setBusyId(v.id);
+    try {
+      await recruitmentApi.closeVacancy(v.id);
+      setClosing(null);
+      await load();
+    } catch (e) {
+      setClosing(null);
+      setError(errorText(e, "Failed to close vacancy"));
     } finally {
       setBusyId(null);
     }
@@ -505,9 +557,27 @@ export default function RecruitmentVacancies() {
                       </button>
                     </>
                   )}
-                  {v.status !== "DRAFT" && v.status !== "PENDING_APPROVAL" && (
-                    <span className="text-slate-300">—</span>
+                                   {v.status === "APPROVED" && (
+                    <button
+                      title="Publish"
+                      disabled={busyId === v.id}
+                      onClick={() => runAction(v, recruitmentApi.publishVacancy, "Failed to publish vacancy")}
+                      className="p-2 rounded-lg text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 disabled:opacity-50"
+                    >
+                      {busyId === v.id ? <Loader2 size={16} className="animate-spin" /> : <Megaphone size={16} />}
+                    </button>
                   )}
+                  {v.status === "PUBLISHED" && (
+                    <button
+                      title="Close vacancy"
+                      disabled={busyId === v.id}
+                      onClick={() => setClosing(v)}
+                      className="p-2 rounded-lg text-slate-500 hover:text-amber-600 hover:bg-amber-50 disabled:opacity-50"
+                    >
+                      <Ban size={16} />
+                    </button>
+                  )}
+                  {v.status === "CLOSED" && <span className="text-slate-300">—</span>}
                 </span>
               </div>
             ))
@@ -532,6 +602,14 @@ export default function RecruitmentVacancies() {
           busy={busyId === rejecting.id}
           onCancel={() => setRejecting(null)}
           onConfirm={confirmReject}
+        />
+      )}
+            {closing && (
+        <CloseConfirmModal
+          vacancy={closing}
+          busy={busyId === closing.id}
+          onCancel={() => setClosing(null)}
+          onConfirm={confirmClose}
         />
       )}
     </PageLayout>
