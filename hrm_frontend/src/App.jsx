@@ -101,8 +101,8 @@ function App() {
       <Route path="/recruitment/evaluations" element={<RecruitmentEvaluations />} />
       <Route path="/recruitment/offers" element={<RecruitmentOffers />} />
       <Route path="/recruitment/reports" element={<RecruitmentReports />} />
-      <Route path="/recruitment/offers" element={<RecruitmentRouteGuard requiredAny={["OFFER_MANAGE"]}><RecruitmentOffers /></RecruitmentRouteGuard>}/>
 
+      <Route path="/recruitment/roles-permissions" element={<RecruitmentRolesPermissions />}/>
       <Route path="/hr/roles-permissions" element={<RecruitmentRolesPermissions />}/>
     </Routes>
   );

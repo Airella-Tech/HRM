@@ -5,8 +5,8 @@ export default function RecruitmentEvaluations() {
   return (
     <PageLayout
       role="recruiter"
-      activePage="Evaluations"
-      title="Evaluations"
+      activePage="Evaluate Interviews"
+      title="Evaluate Interviews"
     >
     </PageLayout>
   );

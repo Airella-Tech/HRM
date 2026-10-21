@@ -12,7 +12,7 @@
  */
 import React, { useEffect, useState } from "react";
 import { recruitmentApi } from "../services/api";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import {
   ChevronLeft, ChevronRight, LogOut, Bell,
   // Employee icons
@@ -28,6 +28,13 @@ import {
   ChartNoAxesCombined,
   Handshake,
   ShieldCheck,
+  FilePlus,
+  CheckCircle2,
+  Megaphone,
+  UserCheck,
+  FileDown,
+  UserPlus,
+  Award,
 } from "lucide-react";
 import logo from "../assets/logo.jpg";
 import NotificationPopup from "./NotificationPopup";
@@ -77,61 +84,87 @@ const NAV = {
       path: "/recruitment/dashboard",
       requiresAny: [],
     },
+
+    // Job Vacancies
     {
-      name: "Job Vacancies",
-      icon: BriefcaseBusiness,
-      path: "/recruitment/vacancies",
-      requiresAny: ["VACANCY_CREATE", "VACANCY_APPROVE", "VACANCY_PUBLISH"],
+      name: "Create Vacancies",
+      icon: FilePlus,
+      path: "/recruitment/vacancies?view=create",
+      requiresAny: ["VACANCY_CREATE", "CREATE_VACANCIES"],
     },
     {
-      name: "Applications",
+      name: "Approve Vacancies",
+      icon: CheckCircle2,
+      path: "/recruitment/vacancies?view=approve",
+      requiresAny: ["VACANCY_APPROVE", "APPROVE_VACANCIES"],
+    },
+    {
+      name: "Publish & Close Vacancies",
+      icon: Megaphone,
+      path: "/recruitment/vacancies?view=publish",
+      requiresAny: ["VACANCY_PUBLISH", "PUBLISH_CLOSE_VACANCIES"],
+    },
+
+    // Candidate Applications
+    {
+      name: "View Applications",
       icon: FileText,
       path: "/recruitment/applications",
-      requiresAny: [
-        "APPLICATION_VIEW",
-        "APPLICATION_SCREEN",
-        "APPLICATION_SHORTLIST",
-      ],
+      requiresAny: ["APPLICATION_VIEW", "VIEW_APPLICATIONS"],
     },
     {
-      name: "Candidate Records",
-      icon: Users,
-      path: "/recruitment/candidates",
-      requiresAny: ["APPLICATION_VIEW"],
-    },
-    {
-      name: "Interviews",
-      icon: CalendarClock,
-      path: "/recruitment/interviews",
-      requiresAny: [
-        "INTERVIEW_SCHEDULE",
-        "INTERVIEW_ASSIGN",
-        "INTERVIEW_EVALUATE",
-      ],
-    },
-    {
-      name: "Evaluations",
+      name: "Review Applications",
       icon: ClipboardCheck,
-      path: "/recruitment/evaluations",
-      requiresAny: ["INTERVIEW_EVALUATE"],
+      path: "/recruitment/applications?view=review",
+      requiresAny: ["APPLICATION_SCREEN", "REVIEW_APPLICATIONS"],
     },
     {
-      name: "Job Offers",
+      name: "Shortlist Candidates",
+      icon: UserCheck,
+      path: "/recruitment/applications?view=shortlist",
+      requiresAny: ["APPLICATION_SHORTLIST", "SHORTLIST_CANDIDATES"],
+    },
+    {
+      name: "Download Resumes",
+      icon: FileDown,
+      path: "/recruitment/applications?view=resumes",
+      requiresAny: ["RESUME_DOWNLOAD", "DOWNLOAD_RESUMES"],
+    },
+
+    // Interviews & Evaluations
+    {
+      name: "Schedule Interviews",
+      icon: CalendarClock,
+      path: "/recruitment/interviews?view=schedule",
+      requiresAny: ["INTERVIEW_SCHEDULE", "SCHEDULE_INTERVIEWS"],
+    },
+    {
+      name: "Assign Interviewers",
+      icon: UserPlus,
+      path: "/recruitment/interviews?view=assign",
+      requiresAny: ["INTERVIEW_ASSIGN", "ASSIGN_INTERVIEWERS"],
+    },
+    {
+      name: "Evaluate Interviews",
+      icon: Award,
+      path: "/recruitment/evaluations",
+      requiresAny: ["INTERVIEW_EVALUATE", "EVALUATE_INTERVIEWS"],
+    },
+
+    // Job Offers
+    {
+      name: "Manage Job Offers",
       icon: Handshake,
       path: "/recruitment/offers",
-      requiresAny: ["OFFER_MANAGE"],
+      requiresAny: ["OFFER_MANAGE", "MANAGE_JOB_OFFERS"],
     },
-    {
-      name: "Reports & Statistics",
-      icon: BarChart3,
-      path: "/recruitment/reports",
-      requiresAny: ["REPORT_VIEW"],
-    },
+
+    // Role & Permission Management
     {
       name: "Roles & Permissions",
       icon: ShieldCheck,
       path: "/recruitment/roles-permissions",
-      requiresAny: ["RECRUITMENT_ROLE_ADMIN"],
+      requiresAny: ["RECRUITMENT_ROLE_ADMIN", "MANAGE_ROLES_PERMISSIONS"],
     },
   ],
 };
@@ -200,6 +233,7 @@ export const PageLayout = ({
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const navigate = useNavigate();
+  const location = useLocation();
   const accent = ACCENT[role];
 
   const [recruitmentAccess, setRecruitmentAccess] = useState(null);
@@ -327,7 +361,27 @@ export const PageLayout = ({
         {/* Nav items */}
         <ul className="flex-1 py-4 space-y-1 px-3 overflow-y-auto">
           {navItems.map((item) => {
-            const isActive = activePage === item.name;
+            const currentFullPath = location.pathname + location.search;
+            const currentBase = location.pathname;
+            const itemBase = item.path ? item.path.split("?")[0] : "";
+
+            const nameMatches =
+              activePage === item.name ||
+              (activePage === "Roles & Permissions" && item.name === "Manage Roles & Permissions") ||
+              (activePage === "Manage Roles & Permissions" && item.name === "Roles & Permissions") ||
+              (activePage === "Job Vacancies" && (item.name === "Create Vacancies" || item.name === "Job Vacancies")) ||
+              (activePage === "Applications" && (item.name === "View Applications" || item.name === "Applications")) ||
+              (activePage === "Interviews" && (item.name === "Schedule Interviews" || item.name === "Interviews")) ||
+              (activePage === "Evaluations" && (item.name === "Evaluate Interviews" || item.name === "Evaluations")) ||
+              (activePage === "Job Offers" && (item.name === "Manage Job Offers" || item.name === "Job Offers"));
+
+            const exactUrlMatches = Boolean(item.path && item.path === currentFullPath);
+            const baseUrlMatches = Boolean(item.path && !location.search && itemBase === currentBase);
+
+            const isActive =
+              exactUrlMatches ||
+              (nameMatches && (location.search ? exactUrlMatches : baseUrlMatches || !item.path?.includes("?"))) ||
+              (baseUrlMatches && !navItems.some((n) => n.name === activePage));
             return (
               <li key={item.name}>
                 <button
