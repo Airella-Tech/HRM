@@ -47,6 +47,8 @@ import RecruitmentEvaluations from "./Pages/recruitment/Evaluations.jsx";
 import RecruitmentOffers from "./Pages/recruitment/Offers.jsx";
 import RecruitmentReports from "./Pages/recruitment/Reports.jsx";
 import RecruitmentRolesPermissions from "./Pages/hr/RecruitmentRolesPermissions.jsx";
+import Careers from "./Pages/careers/Careers.jsx";
+import CareerJob from "./Pages/careers/CareerJob.jsx";
 
 function App() {
   return (
@@ -57,6 +59,8 @@ function App() {
       <Route path="/blog" element={<Blog />} />
       <Route path="/contact" element={<Contact />} />
       <Route path="/login" element={<Login />} />
+            <Route path="/careers" element={<Careers />} />
+      <Route path="/careers/jobs/:id" element={<CareerJob />} />
       <Route path="/createaccount" element={<CreateAccount />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password" element={<ResetPassword />} />
