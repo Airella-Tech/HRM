@@ -390,7 +390,7 @@ const RecruitmentRolesPermissions = () => {
   const [defaultTemplates, setDefaultTemplates] = useState([]);
   const [permissionCategories, setPermissionCategories] = useState({});
   const [employees, setEmployees] = useState([]);
-  const [, setMyAccess] = useState(null);
+  const [myAccess, setMyAccess] = useState(null);
 
   // Loading & error state
   const [loading, setLoading] = useState(true);
@@ -525,19 +525,46 @@ const RecruitmentRolesPermissions = () => {
       return;
     }
 
+    let parsedUser;
     try {
-      const parsedUser = JSON.parse(storedUser);
-      if (parsedUser.role !== "HR_MANAGER" && parsedUser.role !== "ADMIN") {
-        navigate("/unauthorized");
-        return;
-      }
+      parsedUser = JSON.parse(storedUser);
     } catch (error) {
       console.error("Invalid user data in storage:", error);
       navigate("/login");
       return;
     }
 
-    loadAllData();
+    const isSystemAdminOrHR = parsedUser.role === "HR_MANAGER" || parsedUser.role === "ADMIN";
+
+    // HR Managers and Admins always have full access
+    if (isSystemAdminOrHR) {
+      loadAllData();
+      return;
+    }
+
+    // For employees, check recruitment role management permission via getMyAccess API
+    recruitmentApi
+      .getMyAccess()
+      .then((res) => {
+        const access = res?.data?.data ?? res?.data ?? res;
+        const perms = Array.isArray(access?.permissions) ? access.permissions : [];
+        const canManage =
+          access?.fullAccess === true ||
+          perms.includes("RECRUITMENT_ROLE_ADMIN") ||
+          perms.includes("MANAGE_ROLES_PERMISSIONS");
+
+        if (!canManage) {
+          navigate("/unauthorized");
+          return;
+        }
+
+        setMyAccess(access);
+        loadAllData();
+      })
+      .catch((err) => {
+        console.error("Failed to verify role management permission:", err);
+        navigate("/unauthorized");
+      });
   }, [navigate]);
 
   // ---------------------------------------------------------
@@ -1065,11 +1092,18 @@ const RecruitmentRolesPermissions = () => {
 
   // ======================================================
   // PAGE UI
-  // ======================================================
+  const storedUser = localStorage.getItem("user");
+  let layoutRole = "recruiter";
+  try {
+    const parsed = storedUser ? JSON.parse(storedUser) : null;
+    if (parsed?.role === "HR_MANAGER" || parsed?.role === "ADMIN") {
+      layoutRole = "hr";
+    }
+  } catch {}
 
   return (
     <PageLayout
-      role="hr"
+      role={layoutRole}
       activePage="Roles & Permissions"
       title="Recruitment Roles & Permissions"
       subtitle="Manage company recruitment roles, assign permissions, and delegate hiring access to staff"

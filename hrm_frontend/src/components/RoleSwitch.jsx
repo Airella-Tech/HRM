@@ -8,9 +8,10 @@
  *   sidebar  : render for the dark sidebar instead of a light topbar
  *   collapsed: hide labels when the sidebar is collapsed
  */
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Briefcase, UserRound } from "lucide-react";
+import { Briefcase, UserRound, UsersRound } from "lucide-react";
+import { recruitmentApi } from "../services/api";
 
 const getStoredUser = () => {
   try {
@@ -20,13 +21,113 @@ const getStoredUser = () => {
   }
 };
 
-export const RoleSwitch = ({ mode = "hr", sidebar = false, collapsed = false }) => {
+const hasRecruitmentAccess = () => {
+  try {
+    const user = getStoredUser();
+
+    const permissions = user?.permissions ?? user?.authorities ?? [];
+
+    if (!Array.isArray(permissions)) return false;
+
+    const permissionNames = permissions.map((permission) =>
+      typeof permission === "string"
+        ? permission
+        : permission?.name ??
+          permission?.permission ??
+          permission?.code ??
+          permission?.authority ??
+          ""
+    );
+
+    return permissionNames.some((permission) =>
+      permission.startsWith("RECRUITMENT_") ||
+      permission.startsWith("JOB_VACANCIES_") ||
+      permission.startsWith("APPLICATIONS_") ||
+      permission.startsWith("CANDIDATE_RECORDS_") ||
+      permission.startsWith("INTERVIEWS_") ||
+      permission.startsWith("EVALUATIONS_") ||
+      permission.startsWith("JOB_OFFERS_")
+    );
+  } catch {
+    return false;
+  }
+};
+
+export const RoleSwitch = ({
+  mode = "hr",
+  sidebar = false,
+  collapsed = false,
+}) => {
   const navigate = useNavigate();
-  if (getStoredUser()?.role !== "HR_MANAGER") return null;
+
+  const user = getStoredUser();
+  const isHRManager = user?.role === "HR_MANAGER";
+
+  const [canRecruit, setCanRecruit] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    recruitmentApi
+      .getMyAccess()
+      .then((response) => {
+        if (cancelled) return;
+
+        // api.js returns parsed JSON directly.
+        const access = response?.data ?? response;
+
+        setCanRecruit(
+          access?.hasRecruitmentAccess === true ||
+            access?.fullAccess === true
+        );
+      })
+      .catch((error) => {
+        console.error("Failed to check Recruitment access:", error);
+
+        if (!cancelled) {
+          setCanRecruit(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  if (!isHRManager && !canRecruit) return null;
 
   const options = [
-    { key: "hr", label: "HR", icon: Briefcase, path: "/hr/dashboard", active: "bg-teal-500 text-white shadow" },
-    { key: "employee", label: "Employee", icon: UserRound, path: "/employee/dashboard", active: "bg-gradient-to-br from-sky-500 to-cyan-500 text-white shadow" },
+    ...(isHRManager
+      ? [
+          {
+            key: "hr",
+            label: "HR",
+            icon: Briefcase,
+            path: "/hr/dashboard",
+            active: "bg-teal-500 text-white shadow",
+          },
+        ]
+      : []),
+
+    {
+      key: "employee",
+      label: "Employee",
+      icon: UserRound,
+      path: "/employee/dashboard",
+      active: "bg-gradient-to-br from-sky-500 to-cyan-500 text-white shadow",
+    },
+
+   ...(!isHRManager && canRecruit
+  ? [
+      {
+        key: "recruitment",
+        label: "Recruitment",
+        icon: UsersRound,
+        path: "/recruitment/dashboard",
+        active: "bg-violet-600 text-white shadow",
+      },
+    ]
+  : []),
   ];
 
   return (

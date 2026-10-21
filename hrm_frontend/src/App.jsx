@@ -49,6 +49,7 @@ import RecruitmentReports from "./Pages/recruitment/Reports.jsx";
 import RecruitmentRolesPermissions from "./Pages/hr/RecruitmentRolesPermissions.jsx";
 import Careers from "./Pages/careers/Careers.jsx";
 import CareerJob from "./Pages/careers/CareerJob.jsx";
+import RecruitmentRouteGuard from "./Pages/recruitment/RecruitmentRouteGuard";
 
 function App() {
   return (
@@ -104,8 +105,9 @@ function App() {
       <Route path="/recruitment/evaluations" element={<RecruitmentEvaluations />} />
       <Route path="/recruitment/offers" element={<RecruitmentOffers />} />
       <Route path="/recruitment/reports" element={<RecruitmentReports />} />
-      <Route path="/hr/roles-permissions" element={<RecruitmentRolesPermissions />}
-/>
+
+      <Route path="/recruitment/roles-permissions" element={<RecruitmentRolesPermissions />}/>
+      <Route path="/hr/roles-permissions" element={<RecruitmentRolesPermissions />}/>
     </Routes>
   );
 }
