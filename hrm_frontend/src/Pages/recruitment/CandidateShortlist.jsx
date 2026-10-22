@@ -104,6 +104,23 @@ const REJECTION_REASONS = [
   "Other / Non-competitive background",
 ];
 
+function normalizeCandidate(c) {
+  const skillsList = Array.isArray(c.skillsMatched) && c.skillsMatched.length > 0
+    ? c.skillsMatched
+    : (Array.isArray(c.skills) ? c.skills : []);
+  const score = c.matchScore ?? c.screeningScore ?? (c.status === "SHORTLISTED" ? 85 : 70);
+  return {
+    ...c,
+    matchScore: score,
+    screeningScore: c.screeningScore ?? score,
+    skillsMatched: skillsList,
+    skillsMatchCount: c.skillsMatchCount || (skillsList.length > 0 ? `${skillsList.length} skills listed` : "Skills reviewed"),
+    jobTitle: c.jobTitle || c.vacancyTitle || "Job Vacancy",
+    department: c.department || "General",
+    experienceYears: c.experienceYears ?? 0,
+  };
+}
+
 export default function RecruitmentCandidateShortlist() {
   const [candidates, setCandidates] = useState(INITIAL_SHORTLIST_CANDIDATES);
   const [search, setSearch] = useState("");
@@ -116,7 +133,7 @@ export default function RecruitmentCandidateShortlist() {
         .getApplications()
         .then((res) => {
           if (!cancelled && res?.data && Array.isArray(res.data) && res.data.length > 0) {
-            setCandidates(res.data);
+            setCandidates(res.data.map(normalizeCandidate));
           }
         })
         .catch((err) => {
@@ -211,13 +228,14 @@ export default function RecruitmentCandidateShortlist() {
       const q = search.trim().toLowerCase();
       const matchesSearch =
         !q ||
-        c.candidateName.toLowerCase().includes(q) ||
-        c.jobTitle.toLowerCase().includes(q) ||
-        c.email.toLowerCase().includes(q);
+        (c.candidateName || "").toLowerCase().includes(q) ||
+        (c.jobTitle || "").toLowerCase().includes(q) ||
+        (c.email || "").toLowerCase().includes(q);
 
+      const score = c.matchScore ?? c.screeningScore ?? 0;
       const matchesStatus =
         statusFilter === "ALL" ||
-        (statusFilter === "RECOMMENDED" && c.matchScore >= threshold && c.status !== "REJECTED") ||
+        (statusFilter === "RECOMMENDED" && score >= threshold && c.status !== "REJECTED") ||
         (statusFilter === "SHORTLISTED" && c.status === "SHORTLISTED") ||
         (statusFilter === "REJECTED" && c.status === "REJECTED");
 
@@ -227,7 +245,7 @@ export default function RecruitmentCandidateShortlist() {
 
   const shortlistedCount = candidates.filter((c) => c.status === "SHORTLISTED").length;
   const eligibleAutoCount = candidates.filter(
-    (c) => c.status !== "REJECTED" && c.matchScore >= threshold
+    (c) => c.status !== "REJECTED" && (c.matchScore ?? c.screeningScore ?? 0) >= threshold
   ).length;
 
   return (
@@ -355,9 +373,13 @@ export default function RecruitmentCandidateShortlist() {
         {/* ── Candidates Grid with Automated Match Badges ── */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {filteredCandidates.map((cand) => {
-            const isAutoEligible = cand.matchScore >= threshold;
+            const score = cand.matchScore ?? cand.screeningScore ?? 0;
+            const isAutoEligible = score >= threshold;
             const isShortlisted = cand.status === "SHORTLISTED";
             const isRejected = cand.status === "REJECTED";
+            const candidateSkills = Array.isArray(cand.skillsMatched) && cand.skillsMatched.length > 0
+              ? cand.skillsMatched
+              : (Array.isArray(cand.skills) ? cand.skills : []);
 
             return (
               <div
@@ -375,27 +397,27 @@ export default function RecruitmentCandidateShortlist() {
                 <div className="space-y-3">
                   <div className="flex items-start justify-between">
                     <div>
-                      <h4 className="font-bold text-slate-900 text-base">{cand.candidateName}</h4>
-                      <p className="text-xs text-indigo-600 font-medium mt-0.5">{cand.jobTitle}</p>
-                      <p className="text-xs text-slate-400">{cand.department} • {cand.experienceYears} yrs experience</p>
+                      <h4 className="font-bold text-slate-900 text-base">{cand.candidateName || "Applicant"}</h4>
+                      <p className="text-xs text-indigo-600 font-medium mt-0.5">{cand.jobTitle || "Role"}</p>
+                      <p className="text-xs text-slate-400">{cand.department || "General"} • {cand.experienceYears ?? 0} yrs experience</p>
                     </div>
 
                     {/* Match Score Badge */}
                     <div className="text-right">
                       <div
                         className={`inline-flex items-center gap-1 px-3 py-1 rounded-xl text-xs font-bold border ${
-                          cand.matchScore >= 80
+                          score >= 80
                             ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                            : cand.matchScore >= 70
+                            : score >= 70
                             ? "bg-amber-50 text-amber-700 border-amber-200"
                             : "bg-rose-50 text-rose-700 border-rose-200"
                         }`}
                       >
                         <Sparkles size={13} className="text-amber-500" />
-                        <span>{cand.matchScore}% Match</span>
+                        <span>{score}% Match</span>
                       </div>
                       <span className="block text-[10px] text-slate-400 mt-1">
-                        Screening: {cand.screeningScore}%
+                        Screening: {cand.screeningScore != null ? `${cand.screeningScore}%` : "Pending"}
                       </span>
                     </div>
                   </div>
@@ -403,18 +425,24 @@ export default function RecruitmentCandidateShortlist() {
                   {/* Skills matched list */}
                   <div className="p-3 bg-slate-50 rounded-xl text-xs space-y-1.5 border border-slate-100">
                     <div className="flex items-center justify-between text-slate-500 font-medium">
-                      <span>Automated Skill Evaluation:</span>
-                      <span className="font-semibold text-slate-700">{cand.skillsMatchCount}</span>
+                      <span>Skills & Qualifications:</span>
+                      <span className="font-semibold text-slate-700">
+                        {cand.skillsMatchCount || `${candidateSkills.length} skills recorded`}
+                      </span>
                     </div>
                     <div className="flex flex-wrap gap-1.5 pt-1">
-                      {cand.skillsMatched.map((s) => (
-                        <span
-                          key={s}
-                          className="px-2 py-0.5 rounded-lg text-[10px] font-semibold bg-white text-indigo-700 border border-indigo-100"
-                        >
-                          {s}
-                        </span>
-                      ))}
+                      {candidateSkills.length > 0 ? (
+                        candidateSkills.map((s) => (
+                          <span
+                            key={s}
+                            className="px-2 py-0.5 rounded-lg text-[10px] font-semibold bg-white text-indigo-700 border border-indigo-100"
+                          >
+                            {s}
+                          </span>
+                        ))
+                      ) : (
+                        <span className="text-[11px] text-slate-400 italic">No specific skills listed</span>
+                      )}
                     </div>
                   </div>
 

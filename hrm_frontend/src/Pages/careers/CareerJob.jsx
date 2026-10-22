@@ -2,7 +2,7 @@
  * Public vacancy detail page.
  * Link format: /careers/jobs/<id>?company=<registration number>
  */
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo, useRef } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import {
   ArrowLeft,
@@ -18,6 +18,7 @@ import {
   Sparkles,
   Send,
   AlertCircle,
+  Info,
 } from "lucide-react";
 import { careersApi } from "../../services/api";
 import { CareersLayout, DeadlineMeter, Notice, errorText, formatSalary } from "./careersShared";
@@ -62,6 +63,10 @@ export default function CareerJob() {
   const [applySubmitting, setApplySubmitting] = useState(false);
   const [applyError, setApplyError] = useState("");
   const [applySuccess, setApplySuccess] = useState(null);
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [autoRename, setAutoRename] = useState(true);
+  const fileInputRef = useRef(null);
+
   const [applyForm, setApplyForm] = useState({
     candidateName: "",
     email: "",
@@ -71,12 +76,43 @@ export default function CareerJob() {
     experienceYears: 3,
     summary: "",
     skillsInput: "",
-    resumeFileName: "",
   });
+
+  // Calculate standard ATS file name convention: [Candidate_Name]_CV.pdf
+  const suggestedFileName = useMemo(() => {
+    const raw = applyForm.candidateName.trim();
+    if (!raw) return "Candidate_Name_CV.pdf";
+    const clean = raw.replace(/[^a-zA-Z0-9]/g, "_").replace(/_+/g, "_");
+    return `${clean}_CV.pdf`;
+  }, [applyForm.candidateName]);
+
+  const handleFileChange = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.name.toLowerCase().endsWith(".pdf") && file.type !== "application/pdf") {
+      setApplyError("Please select a valid PDF file (.pdf only).");
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      setApplyError("Resume file size exceeds the 5MB limit.");
+      return;
+    }
+
+    setApplyError("");
+    setSelectedFile(file);
+  };
 
   const handleApplySubmit = async (e) => {
     e.preventDefault();
     setApplyError("");
+
+    if (!selectedFile) {
+      setApplyError("CV / Resume (PDF) is required. Please select and upload your CV before submitting.");
+      return;
+    }
+
     setApplySubmitting(true);
     try {
       const skills = applyForm.skillsInput
@@ -84,24 +120,32 @@ export default function CareerJob() {
         .map((s) => s.trim())
         .filter(Boolean);
 
-      const payload = {
-        candidateName: applyForm.candidateName.trim(),
-        email: applyForm.email.trim(),
-        phone: applyForm.phone.trim(),
-        location: applyForm.location.trim(),
-        education: applyForm.education.trim(),
-        experienceYears: Number(applyForm.experienceYears) || 0,
-        summary: applyForm.summary.trim(),
-        skills: skills.length > 0 ? skills : (job?.requiredSkills || []),
-        resumeFileName: applyForm.resumeFileName.trim() || `${applyForm.candidateName.replace(/\s+/g, "_")}_CV.pdf`,
-        resumeFileType: "application/pdf",
-        resumeFileSize: "1.4 MB",
-        resumeData: `Candidate CV: ${applyForm.candidateName}\nEmail: ${applyForm.email}\nExperience: ${applyForm.experienceYears} yrs\nSummary: ${applyForm.summary}`,
-      };
+      const finalFileName = autoRename
+        ? suggestedFileName
+        : (selectedFile?.name || suggestedFileName);
 
-      const res = await careersApi.applyJob(job.id, company, payload);
+      const formData = new FormData();
+      formData.append("candidateName", applyForm.candidateName.trim());
+      formData.append("email", applyForm.email.trim());
+      formData.append("phone", applyForm.phone.trim());
+      formData.append("location", applyForm.location.trim());
+      formData.append("education", applyForm.education.trim());
+      formData.append("experienceYears", Number(applyForm.experienceYears) || 0);
+      formData.append("summary", applyForm.summary.trim());
+
+      const skillsToSave = skills.length > 0 ? skills : (job?.requiredSkills || []);
+      skillsToSave.forEach((s) => formData.append("skills", s));
+
+      const fileToUpload = new File([selectedFile], finalFileName, { type: "application/pdf" });
+      formData.append("resume", fileToUpload);
+      formData.append("resumeFileName", finalFileName);
+      formData.append("resumeFileType", "application/pdf");
+      formData.append("resumeFileSize", `${(selectedFile.size / (1024 * 1024)).toFixed(1)} MB`);
+
+      const res = await careersApi.applyJob(job.id, company, formData);
       setApplySuccess(res.data || { id: Date.now() });
       setIsApplying(false);
+      setSelectedFile(null);
     } catch (err) {
       setApplyError(err.message || "Failed to submit application. Please check details and try again.");
     } finally {
@@ -208,14 +252,31 @@ export default function CareerJob() {
           </button>
 
           {applySuccess && (
-            <div className="mt-4 p-4 bg-emerald-50 border border-emerald-200 rounded-xl">
+            <div className="mt-4 p-4 bg-emerald-50 border border-emerald-200 rounded-xl space-y-2">
               <div className="flex items-center gap-2 text-emerald-800 font-semibold text-sm">
                 <CheckCircle2 size={18} className="text-emerald-600" />
                 <span>Application Submitted!</span>
               </div>
-              <p className="text-xs text-emerald-700 mt-1">
-                Reference ID: <strong className="font-mono">#{applySuccess.id}</strong>
-              </p>
+              {applySuccess.trackingCode ? (
+                <div className="text-xs text-emerald-800 space-y-1">
+                  <p className="text-slate-600">Your unique tracking code:</p>
+                  <p className="font-mono font-bold text-sm text-emerald-950 bg-white px-2 py-1 rounded border border-emerald-200 inline-block">
+                    {applySuccess.trackingCode}
+                  </p>
+                  <div className="pt-1.5">
+                    <Link
+                      to={`/careers/track?company=${encodeURIComponent(company)}`}
+                      className="font-semibold text-indigo-700 hover:text-indigo-900 underline block"
+                    >
+                      Track Application Status &rarr;
+                    </Link>
+                  </div>
+                </div>
+              ) : (
+                <p className="text-xs text-emerald-700 mt-1">
+                  Reference ID: <strong className="font-mono">#{applySuccess.id}</strong>
+                </p>
+              )}
             </div>
           )}
         </aside>
@@ -380,20 +441,90 @@ export default function CareerJob() {
 
               <div>
                 <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">
-                  CV / Resume File Name
+                  Upload CV / Resume (PDF) *
                 </label>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="text"
-                    value={applyForm.resumeFileName}
-                    onChange={(e) => setApplyForm({ ...applyForm, resumeFileName: e.target.value })}
-                    placeholder="Sophia_Martinez_Resume.pdf"
-                    className="flex-1 px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  />
-                  <div className="px-3.5 py-2.5 bg-slate-100 text-slate-600 rounded-xl text-xs font-semibold flex items-center gap-1.5">
-                    <FileText size={16} />
-                    <span>PDF</span>
+
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  accept=".pdf,application/pdf"
+                  onChange={handleFileChange}
+                  className="hidden"
+                />
+
+                {!selectedFile ? (
+                  <div
+                    onClick={() => fileInputRef.current?.click()}
+                    className="border-2 border-dashed border-slate-300 hover:border-indigo-500 rounded-2xl p-5 text-center cursor-pointer bg-slate-50/60 hover:bg-indigo-50/30 transition-all group"
+                  >
+                    <div className="w-10 h-10 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center mx-auto mb-2 group-hover:scale-110 transition-transform">
+                      <Upload size={20} />
+                    </div>
+                    <p className="text-xs font-semibold text-slate-800">
+                      Click to browse or drag & drop your CV (PDF)
+                    </p>
+                    <p className="text-[11px] text-slate-400 mt-0.5">
+                      Accepted format: PDF (.pdf) • Maximum file size: 5MB
+                    </p>
                   </div>
+                ) : (
+                  <div className="flex items-center justify-between p-3.5 bg-indigo-50/60 border border-indigo-200 rounded-xl">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="w-9 h-9 rounded-lg bg-indigo-600 text-white flex items-center justify-center shrink-0 text-xs font-bold shadow-sm">
+                        PDF
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-xs font-semibold text-slate-900 truncate">
+                          {selectedFile.name}
+                        </p>
+                        <p className="text-[11px] text-slate-500">
+                          {(selectedFile.size / (1024 * 1024)).toFixed(2)} MB • Ready for submission
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => fileInputRef.current?.click()}
+                        className="text-xs font-semibold text-indigo-600 hover:text-indigo-800 px-2.5 py-1 rounded-lg hover:bg-white transition-colors"
+                      >
+                        Change
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setSelectedFile(null)}
+                        className="text-slate-400 hover:text-rose-600 p-1 rounded-lg hover:bg-white transition-colors"
+                        title="Remove file"
+                      >
+                        <X size={16} />
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Standard rename format guidance displayed under upload area */}
+                <div className="mt-2.5 p-3 rounded-xl bg-slate-50 border border-slate-200/90 text-xs">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1.5 mb-1.5">
+                    <span className="font-semibold text-slate-700 flex items-center gap-1.5">
+                      <Info size={14} className="text-indigo-600 shrink-0" />
+                      Standard Rename Format:
+                    </span>
+                    <span className="font-mono text-[11px] font-bold text-indigo-700 bg-white px-2 py-0.5 rounded border border-indigo-200">
+                      {suggestedFileName}
+                    </span>
+                  </div>
+                  <p className="text-slate-500 text-[11px] leading-relaxed">
+                    Convention: <code className="text-slate-700 font-mono font-medium">[FullName]_CV.pdf</code> (e.g. <span className="font-mono text-slate-600">Sewwandi_Iresha_CV.pdf</span>)
+                  </p>
+                  <label className="mt-2 flex items-center gap-2 cursor-pointer text-slate-700 text-xs select-none">
+                    <input
+                      type="checkbox"
+                      checked={autoRename}
+                      onChange={(e) => setAutoRename(e.target.checked)}
+                      className="rounded text-indigo-600 focus:ring-indigo-500 w-3.5 h-3.5"
+                    />
+                    <span>Automatically apply standard rename format upon upload</span>
+                  </label>
                 </div>
               </div>
 

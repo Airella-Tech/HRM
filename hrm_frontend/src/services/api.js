@@ -418,9 +418,20 @@ export const careersApi = {
     request("GET", `${RECRUITMENT_URL}/careers/jobs?company=${encodeURIComponent(company)}`),
   getJob: (id, company) =>
     request("GET", `${RECRUITMENT_URL}/careers/jobs/${id}?company=${encodeURIComponent(company)}`),
-  applyJob: (id, formData, company) => {
+  applyJob: (id, arg2, arg3) => {
+    let company = "COMP-001";
+    let body = arg2;
+    if (typeof arg2 === "string" && typeof arg3 === "object") {
+      company = arg2;
+      body = arg3;
+    } else if (typeof arg3 === "string") {
+      company = arg3;
+      body = arg2;
+    }
     const c = company || "COMP-001";
-    return request("POST", `${RECRUITMENT_URL}/careers/jobs/${id}/apply?company=${encodeURIComponent(c)}`, formData);
+    return request("POST", `${RECRUITMENT_URL}/careers/jobs/${id}/apply?company=${encodeURIComponent(c)}`, body);
   },
+  trackApplication: (trackingCode, email) =>
+    request("POST", `${RECRUITMENT_URL}/careers/applications/track`, { trackingCode, email }),
 };
 
