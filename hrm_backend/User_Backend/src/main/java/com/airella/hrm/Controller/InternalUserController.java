@@ -14,8 +14,10 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * Service-to-service user lookups. hrm_db_user is the only store of users; HR_Backend,
- * Employee_Backend and Admin_Backend read people from here instead of keeping their own copy.
+ * Service-to-service user lookups. hrm_db_user is the only store of users;
+ * HR_Backend,
+ * Employee_Backend and Admin_Backend read people from here instead of keeping
+ * their own copy.
  */
 @RestController
 @RequestMapping("/api/internal/users")
@@ -50,11 +52,14 @@ public class InternalUserController {
         return employeeRepo.findAllById(ids).stream().map(this::toSummary).toList();
     }
 
-    /** Users of one company, identified by registration number (preferred), name, or companyId. */
+    /**
+     * Users of one company, identified by registration number (preferred) or name —
+     * company ids differ per database.
+     */
     @GetMapping("/by-company")
     public List<UserSummaryDTO> byCompany(@RequestParam(required = false) String registrationNumber,
-                                          @RequestParam(required = false) String companyName,
-                                          @RequestParam(required = false) Long companyId) {
+            @RequestParam(required = false) String companyName,
+            @RequestParam(required = false) Long companyId) {
         Optional<Company> company = Optional.empty();
 
         if (registrationNumber != null && !registrationNumber.isBlank()) {
@@ -64,7 +69,8 @@ public class InternalUserController {
                 try {
                     String decoded = java.net.URLDecoder.decode(reg, java.nio.charset.StandardCharsets.UTF_8);
                     company = companyRepo.findByRegistrationNumber(decoded);
-                } catch (Exception ignored) {}
+                } catch (Exception ignored) {
+                }
             }
             if (company.isEmpty()) {
                 company = companyRepo.findByCompanyName(reg);
@@ -78,7 +84,8 @@ public class InternalUserController {
                 try {
                     String decoded = java.net.URLDecoder.decode(name, java.nio.charset.StandardCharsets.UTF_8);
                     company = companyRepo.findByCompanyName(decoded);
-                } catch (Exception ignored) {}
+                } catch (Exception ignored) {
+                }
             }
             if (company.isEmpty()) {
                 company = companyRepo.findByRegistrationNumber(name);
@@ -93,17 +100,23 @@ public class InternalUserController {
                 .orElse(List.of());
     }
 
-    /** The user's own profile with personal details — Employee_Backend's profile page. */
+    /**
+     * The user's own profile with personal details — Employee_Backend's profile
+     * page.
+     */
     @GetMapping("/{id}/profile")
     public ResponseEntity<UserProfileDTO> profile(@PathVariable Long id) {
         return ResponseEntity.of(employeeRepo.findById(id).map(this::toProfile));
     }
 
-    /** Saves the personal details an employee edits on their profile page (via Employee_Backend). */
+    /**
+     * Saves the personal details an employee edits on their profile page (via
+     * Employee_Backend).
+     */
     @PutMapping("/{id}/profile")
     @Transactional
     public ResponseEntity<UserProfileDTO> updateProfile(@PathVariable Long id,
-                                                        @RequestBody UserProfileDTO.UpdateRequest request) {
+            @RequestBody UserProfileDTO.UpdateRequest request) {
         return ResponseEntity.of(employeeRepo.findById(id).map(e -> {
             e.setPhone(blankToNull(request.getPhone()));
             e.setAddress(blankToNull(request.getAddress()));
@@ -148,7 +161,8 @@ public class InternalUserController {
         dto.setDesignation(e.getDesignation());
         dto.setEmploymentType(e.getEmploymentType());
         dto.setJoiningDate(e.getJoiningDate());
-        if (e.getDepartment() != null) dto.setDepartmentName(e.getDepartment().getName());
+        if (e.getDepartment() != null)
+            dto.setDepartmentName(e.getDepartment().getName());
         if (e.getCompany() != null) {
             dto.setCompanyName(e.getCompany().getCompanyName());
             dto.setCompanyRegistrationNumber(e.getCompany().getRegistrationNumber());
@@ -180,7 +194,8 @@ public class InternalUserController {
         dto.setEmploymentType(e.getEmploymentType());
         dto.setJoiningDate(e.getJoiningDate());
         dto.setTerminationDate(e.getTerminationDate());
-        if (e.getDepartment() != null) dto.setDepartmentName(e.getDepartment().getName());
+        if (e.getDepartment() != null)
+            dto.setDepartmentName(e.getDepartment().getName());
         if (e.getCompany() != null) {
             dto.setCompanyId(e.getCompany().getId());
             dto.setCompanyName(e.getCompany().getCompanyName());

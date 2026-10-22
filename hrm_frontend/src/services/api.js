@@ -46,13 +46,18 @@ async function parseErrorMessage(res) {
 // ─── Shared fetch helper ──────────────────────────────────────
 async function request(method, url, body = null) {
   const token = localStorage.getItem("token");
+  const isFormData = typeof FormData !== "undefined" && body instanceof FormData;
+  const headers = {
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+  };
+  if (!isFormData) {
+    headers["Content-Type"] = "application/json";
+  }
+
   const opts = {
     method,
-    headers: {
-      "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    },
-    ...(body ? { body: JSON.stringify(body) } : {}),
+    headers,
+    ...(body ? { body: isFormData ? body : JSON.stringify(body) } : {}),
   };
 
   try {

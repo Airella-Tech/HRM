@@ -1,0 +1,352 @@
+package com.airella.hrm.service;
+
+import com.airella.hrm.dto.ApplyJobRequest;
+import com.airella.hrm.dto.CandidateApplicationDTO;
+import com.airella.hrm.exception.BusinessException;
+import com.airella.hrm.exception.ResourceNotFoundException;
+import com.airella.hrm.model.*;
+import com.airella.hrm.repository.CandidateApplicationDocumentRepository;
+import com.airella.hrm.repository.CandidateApplicationRepository;
+import com.airella.hrm.repository.JobVacancyRepository;
+import org.apache.pdfbox.Loader;
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.text.PDFTextStripper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.*;
+
+/**
+ * Service for Candidate Application intake and database-backed PDF storage.
+ * Follows the Employee_Backend pattern (byte[] stored as PostgreSQL bytea in a separate table).
+ * Extracts CV text via Apache PDFBox for recruitment screening without reading binary PDFs.
+ */
+@Service
+@Transactional
+public class CandidateApplicationService {
+
+    private static final Logger log = LoggerFactory.getLogger(CandidateApplicationService.class);
+    private static final long MAX_DOCUMENT_BYTES = 5 * 1024 * 1024; // 5 MB
+
+    private final CandidateApplicationRepository applicationRepo;
+    private final CandidateApplicationDocumentRepository documentRepo;
+    private final JobVacancyRepository vacancyRepo;
+    private final AuthService authService;
+    private final AuditService auditService;
+
+    public CandidateApplicationService(CandidateApplicationRepository applicationRepo,
+                                     CandidateApplicationDocumentRepository documentRepo,
+                                     JobVacancyRepository vacancyRepo,
+                                     AuthService authService,
+                                     AuditService auditService) {
+        this.applicationRepo = applicationRepo;
+        this.documentRepo = documentRepo;
+        this.vacancyRepo = vacancyRepo;
+        this.authService = authService;
+        this.auditService = auditService;
+    }
+
+    // =========================================================================
+    // Public Application Submission & Database-Backed Document Storage
+    // =========================================================================
+
+    public CandidateApplicationDTO submitApplication(Long vacancyId,
+                                                   String companyRef,
+                                                   ApplyJobRequest request,
+                                                   MultipartFile resumeFile) {
+        if (vacancyId == null) {
+            throw new BusinessException("Job vacancy ID is required.");
+        }
+
+        // 1. Validate vacancy exists and is currently published
+        JobVacancy vacancy = vacancyRepo.findById(vacancyId)
+                .orElseThrow(() -> new ResourceNotFoundException("JobVacancy", "id", vacancyId));
+
+        if (vacancy.getStatus() != VacancyStatus.PUBLISHED) {
+            throw new BusinessException("This vacancy is no longer accepting applications.");
+        }
+        if (vacancy.getDeadline() != null && vacancy.getDeadline().isBefore(LocalDate.now())) {
+            throw new BusinessException("The application deadline for this position has passed.");
+        }
+
+        // Validate company reference if provided
+        if (companyRef != null && !companyRef.isBlank()) {
+            if (!vacancy.getCompanyRef().equalsIgnoreCase(companyRef.trim())) {
+                log.warn("Company mismatch: vacancy company {} vs requested {}", vacancy.getCompanyRef(), companyRef);
+            }
+        }
+
+        String email = request.getEmail().trim().toLowerCase(Locale.ROOT);
+
+        // 2. 90-Day Duplicate Submission Prevention (same email + vacancyId)
+        LocalDateTime cutoff = LocalDateTime.now().minusDays(90);
+        if (applicationRepo.existsByEmailIgnoreCaseAndVacancyIdAndCreatedAtGreaterThanEqual(email, vacancy.getId(), cutoff)) {
+            throw new BusinessException(
+                    "You have already applied for the '" + vacancy.getTitle() +
+                    "' role within the last 90 days. Duplicate submissions are not permitted."
+            );
+        }
+
+        // 3. Strict PDF Validation & Read Bytes (Following Employee_Backend convention)
+        byte[] pdfBytes = readAndValidatePdf(resumeFile);
+
+        // 4. Extract Text from PDF using Apache PDFBox for recruitment screening
+        String extractedText = extractTextFromPdf(pdfBytes);
+
+        // Standardized or original filename
+        String originalFilename = sanitizeFileName(resumeFile, request.getCandidateName());
+
+        // 5. Create CandidateApplication Entity
+        CandidateApplication app = new CandidateApplication();
+        app.setVacancy(vacancy);
+        app.setCompanyRef(vacancy.getCompanyRef());
+
+        try {
+            Long cId = authService.resolveCompanyId(null);
+            app.setCompanyId(cId);
+        } catch (Exception ignored) {
+            // Public unauthenticated flow
+        }
+
+        app.setCandidateName(request.getCandidateName().trim());
+        app.setEmail(email);
+        app.setPhone(request.getPhone() != null ? request.getPhone().trim() : null);
+        app.setLocation(request.getLocation() != null ? request.getLocation().trim() : null);
+        app.setEducation(request.getEducation() != null ? request.getEducation().trim() : null);
+        app.setExperienceYears(request.getExperienceYears() != null ? Math.max(0, request.getExperienceYears()) : 0);
+        app.setSummary(request.getSummary() != null ? request.getSummary().trim() : null);
+
+        if (request.getSkills() != null && !request.getSkills().isEmpty()) {
+            Set<String> parsedSkills = new LinkedHashSet<>();
+            for (String s : request.getSkills()) {
+                if (s != null && s.contains(",")) {
+                    for (String part : s.split(",")) {
+                        if (!part.trim().isEmpty()) parsedSkills.add(part.trim());
+                    }
+                } else if (s != null && !s.trim().isEmpty()) {
+                    parsedSkills.add(s.trim());
+                }
+            }
+            app.setSkills(parsedSkills.isEmpty() && vacancy.getRequiredSkills() != null
+                    ? new LinkedHashSet<>(vacancy.getRequiredSkills()) : parsedSkills);
+        } else if (vacancy.getRequiredSkills() != null) {
+            app.setSkills(new LinkedHashSet<>(vacancy.getRequiredSkills()));
+        }
+
+        app.setStatus(ApplicationStatus.NEW);
+        app.setEligibilityStatus(EligibilityStatus.PENDING);
+        app.setTrackingCode(generateUniqueTrackingCode());
+
+        // Metadata & extracted text for screening
+        app.setResumeFileName(originalFilename);
+        app.setResumeFileType("application/pdf");
+        app.setResumeFileSize((long) pdfBytes.length);
+        app.setResumeText(extractedText);
+
+        CandidateApplication savedApp = applicationRepo.save(app);
+
+        // 6. Save PDF Binary into separate CandidateApplicationDocument table (PostgreSQL bytea)
+        CandidateApplicationDocument document = new CandidateApplicationDocument();
+        document.setApplicationId(savedApp.getId());
+        document.setFileName(originalFilename);
+        document.setContentType("application/pdf");
+        document.setFileSize((long) pdfBytes.length);
+        document.setData(pdfBytes);
+        documentRepo.save(document);
+
+        // Audit log
+        auditService.logAction(
+                "APPLY",
+                "CandidateApplication",
+                savedApp.getId(),
+                "Candidate " + savedApp.getCandidateName() + " applied for '" + vacancy.getTitle() + "' [Tracking: " + savedApp.getTrackingCode() + "]",
+                savedApp.getCompanyRef()
+        );
+
+        return toDto(savedApp);
+    }
+
+    // =========================================================================
+    // Secure Document Viewing / Downloading (Authorized HR Users)
+    // =========================================================================
+
+    @Transactional(readOnly = true)
+    public CandidateApplicationDocument getDocumentForApplication(Long applicationId) {
+        CandidateApplication app = findApplicationForCurrentStaff(applicationId);
+
+        // Increment download counter
+        app.setDownloadCount(app.getDownloadCount() + 1);
+        applicationRepo.save(app);
+
+        return documentRepo.findByApplicationId(applicationId)
+                .orElseThrow(() -> new ResourceNotFoundException("CandidateApplicationDocument", "applicationId", applicationId));
+    }
+
+    // =========================================================================
+    // Validation & Apache PDFBox Text Extraction Helpers
+    // =========================================================================
+
+    /**
+     * Reads and validates the uploaded file following Employee_Backend readPdf conventions:
+     * - Checks not null / not empty
+     * - Checks size <= 5 MB
+     * - Checks filename ends with .pdf
+     * - Checks magic header (%PDF-)
+     */
+    private byte[] readAndValidatePdf(MultipartFile document) {
+        if (document == null || document.isEmpty()) {
+            throw new BusinessException("CV / Resume document (PDF) is required.");
+        }
+        if (document.getSize() > MAX_DOCUMENT_BYTES) {
+            throw new BusinessException("The CV document must be 5 MB or smaller.");
+        }
+
+        String original = document.getOriginalFilename();
+        if (original != null && !original.toLowerCase(Locale.ROOT).endsWith(".pdf")) {
+            throw new BusinessException("Only standard PDF documents (.pdf) are accepted.");
+        }
+
+        byte[] data;
+        try {
+            data = document.getBytes();
+        } catch (IOException e) {
+            throw new BusinessException("Could not read uploaded resume document.");
+        }
+
+        // Validate PDF binary magic bytes: %PDF-
+        boolean isPdf = data.length >= 5 && data[0] == '%' && data[1] == 'P' && data[2] == 'D' && data[3] == 'F' && data[4] == '-';
+        if (!isPdf) {
+            throw new BusinessException("Only valid PDF files can be uploaded as resumes.");
+        }
+
+        return data;
+    }
+
+    /**
+     * Extracts plain text from the PDF binary using Apache PDFBox for ATS screening.
+     */
+    private String extractTextFromPdf(byte[] pdfBytes) {
+        try (PDDocument document = Loader.loadPDF(pdfBytes)) {
+            PDFTextStripper stripper = new PDFTextStripper();
+            stripper.setSortByPosition(true);
+            String text = stripper.getText(document);
+            return text != null ? text.trim() : "";
+        } catch (Exception e) {
+            log.warn("Could not extract text from PDF resume: {}", e.getMessage());
+            return "";
+        }
+    }
+
+    private String sanitizeFileName(MultipartFile document, String candidateName) {
+        String original = document != null ? document.getOriginalFilename() : null;
+        if (original != null && !original.isBlank()) {
+            String name = original.replaceAll("[\\\\/]", "_").trim();
+            if (!name.toLowerCase(Locale.ROOT).endsWith(".pdf")) {
+                name = name + ".pdf";
+            }
+            return name.length() > 200 ? name.substring(name.length() - 200) : name;
+        }
+        String cleanName = candidateName != null ? candidateName.replaceAll("\\s+", "_") : "Candidate";
+        return cleanName + "_CV.pdf";
+    }
+
+    private String generateUniqueTrackingCode() {
+        return "APP-" + UUID.randomUUID().toString().replace("-", "").substring(0, 8).toUpperCase(Locale.ROOT);
+    }
+
+    private CandidateApplication findApplicationForCurrentStaff(Long id) {
+        String companyRef = authService.getCurrentCompanyRef();
+        Long companyId = safeGetCurrentCompanyId();
+
+        CandidateApplication app = applicationRepo.findByIdAndCompany(id, companyRef, companyId)
+                .orElseThrow(() -> new ResourceNotFoundException("CandidateApplication", "id", id));
+
+        validateCompanyAccess(app.getCompanyRef(), app.getCompanyId());
+        return app;
+    }
+
+    private Long safeGetCurrentCompanyId() {
+        try {
+            return authService.resolveCompanyId(null);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    private void validateCompanyAccess(String entityCompanyRef, Long entityCompanyId) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated()) {
+            throw new AccessDeniedException("Authentication required.");
+        }
+
+        String userCompanyRef = authService.getCurrentCompanyRef();
+        Long userCompanyId = safeGetCurrentCompanyId();
+
+        boolean matchRef = (userCompanyRef != null && entityCompanyRef != null &&
+                userCompanyRef.trim().equalsIgnoreCase(entityCompanyRef.trim()));
+        boolean matchId = (userCompanyId != null && entityCompanyId != null &&
+                userCompanyId.equals(entityCompanyId));
+
+        if (!matchRef && !matchId) {
+            throw new AccessDeniedException("Access denied: You cannot view records from another company.");
+        }
+    }
+
+    public CandidateApplicationDTO toDto(CandidateApplication a) {
+        CandidateApplicationDTO dto = new CandidateApplicationDTO();
+        dto.setId(a.getId());
+        dto.setTrackingCode(a.getTrackingCode());
+        dto.setCandidateName(a.getCandidateName());
+        dto.setEmail(a.getEmail());
+        dto.setPhone(a.getPhone());
+        dto.setLocation(a.getLocation());
+        dto.setEducation(a.getEducation());
+        dto.setExperienceYears(a.getExperienceYears());
+        dto.setSummary(a.getSummary());
+        dto.setSkills(a.getSkills() != null ? new ArrayList<>(a.getSkills()) : List.of());
+
+        if (a.getVacancy() != null) {
+            dto.setVacancyId(a.getVacancy().getId());
+            dto.setJobTitle(a.getVacancy().getTitle());
+            dto.setVacancyTitle(a.getVacancy().getTitle());
+            dto.setDepartment(a.getVacancy().getDepartment());
+        }
+
+        dto.setStatus(a.getStatus() != null ? a.getStatus().name() : "NEW");
+        dto.setEligibilityStatus(a.getEligibilityStatus() != null ? a.getEligibilityStatus().name() : "PENDING");
+        dto.setScreeningScore(a.getScreeningScore());
+        dto.setMatchScore(a.getScreeningScore());
+        dto.setScreeningNotes(a.getScreeningNotes());
+        dto.setRejectionReason(a.getRejectionReason());
+
+        dto.setResumeFileName(a.getResumeFileName());
+        dto.setResumeFileType(a.getResumeFileType());
+        if (a.getResumeFileSize() != null) {
+            dto.setResumeFileSize(String.format("%.1f MB", a.getResumeFileSize() / (1024.0 * 1024.0)));
+        }
+        dto.setResumeText(a.getResumeText());
+        dto.setDownloadCount(a.getDownloadCount() != null ? a.getDownloadCount() : 0);
+
+        dto.setCompanyRef(a.getCompanyRef());
+        dto.setCompanyId(a.getCompanyId());
+
+        if (a.getCreatedAt() != null) {
+            dto.setAppliedDate(a.getCreatedAt().toLocalDate());
+            dto.setCreatedAt(a.getCreatedAt());
+        }
+        dto.setUpdatedAt(a.getUpdatedAt());
+        dto.setReviewedBy(a.getReviewedBy());
+        dto.setReviewedAt(a.getReviewedAt());
+
+        return dto;
+    }
+}

@@ -64,8 +64,6 @@ server:
 app:
   frontend:
     url: ${FRONTEND_URL:http://localhost:5173}
-  resume:
-    upload-dir: ${RESUME_UPLOAD_DIR:./uploads/resumes}
 
 # ── JWT (must be the same secret as the other services) ──
 jwt:
