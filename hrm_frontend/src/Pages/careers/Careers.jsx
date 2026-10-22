@@ -6,7 +6,8 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { Search, Building2, Clock, CalendarDays, Loader2, ArrowRight } from "lucide-react";
 import { careersApi } from "../../services/api";
-import { CareersLayout, Notice, errorText, formatDate } from "./careersShared";
+import { CareersLayout, Notice } from "./careersShared";
+import { errorText, formatDate } from "../../utils/careersFormat";
 
 const selectCls =
   "rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-700 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100";

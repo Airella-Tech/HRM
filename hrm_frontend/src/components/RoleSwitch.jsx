@@ -21,38 +21,6 @@ const getStoredUser = () => {
   }
 };
 
-const hasRecruitmentAccess = () => {
-  try {
-    const user = getStoredUser();
-
-    const permissions = user?.permissions ?? user?.authorities ?? [];
-
-    if (!Array.isArray(permissions)) return false;
-
-    const permissionNames = permissions.map((permission) =>
-      typeof permission === "string"
-        ? permission
-        : permission?.name ??
-          permission?.permission ??
-          permission?.code ??
-          permission?.authority ??
-          ""
-    );
-
-    return permissionNames.some((permission) =>
-      permission.startsWith("RECRUITMENT_") ||
-      permission.startsWith("JOB_VACANCIES_") ||
-      permission.startsWith("APPLICATIONS_") ||
-      permission.startsWith("CANDIDATE_RECORDS_") ||
-      permission.startsWith("INTERVIEWS_") ||
-      permission.startsWith("EVALUATIONS_") ||
-      permission.startsWith("JOB_OFFERS_")
-    );
-  } catch {
-    return false;
-  }
-};
-
 export const RoleSwitch = ({
   mode = "hr",
   sidebar = false,

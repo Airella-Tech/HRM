@@ -25,7 +25,7 @@ async function parseErrorMessage(res) {
     } else {
       errMsg = await res.text();
     }
-  } catch (e) {
+  } catch {
     // Ignore parse failure
   }
 

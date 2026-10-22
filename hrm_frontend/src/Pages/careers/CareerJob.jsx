@@ -6,7 +6,8 @@ import React, { useEffect, useState } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import { ArrowLeft, Building2, Clock, CalendarDays, Users, Loader2, Banknote } from "lucide-react";
 import { careersApi } from "../../services/api";
-import { CareersLayout, Notice, errorText, formatDate, formatSalary } from "./careersShared";
+import { CareersLayout, Notice } from "./careersShared";
+import { errorText, formatDate, formatSalary } from "../../utils/careersFormat";
 
 const Section = ({ title, children }) => (
   <section className="mt-6">
