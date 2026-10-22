@@ -1,5 +1,5 @@
 /**
- * Shared pieces for the public Careers pages: layout and the deadline meter.
+ * Shared pieces for the public Careers pages: layout and notice components.
  */
 import React, { useEffect, useState } from "react";
 import logo from "../../assets/logo.jpg";
