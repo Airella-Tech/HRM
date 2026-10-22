@@ -22,7 +22,7 @@ import {
 } from "lucide-react";
 import { careersApi } from "../../services/api";
 import { CareersLayout, DeadlineMeter, Notice } from "./careersShared";
-import { errorText, formatSalary, formatSalary } from "../../utils/careersFormat";
+import { errorText, formatSalary } from "../../utils/careersFormat";
 
 const focusRing =
   "focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2";
