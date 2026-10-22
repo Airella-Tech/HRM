@@ -50,17 +50,45 @@ public class InternalUserController {
         return employeeRepo.findAllById(ids).stream().map(this::toSummary).toList();
     }
 
-    /** Users of one company, identified by registration number (preferred) or name — company ids differ per database. */
+    /** Users of one company, identified by registration number (preferred), name, or companyId. */
     @GetMapping("/by-company")
     public List<UserSummaryDTO> byCompany(@RequestParam(required = false) String registrationNumber,
-                                          @RequestParam(required = false) String companyName) {
+                                          @RequestParam(required = false) String companyName,
+                                          @RequestParam(required = false) Long companyId) {
         Optional<Company> company = Optional.empty();
+
         if (registrationNumber != null && !registrationNumber.isBlank()) {
-            company = companyRepo.findByRegistrationNumber(registrationNumber.trim());
+            String reg = registrationNumber.trim();
+            company = companyRepo.findByRegistrationNumber(reg);
+            if (company.isEmpty() && reg.contains("%")) {
+                try {
+                    String decoded = java.net.URLDecoder.decode(reg, java.nio.charset.StandardCharsets.UTF_8);
+                    company = companyRepo.findByRegistrationNumber(decoded);
+                } catch (Exception ignored) {}
+            }
+            if (company.isEmpty()) {
+                company = companyRepo.findByCompanyName(reg);
+            }
         }
+
         if (company.isEmpty() && companyName != null && !companyName.isBlank()) {
-            company = companyRepo.findByCompanyName(companyName.trim());
+            String name = companyName.trim();
+            company = companyRepo.findByCompanyName(name);
+            if (company.isEmpty() && name.contains("%")) {
+                try {
+                    String decoded = java.net.URLDecoder.decode(name, java.nio.charset.StandardCharsets.UTF_8);
+                    company = companyRepo.findByCompanyName(decoded);
+                } catch (Exception ignored) {}
+            }
+            if (company.isEmpty()) {
+                company = companyRepo.findByRegistrationNumber(name);
+            }
         }
+
+        if (company.isEmpty() && companyId != null) {
+            company = companyRepo.findById(companyId);
+        }
+
         return company.map(c -> employeeRepo.findByCompanyId(c.getId()).stream().map(this::toSummary).toList())
                 .orElse(List.of());
     }
@@ -154,6 +182,7 @@ public class InternalUserController {
         dto.setTerminationDate(e.getTerminationDate());
         if (e.getDepartment() != null) dto.setDepartmentName(e.getDepartment().getName());
         if (e.getCompany() != null) {
+            dto.setCompanyId(e.getCompany().getId());
             dto.setCompanyName(e.getCompany().getCompanyName());
             dto.setCompanyRegistrationNumber(e.getCompany().getRegistrationNumber());
         }

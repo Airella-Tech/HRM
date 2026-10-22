@@ -1,14 +1,13 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  LayoutDashboard, ClockIcon, CalendarDays, DollarSign, User, Bell,
+  ClockIcon, CalendarDays, DollarSign, Bell,
   Award, Target, TrendingUp, CheckCircle2, Calendar, Gift,
 } from "lucide-react";
 import { PageLayout } from "../../components/PageLayout";
 import { SummaryCard } from "../../components/EmployeeUI";
 import { CARD_TONES } from "../../components/employeeTheme";
 import { employeeApi } from "../../services/api";
-import { getCurrentPosition, formatMinutes, summarizeSessions, useNow } from "../../utils/attendance";
 
 const EmployeeDashboard = () => {
   const navigate = useNavigate();
@@ -24,21 +23,11 @@ const EmployeeDashboard = () => {
   // Real numbers behind "My Month" and "Upcoming Leave"
   const [monthStats, setMonthStats] = useState({ attendancePct: null, punctualPct: null, leaveUsedPct: null, leaveUsed: 0, leaveTotal: 0 });
   const [upcomingLeaves, setUpcomingLeaves] = useState([]);
-  const [todaySessions, setTodaySessions] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [clockInLoading, setClockInLoading] = useState(false);
-  const [clockOutLoading, setClockOutLoading] = useState(false);
-  const [message, setMessage] = useState("");
-
-  const isClockedIn = todaySessions.some((s) => !s.clockOutTime);
-  const now = useNow(isClockedIn);
-  const attendance = useMemo(() => summarizeSessions(todaySessions, now), [todaySessions, now]);
 
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
     if (storedUser) {
       setUser(JSON.parse(storedUser));
-      fetchTodayAttendance();
     } else {
       navigate("/login");
     }
@@ -109,65 +98,6 @@ const EmployeeDashboard = () => {
     }
   }, [user]);
 
-  const fetchTodayAttendance = async () => {
-    try {
-      setLoading(true);
-      const response = await employeeApi.getTodayAttendance();
-      setTodaySessions(Array.isArray(response.data) ? response.data : []);
-    } catch (error) {
-      console.error("Error fetching attendance:", error);
-      setTodaySessions([]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleClockIn = async () => {
-    try {
-      setClockInLoading(true);
-      const coords = await getCurrentPosition();
-      const response = await employeeApi.clockInGPS(coords.latitude, coords.longitude);
-      if (response.data) {
-        setMessage("✓ Clocked in successfully!");
-        setTimeout(() => setMessage(""), 3000);
-        fetchTodayAttendance();
-      }
-    } catch (error) {
-      console.error("Clock in error:", error);
-      setMessage("✗ " + (error.message || "Failed to clock in"));
-      setTimeout(() => setMessage(""), 5000);
-    } finally {
-      setClockInLoading(false);
-    }
-  };
-
-  const handleClockOut = async () => {
-    try {
-      setClockOutLoading(true);
-      const coords = await getCurrentPosition();
-      const response = await employeeApi.clockOutGPS(coords.latitude, coords.longitude);
-      if (response.data) {
-        setMessage("✓ Clocked out successfully!");
-        setTimeout(() => setMessage(""), 3000);
-        fetchTodayAttendance();
-      }
-    } catch (error) {
-      setMessage("✗ " + (error.message || "Failed to clock out"));
-      setTimeout(() => setMessage(""), 3000);
-    } finally {
-      setClockOutLoading(false);
-    }
-  };
-
-  const formatTime = (time) => {
-    if (!time) return "--:--";
-    const [hours, minutes] = time.split(":").slice(0, 2);
-    const hour = parseInt(hours);
-    const ampm = hour >= 12 ? "PM" : "AM";
-    const displayHour = hour % 12 || 12;
-    return `${displayHour}:${minutes} ${ampm}`;
-  };
-
   if (!user) return (
     <div className="flex items-center justify-center h-screen">
       <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-employee-500" />
@@ -183,13 +113,6 @@ const EmployeeDashboard = () => {
     >
       <div className="space-y-6">
 
-        {/* ── Message Alert ── */}
-        {message && (
-          <div className={`p-4 rounded-lg text-white ${message.startsWith("✓") ? "bg-green-500" : "bg-red-500"}`}>
-            {message}
-          </div>
-        )}
-
         {/* ── Stats Cards ── */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {[
@@ -201,79 +124,6 @@ const EmployeeDashboard = () => {
             <SummaryCard key={c.label} icon={c.icon} title={c.label} value={c.value} description={c.sub} className={c.tone} />
           ))}
         </div>
-
-        {/* ── Today's Attendance + Quick Actions ──
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          
-          <div className="lg:col-span-2 bg-white p-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300">
-            <h3 className="text-xl font-bold mb-6 flex items-center text-gray-800">
-              <div className="bg-blue-100 p-2 rounded-lg mr-3">
-                <ClockIcon className="text-blue-600" size={24} />
-              </div>
-              Today's Attendance
-            </h3>
-            {loading ? (
-              <div className="flex justify-center items-center py-8">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-              </div>
-            ) : (
-              <>
-                <div className="grid grid-cols-3 gap-4 mb-6">
-                  <div className="text-center p-4 bg-blue-50 rounded-lg">
-                    <p className="text-gray-500 text-sm mb-2">Clock In</p>
-                    <p className="text-3xl font-bold text-blue-600">{formatTime(attendance?.clockInTime)}</p>
-                  </div>
-                  <div className="text-center p-4 bg-orange-50 rounded-lg">
-                    <p className="text-gray-500 text-sm mb-2">Clock Out</p>
-                    <p className="text-3xl font-bold text-orange-600">{formatTime(attendance?.clockOutTime)}</p>
-                  </div>
-                  <div className="text-center p-4 bg-green-50 rounded-lg">
-                    <p className="text-gray-500 text-sm mb-2">Working Hours</p>
-                    <p className="text-3xl font-bold text-green-600">{formatMinutes(attendance?.totalWorkingMinutes || 0, isClockedIn)}</p>
-                  </div>
-                </div>
-                <div className="flex gap-3">
-                  <button 
-                    onClick={handleClockIn}
-                    disabled={clockInLoading || isClockedIn}
-                    className="flex-1 bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed text-white py-3 px-4 rounded-lg hover:bg-blue-600 transition flex items-center justify-center gap-2 font-semibold">
-                    <ClockIcon size={20} /> {clockInLoading ? "Getting location..." : "Clock In"}
-                  </button>
-                  <button 
-                    onClick={handleClockOut}
-                    disabled={clockOutLoading || !isClockedIn}
-                    className="flex-1 bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed text-gray-400 hover:bg-gray-300 hover:text-gray-500 py-3 px-4 rounded-lg flex items-center justify-center gap-2 font-semibold transition">
-                    <ClockIcon size={20} /> {clockOutLoading ? "Getting location..." : "Clock Out"}
-                  </button>
-                </div>
-              </>
-            )}
-          </div>
-
-          
-          <div className="bg-white p-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300">
-            <h3 className="text-xl font-bold mb-6 flex items-center text-gray-800">
-              <div className="bg-gray-100 p-2 rounded-lg mr-3">
-                <LayoutDashboard className="text-gray-700" size={24} />
-              </div>
-              Quick Actions
-            </h3>
-            <div className="space-y-3">
-              <button onClick={() => navigate("/employee/leave")}
-                className="w-full bg-gradient-to-r from-green-500 to-green-600 text-white py-3 px-4 rounded-lg hover:from-green-600 hover:to-green-700 transition flex items-center justify-center gap-2 font-medium shadow-md hover:shadow-lg">
-                <CalendarDays size={20} /> Apply for Leave
-              </button>
-              <button onClick={() => navigate("/employee/payslip")}
-                className="w-full bg-gradient-to-r from-purple-500 to-purple-600 text-white py-3 px-4 rounded-lg hover:from-purple-600 hover:to-purple-700 transition flex items-center justify-center gap-2 font-medium shadow-md hover:shadow-lg">
-                <DollarSign size={20} /> View Payslip
-              </button>
-              <button onClick={() => navigate("/employee/profile")}
-                className="w-full bg-gradient-to-r from-blue-500 to-blue-600 text-white py-3 px-4 rounded-lg hover:from-blue-600 hover:to-blue-700 transition flex items-center justify-center gap-2 font-medium shadow-md hover:shadow-lg">
-                <User size={20} /> Update Profile
-              </button>
-            </div>
-          </div>
-        </div> */}
 
         {/* ── My Month + Upcoming Leave (real data) ── */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

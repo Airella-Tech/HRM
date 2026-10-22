@@ -11,7 +11,6 @@ const AppleAuthCallback = () => {
       try {
         const code = searchParams.get("code");
         const idToken = searchParams.get("id_token");
-        const state = searchParams.get("state");
 
         if (!code && !idToken) {
           throw new Error("No authorization code or ID token received");
@@ -19,6 +18,10 @@ const AppleAuthCallback = () => {
 
         console.log("Apple OAuth callback — not connected yet, redirecting to login.");
         throw new Error("Apple OAuth is not connected yet. Please use email and password to sign in.");
+      } catch (error) {
+        console.error("Apple authentication error:", error);
+        setError(error.message || "Authentication failed. Please try again.");
+        setTimeout(() => navigate("/login?error=apple_auth_failed"), 3000);
       }
     };
 
