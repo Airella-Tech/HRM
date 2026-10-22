@@ -397,7 +397,17 @@ export const recruitmentApi = {
     publishVacancy: (id) => request("POST", `${RECRUITMENT_URL}/recruitment/jobs/${id}/publish`),
   closeVacancy: (id) => request("POST", `${RECRUITMENT_URL}/recruitment/jobs/${id}/close`),
 
-  // ── Applications & roles (Member 2) ──
+  // ── Applications & Candidate Management (Member 2) ──
+  getApplications: (params) => {
+    const qs = params ? `?${new URLSearchParams(params).toString()}` : "";
+    return request("GET", `${RECRUITMENT_URL}/recruitment/applications${qs}`);
+  },
+  getApplication: (id) => request("GET", `${RECRUITMENT_URL}/recruitment/applications/${id}`),
+  screenApplication: (id, data) => request("PUT", `${RECRUITMENT_URL}/recruitment/applications/${id}/screen`, data),
+  shortlistCandidate: (id, notes) => request("POST", `${RECRUITMENT_URL}/recruitment/applications/${id}/shortlist`, { notes }),
+  rejectCandidate: (id, reason) => request("POST", `${RECRUITMENT_URL}/recruitment/applications/${id}/reject`, { reason }),
+  autoShortlist: (threshold) => request("POST", `${RECRUITMENT_URL}/recruitment/applications/auto-shortlist`, { threshold }),
+  getResumeDownloadUrl: (id) => `${RECRUITMENT_URL}/recruitment/applications/${id}/resume`,
 
   // ── Interviews, offers, reports (Member 3) ──
 };
@@ -408,4 +418,9 @@ export const careersApi = {
     request("GET", `${RECRUITMENT_URL}/careers/jobs?company=${encodeURIComponent(company)}`),
   getJob: (id, company) =>
     request("GET", `${RECRUITMENT_URL}/careers/jobs/${id}?company=${encodeURIComponent(company)}`),
+  applyJob: (id, formData, company) => {
+    const c = company || "COMP-001";
+    return request("POST", `${RECRUITMENT_URL}/careers/jobs/${id}/apply?company=${encodeURIComponent(c)}`, formData);
+  },
 };
+
