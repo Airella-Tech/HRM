@@ -14,9 +14,12 @@ import java.util.List;
 public class CareersController {
 
     private final CareersService careersService;
+    private final com.airella.hrm.service.CandidateApplicationService applicationService;
 
-    public CareersController(CareersService careersService) {
+    public CareersController(CareersService careersService,
+                             com.airella.hrm.service.CandidateApplicationService applicationService) {
         this.careersService = careersService;
+        this.applicationService = applicationService;
     }
 
     // "company" is checked in the service, so a missing value gives a clear 400 message.
@@ -34,5 +37,18 @@ public class CareersController {
     public ResponseEntity<ApiResponse<PublicVacancyDTO>> get(@PathVariable Long id,
                                                              @RequestParam(required = false) String company) {
         return ResponseEntity.ok(ApiResponse.success(careersService.getOpen(id, company)));
+    }
+
+    /**
+     * Public Quick Apply intake API (Multipart form with PDF resume).
+     */
+    @PostMapping(value = "/{id}/apply", consumes = org.springframework.http.MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ApiResponse<com.airella.hrm.dto.CandidateApplicationDTO>> applyMultipart(
+            @PathVariable Long id,
+            @RequestParam(required = false) String company,
+            @ModelAttribute com.airella.hrm.dto.ApplyJobRequest request,
+            @RequestParam(value = "resume", required = false) org.springframework.web.multipart.MultipartFile resume) {
+        com.airella.hrm.dto.CandidateApplicationDTO result = applicationService.submitApplication(id, company, request, resume);
+        return ResponseEntity.ok(ApiResponse.success(result, "Application submitted successfully! Your tracking code is: " + result.getTrackingCode()));
     }
 }
