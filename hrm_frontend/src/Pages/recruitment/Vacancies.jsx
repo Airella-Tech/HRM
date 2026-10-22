@@ -5,7 +5,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { PageLayout } from "../../components/PageLayout";
-import { recruitmentApi } from "../../services/api";
+import { recruitmentApi, hrApi } from "../../services/api";
 import { Plus, Pencil, Trash2, BriefcaseBusiness, Loader2, X, Save, AlertTriangle, Send, CheckCircle2, XCircle, Megaphone, Ban } from "lucide-react";
 
 
@@ -80,6 +80,27 @@ const VacancyModal = ({ vacancy, onClose, onSaved }) => {
   const [form, setForm] = useState(editing ? formFromVacancy(vacancy) : emptyForm);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+    const [departments, setDepartments] = useState([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    hrApi
+      .getDepartments()
+      .then((res) => {
+        const list = res?.data ?? res ?? [];
+        const names = (Array.isArray(list) ? list : [])
+          .filter((d) => d.active !== false)
+          .map((d) => d.name)
+          .filter(Boolean);
+        if (!cancelled) setDepartments(names);
+      })
+      .catch(() => {
+        /* not allowed or unavailable: keep the plain text box */
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const set = (field) => (e) => setForm((f) => ({ ...f, [field]: e.target.value }));
 
@@ -146,8 +167,20 @@ const VacancyModal = ({ vacancy, onClose, onSaved }) => {
             <Field label="Job title" required>
               <input className={inputCls} value={form.title} onChange={set("title")} maxLength={120} placeholder="e.g. Senior Java Developer" />
             </Field>
-            <Field label="Department" required>
-              <input className={inputCls} value={form.department} onChange={set("department")} maxLength={100} placeholder="e.g. Engineering" />
+                        <Field label="Department" required>
+              {departments.length > 0 ? (
+                <select className={inputCls} value={form.department} onChange={set("department")}>
+                  <option value="">Select a department</option>
+                  {form.department && !departments.includes(form.department) && (
+                    <option value={form.department}>{form.department}</option>
+                  )}
+                  {departments.map((name) => (
+                    <option key={name} value={name}>{name}</option>
+                  ))}
+                </select>
+              ) : (
+                <input className={inputCls} value={form.department} onChange={set("department")} maxLength={100} placeholder="e.g. Engineering" />
+              )}
             </Field>
             <Field label="Job type" required>
               <select className={inputCls} value={form.jobType} onChange={set("jobType")}>
