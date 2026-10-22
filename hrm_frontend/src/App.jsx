@@ -41,6 +41,9 @@ import AdminSystemConfig from "./Pages/admin/SystemConfig.jsx";
 import RecruitmentDashboard from "./Pages/recruitment/Dashboard.jsx";
 import RecruitmentVacancies from "./Pages/recruitment/Vacancies.jsx";
 import RecruitmentApplications from "./Pages/recruitment/Applications.jsx";
+import RecruitmentApplicationReview from "./Pages/recruitment/ApplicationReview.jsx";
+import RecruitmentCandidateShortlist from "./Pages/recruitment/CandidateShortlist.jsx";
+import RecruitmentResumeDownload from "./Pages/recruitment/ResumeDownload.jsx";
 import RecruitmentCandidates from "./Pages/recruitment/Candidates.jsx";
 import RecruitmentInterviews from "./Pages/recruitment/Interviews.jsx";
 import RecruitmentEvaluations from "./Pages/recruitment/Evaluations.jsx";
@@ -100,6 +103,12 @@ function App() {
       <Route path="/recruitment/dashboard" element={<RecruitmentDashboard />} />
       <Route path="/recruitment/vacancies" element={<RecruitmentVacancies />} />
       <Route path="/recruitment/applications" element={<RecruitmentApplications />} />
+      <Route path="/recruitment/applications/review" element={<RecruitmentApplicationReview />} />
+      <Route path="/recruitment/applications/shortlist" element={<RecruitmentCandidateShortlist />} />
+      <Route path="/recruitment/applications/resumes" element={<RecruitmentResumeDownload />} />
+      <Route path="/recruitment/review-applications" element={<RecruitmentApplicationReview />} />
+      <Route path="/recruitment/shortlist" element={<RecruitmentCandidateShortlist />} />
+      <Route path="/recruitment/resumes" element={<RecruitmentResumeDownload />} />
       <Route path="/recruitment/candidates" element={<RecruitmentCandidates />} />
       <Route path="/recruitment/interviews" element={<RecruitmentInterviews />} />
       <Route path="/recruitment/evaluations" element={<RecruitmentEvaluations />} />

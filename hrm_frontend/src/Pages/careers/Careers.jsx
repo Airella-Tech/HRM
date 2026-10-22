@@ -4,13 +4,21 @@
  */
 import React, { useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { Search, Building2, Clock, CalendarDays, Loader2, ArrowRight } from "lucide-react";
+import { Search, Building2, Clock, Banknote, ChevronRight } from "lucide-react";
 import { careersApi } from "../../services/api";
-import { CareersLayout, Notice } from "./careersShared";
-import { errorText, formatDate } from "../../utils/careersFormat";
+import { CareersLayout, DeadlineMeter, Notice } from "./careersShared";
+import { errorText, formatSalary, isNew } from "../../utils/careersFormat";
 
-const selectCls =
-  "rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-700 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100";
+const focusRing =
+  "focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2";
+
+const SkeletonRow = () => (
+  <div className="px-5 py-5 sm:px-6 animate-pulse motion-reduce:animate-none">
+    <div className="h-5 w-1/3 rounded bg-slate-200" />
+    <div className="h-4 w-1/2 rounded bg-slate-100 mt-3" />
+    <div className="h-4 w-1/4 rounded bg-slate-100 mt-3" />
+  </div>
+);
 
 export default function Careers() {
   const [params] = useSearchParams();
@@ -31,7 +39,7 @@ export default function Careers() {
     careersApi
       .getJobs(company)
       .then((res) => !cancelled && setJobs(res.data || []))
-      .catch((e) => !cancelled && setError(errorText(e, "Could not load vacancies")))
+      .catch((e) => !cancelled && setError(errorText(e, "Could not load the open roles")))
       .finally(() => !cancelled && setLoading(false));
     return () => {
       cancelled = true;
@@ -54,96 +62,161 @@ export default function Careers() {
     );
   }, [jobs, search, department, jobType]);
 
+  const hasFilters = Boolean(search.trim() || department || jobType);
+  const clearFilters = () => {
+    setSearch("");
+    setDepartment("");
+    setJobType("");
+  };
+
   if (!company) {
     return (
       <CareersLayout>
         <Notice
           title="This careers link is incomplete"
-          text="Please use the full careers link provided by the company."
+          text="Please open the full careers link shared by the company."
         />
       </CareersLayout>
     );
   }
 
-  return (
-    <CareersLayout>
-      <div className="mb-6">
-        <h1 className="text-2xl sm:text-3xl font-bold text-slate-900">Open positions</h1>
-        <p className="text-slate-500 mt-1">Find a role that fits you and apply today.</p>
+  const hero = (
+    <div className="pt-6 pb-10 sm:pt-10 sm:pb-14">
+      <h1 className="text-3xl sm:text-5xl font-bold tracking-tight leading-[1.1] max-w-2xl">
+        Find your next role
+      </h1>
+      <p className="mt-3 text-indigo-100/80 max-w-xl">
+        Browse the positions open right now, and apply before the deadline.
+      </p>
+      <div className="relative mt-6 max-w-2xl">
+        <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+        <input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search by job title, department or skill"
+          aria-label="Search open roles"
+          className={`w-full rounded-xl bg-white pl-11 pr-4 py-3.5 text-[15px] text-slate-900 placeholder:text-slate-400 shadow-lg shadow-black/10 ${focusRing} focus-visible:ring-offset-[#0F1B3D]`}
+        />
       </div>
+    </div>
+  );
 
-      {/* Search and filters */}
-      <div className="flex flex-col sm:flex-row gap-3 mb-6">
-        <div className="relative flex-1">
-          <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
-          <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search by title, department or skill"
-            className="w-full rounded-xl border border-slate-200 bg-white pl-10 pr-3.5 py-2.5 text-sm text-slate-800 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
-          />
+  return (
+    <CareersLayout hero={hero}>
+      {/* Filters */}
+      {!loading && jobs.length > 0 && (
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-5">
+          <div className="flex flex-wrap gap-2" role="group" aria-label="Filter by department">
+            {["", ...departments].map((d) => (
+              <button
+                key={d || "all"}
+                onClick={() => setDepartment(d)}
+                aria-pressed={department === d}
+                className={`px-3.5 py-1.5 rounded-full text-sm font-medium border transition-colors ${focusRing} ${
+                  department === d
+                    ? "bg-[#0F1B3D] text-white border-[#0F1B3D]"
+                    : "bg-white text-slate-600 border-slate-200 hover:border-slate-300"
+                }`}
+              >
+                {d || "All departments"}
+              </button>
+            ))}
+          </div>
+          {jobTypes.length > 1 && (
+            <select
+              value={jobType}
+              onChange={(e) => setJobType(e.target.value)}
+              aria-label="Filter by job type"
+              className={`rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-700 ${focusRing}`}
+            >
+              <option value="">All job types</option>
+              {jobTypes.map((t) => (
+                <option key={t} value={t}>{t}</option>
+              ))}
+            </select>
+          )}
         </div>
-        <select value={department} onChange={(e) => setDepartment(e.target.value)} className={selectCls}>
-          <option value="">All departments</option>
-          {departments.map((d) => (
-            <option key={d} value={d}>{d}</option>
-          ))}
-        </select>
-        <select value={jobType} onChange={(e) => setJobType(e.target.value)} className={selectCls}>
-          <option value="">All job types</option>
-          {jobTypes.map((t) => (
-            <option key={t} value={t}>{t}</option>
-          ))}
-        </select>
-      </div>
+      )}
 
       {loading ? (
-        <div className="flex items-center justify-center gap-2 py-16 text-slate-500 text-sm">
-          <Loader2 size={18} className="animate-spin" /> Loading positions...
+        <div className="bg-white rounded-2xl border border-slate-200 divide-y divide-slate-100 overflow-hidden">
+          <SkeletonRow /><SkeletonRow /><SkeletonRow />
         </div>
       ) : error ? (
         <div className="px-4 py-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm font-medium">
           {error}
         </div>
       ) : filtered.length === 0 ? (
-        <Notice
-          title={jobs.length === 0 ? "No open positions right now" : "No positions match your search"}
-          text={jobs.length === 0 ? "Please check back soon." : "Try a different word or clear the filters."}
-        />
+        jobs.length === 0 ? (
+          <Notice
+            title="No open roles right now"
+            text="There are no positions open at the moment. Please check back soon."
+          />
+        ) : (
+          <Notice title="No roles match your search" text="Try a different word, or show all roles.">
+            {hasFilters && (
+              <button
+                onClick={clearFilters}
+                className={`px-4 py-2 rounded-xl bg-[#0F1B3D] text-white text-sm font-semibold hover:bg-[#1a2a55] ${focusRing}`}
+              >
+                Clear filters
+              </button>
+            )}
+          </Notice>
+        )
       ) : (
-        <div className="space-y-4">
-          <p className="text-sm text-slate-500">
-            {filtered.length} {filtered.length === 1 ? "position" : "positions"}
+        <>
+          <p className="text-sm text-slate-500 mb-3">
+            {filtered.length} open {filtered.length === 1 ? "role" : "roles"}
           </p>
-          {filtered.map((job) => (
-            <Link
-              key={job.id}
-              to={`/careers/jobs/${job.id}?company=${encodeURIComponent(company)}`}
-              className="block bg-white rounded-2xl border border-slate-200 shadow-sm p-5 hover:border-indigo-300 hover:shadow-md transition"
-            >
-              <div className="flex items-start justify-between gap-4">
-                <div className="min-w-0">
-                  <h2 className="text-lg font-bold text-slate-900">{job.title}</h2>
-                  <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2 text-sm text-slate-500">
-                    <span className="inline-flex items-center gap-1.5"><Building2 size={14} /> {job.department}</span>
-                    <span className="inline-flex items-center gap-1.5"><Clock size={14} /> {job.jobType}</span>
-                    <span className="inline-flex items-center gap-1.5"><CalendarDays size={14} /> Apply by {formatDate(job.deadline)}</span>
-                  </div>
-                  {(job.requiredSkills || []).length > 0 && (
-                    <div className="flex flex-wrap gap-2 mt-3">
-                      {job.requiredSkills.slice(0, 5).map((s) => (
-                        <span key={s} className="px-2.5 py-1 rounded-full bg-indigo-50 text-indigo-700 text-xs font-medium">
-                          {s}
+          <div className="bg-white rounded-2xl border border-slate-200 divide-y divide-slate-100 overflow-hidden">
+            {filtered.map((job) => {
+              const salary = formatSalary(job.salaryMin, job.salaryMax);
+              return (
+                <Link
+                  key={job.id}
+                  to={`/careers/jobs/${job.id}?company=${encodeURIComponent(company)}`}
+                  className={`group grid sm:grid-cols-[1fr_220px_24px] gap-x-8 gap-y-4 items-center px-5 py-5 sm:px-6 hover:bg-slate-50 transition-colors ${focusRing} focus-visible:ring-inset`}
+                >
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2.5">
+                      <h2 className="text-lg font-bold text-slate-900 tracking-tight truncate">{job.title}</h2>
+                      {isNew(job.publishedAt) && (
+                        <span className="shrink-0 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-xs font-semibold">
+                          New
                         </span>
-                      ))}
+                      )}
                     </div>
-                  )}
-                </div>
-                <ArrowRight size={20} className="text-slate-300 shrink-0 mt-1" />
-              </div>
-            </Link>
-          ))}
-        </div>
+                    <div className="flex flex-wrap items-center gap-x-5 gap-y-1 mt-1.5 text-sm text-slate-500">
+                      <span className="inline-flex items-center gap-1.5"><Building2 size={14} />{job.department}</span>
+                      <span className="inline-flex items-center gap-1.5"><Clock size={14} />{job.jobType}</span>
+                      {salary && <span className="inline-flex items-center gap-1.5"><Banknote size={14} />{salary}</span>}
+                    </div>
+                    {(job.requiredSkills || []).length > 0 && (
+                      <div className="flex flex-wrap gap-1.5 mt-3">
+                        {job.requiredSkills.slice(0, 4).map((s) => (
+                          <span key={s} className="px-2.5 py-0.5 rounded-md bg-slate-100 text-slate-600 text-xs font-medium">
+                            {s}
+                          </span>
+                        ))}
+                        {job.requiredSkills.length > 4 && (
+                          <span className="px-1 py-0.5 text-xs text-slate-400">+{job.requiredSkills.length - 4} more</span>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  <DeadlineMeter deadline={job.deadline} publishedAt={job.publishedAt} />
+
+                  <ChevronRight
+                    size={20}
+                    className="hidden sm:block text-slate-300 group-hover:text-indigo-500 group-hover:translate-x-0.5 transition motion-reduce:transition-none"
+                  />
+                </Link>
+              );
+            })}
+          </div>
+        </>
       )}
     </CareersLayout>
   );
