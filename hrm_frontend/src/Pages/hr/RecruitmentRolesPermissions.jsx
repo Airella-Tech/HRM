@@ -390,7 +390,6 @@ const RecruitmentRolesPermissions = () => {
   const [defaultTemplates, setDefaultTemplates] = useState([]);
   const [permissionCategories, setPermissionCategories] = useState({});
   const [employees, setEmployees] = useState([]);
-  const [myAccess, setMyAccess] = useState(null);
 
   // Loading & error state
   const [loading, setLoading] = useState(true);
@@ -470,7 +469,7 @@ const RecruitmentRolesPermissions = () => {
     setFetchError(null);
 
     try {
-      const [customRolesRes, defaultTemplatesRes, permsRes, usersRes, myAccessRes] = await Promise.all([
+      const [customRolesRes, defaultTemplatesRes, permsRes, usersRes, _myAccessRes] = await Promise.all([
         recruitmentApi.getRoles("", true), // customOnly = true: only company custom roles
         recruitmentApi.getDefaultRoleTemplates().catch(async (err) => {
           // If a race condition occurred during initial role template seeding, retry once
@@ -501,10 +500,6 @@ const RecruitmentRolesPermissions = () => {
 
       const rawUsers = usersRes?.data || [];
       setEmployees(rawUsers.map(normalizeEmployee).filter(Boolean));
-
-      if (myAccessRes?.data) {
-        setMyAccess(myAccessRes.data);
-      }
     } catch (err) {
       console.error("Failed to load recruitment data:", err);
       const cleaned = cleanError(err);
@@ -558,7 +553,6 @@ const RecruitmentRolesPermissions = () => {
           return;
         }
 
-        setMyAccess(access);
         loadAllData();
       })
       .catch((err) => {
@@ -584,8 +578,6 @@ const RecruitmentRolesPermissions = () => {
   };
 
   const allAssignableRoles = [...roles, ...defaultTemplates];
-
-  const getRoleById = (roleId) => allAssignableRoles.find((role) => role.id === roleId);
 
   const selectedDefaultRole = defaultTemplates.find(
     (role) => String(role.id) === String(selectedDefaultRoleId)
@@ -1086,10 +1078,6 @@ const RecruitmentRolesPermissions = () => {
       (employee.userId || employee.id) === Number(assignmentEmployeeId)
   );
 
-  const editingRole = editingRoleId
-    ? roles.find((r) => r.id === editingRoleId)
-    : null;
-
   // ======================================================
   // PAGE UI
   const storedUser = localStorage.getItem("user");
@@ -1099,7 +1087,9 @@ const RecruitmentRolesPermissions = () => {
     if (parsed?.role === "HR_MANAGER" || parsed?.role === "ADMIN") {
       layoutRole = "hr";
     }
-  } catch {}
+  } catch {
+    // Ignore — keep the default layoutRole
+  }
 
   return (
     <PageLayout

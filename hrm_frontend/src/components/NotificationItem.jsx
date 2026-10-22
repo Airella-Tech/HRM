@@ -1,23 +1,6 @@
 import React from "react";
-import { CalendarDays, Wallet, CheckCircle2, XCircle, Cake, Gift, Receipt, Building2, Bell, ExternalLink } from "lucide-react";
-import { isBirthday, linkLabel, timeAgo } from "../utils/notifications";
-
-// Icon + colour chip per notification category
-const KIND = {
-  LEAVE_REQUEST:      { icon: CalendarDays, chip: "bg-amber-100 text-amber-700" },
-  ALLOWANCE_REQUEST:  { icon: Wallet,       chip: "bg-violet-100 text-violet-700" },
-  LEAVE_APPROVED:     { icon: CheckCircle2, chip: "bg-emerald-100 text-emerald-700" },
-  ALLOWANCE_APPROVED: { icon: CheckCircle2, chip: "bg-emerald-100 text-emerald-700" },
-  LEAVE_REJECTED:     { icon: XCircle,      chip: "bg-red-100 text-red-700" },
-  ALLOWANCE_REJECTED: { icon: XCircle,      chip: "bg-red-100 text-red-700" },
-  BIRTHDAY:           { icon: Cake,         chip: "bg-pink-100 text-pink-600" },
-  BIRTHDAY_WISH:      { icon: Gift,         chip: "bg-pink-100 text-pink-600" },
-  PAYSLIP:            { icon: Receipt,      chip: "bg-sky-100 text-sky-700" },
-  COMPANY_REQUEST:    { icon: Building2,    chip: "bg-amber-100 text-amber-700" },
-};
-const DEFAULT_KIND = { icon: Bell, chip: "bg-slate-100 text-slate-600" };
-
-export const kindOf = (n) => KIND[n.category] || DEFAULT_KIND;
+import { ExternalLink } from "lucide-react";
+import { isBirthday, kindOf, linkLabel, timeAgo } from "../utils/notifications";
 
 /** Name / employee id / department / job role of the birthday person. */
 export const BirthdayDetails = ({ subject, compact }) => {

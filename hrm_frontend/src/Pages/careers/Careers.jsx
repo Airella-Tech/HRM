@@ -6,7 +6,8 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { Search, Building2, Clock, Banknote, ChevronRight } from "lucide-react";
 import { careersApi } from "../../services/api";
-import { CareersLayout, DeadlineMeter, Notice, errorText, formatSalary, isNew } from "./careersShared";
+import { CareersLayout, DeadlineMeter, Notice } from "./careersShared";
+import { errorText, formatSalary, isNew } from "../../utils/careersFormat";
 
 const focusRing =
   "focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2";
