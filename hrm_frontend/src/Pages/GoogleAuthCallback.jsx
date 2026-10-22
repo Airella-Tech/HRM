@@ -10,7 +10,6 @@ const GoogleAuthCallback = () => {
     const handleGoogleCallback = async () => {
       try {
         const code = searchParams.get("code");
-        const state = searchParams.get("state");
 
         if (!code) {
           throw new Error("No authorization code received");

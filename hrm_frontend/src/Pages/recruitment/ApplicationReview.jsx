@@ -460,10 +460,11 @@ export default function RecruitmentApplicationReview() {
                 </button>
                 <button
                   type="submit"
-                  className="inline-flex items-center gap-1.5 px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-semibold shadow-sm"
+                  disabled={saving}
+                  className="inline-flex items-center gap-1.5 px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-semibold shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <Save size={14} />
-                  <span>Save Review Score</span>
+                  <span>{saving ? "Saving..." : "Save Review Score"}</span>
                 </button>
               </div>
             </form>

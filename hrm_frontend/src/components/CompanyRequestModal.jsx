@@ -50,7 +50,7 @@ const CompanyRequestModal = ({ onClose }) => {
       let data = {};
       try {
         data = text ? JSON.parse(text) : {};
-      } catch (e) {
+      } catch {
         data = { message: text || response.statusText };
       }
 

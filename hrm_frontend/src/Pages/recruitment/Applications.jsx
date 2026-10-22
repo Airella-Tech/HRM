@@ -166,17 +166,6 @@ export default function RecruitmentApplications() {
   const searchParams = new URLSearchParams(location.search);
   const viewParam = (searchParams.get("view") || "").toLowerCase();
 
-  // If query parameter requested a specific view, render that dedicated component
-  if (viewParam === "review" || viewParam === "screen") {
-    return <RecruitmentApplicationReview />;
-  }
-  if (viewParam === "shortlist") {
-    return <RecruitmentCandidateShortlist />;
-  }
-  if (viewParam === "resumes" || viewParam === "download" || viewParam === "resume") {
-    return <RecruitmentResumeDownload />;
-  }
-
   const [applications, setApplications] = useState(DEMO_APPLICATIONS);
   const [vacancies, setVacancies] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
@@ -286,6 +275,19 @@ export default function RecruitmentApplications() {
       .join("")
       .toUpperCase();
   };
+
+  // If query parameter requested a specific view, render that dedicated component.
+  // This check runs after every hook above so hook call order stays consistent
+  // across renders, even when ?view= changes while this component stays mounted.
+  if (viewParam === "review" || viewParam === "screen") {
+    return <RecruitmentApplicationReview />;
+  }
+  if (viewParam === "shortlist") {
+    return <RecruitmentCandidateShortlist />;
+  }
+  if (viewParam === "resumes" || viewParam === "download" || viewParam === "resume") {
+    return <RecruitmentResumeDownload />;
+  }
 
   return (
     <PageLayout

@@ -138,7 +138,7 @@ const loadEmployeeDraft = () => {
 
 const saveEmployeeDraft = (formData, currentStep) => {
   try {
-    const { password, confirmPassword, ...rest } = formData;
+    const { password: _password, confirmPassword: _confirmPassword, ...rest } = formData;
     const hasContent = Object.values(rest).some((v) => String(v || "").trim() !== "");
     if (!hasContent) {
       localStorage.removeItem(ADD_EMPLOYEE_DRAFT_KEY);
@@ -196,7 +196,7 @@ const buildFormFromEmployee = (emp, departments) => {
   };
 };
 
-const AddEmployeeModal = ({ open, onClose, departments = [], onSuccess, employee = null, onDelete }) => {
+const AddEmployeeModal = ({ open, onClose, departments = [], onSuccess, employee = null }) => {
   const isEdit = Boolean(employee);
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState(EMPTY_FORM);

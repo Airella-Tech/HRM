@@ -46,7 +46,6 @@ const Attendance = () => {
   // so an open session's working time keeps counting up while the page is open.
   const [todaySessions, setTodaySessions] = useState([]);
   const [historySessions, setHistorySessions] = useState([]);
-  const [selectedMonth, setSelectedMonth] = useState("current");
   const [loading, setLoading] = useState(true);
   const [clockInLoading, setClockInLoading] = useState(false);
   const [clockOutLoading, setClockOutLoading] = useState(false);

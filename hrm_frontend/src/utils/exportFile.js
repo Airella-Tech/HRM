@@ -25,6 +25,7 @@ export const downloadCsvFile = (filename, headers, rows) => {
 
 const xmlEsc = (v) =>
   String(v)
+    // eslint-disable-next-line no-control-regex -- strip XML-invalid control chars
     .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, "")
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")

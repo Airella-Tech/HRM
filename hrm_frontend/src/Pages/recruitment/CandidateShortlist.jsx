@@ -351,7 +351,7 @@ export default function RecruitmentCandidateShortlist() {
           <div className="flex flex-wrap gap-2">
             {[
               { id: "ALL", label: `All Candidates (${candidates.length})` },
-              { id: "RECOMMENDED", label: `Auto-Qualified (≥${threshold}%)` },
+              { id: "RECOMMENDED", label: `Auto-Qualified ≥${threshold}% (${eligibleAutoCount})` },
               { id: "SHORTLISTED", label: `Shortlisted (${shortlistedCount})` },
               { id: "REJECTED", label: "Rejected" },
             ].map((t) => (

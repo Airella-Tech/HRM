@@ -761,7 +761,7 @@ const Department = () => {
             /* Department Rows */
             <div className="divide-y divide-slate-100">
 
-              {paginatedDepartments.map((department, index) => {
+              {paginatedDepartments.map((department) => {
 
                 const code =
                   department.shortCode ||
