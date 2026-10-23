@@ -28,8 +28,10 @@ import java.util.*;
 
 /**
  * Service for Candidate Application intake and database-backed PDF storage.
- * Follows the Employee_Backend pattern (byte[] stored as PostgreSQL bytea in a separate table).
- * Extracts CV text via Apache PDFBox for recruitment screening without reading binary PDFs.
+ * Follows the Employee_Backend pattern (byte[] stored as PostgreSQL bytea in a
+ * separate table).
+ * Extracts CV text via Apache PDFBox for recruitment screening without reading
+ * binary PDFs.
  */
 @Service
 @Transactional
@@ -46,11 +48,11 @@ public class CandidateApplicationService {
     private final EmailService emailService;
 
     public CandidateApplicationService(CandidateApplicationRepository applicationRepo,
-                                     CandidateApplicationDocumentRepository documentRepo,
-                                     JobVacancyRepository vacancyRepo,
-                                     AuthService authService,
-                                     AuditService auditService,
-                                     EmailService emailService) {
+            CandidateApplicationDocumentRepository documentRepo,
+            JobVacancyRepository vacancyRepo,
+            AuthService authService,
+            AuditService auditService,
+            EmailService emailService) {
         this.applicationRepo = applicationRepo;
         this.documentRepo = documentRepo;
         this.vacancyRepo = vacancyRepo;
@@ -59,14 +61,12 @@ public class CandidateApplicationService {
         this.emailService = emailService;
     }
 
-    // =========================================================================
     // Public Application Submission & Database-Backed Document Storage
-    // =========================================================================
 
     public CandidateApplicationDTO submitApplication(Long vacancyId,
-                                                   String companyRef,
-                                                   ApplyJobRequest request,
-                                                   MultipartFile resumeFile) {
+            String companyRef,
+            ApplyJobRequest request,
+            MultipartFile resumeFile) {
         if (vacancyId == null) {
             throw new BusinessException("Job vacancy ID is required.");
         }
@@ -93,11 +93,11 @@ public class CandidateApplicationService {
 
         // 2. 90-Day Duplicate Submission Prevention (same email + vacancyId)
         LocalDateTime cutoff = LocalDateTime.now().minusDays(90);
-        if (applicationRepo.existsByEmailIgnoreCaseAndVacancyIdAndCreatedAtGreaterThanEqual(email, vacancy.getId(), cutoff)) {
+        if (applicationRepo.existsByEmailIgnoreCaseAndVacancyIdAndCreatedAtGreaterThanEqual(email, vacancy.getId(),
+                cutoff)) {
             throw new BusinessException(
                     "You have already applied for the '" + vacancy.getTitle() +
-                    "' role within the last 90 days. Duplicate submissions are not permitted."
-            );
+                            "' role within the last 90 days. Duplicate submissions are not permitted.");
         }
 
         // 3. Strict PDF Validation & Read Bytes (Following Employee_Backend convention)
@@ -134,14 +134,16 @@ public class CandidateApplicationService {
             for (String s : request.getSkills()) {
                 if (s != null && s.contains(",")) {
                     for (String part : s.split(",")) {
-                        if (!part.trim().isEmpty()) parsedSkills.add(part.trim());
+                        if (!part.trim().isEmpty())
+                            parsedSkills.add(part.trim());
                     }
                 } else if (s != null && !s.trim().isEmpty()) {
                     parsedSkills.add(s.trim());
                 }
             }
             app.setSkills(parsedSkills.isEmpty() && vacancy.getRequiredSkills() != null
-                    ? new LinkedHashSet<>(vacancy.getRequiredSkills()) : parsedSkills);
+                    ? new LinkedHashSet<>(vacancy.getRequiredSkills())
+                    : parsedSkills);
         } else if (vacancy.getRequiredSkills() != null) {
             app.setSkills(new LinkedHashSet<>(vacancy.getRequiredSkills()));
         }
@@ -158,7 +160,8 @@ public class CandidateApplicationService {
 
         CandidateApplication savedApp = applicationRepo.save(app);
 
-        // 6. Save PDF Binary into separate CandidateApplicationDocument table (PostgreSQL bytea)
+        // 6. Save PDF Binary into separate CandidateApplicationDocument table
+        // (PostgreSQL bytea)
         CandidateApplicationDocument document = new CandidateApplicationDocument();
         document.setApplicationId(savedApp.getId());
         document.setFileName(originalFilename);
@@ -172,9 +175,9 @@ public class CandidateApplicationService {
                 "APPLY",
                 "CandidateApplication",
                 savedApp.getId(),
-                "Candidate " + savedApp.getCandidateName() + " applied for '" + vacancy.getTitle() + "' [Tracking: " + savedApp.getTrackingCode() + "]",
-                savedApp.getCompanyRef()
-        );
+                "Candidate " + savedApp.getCandidateName() + " applied for '" + vacancy.getTitle() + "' [Tracking: "
+                        + savedApp.getTrackingCode() + "]",
+                savedApp.getCompanyRef());
 
         // Send confirmation email with tracking code & direct tracking link
         try {
@@ -183,8 +186,7 @@ public class CandidateApplicationService {
                     savedApp.getCandidateName(),
                     vacancy.getTitle(),
                     savedApp.getCompanyRef(),
-                    savedApp.getTrackingCode()
-            );
+                    savedApp.getTrackingCode());
         } catch (Exception e) {
             log.error("Failed to send application confirmation email to {}: {}", savedApp.getEmail(), e.getMessage());
         }
@@ -205,15 +207,15 @@ public class CandidateApplicationService {
         applicationRepo.save(app);
 
         return documentRepo.findByApplicationId(applicationId)
-                .orElseThrow(() -> new ResourceNotFoundException("CandidateApplicationDocument", "applicationId", applicationId));
+                .orElseThrow(() -> new ResourceNotFoundException("CandidateApplicationDocument", "applicationId",
+                        applicationId));
     }
 
-    // =========================================================================
     // Validation & Apache PDFBox Text Extraction Helpers
-    // =========================================================================
 
     /**
-     * Reads and validates the uploaded file following Employee_Backend readPdf conventions:
+     * Reads and validates the uploaded file following Employee_Backend readPdf
+     * conventions:
      * - Checks not null / not empty
      * - Checks size <= 5 MB
      * - Checks filename ends with .pdf
@@ -240,7 +242,8 @@ public class CandidateApplicationService {
         }
 
         // Validate PDF binary magic bytes: %PDF-
-        boolean isPdf = data.length >= 5 && data[0] == '%' && data[1] == 'P' && data[2] == 'D' && data[3] == 'F' && data[4] == '-';
+        boolean isPdf = data.length >= 5 && data[0] == '%' && data[1] == 'P' && data[2] == 'D' && data[3] == 'F'
+                && data[4] == '-';
         if (!isPdf) {
             throw new BusinessException("Only valid PDF files can be uploaded as resumes.");
         }
@@ -249,7 +252,8 @@ public class CandidateApplicationService {
     }
 
     /**
-     * Extracts plain text from the PDF binary using Apache PDFBox for ATS screening.
+     * Extracts plain text from the PDF binary using Apache PDFBox for ATS
+     * screening.
      */
     private String extractTextFromPdf(byte[] pdfBytes) {
         try (PDDocument document = Loader.loadPDF(pdfBytes)) {
@@ -367,9 +371,7 @@ public class CandidateApplicationService {
         return dto;
     }
 
-    // =========================================================================
     // Public Application Status Tracking
-    // =========================================================================
 
     @Transactional(readOnly = true)
     public CandidateApplicationTrackDTO trackApplication(String trackingCode, String email) {
@@ -381,7 +383,8 @@ public class CandidateApplicationService {
         }
 
         CandidateApplication app = applicationRepo
-                .findByTrackingCodeIgnoreCaseAndEmailIgnoreCase(trackingCode.trim(), email.trim().toLowerCase(Locale.ROOT))
+                .findByTrackingCodeIgnoreCaseAndEmailIgnoreCase(trackingCode.trim(),
+                        email.trim().toLowerCase(Locale.ROOT))
                 .orElseThrow(() -> new ResourceNotFoundException("Application", "trackingCode", trackingCode));
 
         return toTrackDto(app);
@@ -393,9 +396,12 @@ public class CandidateApplicationService {
 
         switch (status) {
             case "NEW" -> statusDescription = "Application received and queued for review.";
-            case "UNDER_REVIEW" -> statusDescription = "Your application is currently being reviewed by our recruitment team.";
-            case "SHORTLISTED" -> statusDescription = "Congratulations! Your profile has been shortlisted for the next stage.";
-            case "REJECTED" -> statusDescription = "Thank you for applying. After careful review, we have decided to proceed with other candidates.";
+            case "UNDER_REVIEW" ->
+                statusDescription = "Your application is currently being reviewed by our recruitment team.";
+            case "SHORTLISTED" ->
+                statusDescription = "Congratulations! Your profile has been shortlisted for the next stage.";
+            case "REJECTED" ->
+                statusDescription = "Thank you for applying. After careful review, we have decided to proceed with other candidates.";
             default -> statusDescription = "Application is in progress.";
         }
 
