@@ -1,16 +1,26 @@
 /**
  * Job Vacancies — recruitment page for creating and managing job vacancies.
  * List with status filter; create / edit drafts in a pop-up; delete drafts.
+ * Buttons are shown only for what the logged-in user is allowed to do, and the
+ * sidebar links (?view=create | approve | publish) open the matching view.
  */
 import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { PageLayout } from "../../components/PageLayout";
 import { recruitmentApi, hrApi } from "../../services/api";
+import { useRecruitmentAccess, fetchRecruitmentAccess } from "../../utils/useRecruitmentAccess";
 import { Plus, Pencil, Trash2, BriefcaseBusiness, Loader2, X, Save, AlertTriangle, Send, CheckCircle2, XCircle, Megaphone, Ban } from "lucide-react";
 
 
 const FILTERS = ["ALL", "DRAFT", "PENDING_APPROVAL", "APPROVED", "PUBLISHED", "CLOSED"];
 const JOB_TYPES = ["Full-time", "Part-time", "Contract", "Internship"];
+
+// Sidebar links open the page with ?view=... — each one starts on a matching filter
+const VIEW_FILTER = {
+  create: "DRAFT",
+  approve: "PENDING_APPROVAL",
+  publish: "APPROVED",
+};
 
 const STATUS_STYLE = {
   DRAFT: "bg-slate-100 text-slate-700",
@@ -80,8 +90,10 @@ const VacancyModal = ({ vacancy, onClose, onSaved }) => {
   const [form, setForm] = useState(editing ? formFromVacancy(vacancy) : emptyForm);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
-    const [departments, setDepartments] = useState([]);
+  const [departments, setDepartments] = useState([]);
 
+  // Department dropdown — only HR Managers / Admins may load the list;
+  // for everyone else the field stays a normal text box.
   useEffect(() => {
     let cancelled = false;
     hrApi
@@ -167,7 +179,7 @@ const VacancyModal = ({ vacancy, onClose, onSaved }) => {
             <Field label="Job title" required>
               <input className={inputCls} value={form.title} onChange={set("title")} maxLength={120} placeholder="e.g. Senior Java Developer" />
             </Field>
-                        <Field label="Department" required>
+            <Field label="Department" required>
               {departments.length > 0 ? (
                 <select className={inputCls} value={form.department} onChange={set("department")}>
                   <option value="">Select a department</option>
@@ -238,6 +250,7 @@ const VacancyModal = ({ vacancy, onClose, onSaved }) => {
     </div>
   );
 };
+
 // ─── Delete confirmation pop-up ───────────────────────────────
 const DeleteConfirmModal = ({ vacancy, busy, onCancel, onConfirm }) => (
   <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
@@ -274,6 +287,7 @@ const DeleteConfirmModal = ({ vacancy, busy, onCancel, onConfirm }) => (
     </div>
   </div>
 );
+
 // ─── Reject pop-up (asks for a reason) ────────────────────────
 const RejectModal = ({ vacancy, busy, onCancel, onConfirm }) => {
   const [reason, setReason] = useState("");
@@ -325,6 +339,7 @@ const RejectModal = ({ vacancy, busy, onCancel, onConfirm }) => {
     </div>
   );
 };
+
 // ─── Close confirmation pop-up ────────────────────────────────
 const CloseConfirmModal = ({ vacancy, busy, onCancel, onConfirm }) => (
   <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
@@ -361,19 +376,45 @@ const CloseConfirmModal = ({ vacancy, busy, onCancel, onConfirm }) => (
     </div>
   </div>
 );
+
 // ─── Page ─────────────────────────────────────────────────────
 export default function RecruitmentVacancies() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const view = searchParams.get("view");
+
   const [vacancies, setVacancies] = useState([]);
-  const [filter, setFilter] = useState("ALL");
+  const [filter, setFilter] = useState(VIEW_FILTER[view] || "ALL");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [busyId, setBusyId] = useState(null);
   // null = closed, { vacancy: null } = create, { vacancy } = edit
   const [modal, setModal] = useState(null);
-    const [deleting, setDeleting] = useState(null); // vacancy waiting for delete confirmation
-      const [rejecting, setRejecting] = useState(null); // vacancy waiting for a rejection reason
-        const [closing, setClosing] = useState(null); // vacancy waiting for close confirmation
+  const [deleting, setDeleting] = useState(null); // vacancy waiting for delete confirmation
+  const [rejecting, setRejecting] = useState(null); // vacancy waiting for a rejection reason
+  const [closing, setClosing] = useState(null); // vacancy waiting for close confirmation
+
+  // What this user may do (HR managers / admins have full access)
+  const access = useRecruitmentAccess();
+  const can = (permission) =>
+    Boolean(access?.fullAccess || access?.permissions?.includes(permission));
+  const canCreate = can("VACANCY_CREATE");
+  const canApprove = can("VACANCY_APPROVE");
+  const canPublish = can("VACANCY_PUBLISH");
+
+  // Always ask the server for fresh access when this page opens
+  useEffect(() => {
+    fetchRecruitmentAccess(true);
+  }, []);
+
+  // Sidebar links: ?view=create | approve | publish
+  useEffect(() => {
+    if (VIEW_FILTER[view]) setFilter(VIEW_FILTER[view]);
+    if (view === "create" && canCreate) {
+      setModal({ vacancy: null });
+      setSearchParams({}, { replace: true });
+    }
+  }, [view, canCreate, setSearchParams]);
 
   const load = async (status = filter) => {
     setLoading(true);
@@ -397,7 +438,7 @@ export default function RecruitmentVacancies() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filter]);
 
-   const confirmDelete = async () => {
+  const confirmDelete = async () => {
     const v = deleting;
     setBusyId(v.id);
     try {
@@ -412,7 +453,7 @@ export default function RecruitmentVacancies() {
     }
   };
 
-    // Submit for approval / approve — one call, then reload
+  // Submit for approval / approve / publish — one call, then reload
   const runAction = async (v, call, fallback) => {
     setBusyId(v.id);
     setError("");
@@ -440,7 +481,8 @@ export default function RecruitmentVacancies() {
       setBusyId(null);
     }
   };
-    const confirmClose = async () => {
+
+  const confirmClose = async () => {
     const v = closing;
     setBusyId(v.id);
     try {
@@ -454,10 +496,17 @@ export default function RecruitmentVacancies() {
       setBusyId(null);
     }
   };
+
   const handleSaved = () => {
     setModal(null);
     load();
   };
+
+  // Does this user have any button to show for this vacancy?
+  const hasActions = (v) =>
+    (v.status === "DRAFT" && canCreate) ||
+    (v.status === "PENDING_APPROVAL" && canApprove) ||
+    ((v.status === "APPROVED" || v.status === "PUBLISHED") && canPublish);
 
   return (
     <PageLayout
@@ -466,12 +515,14 @@ export default function RecruitmentVacancies() {
       title="Job Vacancies"
       subtitle="Create and manage job vacancies"
       actions={
-        <button
-          onClick={() => setModal({ vacancy: null })}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold shadow-sm"
-        >
-          <Plus size={16} /> New vacancy
-        </button>
+        canCreate ? (
+          <button
+            onClick={() => setModal({ vacancy: null })}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold shadow-sm"
+          >
+            <Plus size={16} /> New vacancy
+          </button>
+        ) : null
       }
     >
       <div className="p-6 space-y-5">
@@ -518,8 +569,12 @@ export default function RecruitmentVacancies() {
               <div className="h-16 w-16 rounded-2xl bg-indigo-50 text-indigo-500 flex items-center justify-center mb-4">
                 <BriefcaseBusiness size={28} />
               </div>
-              <p className="text-slate-800 font-semibold">No vacancies yet</p>
-              <p className="text-slate-500 text-sm mt-1">Click "New vacancy" to create the first draft.</p>
+              <p className="text-slate-800 font-semibold">No vacancies here</p>
+              <p className="text-slate-500 text-sm mt-1">
+                {canCreate
+                  ? 'Click "New vacancy" to create a draft.'
+                  : "Nothing to show for this filter right now."}
+              </p>
             </div>
           ) : (
             vacancies.map((v) => (
@@ -527,7 +582,7 @@ export default function RecruitmentVacancies() {
                 key={v.id}
                 className="grid grid-cols-1 md:grid-cols-[2.2fr_1.2fr_1fr_0.7fr_1fr_1.1fr_130px] gap-2 md:gap-4 px-6 py-4 border-t border-slate-100 items-center text-sm"
               >
-                                <div>
+                <div>
                   <span className="font-semibold text-slate-900">{v.title}</span>
                   {v.status === "DRAFT" && v.rejectionReason && (
                     <p className="mt-1 text-xs text-red-600">Sent back: {v.rejectionReason}</p>
@@ -542,8 +597,8 @@ export default function RecruitmentVacancies() {
                     {statusLabel(v.status)}
                   </span>
                 </span>
-                               <span className="flex md:justify-end gap-1">
-                  {v.status === "DRAFT" && (
+                <span className="flex md:justify-end gap-1">
+                  {v.status === "DRAFT" && canCreate && (
                     <>
                       <button
                         title="Submit for approval"
@@ -570,7 +625,7 @@ export default function RecruitmentVacancies() {
                       </button>
                     </>
                   )}
-                  {v.status === "PENDING_APPROVAL" && (
+                  {v.status === "PENDING_APPROVAL" && canApprove && (
                     <>
                       <button
                         title="Approve"
@@ -590,7 +645,7 @@ export default function RecruitmentVacancies() {
                       </button>
                     </>
                   )}
-                                   {v.status === "APPROVED" && (
+                  {v.status === "APPROVED" && canPublish && (
                     <button
                       title="Publish"
                       disabled={busyId === v.id}
@@ -600,7 +655,7 @@ export default function RecruitmentVacancies() {
                       {busyId === v.id ? <Loader2 size={16} className="animate-spin" /> : <Megaphone size={16} />}
                     </button>
                   )}
-                  {v.status === "PUBLISHED" && (
+                  {v.status === "PUBLISHED" && canPublish && (
                     <button
                       title="Close vacancy"
                       disabled={busyId === v.id}
@@ -610,7 +665,7 @@ export default function RecruitmentVacancies() {
                       <Ban size={16} />
                     </button>
                   )}
-                  {v.status === "CLOSED" && <span className="text-slate-300">—</span>}
+                  {!hasActions(v) && <span className="text-slate-300">—</span>}
                 </span>
               </div>
             ))
@@ -621,7 +676,7 @@ export default function RecruitmentVacancies() {
       {modal && (
         <VacancyModal vacancy={modal.vacancy} onClose={() => setModal(null)} onSaved={handleSaved} />
       )}
-            {deleting && (
+      {deleting && (
         <DeleteConfirmModal
           vacancy={deleting}
           busy={busyId === deleting.id}
@@ -629,7 +684,7 @@ export default function RecruitmentVacancies() {
           onConfirm={confirmDelete}
         />
       )}
-            {rejecting && (
+      {rejecting && (
         <RejectModal
           vacancy={rejecting}
           busy={busyId === rejecting.id}
@@ -637,7 +692,7 @@ export default function RecruitmentVacancies() {
           onConfirm={confirmReject}
         />
       )}
-            {closing && (
+      {closing && (
         <CloseConfirmModal
           vacancy={closing}
           busy={busyId === closing.id}
