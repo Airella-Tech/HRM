@@ -2,6 +2,7 @@ package com.airella.hrm.service;
 
 import com.airella.hrm.dto.ApplyJobRequest;
 import com.airella.hrm.dto.CandidateApplicationDTO;
+import com.airella.hrm.dto.CandidateApplicationTrackDTO;
 import com.airella.hrm.exception.BusinessException;
 import com.airella.hrm.exception.ResourceNotFoundException;
 import com.airella.hrm.model.*;
@@ -42,17 +43,20 @@ public class CandidateApplicationService {
     private final JobVacancyRepository vacancyRepo;
     private final AuthService authService;
     private final AuditService auditService;
+    private final EmailService emailService;
 
     public CandidateApplicationService(CandidateApplicationRepository applicationRepo,
                                      CandidateApplicationDocumentRepository documentRepo,
                                      JobVacancyRepository vacancyRepo,
                                      AuthService authService,
-                                     AuditService auditService) {
+                                     AuditService auditService,
+                                     EmailService emailService) {
         this.applicationRepo = applicationRepo;
         this.documentRepo = documentRepo;
         this.vacancyRepo = vacancyRepo;
         this.authService = authService;
         this.auditService = auditService;
+        this.emailService = emailService;
     }
 
     // =========================================================================
@@ -171,6 +175,19 @@ public class CandidateApplicationService {
                 "Candidate " + savedApp.getCandidateName() + " applied for '" + vacancy.getTitle() + "' [Tracking: " + savedApp.getTrackingCode() + "]",
                 savedApp.getCompanyRef()
         );
+
+        // Send confirmation email with tracking code & direct tracking link
+        try {
+            emailService.sendApplicationConfirmation(
+                    savedApp.getEmail(),
+                    savedApp.getCandidateName(),
+                    vacancy.getTitle(),
+                    savedApp.getCompanyRef(),
+                    savedApp.getTrackingCode()
+            );
+        } catch (Exception e) {
+            log.error("Failed to send application confirmation email to {}: {}", savedApp.getEmail(), e.getMessage());
+        }
 
         return toDto(savedApp);
     }
@@ -348,5 +365,54 @@ public class CandidateApplicationService {
         dto.setReviewedAt(a.getReviewedAt());
 
         return dto;
+    }
+
+    // =========================================================================
+    // Public Application Status Tracking
+    // =========================================================================
+
+    @Transactional(readOnly = true)
+    public CandidateApplicationTrackDTO trackApplication(String trackingCode, String email) {
+        if (trackingCode == null || trackingCode.isBlank()) {
+            throw new BusinessException("Tracking code is required.");
+        }
+        if (email == null || email.isBlank()) {
+            throw new BusinessException("Email address is required.");
+        }
+
+        CandidateApplication app = applicationRepo
+                .findByTrackingCodeIgnoreCaseAndEmailIgnoreCase(trackingCode.trim(), email.trim().toLowerCase(Locale.ROOT))
+                .orElseThrow(() -> new ResourceNotFoundException("Application", "trackingCode", trackingCode));
+
+        return toTrackDto(app);
+    }
+
+    private CandidateApplicationTrackDTO toTrackDto(CandidateApplication a) {
+        String status = a.getStatus() != null ? a.getStatus().name() : "NEW";
+        String statusDescription;
+
+        switch (status) {
+            case "NEW" -> statusDescription = "Application received and queued for review.";
+            case "UNDER_REVIEW" -> statusDescription = "Your application is currently being reviewed by our recruitment team.";
+            case "SHORTLISTED" -> statusDescription = "Congratulations! Your profile has been shortlisted for the next stage.";
+            case "REJECTED" -> statusDescription = "Thank you for applying. After careful review, we have decided to proceed with other candidates.";
+            default -> statusDescription = "Application is in progress.";
+        }
+
+        return CandidateApplicationTrackDTO.builder()
+                .trackingCode(a.getTrackingCode())
+                .candidateName(a.getCandidateName())
+                .email(a.getEmail())
+                .vacancyId(a.getVacancy() != null ? a.getVacancy().getId() : null)
+                .jobTitle(a.getVacancy() != null ? a.getVacancy().getTitle() : null)
+                .department(a.getVacancy() != null ? a.getVacancy().getDepartment() : null)
+                .companyRef(a.getCompanyRef())
+                .status(status)
+                .statusDescription(statusDescription)
+                .eligibilityStatus(a.getEligibilityStatus() != null ? a.getEligibilityStatus().name() : "PENDING")
+                .appliedDate(a.getCreatedAt() != null ? a.getCreatedAt().toLocalDate() : null)
+                .createdAt(a.getCreatedAt())
+                .updatedAt(a.getUpdatedAt())
+                .build();
     }
 }
