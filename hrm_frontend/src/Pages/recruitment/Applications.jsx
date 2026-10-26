@@ -4,7 +4,6 @@ import { PageLayout } from "../../components/PageLayout";
 import { recruitmentApi } from "../../services/api";
 import RecruitmentApplicationReview from "./ApplicationReview";
 import RecruitmentCandidateShortlist from "./CandidateShortlist";
-import RecruitmentResumeDownload from "./ResumeDownload";
 import {
   FileText,
   Search,
@@ -249,8 +248,25 @@ export default function RecruitmentApplications() {
   }, [applications, search, statusFilter, vacancyFilter]);
 
   // Resume Download Handler
-  const handleDownloadResume = (app, e) => {
+  const handleDownloadResume = async (app, e) => {
     if (e) e.stopPropagation();
+    try {
+      if (app.id && typeof recruitmentApi?.downloadResume === "function") {
+        const blob = await recruitmentApi.downloadResume(app.id);
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = app.resumeFileName || `${app.candidateName.replace(/\s+/g, "_")}_CV.pdf`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        return;
+      }
+    } catch (err) {
+      console.warn("Backend resume download note, using local summary:", err);
+    }
+
     try {
       const content = `Resume of ${app.candidateName}\n\nEmail: ${app.email}\nPhone: ${app.phone}\nRole: ${app.jobTitle}\n\nEducation: ${app.education}\nExperience: ${app.experienceYears} years\n\nSummary:\n${app.summary}\n\nSkills:\n${(app.skills || []).join(", ")}`;
       const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
@@ -284,9 +300,6 @@ export default function RecruitmentApplications() {
   }
   if (viewParam === "shortlist") {
     return <RecruitmentCandidateShortlist />;
-  }
-  if (viewParam === "resumes" || viewParam === "download" || viewParam === "resume") {
-    return <RecruitmentResumeDownload />;
   }
 
   return (

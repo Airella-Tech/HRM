@@ -1,4 +1,4 @@
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import Login from "./Pages/login.jsx";
 import Hero from "./Pages/hero.jsx";
 import About from "./Pages/about.jsx";
@@ -43,7 +43,6 @@ import RecruitmentVacancies from "./Pages/recruitment/Vacancies.jsx";
 import RecruitmentApplications from "./Pages/recruitment/Applications.jsx";
 import RecruitmentApplicationReview from "./Pages/recruitment/ApplicationReview.jsx";
 import RecruitmentCandidateShortlist from "./Pages/recruitment/CandidateShortlist.jsx";
-import RecruitmentResumeDownload from "./Pages/recruitment/ResumeDownload.jsx";
 import RecruitmentCandidates from "./Pages/recruitment/Candidates.jsx";
 import RecruitmentInterviews from "./Pages/recruitment/Interviews.jsx";
 import RecruitmentEvaluations from "./Pages/recruitment/Evaluations.jsx";
@@ -107,10 +106,10 @@ function App() {
       <Route path="/recruitment/applications" element={<RecruitmentApplications />} />
       <Route path="/recruitment/applications/review" element={<RecruitmentApplicationReview />} />
       <Route path="/recruitment/applications/shortlist" element={<RecruitmentCandidateShortlist />} />
-      <Route path="/recruitment/applications/resumes" element={<RecruitmentResumeDownload />} />
+      <Route path="/recruitment/applications/resumes" element={<Navigate to="/recruitment/applications" replace />} />
       <Route path="/recruitment/review-applications" element={<RecruitmentApplicationReview />} />
       <Route path="/recruitment/shortlist" element={<RecruitmentCandidateShortlist />} />
-      <Route path="/recruitment/resumes" element={<RecruitmentResumeDownload />} />
+      <Route path="/recruitment/resumes" element={<Navigate to="/recruitment/applications" replace />} />
       <Route path="/recruitment/candidates" element={<RecruitmentCandidates />} />
       <Route path="/recruitment/interviews" element={<RecruitmentInterviews />} />
       <Route path="/recruitment/evaluations" element={<RecruitmentEvaluations />} />

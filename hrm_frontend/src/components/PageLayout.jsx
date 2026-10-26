@@ -119,12 +119,6 @@ const NAV = {
       path: "/recruitment/applications/shortlist",
       requiresAny: ["APPLICATION_SHORTLIST", "SHORTLIST_CANDIDATES", "APPLICATION_VIEW"],
     },
-    {
-      name: "Download Resumes",
-      icon: FileDown,
-      path: "/recruitment/applications/resumes",
-      requiresAny: ["RESUME_DOWNLOAD", "DOWNLOAD_RESUMES", "APPLICATION_VIEW"],
-    },
 
     // Interviews & Evaluations
     {
@@ -262,8 +256,6 @@ export const PageLayout = ({
                 "REVIEW_APPLICATIONS",
                 "APPLICATION_SHORTLIST",
                 "SHORTLIST_CANDIDATES",
-                "RESUME_DOWNLOAD",
-                "DOWNLOAD_RESUMES",
                 "VACANCY_CREATE",
                 "CREATE_VACANCIES",
                 "VACANCY_APPROVE",
@@ -291,8 +283,6 @@ export const PageLayout = ({
               "REVIEW_APPLICATIONS",
               "APPLICATION_SHORTLIST",
               "SHORTLIST_CANDIDATES",
-              "RESUME_DOWNLOAD",
-              "DOWNLOAD_RESUMES",
               "VACANCY_CREATE",
               "CREATE_VACANCIES",
               "VACANCY_APPROVE",
