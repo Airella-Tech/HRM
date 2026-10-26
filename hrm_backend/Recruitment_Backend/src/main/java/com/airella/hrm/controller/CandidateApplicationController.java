@@ -30,7 +30,7 @@ public class CandidateApplicationController {
      * Follows the Employee_Backend AllowanceRequestController pattern.
      */
     @GetMapping("/{id}/resume")
-    @PreAuthorize("@perm.has('RESUME_DOWNLOAD')")
+    @PreAuthorize("@perm.has('APPLICATION_VIEW')")
     public ResponseEntity<byte[]> getResume(
             @PathVariable Long id,
             @RequestParam(required = false, defaultValue = "false") boolean download) {
