@@ -20,108 +20,37 @@ import {
   ChevronRight,
 } from "lucide-react";
 
-const INITIAL_REVIEW_CANDIDATES = [
-  {
-    id: 1,
-    candidateName: "Sophia Martinez",
-    email: "sophia.m@example.com",
-    jobTitle: "Senior Frontend Engineer",
-    department: "Engineering",
-    experienceYears: 5,
-    education: "B.S. in Computer Science",
-    appliedDate: "2026-10-18",
-    screeningScore: 88,
-    screeningNotes: "Strong background with React architecture and performance optimization.",
-    eligibilityStatus: "ELIGIBLE",
-    criteria: {
-      experienceMatch: true,
-      degreeRequirement: true,
-      coreSkillsMatch: true,
-      communicationCheck: true,
-    },
-    status: "UNDER_REVIEW",
-  },
-  {
-    id: 2,
-    candidateName: "Amara Patel",
-    email: "amara.patel@example.com",
-    jobTitle: "DevOps & Cloud Engineer",
-    department: "Infrastructure",
-    experienceYears: 6,
-    education: "M.S. in Software Systems",
-    appliedDate: "2026-10-20",
-    screeningScore: null,
-    screeningNotes: "",
-    eligibilityStatus: "PENDING",
-    criteria: {
-      experienceMatch: true,
-      degreeRequirement: true,
-      coreSkillsMatch: false,
-      communicationCheck: false,
-    },
-    status: "NEW",
-  },
-  {
-    id: 3,
-    candidateName: "Ethan Davis",
-    email: "ethan.davis@example.com",
-    jobTitle: "Full Stack Developer",
-    department: "Engineering",
-    experienceYears: 3,
-    education: "B.S. in Information Systems",
-    appliedDate: "2026-10-20",
-    screeningScore: null,
-    screeningNotes: "",
-    eligibilityStatus: "PENDING",
-    criteria: {
-      experienceMatch: false,
-      degreeRequirement: true,
-      coreSkillsMatch: true,
-      communicationCheck: false,
-    },
-    status: "NEW",
-  },
-  {
-    id: 4,
-    candidateName: "Liam Johnson",
-    email: "liam.j@example.com",
-    jobTitle: "UI/UX Product Designer",
-    department: "Product Design",
-    experienceYears: 4,
-    education: "B.A. in Digital Interaction Design",
-    appliedDate: "2026-10-19",
-    screeningScore: 92,
-    screeningNotes: "Portfolio exhibits excellent mobile design systems and design thinking.",
-    eligibilityStatus: "ELIGIBLE",
-    criteria: {
-      experienceMatch: true,
-      degreeRequirement: true,
-      coreSkillsMatch: true,
-      communicationCheck: true,
-    },
-    status: "UNDER_REVIEW",
-  },
-];
+
 
 export default function RecruitmentApplicationReview() {
-  const [candidates, setCandidates] = useState(INITIAL_REVIEW_CANDIDATES);
+  const [candidates, setCandidates] = useState([]);
   const [search, setSearch] = useState("");
   const [statusTab, setStatusTab] = useState("ALL");
   const [activeReviewCandidate, setActiveReviewCandidate] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let cancelled = false;
     if (typeof recruitmentApi?.getApplications === "function") {
+      setLoading(true);
       recruitmentApi
         .getApplications()
         .then((res) => {
-          if (!cancelled && res?.data && Array.isArray(res.data) && res.data.length > 0) {
-            setCandidates(res.data);
+          if (!cancelled) {
+            if (res?.data && Array.isArray(res.data)) {
+              setCandidates(res.data);
+            } else {
+              setCandidates([]);
+            }
           }
         })
         .catch((err) => {
-          console.warn("Could not load backend applications for review, using initial dataset:", err);
+          console.warn("Could not load backend applications for review:", err);
+          if (!cancelled) setCandidates([]);
+        })
+        .finally(() => {
+          if (!cancelled) setLoading(false);
         });
     }
     return () => {
@@ -305,8 +234,17 @@ export default function RecruitmentApplicationReview() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {filteredCandidates.map((c) => (
-                  <tr key={c.id} className="hover:bg-slate-50/80 transition-colors">
+                {filteredCandidates.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="px-6 py-12 text-center text-slate-400 text-xs">
+                      {loading
+                        ? "Loading candidates for screening..."
+                        : "No candidate applications currently available for review."}
+                    </td>
+                  </tr>
+                ) : (
+                  filteredCandidates.map((c) => (
+                    <tr key={c.id} className="hover:bg-slate-50/80 transition-colors">
                     <td className="px-6 py-4">
                       <div className="font-semibold text-slate-900">{c.candidateName}</div>
                       <div className="text-xs text-slate-400">{c.email}</div>
@@ -344,7 +282,8 @@ export default function RecruitmentApplicationReview() {
                       </button>
                     </td>
                   </tr>
-                ))}
+                ))
+              )}
               </tbody>
             </table>
           </div>

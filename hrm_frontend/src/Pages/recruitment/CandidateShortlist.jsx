@@ -22,78 +22,7 @@ import {
   Loader2,
 } from "lucide-react";
 
-const INITIAL_SHORTLIST_CANDIDATES = [
-  {
-    id: 1,
-    candidateName: "Sophia Martinez",
-    email: "sophia.m@example.com",
-    jobTitle: "Senior Frontend Engineer",
-    department: "Engineering",
-    experienceYears: 5,
-    matchScore: 92,
-    screeningScore: 88,
-    skillsMatchCount: "5 of 5 skills matched",
-    skillsMatched: ["React", "TypeScript", "Next.js", "Redux", "GraphQL"],
-    status: "UNDER_REVIEW", // can be SHORTLISTED or REJECTED
-    rejectionReason: null,
-  },
-  {
-    id: 2,
-    candidateName: "Liam Johnson",
-    email: "liam.j@example.com",
-    jobTitle: "UI/UX Product Designer",
-    department: "Product Design",
-    experienceYears: 4,
-    matchScore: 94,
-    screeningScore: 92,
-    skillsMatchCount: "6 of 6 skills matched",
-    skillsMatched: ["Figma", "UI Design", "User Research", "Wireframing", "Prototyping", "Design Systems"],
-    status: "UNDER_REVIEW",
-    rejectionReason: null,
-  },
-  {
-    id: 3,
-    candidateName: "Amara Patel",
-    email: "amara.patel@example.com",
-    jobTitle: "DevOps & Cloud Engineer",
-    department: "Infrastructure",
-    experienceYears: 6,
-    matchScore: 84,
-    screeningScore: 78,
-    skillsMatchCount: "4 of 5 skills matched",
-    skillsMatched: ["AWS", "Docker", "Kubernetes", "Linux"],
-    status: "UNDER_REVIEW",
-    rejectionReason: null,
-  },
-  {
-    id: 4,
-    candidateName: "Ethan Davis",
-    email: "ethan.davis@example.com",
-    jobTitle: "Full Stack Developer",
-    department: "Engineering",
-    experienceYears: 3,
-    matchScore: 68,
-    screeningScore: 65,
-    skillsMatchCount: "3 of 5 skills matched",
-    skillsMatched: ["JavaScript", "Node.js", "React"],
-    status: "UNDER_REVIEW",
-    rejectionReason: null,
-  },
-  {
-    id: 5,
-    candidateName: "Chloe Dubois",
-    email: "chloe.dubois@example.com",
-    jobTitle: "HR & Recruitment Coordinator",
-    department: "Human Resources",
-    experienceYears: 2,
-    matchScore: 54,
-    screeningScore: 50,
-    skillsMatchCount: "2 of 5 skills matched",
-    skillsMatched: ["Onboarding", "HR Policies"],
-    status: "REJECTED",
-    rejectionReason: "Experience below required threshold for vacancy",
-  },
-];
+
 
 const REJECTION_REASONS = [
   "Experience below required threshold for vacancy",
@@ -122,22 +51,32 @@ function normalizeCandidate(c) {
 }
 
 export default function RecruitmentCandidateShortlist() {
-  const [candidates, setCandidates] = useState(INITIAL_SHORTLIST_CANDIDATES);
+  const [candidates, setCandidates] = useState([]);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL");
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let cancelled = false;
     if (typeof recruitmentApi?.getApplications === "function") {
+      setLoading(true);
       recruitmentApi
         .getApplications()
         .then((res) => {
-          if (!cancelled && res?.data && Array.isArray(res.data) && res.data.length > 0) {
-            setCandidates(res.data.map(normalizeCandidate));
+          if (!cancelled) {
+            if (res?.data && Array.isArray(res.data)) {
+              setCandidates(res.data.map(normalizeCandidate));
+            } else {
+              setCandidates([]);
+            }
           }
         })
         .catch((err) => {
-          console.warn("Could not load backend applications for shortlisting, using initial dataset:", err);
+          console.warn("Could not load backend applications for shortlisting:", err);
+          if (!cancelled) setCandidates([]);
+        })
+        .finally(() => {
+          if (!cancelled) setLoading(false);
         });
     }
     return () => {
@@ -371,8 +310,17 @@ export default function RecruitmentCandidateShortlist() {
         </div>
 
         {/* ── Candidates Grid with Automated Match Badges ── */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {filteredCandidates.map((cand) => {
+        {filteredCandidates.length === 0 ? (
+          <div className="bg-white rounded-2xl p-12 text-center border border-slate-200/80 shadow-sm max-w-md mx-auto">
+            <p className="text-xs text-slate-400">
+              {loading
+                ? "Loading candidates for shortlisting..."
+                : "No candidate applications currently available for shortlisting."}
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {filteredCandidates.map((cand) => {
             const score = cand.matchScore ?? cand.screeningScore ?? 0;
             const isAutoEligible = score >= threshold;
             const isShortlisted = cand.status === "SHORTLISTED";
@@ -501,7 +449,8 @@ export default function RecruitmentCandidateShortlist() {
             );
           })}
         </div>
-      </div>
+      )}
+    </div>
 
       {/* Structured Rejection Modal with Reasons */}
       {rejectingCandidate && (
