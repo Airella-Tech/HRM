@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo } from "react";
-import { useLocation, Link, useNavigate } from "react-router-dom";
+import { useLocation, Link } from "react-router-dom";
 import { PageLayout } from "../../components/PageLayout";
 import { recruitmentApi } from "../../services/api";
 import RecruitmentApplicationReview from "./ApplicationReview";
@@ -107,7 +107,6 @@ const AVATAR_GRADIENTS = [
 
 export default function RecruitmentApplications() {
   const location = useLocation();
-  const navigate = useNavigate();
   const searchParams = new URLSearchParams(location.search);
   const viewParam = (searchParams.get("view") || "").toLowerCase();
 
