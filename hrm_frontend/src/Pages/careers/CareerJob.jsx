@@ -266,7 +266,7 @@ export default function CareerJob() {
                   </p>
                   <div className="pt-1.5">
                     <Link
-                      to={`/careers/track?company=${encodeURIComponent(company)}`}
+                      to={`/careers/track?company=${encodeURIComponent(company)}&code=${encodeURIComponent(applySuccess.trackingCode)}&email=${encodeURIComponent(applyForm.email)}`}
                       className="font-semibold text-indigo-700 hover:text-indigo-900 underline block"
                     >
                       Track Application Status &rarr;

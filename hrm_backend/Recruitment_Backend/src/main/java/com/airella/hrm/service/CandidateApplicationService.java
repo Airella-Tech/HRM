@@ -2,6 +2,7 @@ package com.airella.hrm.service;
 
 import com.airella.hrm.dto.ApplyJobRequest;
 import com.airella.hrm.dto.CandidateApplicationDTO;
+import com.airella.hrm.dto.CandidateApplicationTrackDTO;
 import com.airella.hrm.exception.BusinessException;
 import com.airella.hrm.exception.ResourceNotFoundException;
 import com.airella.hrm.model.*;
@@ -27,8 +28,10 @@ import java.util.*;
 
 /**
  * Service for Candidate Application intake and database-backed PDF storage.
- * Follows the Employee_Backend pattern (byte[] stored as PostgreSQL bytea in a separate table).
- * Extracts CV text via Apache PDFBox for recruitment screening without reading binary PDFs.
+ * Follows the Employee_Backend pattern (byte[] stored as PostgreSQL bytea in a
+ * separate table).
+ * Extracts CV text via Apache PDFBox for recruitment screening without reading
+ * binary PDFs.
  */
 @Service
 @Transactional
@@ -42,27 +45,28 @@ public class CandidateApplicationService {
     private final JobVacancyRepository vacancyRepo;
     private final AuthService authService;
     private final AuditService auditService;
+    private final EmailService emailService;
 
     public CandidateApplicationService(CandidateApplicationRepository applicationRepo,
-                                     CandidateApplicationDocumentRepository documentRepo,
-                                     JobVacancyRepository vacancyRepo,
-                                     AuthService authService,
-                                     AuditService auditService) {
+            CandidateApplicationDocumentRepository documentRepo,
+            JobVacancyRepository vacancyRepo,
+            AuthService authService,
+            AuditService auditService,
+            EmailService emailService) {
         this.applicationRepo = applicationRepo;
         this.documentRepo = documentRepo;
         this.vacancyRepo = vacancyRepo;
         this.authService = authService;
         this.auditService = auditService;
+        this.emailService = emailService;
     }
 
-    // =========================================================================
     // Public Application Submission & Database-Backed Document Storage
-    // =========================================================================
 
     public CandidateApplicationDTO submitApplication(Long vacancyId,
-                                                   String companyRef,
-                                                   ApplyJobRequest request,
-                                                   MultipartFile resumeFile) {
+            String companyRef,
+            ApplyJobRequest request,
+            MultipartFile resumeFile) {
         if (vacancyId == null) {
             throw new BusinessException("Job vacancy ID is required.");
         }
@@ -89,11 +93,11 @@ public class CandidateApplicationService {
 
         // 2. 90-Day Duplicate Submission Prevention (same email + vacancyId)
         LocalDateTime cutoff = LocalDateTime.now().minusDays(90);
-        if (applicationRepo.existsByEmailIgnoreCaseAndVacancyIdAndCreatedAtGreaterThanEqual(email, vacancy.getId(), cutoff)) {
+        if (applicationRepo.existsByEmailIgnoreCaseAndVacancyIdAndCreatedAtGreaterThanEqual(email, vacancy.getId(),
+                cutoff)) {
             throw new BusinessException(
                     "You have already applied for the '" + vacancy.getTitle() +
-                    "' role within the last 90 days. Duplicate submissions are not permitted."
-            );
+                            "' role within the last 90 days. Duplicate submissions are not permitted.");
         }
 
         // 3. Strict PDF Validation & Read Bytes (Following Employee_Backend convention)
@@ -130,14 +134,16 @@ public class CandidateApplicationService {
             for (String s : request.getSkills()) {
                 if (s != null && s.contains(",")) {
                     for (String part : s.split(",")) {
-                        if (!part.trim().isEmpty()) parsedSkills.add(part.trim());
+                        if (!part.trim().isEmpty())
+                            parsedSkills.add(part.trim());
                     }
                 } else if (s != null && !s.trim().isEmpty()) {
                     parsedSkills.add(s.trim());
                 }
             }
             app.setSkills(parsedSkills.isEmpty() && vacancy.getRequiredSkills() != null
-                    ? new LinkedHashSet<>(vacancy.getRequiredSkills()) : parsedSkills);
+                    ? new LinkedHashSet<>(vacancy.getRequiredSkills())
+                    : parsedSkills);
         } else if (vacancy.getRequiredSkills() != null) {
             app.setSkills(new LinkedHashSet<>(vacancy.getRequiredSkills()));
         }
@@ -154,7 +160,8 @@ public class CandidateApplicationService {
 
         CandidateApplication savedApp = applicationRepo.save(app);
 
-        // 6. Save PDF Binary into separate CandidateApplicationDocument table (PostgreSQL bytea)
+        // 6. Save PDF Binary into separate CandidateApplicationDocument table
+        // (PostgreSQL bytea)
         CandidateApplicationDocument document = new CandidateApplicationDocument();
         document.setApplicationId(savedApp.getId());
         document.setFileName(originalFilename);
@@ -168,9 +175,21 @@ public class CandidateApplicationService {
                 "APPLY",
                 "CandidateApplication",
                 savedApp.getId(),
-                "Candidate " + savedApp.getCandidateName() + " applied for '" + vacancy.getTitle() + "' [Tracking: " + savedApp.getTrackingCode() + "]",
-                savedApp.getCompanyRef()
-        );
+                "Candidate " + savedApp.getCandidateName() + " applied for '" + vacancy.getTitle() + "' [Tracking: "
+                        + savedApp.getTrackingCode() + "]",
+                savedApp.getCompanyRef());
+
+        // Send confirmation email with tracking code & direct tracking link
+        try {
+            emailService.sendApplicationConfirmation(
+                    savedApp.getEmail(),
+                    savedApp.getCandidateName(),
+                    vacancy.getTitle(),
+                    savedApp.getCompanyRef(),
+                    savedApp.getTrackingCode());
+        } catch (Exception e) {
+            log.error("Failed to send application confirmation email to {}: {}", savedApp.getEmail(), e.getMessage());
+        }
 
         return toDto(savedApp);
     }
@@ -188,15 +207,15 @@ public class CandidateApplicationService {
         applicationRepo.save(app);
 
         return documentRepo.findByApplicationId(applicationId)
-                .orElseThrow(() -> new ResourceNotFoundException("CandidateApplicationDocument", "applicationId", applicationId));
+                .orElseThrow(() -> new ResourceNotFoundException("CandidateApplicationDocument", "applicationId",
+                        applicationId));
     }
 
-    // =========================================================================
     // Validation & Apache PDFBox Text Extraction Helpers
-    // =========================================================================
 
     /**
-     * Reads and validates the uploaded file following Employee_Backend readPdf conventions:
+     * Reads and validates the uploaded file following Employee_Backend readPdf
+     * conventions:
      * - Checks not null / not empty
      * - Checks size <= 5 MB
      * - Checks filename ends with .pdf
@@ -223,7 +242,8 @@ public class CandidateApplicationService {
         }
 
         // Validate PDF binary magic bytes: %PDF-
-        boolean isPdf = data.length >= 5 && data[0] == '%' && data[1] == 'P' && data[2] == 'D' && data[3] == 'F' && data[4] == '-';
+        boolean isPdf = data.length >= 5 && data[0] == '%' && data[1] == 'P' && data[2] == 'D' && data[3] == 'F'
+                && data[4] == '-';
         if (!isPdf) {
             throw new BusinessException("Only valid PDF files can be uploaded as resumes.");
         }
@@ -232,7 +252,8 @@ public class CandidateApplicationService {
     }
 
     /**
-     * Extracts plain text from the PDF binary using Apache PDFBox for ATS screening.
+     * Extracts plain text from the PDF binary using Apache PDFBox for ATS
+     * screening.
      */
     private String extractTextFromPdf(byte[] pdfBytes) {
         try (PDDocument document = Loader.loadPDF(pdfBytes)) {
@@ -263,15 +284,106 @@ public class CandidateApplicationService {
         return "APP-" + UUID.randomUUID().toString().replace("-", "").substring(0, 8).toUpperCase(Locale.ROOT);
     }
 
+    // =========================================================================
+    // Authorized Staff Candidate Application Retrieval
+    // =========================================================================
+
+    /**
+     * Retrieves all candidate applications for authorized HR users.
+     * Filterable by vacancyId, status, and search keyword.
+     */
+    @Transactional(readOnly = true)
+    public List<CandidateApplicationDTO> getApplications(Long vacancyId, String statusStr, String search) {
+        List<CandidateApplication> applications;
+
+        if (isFullAccessUser()) {
+            String companyRef = safeGetCurrentCompanyRef();
+            Long companyId = safeGetCurrentCompanyId();
+            if (companyRef != null || companyId != null) {
+                applications = applicationRepo.findAllByCompany(companyRef, companyId);
+            } else {
+                applications = applicationRepo.findAllWithDetails();
+            }
+        } else {
+            String companyRef = safeGetCurrentCompanyRef();
+            Long companyId = safeGetCurrentCompanyId();
+            if (companyRef == null && companyId == null) {
+                return List.of();
+            }
+            applications = applicationRepo.findAllByCompany(companyRef, companyId);
+        }
+
+        return applications.stream()
+                .filter(app -> {
+                    // Filter by vacancyId if provided
+                    if (vacancyId != null) {
+                        if (app.getVacancy() == null || !vacancyId.equals(app.getVacancy().getId())) {
+                            return false;
+                        }
+                    }
+                    // Filter by status if provided and not ALL
+                    if (statusStr != null && !statusStr.isBlank() && !"ALL".equalsIgnoreCase(statusStr.trim())) {
+                        if (app.getStatus() == null || !app.getStatus().name().equalsIgnoreCase(statusStr.trim())) {
+                            return false;
+                        }
+                    }
+                    // Filter by search query if provided
+                    if (search != null && !search.isBlank()) {
+                        String query = search.trim().toLowerCase(Locale.ROOT);
+                        boolean matchesName = app.getCandidateName() != null && app.getCandidateName().toLowerCase(Locale.ROOT).contains(query);
+                        boolean matchesEmail = app.getEmail() != null && app.getEmail().toLowerCase(Locale.ROOT).contains(query);
+                        boolean matchesPhone = app.getPhone() != null && app.getPhone().toLowerCase(Locale.ROOT).contains(query);
+                        boolean matchesCode = app.getTrackingCode() != null && app.getTrackingCode().toLowerCase(Locale.ROOT).contains(query);
+                        boolean matchesJob = app.getVacancy() != null && app.getVacancy().getTitle() != null && app.getVacancy().getTitle().toLowerCase(Locale.ROOT).contains(query);
+                        boolean matchesDept = app.getVacancy() != null && app.getVacancy().getDepartment() != null && app.getVacancy().getDepartment().toLowerCase(Locale.ROOT).contains(query);
+                        return matchesName || matchesEmail || matchesPhone || matchesCode || matchesJob || matchesDept;
+                    }
+                    return true;
+                })
+                .map(this::toDto)
+                .toList();
+    }
+
+    /**
+     * Retrieves a single candidate application profile by ID.
+     */
+    @Transactional(readOnly = true)
+    public CandidateApplicationDTO getApplicationById(Long id) {
+        CandidateApplication app = findApplicationForCurrentStaff(id);
+        return toDto(app);
+    }
+
     private CandidateApplication findApplicationForCurrentStaff(Long id) {
-        String companyRef = authService.getCurrentCompanyRef();
+        if (isFullAccessUser()) {
+            return applicationRepo.findById(id)
+                    .orElseThrow(() -> new ResourceNotFoundException("CandidateApplication", "id", id));
+        }
+
+        String companyRef = safeGetCurrentCompanyRef();
         Long companyId = safeGetCurrentCompanyId();
 
-        CandidateApplication app = applicationRepo.findByIdAndCompany(id, companyRef, companyId)
-                .orElseThrow(() -> new ResourceNotFoundException("CandidateApplication", "id", id));
+        CandidateApplication app = (companyRef != null || companyId != null)
+                ? applicationRepo.findByIdAndCompany(id, companyRef, companyId)
+                        .orElseThrow(() -> new ResourceNotFoundException("CandidateApplication", "id", id))
+                : applicationRepo.findById(id)
+                        .orElseThrow(() -> new ResourceNotFoundException("CandidateApplication", "id", id));
 
         validateCompanyAccess(app.getCompanyRef(), app.getCompanyId());
         return app;
+    }
+
+    private boolean isFullAccessUser() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        return auth != null && auth.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN") || a.getAuthority().equals("ROLE_HR_MANAGER"));
+    }
+
+    private String safeGetCurrentCompanyRef() {
+        try {
+            return authService.getCurrentCompanyRef();
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     private Long safeGetCurrentCompanyId() {
@@ -283,12 +395,16 @@ public class CandidateApplicationService {
     }
 
     private void validateCompanyAccess(String entityCompanyRef, Long entityCompanyId) {
+        if (isFullAccessUser()) {
+            return;
+        }
+
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth == null || !auth.isAuthenticated()) {
             throw new AccessDeniedException("Authentication required.");
         }
 
-        String userCompanyRef = authService.getCurrentCompanyRef();
+        String userCompanyRef = safeGetCurrentCompanyRef();
         Long userCompanyId = safeGetCurrentCompanyId();
 
         boolean matchRef = (userCompanyRef != null && entityCompanyRef != null &&
@@ -296,7 +412,7 @@ public class CandidateApplicationService {
         boolean matchId = (userCompanyId != null && entityCompanyId != null &&
                 userCompanyId.equals(entityCompanyId));
 
-        if (!matchRef && !matchId) {
+        if (!matchRef && !matchId && (userCompanyRef != null || userCompanyId != null)) {
             throw new AccessDeniedException("Access denied: You cannot view records from another company.");
         }
     }
@@ -348,5 +464,56 @@ public class CandidateApplicationService {
         dto.setReviewedAt(a.getReviewedAt());
 
         return dto;
+    }
+
+    // Public Application Status Tracking
+
+    @Transactional(readOnly = true)
+    public CandidateApplicationTrackDTO trackApplication(String trackingCode, String email) {
+        if (trackingCode == null || trackingCode.isBlank()) {
+            throw new BusinessException("Tracking code is required.");
+        }
+        if (email == null || email.isBlank()) {
+            throw new BusinessException("Email address is required.");
+        }
+
+        CandidateApplication app = applicationRepo
+                .findByTrackingCodeIgnoreCaseAndEmailIgnoreCase(trackingCode.trim(),
+                        email.trim().toLowerCase(Locale.ROOT))
+                .orElseThrow(() -> new ResourceNotFoundException("Application", "trackingCode", trackingCode));
+
+        return toTrackDto(app);
+    }
+
+    private CandidateApplicationTrackDTO toTrackDto(CandidateApplication a) {
+        String status = a.getStatus() != null ? a.getStatus().name() : "NEW";
+        String statusDescription;
+
+        switch (status) {
+            case "NEW" -> statusDescription = "Application received and queued for review.";
+            case "UNDER_REVIEW" ->
+                statusDescription = "Your application is currently being reviewed by our recruitment team.";
+            case "SHORTLISTED" ->
+                statusDescription = "Congratulations! Your profile has been shortlisted for the next stage.";
+            case "REJECTED" ->
+                statusDescription = "Thank you for applying. After careful review, we have decided to proceed with other candidates.";
+            default -> statusDescription = "Application is in progress.";
+        }
+
+        return CandidateApplicationTrackDTO.builder()
+                .trackingCode(a.getTrackingCode())
+                .candidateName(a.getCandidateName())
+                .email(a.getEmail())
+                .vacancyId(a.getVacancy() != null ? a.getVacancy().getId() : null)
+                .jobTitle(a.getVacancy() != null ? a.getVacancy().getTitle() : null)
+                .department(a.getVacancy() != null ? a.getVacancy().getDepartment() : null)
+                .companyRef(a.getCompanyRef())
+                .status(status)
+                .statusDescription(statusDescription)
+                .eligibilityStatus(a.getEligibilityStatus() != null ? a.getEligibilityStatus().name() : "PENDING")
+                .appliedDate(a.getCreatedAt() != null ? a.getCreatedAt().toLocalDate() : null)
+                .createdAt(a.getCreatedAt())
+                .updatedAt(a.getUpdatedAt())
+                .build();
     }
 }

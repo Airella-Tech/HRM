@@ -51,6 +51,9 @@ class CandidateApplicationServiceTest {
     @Mock
     private AuditService auditService;
 
+    @Mock
+    private EmailService emailService;
+
     @InjectMocks
     private CandidateApplicationService service;
 
@@ -172,5 +175,37 @@ class CandidateApplicationServiceTest {
 
         assertTrue(ex.getMessage().contains("PDF"));
         verify(documentRepo, never()).save(any());
+    }
+
+    @Test
+    void trackApplication_validCodeAndEmail_returnsTrackingInfo() {
+        CandidateApplication app = new CandidateApplication();
+        app.setTrackingCode("APP-12345678");
+        app.setCandidateName("Alice Smith");
+        app.setEmail("alice@example.com");
+        app.setVacancy(sampleVacancy);
+        app.setStatus(ApplicationStatus.UNDER_REVIEW);
+        app.setEligibilityStatus(EligibilityStatus.PENDING);
+        app.setCreatedAt(LocalDateTime.now());
+
+        when(applicationRepo.findByTrackingCodeIgnoreCaseAndEmailIgnoreCase("APP-12345678", "alice@example.com"))
+                .thenReturn(Optional.of(app));
+
+        var result = service.trackApplication("APP-12345678", "alice@example.com");
+
+        assertNotNull(result);
+        assertEquals("APP-12345678", result.getTrackingCode());
+        assertEquals("Alice Smith", result.getCandidateName());
+        assertEquals("UNDER_REVIEW", result.getStatus());
+        assertTrue(result.getStatusDescription().contains("reviewed"));
+    }
+
+    @Test
+    void trackApplication_notFound_throwsResourceNotFoundException() {
+        when(applicationRepo.findByTrackingCodeIgnoreCaseAndEmailIgnoreCase(anyString(), anyString()))
+                .thenReturn(Optional.empty());
+
+        assertThrows(com.airella.hrm.exception.ResourceNotFoundException.class, () ->
+                service.trackApplication("APP-INVALID", "test@example.com"));
     }
 }

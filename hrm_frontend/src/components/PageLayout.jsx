@@ -87,22 +87,17 @@ const NAV = {
 
     // Job Vacancies
     {
-      name: "Create Vacancies",
-      icon: FilePlus,
-      path: "/recruitment/vacancies?view=create",
-      requiresAny: ["VACANCY_CREATE", "CREATE_VACANCIES"],
-    },
-    {
-      name: "Approve Vacancies",
-      icon: CheckCircle2,
-      path: "/recruitment/vacancies?view=approve",
-      requiresAny: ["VACANCY_APPROVE", "APPROVE_VACANCIES"],
-    },
-    {
-      name: "Publish & Close Vacancies",
-      icon: Megaphone,
-      path: "/recruitment/vacancies?view=publish",
-      requiresAny: ["VACANCY_PUBLISH", "PUBLISH_CLOSE_VACANCIES"],
+      name: "Job Vacancies",
+      icon: BriefcaseBusiness,
+      path: "/recruitment/vacancies",
+      requiresAny: [
+        "VACANCY_CREATE",
+        "VACANCY_APPROVE",
+        "VACANCY_PUBLISH",
+        "CREATE_VACANCIES",
+        "APPROVE_VACANCIES",
+        "PUBLISH_CLOSE_VACANCIES",
+      ],
     },
 
     // Candidate Applications
@@ -123,12 +118,6 @@ const NAV = {
       icon: UserCheck,
       path: "/recruitment/applications/shortlist",
       requiresAny: ["APPLICATION_SHORTLIST", "SHORTLIST_CANDIDATES", "APPLICATION_VIEW"],
-    },
-    {
-      name: "Download Resumes",
-      icon: FileDown,
-      path: "/recruitment/applications/resumes",
-      requiresAny: ["RESUME_DOWNLOAD", "DOWNLOAD_RESUMES", "APPLICATION_VIEW"],
     },
 
     // Interviews & Evaluations
@@ -267,8 +256,6 @@ export const PageLayout = ({
                 "REVIEW_APPLICATIONS",
                 "APPLICATION_SHORTLIST",
                 "SHORTLIST_CANDIDATES",
-                "RESUME_DOWNLOAD",
-                "DOWNLOAD_RESUMES",
                 "VACANCY_CREATE",
                 "CREATE_VACANCIES",
                 "VACANCY_APPROVE",
@@ -296,8 +283,6 @@ export const PageLayout = ({
               "REVIEW_APPLICATIONS",
               "APPLICATION_SHORTLIST",
               "SHORTLIST_CANDIDATES",
-              "RESUME_DOWNLOAD",
-              "DOWNLOAD_RESUMES",
               "VACANCY_CREATE",
               "CREATE_VACANCIES",
               "VACANCY_APPROVE",

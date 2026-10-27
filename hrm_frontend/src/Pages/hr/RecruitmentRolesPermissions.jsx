@@ -50,7 +50,6 @@ const PERMISSION_FRIENDLY_LABELS = {
   APPLICATION_SCREEN: "Review Applications",
   APPLICATION_SHORTLIST: "Shortlist Candidates",
   CANDIDATE_VIEW: "View Candidate Records",
-  RESUME_DOWNLOAD: "Download Resumes",
 
   // Interviews & Evaluations
   INTERVIEW_SCHEDULE: "Schedule Interviews",
