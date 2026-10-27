@@ -33,7 +33,10 @@ public interface CandidateApplicationRepository extends JpaRepository<CandidateA
         LEFT JOIN FETCH a.vacancy
         LEFT JOIN FETCH a.skills
         WHERE a.id = :id
-          AND (a.companyRef = :companyRef OR (:companyId IS NOT NULL AND a.companyId = :companyId))
+          AND (
+            (:companyRef IS NOT NULL AND LOWER(a.companyRef) = LOWER(:companyRef))
+            OR (:companyId IS NOT NULL AND a.companyId = :companyId)
+          )
     """)
     Optional<CandidateApplication> findByIdAndCompany(
             @Param("id") Long id,
@@ -47,10 +50,24 @@ public interface CandidateApplicationRepository extends JpaRepository<CandidateA
         SELECT DISTINCT a FROM CandidateApplication a
         LEFT JOIN FETCH a.vacancy
         LEFT JOIN FETCH a.skills
-        WHERE (a.companyRef = :companyRef OR (:companyId IS NOT NULL AND a.companyId = :companyId))
+        WHERE (
+            (:companyRef IS NOT NULL AND LOWER(a.companyRef) = LOWER(:companyRef))
+            OR (:companyId IS NOT NULL AND a.companyId = :companyId)
+        )
         ORDER BY a.createdAt DESC
     """)
     List<CandidateApplication> findAllByCompany(
             @Param("companyRef") String companyRef,
             @Param("companyId") Long companyId);
+
+    /**
+     * List all applications with details (for super admin).
+     */
+    @Query("""
+        SELECT DISTINCT a FROM CandidateApplication a
+        LEFT JOIN FETCH a.vacancy
+        LEFT JOIN FETCH a.skills
+        ORDER BY a.createdAt DESC
+    """)
+    List<CandidateApplication> findAllWithDetails();
 }

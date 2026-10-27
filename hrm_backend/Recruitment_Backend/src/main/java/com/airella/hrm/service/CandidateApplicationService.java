@@ -284,15 +284,106 @@ public class CandidateApplicationService {
         return "APP-" + UUID.randomUUID().toString().replace("-", "").substring(0, 8).toUpperCase(Locale.ROOT);
     }
 
+    // =========================================================================
+    // Authorized Staff Candidate Application Retrieval
+    // =========================================================================
+
+    /**
+     * Retrieves all candidate applications for authorized HR users.
+     * Filterable by vacancyId, status, and search keyword.
+     */
+    @Transactional(readOnly = true)
+    public List<CandidateApplicationDTO> getApplications(Long vacancyId, String statusStr, String search) {
+        List<CandidateApplication> applications;
+
+        if (isFullAccessUser()) {
+            String companyRef = safeGetCurrentCompanyRef();
+            Long companyId = safeGetCurrentCompanyId();
+            if (companyRef != null || companyId != null) {
+                applications = applicationRepo.findAllByCompany(companyRef, companyId);
+            } else {
+                applications = applicationRepo.findAllWithDetails();
+            }
+        } else {
+            String companyRef = safeGetCurrentCompanyRef();
+            Long companyId = safeGetCurrentCompanyId();
+            if (companyRef == null && companyId == null) {
+                return List.of();
+            }
+            applications = applicationRepo.findAllByCompany(companyRef, companyId);
+        }
+
+        return applications.stream()
+                .filter(app -> {
+                    // Filter by vacancyId if provided
+                    if (vacancyId != null) {
+                        if (app.getVacancy() == null || !vacancyId.equals(app.getVacancy().getId())) {
+                            return false;
+                        }
+                    }
+                    // Filter by status if provided and not ALL
+                    if (statusStr != null && !statusStr.isBlank() && !"ALL".equalsIgnoreCase(statusStr.trim())) {
+                        if (app.getStatus() == null || !app.getStatus().name().equalsIgnoreCase(statusStr.trim())) {
+                            return false;
+                        }
+                    }
+                    // Filter by search query if provided
+                    if (search != null && !search.isBlank()) {
+                        String query = search.trim().toLowerCase(Locale.ROOT);
+                        boolean matchesName = app.getCandidateName() != null && app.getCandidateName().toLowerCase(Locale.ROOT).contains(query);
+                        boolean matchesEmail = app.getEmail() != null && app.getEmail().toLowerCase(Locale.ROOT).contains(query);
+                        boolean matchesPhone = app.getPhone() != null && app.getPhone().toLowerCase(Locale.ROOT).contains(query);
+                        boolean matchesCode = app.getTrackingCode() != null && app.getTrackingCode().toLowerCase(Locale.ROOT).contains(query);
+                        boolean matchesJob = app.getVacancy() != null && app.getVacancy().getTitle() != null && app.getVacancy().getTitle().toLowerCase(Locale.ROOT).contains(query);
+                        boolean matchesDept = app.getVacancy() != null && app.getVacancy().getDepartment() != null && app.getVacancy().getDepartment().toLowerCase(Locale.ROOT).contains(query);
+                        return matchesName || matchesEmail || matchesPhone || matchesCode || matchesJob || matchesDept;
+                    }
+                    return true;
+                })
+                .map(this::toDto)
+                .toList();
+    }
+
+    /**
+     * Retrieves a single candidate application profile by ID.
+     */
+    @Transactional(readOnly = true)
+    public CandidateApplicationDTO getApplicationById(Long id) {
+        CandidateApplication app = findApplicationForCurrentStaff(id);
+        return toDto(app);
+    }
+
     private CandidateApplication findApplicationForCurrentStaff(Long id) {
-        String companyRef = authService.getCurrentCompanyRef();
+        if (isFullAccessUser()) {
+            return applicationRepo.findById(id)
+                    .orElseThrow(() -> new ResourceNotFoundException("CandidateApplication", "id", id));
+        }
+
+        String companyRef = safeGetCurrentCompanyRef();
         Long companyId = safeGetCurrentCompanyId();
 
-        CandidateApplication app = applicationRepo.findByIdAndCompany(id, companyRef, companyId)
-                .orElseThrow(() -> new ResourceNotFoundException("CandidateApplication", "id", id));
+        CandidateApplication app = (companyRef != null || companyId != null)
+                ? applicationRepo.findByIdAndCompany(id, companyRef, companyId)
+                        .orElseThrow(() -> new ResourceNotFoundException("CandidateApplication", "id", id))
+                : applicationRepo.findById(id)
+                        .orElseThrow(() -> new ResourceNotFoundException("CandidateApplication", "id", id));
 
         validateCompanyAccess(app.getCompanyRef(), app.getCompanyId());
         return app;
+    }
+
+    private boolean isFullAccessUser() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        return auth != null && auth.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN") || a.getAuthority().equals("ROLE_HR_MANAGER"));
+    }
+
+    private String safeGetCurrentCompanyRef() {
+        try {
+            return authService.getCurrentCompanyRef();
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     private Long safeGetCurrentCompanyId() {
@@ -304,12 +395,16 @@ public class CandidateApplicationService {
     }
 
     private void validateCompanyAccess(String entityCompanyRef, Long entityCompanyId) {
+        if (isFullAccessUser()) {
+            return;
+        }
+
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth == null || !auth.isAuthenticated()) {
             throw new AccessDeniedException("Authentication required.");
         }
 
-        String userCompanyRef = authService.getCurrentCompanyRef();
+        String userCompanyRef = safeGetCurrentCompanyRef();
         Long userCompanyId = safeGetCurrentCompanyId();
 
         boolean matchRef = (userCompanyRef != null && entityCompanyRef != null &&
@@ -317,7 +412,7 @@ public class CandidateApplicationService {
         boolean matchId = (userCompanyId != null && entityCompanyId != null &&
                 userCompanyId.equals(entityCompanyId));
 
-        if (!matchRef && !matchId) {
+        if (!matchRef && !matchId && (userCompanyRef != null || userCompanyId != null)) {
             throw new AccessDeniedException("Access denied: You cannot view records from another company.");
         }
     }
