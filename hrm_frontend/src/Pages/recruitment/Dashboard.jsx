@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   BriefcaseBusiness,
@@ -10,37 +10,47 @@ import {
   Plus,
   ArrowRight,
   TrendingUp,
+  Archive,
 } from "lucide-react";
 import { PageLayout } from "../../components/PageLayout";
+import { recruitmentApi } from "../../services/api";
 
+// One card per vacancy status. "status" is the value the backend returns.
 const summaryCards = [
   {
-    title: "Active Vacancies",
-    value: "0",
-    description: "Currently open positions",
+    title: "Published Vacancies",
+    status: "PUBLISHED",
+    description: "Open on the careers page",
     icon: BriefcaseBusiness,
     color: "bg-indigo-50 text-indigo-600",
   },
   {
-    title: "Applications",
-    value: "0",
-    description: "Applications received",
+    title: "Pending Approval",
+    status: "PENDING_APPROVAL",
+    description: "Waiting for a decision",
+    icon: Clock3,
+    color: "bg-amber-50 text-amber-600",
+  },
+  {
+    title: "Approved",
+    status: "APPROVED",
+    description: "Ready to publish",
+    icon: CheckCircle2,
+    color: "bg-emerald-50 text-emerald-600",
+  },
+  {
+    title: "Drafts",
+    status: "DRAFT",
+    description: "Not submitted yet",
     icon: FileText,
     color: "bg-sky-50 text-sky-600",
   },
   {
-    title: "Shortlisted Candidates",
-    value: "0",
-    description: "Candidates shortlisted",
-    icon: Users,
-    color: "bg-emerald-50 text-emerald-600",
-  },
-  {
-    title: "Upcoming Interviews",
-    value: "0",
-    description: "Interviews scheduled",
-    icon: CalendarDays,
-    color: "bg-amber-50 text-amber-600",
+    title: "Closed",
+    status: "CLOSED",
+    description: "Closed or past deadline",
+    icon: Archive,
+    color: "bg-slate-100 text-slate-600",
   },
 ];
 
@@ -77,6 +87,31 @@ const recruitmentModules = [
 
 const Dashboard = () => {
   const navigate = useNavigate();
+  const [counts, setCounts] = useState(null); // null = still loading
+  const [countsError, setCountsError] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    recruitmentApi
+      .getVacancies()
+      .then((res) => {
+        if (cancelled) return;
+        const next = {};
+        (res.data || []).forEach((v) => {
+          next[v.status] = (next[v.status] || 0) + 1;
+        });
+        setCounts(next);
+      })
+      .catch(() => {
+        // Users without a vacancy permission get 403 here; show dashes instead.
+        if (cancelled) return;
+        setCounts({});
+        setCountsError(true);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   let user = {};
   try {
@@ -133,7 +168,7 @@ const Dashboard = () => {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
             {summaryCards.map((card) => {
               const Icon = card.icon;
 
@@ -148,7 +183,9 @@ const Dashboard = () => {
                         {card.title}
                       </p>
                       <p className="mt-3 text-3xl font-bold text-slate-800">
-                        {card.value}
+                        {counts === null || countsError
+                          ? "-"
+                          : counts[card.status] || 0}
                       </p>
                     </div>
 
@@ -271,8 +308,9 @@ const Dashboard = () => {
         </section>
 
         <p className="text-xs text-slate-400">
-          Dashboard figures will be connected to recruitment data when the
-          backend API is ready.
+          {countsError
+            ? "Vacancy counts are only shown to users with a vacancy permission."
+            : "Vacancy counts are live. Application and interview figures will appear when those modules are connected."}
         </p>
       </div>
     </PageLayout>
