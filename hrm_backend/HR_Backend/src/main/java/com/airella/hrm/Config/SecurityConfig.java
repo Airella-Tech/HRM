@@ -58,6 +58,7 @@ public class SecurityConfig {
                 .requestMatchers("/actuator/**").permitAll()
                 .requestMatchers("/api/auth/**").authenticated()
                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/hr/departments").authenticated()
                 .requestMatchers("/api/hr/**").hasAnyRole("ADMIN", "HR_MANAGER")
                 .requestMatchers("/api/employee/**").hasAnyRole("ADMIN", "HR_MANAGER", "EMPLOYEE")
                 .anyRequest().authenticated()

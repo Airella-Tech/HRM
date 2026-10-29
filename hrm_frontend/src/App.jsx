@@ -1,4 +1,4 @@
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import Login from "./Pages/login.jsx";
 import Hero from "./Pages/hero.jsx";
 import About from "./Pages/about.jsx";
@@ -37,6 +37,23 @@ import Companies from "./Pages/admin/Companies.jsx";
 import AdminSystemUsers from "./Pages/admin/SystemUser.jsx";
 import AdminSystemConfig from "./Pages/admin/SystemConfig.jsx";
 
+
+import RecruitmentDashboard from "./Pages/recruitment/Dashboard.jsx";
+import RecruitmentVacancies from "./Pages/recruitment/Vacancies.jsx";
+import RecruitmentApplications from "./Pages/recruitment/Applications.jsx";
+import RecruitmentApplicationReview from "./Pages/recruitment/ApplicationReview.jsx";
+import RecruitmentCandidateShortlist from "./Pages/recruitment/CandidateShortlist.jsx";
+import RecruitmentCandidates from "./Pages/recruitment/Candidates.jsx";
+import RecruitmentInterviews from "./Pages/recruitment/Interviews.jsx";
+import RecruitmentEvaluations from "./Pages/recruitment/Evaluations.jsx";
+import RecruitmentOffers from "./Pages/recruitment/Offers.jsx";
+import RecruitmentReports from "./Pages/recruitment/Reports.jsx";
+import RecruitmentRolesPermissions from "./Pages/hr/RecruitmentRolesPermissions.jsx";
+import Careers from "./Pages/careers/Careers.jsx";
+import CareerJob from "./Pages/careers/CareerJob.jsx";
+import CareerTrack from "./Pages/careers/CareerTrack.jsx";
+import RecruitmentRouteGuard from "./Pages/recruitment/RecruitmentRouteGuard";
+
 function App() {
   return (
     <Routes>
@@ -46,6 +63,9 @@ function App() {
       <Route path="/blog" element={<Blog />} />
       <Route path="/contact" element={<Contact />} />
       <Route path="/login" element={<Login />} />
+      <Route path="/careers" element={<Careers />} />
+      <Route path="/careers/jobs/:id" element={<CareerJob />} />
+      <Route path="/careers/track" element={<CareerTrack />} />
       <Route path="/createaccount" element={<CreateAccount />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password" element={<ResetPassword />} />
@@ -80,6 +100,24 @@ function App() {
       <Route path="/admin/companies" element={<Companies />} />
       <Route path="/admin/system-users" element={<AdminSystemUsers />} />
       <Route path="/admin/system-config" element={<AdminSystemConfig />} />
+
+      <Route path="/recruitment/dashboard" element={<RecruitmentDashboard />} />
+      <Route path="/recruitment/vacancies" element={<RecruitmentVacancies />} />
+      <Route path="/recruitment/applications" element={<RecruitmentApplications />} />
+      <Route path="/recruitment/applications/review" element={<RecruitmentApplicationReview />} />
+      <Route path="/recruitment/applications/shortlist" element={<RecruitmentCandidateShortlist />} />
+      <Route path="/recruitment/applications/resumes" element={<Navigate to="/recruitment/applications" replace />} />
+      <Route path="/recruitment/review-applications" element={<RecruitmentApplicationReview />} />
+      <Route path="/recruitment/shortlist" element={<RecruitmentCandidateShortlist />} />
+      <Route path="/recruitment/resumes" element={<Navigate to="/recruitment/applications" replace />} />
+      <Route path="/recruitment/candidates" element={<RecruitmentCandidates />} />
+      <Route path="/recruitment/interviews" element={<RecruitmentInterviews />} />
+      <Route path="/recruitment/evaluations" element={<RecruitmentEvaluations />} />
+      <Route path="/recruitment/offers" element={<RecruitmentOffers />} />
+      <Route path="/recruitment/reports" element={<RecruitmentReports />} />
+
+      <Route path="/recruitment/roles-permissions" element={<RecruitmentRolesPermissions />}/>
+      <Route path="/hr/roles-permissions" element={<RecruitmentRolesPermissions />}/>
     </Routes>
   );
 }

@@ -13,6 +13,7 @@ export const BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5
 export const AUTH_URL = import.meta.env.VITE_AUTH_URL || "http://localhost:5004/api";
 export const EMPLOYEE_URL = import.meta.env.VITE_EMPLOYEE_URL || "http://localhost:5006/api";
 export const ADMIN_URL = import.meta.env.VITE_ADMIN_URL || "http://localhost:5007/api";
+export const RECRUITMENT_URL = import.meta.env.VITE_RECRUITMENT_URL || "http://localhost:5008/api";
 
 async function parseErrorMessage(res) {
   let errMsg = "";
@@ -45,13 +46,18 @@ async function parseErrorMessage(res) {
 // ─── Shared fetch helper ──────────────────────────────────────
 async function request(method, url, body = null) {
   const token = localStorage.getItem("token");
+  const isFormData = typeof FormData !== "undefined" && body instanceof FormData;
+  const headers = {
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+  };
+  if (!isFormData) {
+    headers["Content-Type"] = "application/json";
+  }
+
   const opts = {
     method,
-    headers: {
-      "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    },
-    ...(body ? { body: JSON.stringify(body) } : {}),
+    headers,
+    ...(body ? { body: isFormData ? body : JSON.stringify(body) } : {}),
   };
 
   try {
@@ -347,3 +353,95 @@ export const adminApi = {
   // Auth (admin-specific login)
   login: (email, password) => request("POST", `${ADMIN_URL}/auth/login`, { email, password }),
 };
+
+// ─── RECRUITMENT ROLES & PERMISSIONS DATA ─────────────────────
+export const recruitmentApi = {
+  // Roles
+  getRoles: (search, customOnly = false) => {
+    const query = new URLSearchParams();
+    if (search) query.set("search", search);
+    if (customOnly) query.set("customOnly", "true");
+    const qs = query.toString() ? `?${query.toString()}` : "";
+    return request("GET", `${RECRUITMENT_URL}/recruitment/roles${qs}`);
+  },
+  getDefaultRoleTemplates: () => request("GET", `${RECRUITMENT_URL}/recruitment/roles/defaults`),
+  getRoleById: (id) => request("GET", `${RECRUITMENT_URL}/recruitment/roles/${id}`),
+  createRole: (data) => request("POST", `${RECRUITMENT_URL}/recruitment/roles`, data),
+  updateRole: (id, data) => request("PUT", `${RECRUITMENT_URL}/recruitment/roles/${id}`, data),
+  deleteRole: (id) => request("DELETE", `${RECRUITMENT_URL}/recruitment/roles/${id}`),
+
+  // Permissions
+  getAllPermissions: () => request("GET", `${RECRUITMENT_URL}/recruitment/roles/permissions`),
+  getPermissionsByCategory: () => request("GET", `${RECRUITMENT_URL}/recruitment/roles/permissions/by-category`),
+
+  // User role assignments
+  getCompanyUsersWithRoles: () => request("GET", `${RECRUITMENT_URL}/recruitment/roles/users`),
+  getUserRoleAssignments: (userId) => request("GET", `${RECRUITMENT_URL}/recruitment/roles/users/${userId}`),
+  assignRoleToUser: (userId, roleIds) =>
+    request("POST", `${RECRUITMENT_URL}/recruitment/roles/users/assign`, { userId, roleIds }),
+  removeRoleFromUser: (userId, roleId) =>
+    request("DELETE", `${RECRUITMENT_URL}/recruitment/roles/users/${userId}/roles/${roleId}`),
+  updateUserRoles: (userId, roleIds) =>
+    request("PUT", `${RECRUITMENT_URL}/recruitment/roles/users/${userId}`, roleIds),
+
+  // Current user access
+  getMyAccess: () => request("GET", `${RECRUITMENT_URL}/recruitment/roles/my-access`),
+  checkPermission: (permission) =>
+    request("GET", `${RECRUITMENT_URL}/recruitment/roles/check?permission=${encodeURIComponent(permission)}`),
+
+  // ── Vacancies (Member 1) ──
+  getVacancies: (status) =>
+    request("GET", `${RECRUITMENT_URL}/recruitment/jobs${status ? `?status=${encodeURIComponent(status)}` : ""}`),
+  getVacancy: (id) => request("GET", `${RECRUITMENT_URL}/recruitment/jobs/${id}`),
+    // Notifications (vacancy events)
+  getNotifications: () => request("GET", `${RECRUITMENT_URL}/recruitment/notifications`),
+  markNotificationRead: (id) => request("PUT", `${RECRUITMENT_URL}/recruitment/notifications/${id}/read`),
+  markAllNotificationsRead: () => request("PUT", `${RECRUITMENT_URL}/recruitment/notifications/read-all`),
+  createVacancy: (data) => request("POST", `${RECRUITMENT_URL}/recruitment/jobs`, data),
+  updateVacancy: (id, data) => request("PUT", `${RECRUITMENT_URL}/recruitment/jobs/${id}`, data),
+  deleteVacancy: (id) => request("DELETE", `${RECRUITMENT_URL}/recruitment/jobs/${id}`),
+    submitVacancy: (id) => request("POST", `${RECRUITMENT_URL}/recruitment/jobs/${id}/submit`),
+  approveVacancy: (id) => request("POST", `${RECRUITMENT_URL}/recruitment/jobs/${id}/approve`),
+  rejectVacancy: (id, reason) => request("POST", `${RECRUITMENT_URL}/recruitment/jobs/${id}/reject`, { reason }),
+    publishVacancy: (id) => request("POST", `${RECRUITMENT_URL}/recruitment/jobs/${id}/publish`),
+  closeVacancy: (id) => request("POST", `${RECRUITMENT_URL}/recruitment/jobs/${id}/close`),
+
+  // ── Applications & Candidate Management (Member 2) ──
+  getApplications: (params) => {
+    const qs = params ? `?${new URLSearchParams(params).toString()}` : "";
+    return request("GET", `${RECRUITMENT_URL}/recruitment/applications${qs}`);
+  },
+  getApplication: (id) => request("GET", `${RECRUITMENT_URL}/recruitment/applications/${id}`),
+  screenApplication: (id, data) => request("PUT", `${RECRUITMENT_URL}/recruitment/applications/${id}/screen`, data),
+  shortlistCandidate: (id, notes) => request("POST", `${RECRUITMENT_URL}/recruitment/applications/${id}/shortlist`, { notes }),
+  rejectCandidate: (id, reason) => request("POST", `${RECRUITMENT_URL}/recruitment/applications/${id}/reject`, { reason }),
+  autoShortlist: (threshold) => request("POST", `${RECRUITMENT_URL}/recruitment/applications/auto-shortlist`, { threshold }),
+  getResumeDownloadUrl: (id) => `${RECRUITMENT_URL}/recruitment/applications/${id}/resume`,
+  downloadResume: (id) => requestBlob(`${RECRUITMENT_URL}/recruitment/applications/${id}/resume?download=true`),
+
+  // ── Interviews, offers, reports (Member 3) ──
+};
+
+// ─── PUBLIC CAREERS (no login) ────────────────────────────────
+export const careersApi = {
+  getJobs: (company) =>
+    request("GET", `${RECRUITMENT_URL}/careers/jobs?company=${encodeURIComponent(company)}`),
+  getJob: (id, company) =>
+    request("GET", `${RECRUITMENT_URL}/careers/jobs/${id}?company=${encodeURIComponent(company)}`),
+  applyJob: (id, arg2, arg3) => {
+    let company = "COMP-001";
+    let body = arg2;
+    if (typeof arg2 === "string" && typeof arg3 === "object") {
+      company = arg2;
+      body = arg3;
+    } else if (typeof arg3 === "string") {
+      company = arg3;
+      body = arg2;
+    }
+    const c = company || "COMP-001";
+    return request("POST", `${RECRUITMENT_URL}/careers/jobs/${id}/apply?company=${encodeURIComponent(c)}`, body);
+  },
+  trackApplication: (trackingCode, email) =>
+    request("POST", `${RECRUITMENT_URL}/careers/applications/track`, { trackingCode, email }),
+};
+
