@@ -28,15 +28,18 @@ public class JobVacancyService {
     private final AuthService authService;
     private final PermissionService permissionService;
     private final AuditService auditService;
+          private final RecruitmentNotificationService notificationService;
 
     public JobVacancyService(JobVacancyRepository vacancyRepo,
                              AuthService authService,
                              PermissionService permissionService,
-                             AuditService auditService) {
+                             AuditService auditService,
+                            RecruitmentNotificationService notificationService) {
         this.vacancyRepo = vacancyRepo;
         this.authService = authService;
         this.permissionService = permissionService;
         this.auditService = auditService;
+        this.notificationService = notificationService;
     }
 
     public VacancyDTO create(VacancyRequestDTO request) {
@@ -117,7 +120,9 @@ public class JobVacancyService {
 
         vacancy = vacancyRepo.save(vacancy);
         auditService.logAction("VACANCY_SUBMITTED", "JobVacancy", vacancy.getId(),
+       
                 "Submitted vacancy for approval: " + vacancy.getTitle(), companyRef);
+                 notificationService.vacancySubmitted(vacancy);
         return toDto(vacancy);
     }
 
@@ -137,7 +142,9 @@ public class JobVacancyService {
 
         vacancy = vacancyRepo.save(vacancy);
         auditService.logAction("VACANCY_APPROVED", "JobVacancy", vacancy.getId(),
+      
                 "Approved vacancy: " + vacancy.getTitle(), companyRef);
+                  notificationService.vacancyApproved(vacancy);
         return toDto(vacancy);
     }
 
@@ -157,7 +164,9 @@ public class JobVacancyService {
 
         vacancy = vacancyRepo.save(vacancy);
         auditService.logAction("VACANCY_REJECTED", "JobVacancy", vacancy.getId(),
+      
                 "Rejected vacancy: " + vacancy.getTitle() + " — " + reason.trim(), companyRef);
+                  notificationService.vacancyRejected(vacancy, reason.trim());
         return toDto(vacancy);
     }
 
@@ -180,7 +189,9 @@ public class JobVacancyService {
 
         vacancy = vacancyRepo.save(vacancy);
         auditService.logAction("VACANCY_PUBLISHED", "JobVacancy", vacancy.getId(),
+       
                 "Published vacancy: " + vacancy.getTitle(), companyRef);
+                 notificationService.vacancyPublished(vacancy);
         return toDto(vacancy);
     }
 

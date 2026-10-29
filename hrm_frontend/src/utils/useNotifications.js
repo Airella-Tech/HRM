@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { employeeApi, adminApi } from "../services/api";
+import { employeeApi, adminApi, recruitmentApi } from "../services/api";
 import { NOTIFICATIONS_CHANGED, announceNotificationsChanged, normalizeNotification } from "./notifications";
 
 /**
@@ -17,8 +17,35 @@ export default function useNotifications(role, { pollMs = 5000 } = {}) {
   const reload = useCallback(async () => {
     if (!localStorage.getItem("token")) { setLoading(false); return; }
     try {
-      const res = await employeeApi.getNotifications();
-      let list = (Array.isArray(res?.data) ? res.data : []).map((n) => normalizeNotification(n, role));
+      let list = [];
+      let employeeError = null;
+
+      try {
+        const res = await employeeApi.getNotifications();
+        list = (Array.isArray(res?.data) ? res.data : []).map((n) => normalizeNotification(n, role));
+      } catch (e) {
+        // A recruiter can still see vacancy notifications if the Employee service is unreachable.
+        if (role !== "recruiter") throw e;
+        employeeError = e;
+      }
+
+      if (role === "recruiter") {
+        try {
+          const rRes = await recruitmentApi.getNotifications();
+          const vacancyList = (Array.isArray(rRes?.data) ? rRes.data : []).map((n) => ({
+            ...normalizeNotification(n, role),
+            id: `rec-${n.id}`,
+            rawId: n.id,
+            source: "recruitment",
+          }));
+          list = [...vacancyList, ...list].sort(
+            (a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0),
+          );
+          employeeError = null;
+                } catch {
+          if (employeeError) throw employeeError;
+        }
+      }
 
       if (role === "admin") {
         try {
@@ -60,17 +87,27 @@ export default function useNotifications(role, { pollMs = 5000 } = {}) {
     if (n.read) return;
     setNotifications((prev) => prev.map((x) => (x.id === n.id ? { ...x, read: true } : x)));
     if (n.local) return;
-    try { await employeeApi.markNotificationAsRead(n.id); announceNotificationsChanged(); } catch { reload(); }
+        try {
+      if (n.source === "recruitment") await recruitmentApi.markNotificationRead(n.rawId);
+      else await employeeApi.markNotificationAsRead(n.id);
+      announceNotificationsChanged();
+    } catch { reload(); }
   }, [reload]);
 
   const markAllRead = useCallback(async () => {
     setNotifications((prev) => prev.map((x) => ({ ...x, read: true })));
-    try { await employeeApi.markAllNotificationsAsRead(); announceNotificationsChanged(); } catch { reload(); }
-  }, [reload]);
+       try {
+      await Promise.allSettled([
+        employeeApi.markAllNotificationsAsRead(),
+        role === "recruiter" ? recruitmentApi.markAllNotificationsRead() : Promise.resolve(),
+      ]);
+      announceNotificationsChanged();
+    } catch { reload(); }
+  }, [reload, role]);
 
   const remove = useCallback(async (n) => {
     setNotifications((prev) => prev.filter((x) => x.id !== n.id));
-    if (n.local) return;
+        if (n.local || n.source === "recruitment") return;
     try { await employeeApi.deleteNotification(n.id); announceNotificationsChanged(); } catch { reload(); }
   }, [reload]);
 
