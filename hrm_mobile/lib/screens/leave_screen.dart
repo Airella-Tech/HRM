@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../services/api_service.dart';
 
 class LeaveScreen extends StatefulWidget {
@@ -288,10 +289,10 @@ class _LeaveScreenState extends State<LeaveScreen> {
                 width: 160,
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF3F51B5).withOpacity(0.05),
+                  color: const Color(0xFF3F51B5).withValues(alpha: 0.05),
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
-                    color: const Color(0xFF3F51B5).withOpacity(0.15),
+                    color: const Color(0xFF3F51B5).withValues(alpha: 0.15),
                   ),
                 ),
                 child: Column(
@@ -583,7 +584,7 @@ class _LeaveScreenState extends State<LeaveScreen> {
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(16),
                       ),
-                      color: const Color(0xFF3F51B5).withOpacity(0.04),
+                      color: const Color(0xFF3F51B5).withValues(alpha: 0.04),
                       child: InkWell(
                         onTap: _showApplyLeaveBottomSheet,
                         borderRadius: BorderRadius.circular(16),
@@ -594,7 +595,7 @@ class _LeaveScreenState extends State<LeaveScreen> {
                               CircleAvatar(
                                 backgroundColor: const Color(
                                   0xFF3F51B5,
-                                ).withOpacity(0.1),
+                                ).withValues(alpha: 0.1),
                                 child: const Icon(
                                   Icons.add,
                                   color: Color(0xFF3F51B5),
@@ -696,7 +697,7 @@ class _LeaveScreenState extends State<LeaveScreen> {
                               borderRadius: BorderRadius.circular(12),
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.grey.withOpacity(0.05),
+                                  color: Colors.grey.withValues(alpha: 0.05),
                                   blurRadius: 4,
                                   offset: const Offset(0, 1),
                                 ),
