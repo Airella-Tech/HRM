@@ -60,8 +60,7 @@ async function parseErrorMessage(res) {
 // â”€â”€â”€ Shared fetch helper â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 async function request(method, url, body = null) {
   const token = localStorage.getItem("token");
-  const isFormData =
-    typeof FormData !== "undefined" && body instanceof FormData;
+  const isFormData = typeof FormData !== "undefined" && body instanceof FormData;
   const headers = {
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
   };
@@ -71,11 +70,8 @@ async function request(method, url, body = null) {
 
   const opts = {
     method,
-    headers: {
-      "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    },
-    ...(body ? { body: JSON.stringify(body) } : {}),
+    headers,
+    ...(body ? { body: isFormData ? body : JSON.stringify(body) } : {}),
   };
 
   try {
@@ -628,7 +624,7 @@ export const recruitmentApi = {
   closeVacancy: (id) =>
     request("POST", `${RECRUITMENT_URL}/recruitment/jobs/${id}/close`),
 
-  // â”€â”€ Applications & Candidate Management (Member 2) â”€â”€
+  // ── Applications & Candidate Management (Member 2) ──
   getApplications: (params) => {
     const qs = params ? `?${new URLSearchParams(params).toString()}` : "";
     return request("GET", `${RECRUITMENT_URL}/recruitment/applications${qs}`);
@@ -868,6 +864,21 @@ getShortlistedApplications: () =>
       "DELETE",
       `${RECRUITMENT_URL}/recruitment/job-offers/${id}`,
     ),
+  // ── Configurable Screening & Automatic Shortlisting ──
+  getScreeningConfig: (vacancyId) =>
+    request("GET", `${RECRUITMENT_URL}/recruitment/screening/config/${vacancyId}`),
+  saveScreeningConfig: (vacancyId, data) =>
+    request("PUT", `${RECRUITMENT_URL}/recruitment/screening/config/${vacancyId}`, data),
+  evaluateCandidate: (applicationId) =>
+    request("POST", `${RECRUITMENT_URL}/recruitment/screening/evaluate/${applicationId}`),
+  evaluateVacancy: (vacancyId) =>
+    request("POST", `${RECRUITMENT_URL}/recruitment/screening/evaluate-vacancy/${vacancyId}`),
+  rescreenVacancy: (vacancyId) =>
+    request("POST", `${RECRUITMENT_URL}/recruitment/screening/rescreen-vacancy/${vacancyId}`),
+  getScreeningResult: (applicationId) =>
+    request("GET", `${RECRUITMENT_URL}/recruitment/screening/results/${applicationId}`),
+  getVacancyScreeningResults: (vacancyId) =>
+    request("GET", `${RECRUITMENT_URL}/recruitment/screening/vacancy/${vacancyId}/results`),
 
 };
 
@@ -879,10 +890,7 @@ export const careersApi = {
       `${RECRUITMENT_URL}/careers/jobs?company=${encodeURIComponent(company)}`,
     ),
   getJob: (id, company) =>
-    request(
-      "GET",
-      `${RECRUITMENT_URL}/careers/jobs/${id}?company=${encodeURIComponent(company)}`,
-    ),
+    request("GET", `${RECRUITMENT_URL}/careers/jobs/${id}?company=${encodeURIComponent(company)}`),
   applyJob: (id, arg2, arg3) => {
     let company = "COMP-001";
     let body = arg2;
@@ -894,18 +902,9 @@ export const careersApi = {
       body = arg2;
     }
     const c = company || "COMP-001";
-    return request(
-      "POST",
-      `${RECRUITMENT_URL}/careers/jobs/${id}/apply?company=${encodeURIComponent(c)}`,
-      body,
-    );
+    return request("POST", `${RECRUITMENT_URL}/careers/jobs/${id}/apply?company=${encodeURIComponent(c)}`, body);
   },
   trackApplication: (trackingCode, email) =>
-    request("POST", `${RECRUITMENT_URL}/careers/applications/track`, {
-      trackingCode,
-      email,
-    }),
-
-
-
+    request("POST", `${RECRUITMENT_URL}/careers/applications/track`, { trackingCode, email }),
 };
+

@@ -35,6 +35,7 @@ dependencies {
 
     // ── Utilities ─────────────────────────
     implementation 'org.modelmapper:modelmapper:3.2.0'
+    implementation 'org.apache.pdfbox:pdfbox:3.0.4'
 
     // ── Environment (.env) Support ────────
     implementation 'me.paulschwarz:spring-dotenv:4.0.0'

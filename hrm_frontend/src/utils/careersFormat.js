@@ -20,3 +20,16 @@ export const formatSalary = (min, max) => {
   if (max != null) return `Up to ${fmt(max)}`;
   return null;
 };
+
+const DAY = 24 * 60 * 60 * 1000;
+
+/** Whole days from today until the deadline (0 = closes today). */
+export const daysLeft = (deadline) => {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return Math.max(0, Math.round((new Date(`${deadline}T00:00:00`) - today) / DAY));
+};
+
+/** True if the role was published within the last 3 days. */
+export const isNew = (publishedAt) =>
+  Boolean(publishedAt) && Date.now() - new Date(publishedAt).getTime() < 3 * DAY;

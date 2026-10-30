@@ -29,7 +29,6 @@ public class DefaultRecruitmentSeeder implements CommandLineRunner {
                 new RecruitmentPermission("APPLICATION_VIEW", "APPLICATION", "View candidate applications and candidate list"),
                 new RecruitmentPermission("APPLICATION_SCREEN", "APPLICATION", "Evaluate eligibility, enter screening scores and review notes"),
                 new RecruitmentPermission("APPLICATION_SHORTLIST", "APPLICATION", "Advance candidates to shortlist or reject with reasons"),
-                new RecruitmentPermission("RESUME_DOWNLOAD", "APPLICATION", "View and download candidate resume documents"),
                 new RecruitmentPermission("INTERVIEW_SCHEDULE", "INTERVIEW", "Schedule interview rounds and set session logistics"),
                 new RecruitmentPermission("INTERVIEW_ASSIGN", "INTERVIEW", "Assign and change evaluators for specific interviews"),
                 new RecruitmentPermission("INTERVIEW_EVALUATE", "INTERVIEW", "Submit feedback and ratings for assigned interviews"),

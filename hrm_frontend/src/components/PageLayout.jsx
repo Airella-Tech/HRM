@@ -100,22 +100,17 @@ const NAV = {
 
     // Job Vacancies
     {
-      name: "Create Vacancies",
-      icon: FilePlus,
-      path: "/recruitment/vacancies?view=create",
-      requiresAny: ["VACANCY_CREATE", "CREATE_VACANCIES"],
-    },
-    {
-      name: "Approve Vacancies",
-      icon: CheckCircle2,
-      path: "/recruitment/vacancies?view=approve",
-      requiresAny: ["VACANCY_APPROVE", "APPROVE_VACANCIES"],
-    },
-    {
-      name: "Publish & Close Vacancies",
-      icon: Megaphone,
-      path: "/recruitment/vacancies?view=publish",
-      requiresAny: ["VACANCY_PUBLISH", "PUBLISH_CLOSE_VACANCIES"],
+      name: "Job Vacancies",
+      icon: BriefcaseBusiness,
+      path: "/recruitment/vacancies",
+      requiresAny: [
+        "VACANCY_CREATE",
+        "VACANCY_APPROVE",
+        "VACANCY_PUBLISH",
+        "CREATE_VACANCIES",
+        "APPROVE_VACANCIES",
+        "PUBLISH_CLOSE_VACANCIES",
+      ],
     },
 
     // Candidate Applications
@@ -129,21 +124,13 @@ const NAV = {
       name: "Review Applications",
       icon: ClipboardCheck,
       path: "/recruitment/applications/review",
-      requiresAny: [
-        "APPLICATION_SCREEN",
-        "REVIEW_APPLICATIONS",
-        "APPLICATION_VIEW",
-      ],
+      requiresAny: ["APPLICATION_SCREEN", "REVIEW_APPLICATIONS", "APPLICATION_VIEW"],
     },
     {
       name: "Shortlist Candidates",
       icon: UserCheck,
       path: "/recruitment/applications/shortlist",
-      requiresAny: [
-        "APPLICATION_SHORTLIST",
-        "SHORTLIST_CANDIDATES",
-        "APPLICATION_VIEW",
-      ],
+      requiresAny: ["APPLICATION_SHORTLIST", "SHORTLIST_CANDIDATES", "APPLICATION_VIEW"],
     },
 
     // Interviews & Evaluations
@@ -275,46 +262,62 @@ export const PageLayout = ({
 
         // Supports the API response wrapper used by your backend.
         const access = response?.data?.data ?? response?.data ?? response;
-        const perms = Array.isArray(access?.permissions)
-          ? access.permissions
-          : [];
+        const perms = Array.isArray(access?.permissions) ? access.permissions : [];
 
         setRecruitmentAccess({
           fullAccess: access?.fullAccess === true,
-          hasRecruitmentAccess:
-            access?.hasRecruitmentAccess === true || perms.length > 0,
-          permissions:
-            perms.length > 0
-              ? perms
-              : [
-                  "APPLICATION_VIEW",
-                  "VIEW_APPLICATIONS",
-                  "APPLICATION_SCREEN",
-                  "REVIEW_APPLICATIONS",
-                  "APPLICATION_SHORTLIST",
-                  "SHORTLIST_CANDIDATES",
-                  "RESUME_DOWNLOAD",
-                  "DOWNLOAD_RESUMES",
-                  "VACANCY_CREATE",
-                  "CREATE_VACANCIES",
-                  "VACANCY_APPROVE",
-                  "APPROVE_VACANCIES",
-                  "VACANCY_PUBLISH",
-                  "PUBLISH_CLOSE_VACANCIES",
-                ],
+          hasRecruitmentAccess: access?.hasRecruitmentAccess === true || perms.length > 0,
+          permissions: perms.length > 0
+            ? perms
+            : [
+                "APPLICATION_VIEW",
+                "VIEW_APPLICATIONS",
+                "APPLICATION_SCREEN",
+                "REVIEW_APPLICATIONS",
+                "APPLICATION_SHORTLIST",
+                "SHORTLIST_CANDIDATES",
+                "VACANCY_CREATE",
+                "CREATE_VACANCIES",
+                "VACANCY_APPROVE",
+                "APPROVE_VACANCIES",
+                "VACANCY_PUBLISH",
+                "PUBLISH_CLOSE_VACANCIES",
+              ],
         });
       })
       .catch((error) => {
-        console.warn(
-          "Recruitment access endpoint note, using role-based defaults:",
-          error,
-        );
+        console.warn("Recruitment access endpoint note, using role-based defaults:", error);
 
         if (!cancelled) {
+          const stored = localStorage.getItem("user");
+          const u = stored ? JSON.parse(stored) : {};
+          const isFull = u?.role === "HR_MANAGER" || u?.role === "ADMIN";
+
           setRecruitmentAccess({
-            fullAccess: false,
-            hasRecruitmentAccess: false,
-            permissions: [],
+            fullAccess: isFull,
+            hasRecruitmentAccess: true,
+            permissions: [
+              "APPLICATION_VIEW",
+              "VIEW_APPLICATIONS",
+              "APPLICATION_SCREEN",
+              "REVIEW_APPLICATIONS",
+              "APPLICATION_SHORTLIST",
+              "SHORTLIST_CANDIDATES",
+              "VACANCY_CREATE",
+              "CREATE_VACANCIES",
+              "VACANCY_APPROVE",
+              "APPROVE_VACANCIES",
+              "VACANCY_PUBLISH",
+              "PUBLISH_CLOSE_VACANCIES",
+              "INTERVIEW_SCHEDULE",
+              "SCHEDULE_INTERVIEWS",
+              "INTERVIEW_ASSIGN",
+              "ASSIGN_INTERVIEWERS",
+              "INTERVIEW_EVALUATE",
+              "EVALUATE_INTERVIEWS",
+              "OFFER_MANAGE",
+              "MANAGE_JOB_OFFERS",
+            ],
           });
         }
       });

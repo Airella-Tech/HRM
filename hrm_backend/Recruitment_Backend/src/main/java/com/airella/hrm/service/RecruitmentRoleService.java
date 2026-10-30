@@ -387,18 +387,18 @@ public class RecruitmentRoleService {
                             new DefaultRoleSeed(
                                     "Recruitment Officer",
                                     "Manages recruitment activities, reviews applications, and supports candidate screening and shortlisting.",
-                                    List.of("APPLICATION_VIEW", "APPLICATION_SCREEN", "APPLICATION_SHORTLIST", "RESUME_DOWNLOAD", "INTERVIEW_SCHEDULE")
+                                    List.of("APPLICATION_VIEW", "APPLICATION_SCREEN", "APPLICATION_SHORTLIST", "INTERVIEW_SCHEDULE")
                             ),
                             new DefaultRoleSeed(
                                     "Interviewer / Evaluator",
                                     "Reviews assigned candidates, conducts interviews, and submits interview feedback and evaluations.",
-                                    List.of("APPLICATION_VIEW", "RESUME_DOWNLOAD", "INTERVIEW_EVALUATE")
+                                    List.of("APPLICATION_VIEW", "INTERVIEW_EVALUATE")
                             ),
                             new DefaultRoleSeed(
                                     "Recruitment Manager",
                                     "Oversees recruitment activities and manages recruitment responsibilities according to assigned permissions.",
                                     List.of("VACANCY_CREATE", "VACANCY_APPROVE", "VACANCY_PUBLISH", "APPLICATION_VIEW", "APPLICATION_SCREEN",
-                                            "APPLICATION_SHORTLIST", "RESUME_DOWNLOAD", "INTERVIEW_SCHEDULE", "INTERVIEW_ASSIGN",
+                                            "APPLICATION_SHORTLIST", "INTERVIEW_SCHEDULE", "INTERVIEW_ASSIGN",
                                             "INTERVIEW_EVALUATE", "OFFER_MANAGE", "RECRUITMENT_ROLE_ADMIN")
                             )
                     );
