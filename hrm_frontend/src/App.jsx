@@ -49,7 +49,12 @@ import RecruitmentReports from "./Pages/recruitment/Reports.jsx";
 import RecruitmentRolesPermissions from "./Pages/hr/RecruitmentRolesPermissions.jsx";
 import Careers from "./Pages/careers/Careers.jsx";
 import CareerJob from "./Pages/careers/CareerJob.jsx";
+import CareerTrack from "./Pages/careers/CareerTrack.jsx";
+import RecruitmentInterviewEmails from "./Pages/recruitment/InterviewEmails.jsx";
+import RecruitmentInterviewProgress from "./Pages/recruitment/InterviewProgress.jsx";
+import ShortlistedCandidates from "./Pages/recruitment/ShortlistedCandidates.jsx";
 import RecruitmentRouteGuard from "./Pages/recruitment/RecruitmentRouteGuard";
+import AssignInterviewers from "./Pages/recruitment/AssignInterviewers";
 
 function App() {
   return (
@@ -105,6 +110,13 @@ function App() {
       <Route path="/recruitment/evaluations" element={<RecruitmentEvaluations />} />
       <Route path="/recruitment/offers" element={<RecruitmentOffers />} />
       <Route path="/recruitment/reports" element={<RecruitmentReports />} />
+      <Route path="/recruiter/interview-emails" element={<RecruitmentInterviewEmails />}/>
+      <Route path="/recruitment/interview-progress" element={<RecruitmentInterviewProgress />}
+/>
+      <Route path="/recruitment/shortlisted-candidates" element={<ShortlistedCandidates />} />
+      <Route path="/recruitment/offers" element={<RecruitmentRouteGuard requiredAny={["OFFER_MANAGE"]}><RecruitmentOffers /></RecruitmentRouteGuard>}/>
+      <Route path="/recruitment/assign-interviewers" element={<AssignInterviewers />}
+/>
 
       <Route path="/recruitment/roles-permissions" element={<RecruitmentRolesPermissions />}/>
       <Route path="/hr/roles-permissions" element={<RecruitmentRolesPermissions />}/>
