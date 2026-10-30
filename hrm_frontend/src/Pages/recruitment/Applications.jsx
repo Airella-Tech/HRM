@@ -670,10 +670,11 @@ export default function RecruitmentApplications() {
 
           {/* Quick Position Filter Pills & Reset Action */}
           {vacancySelectorList.length > 1 && (
-            <div className="flex items-center justify-between gap-2 pt-2 border-t border-slate-100">
+            <div className="flex items-center justify-between gap-2 pt-2.5 border-t border-slate-100">
               <div className="flex items-center gap-2 overflow-x-auto pb-1 pt-0.5 no-scrollbar flex-1">
-                <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider whitespace-nowrap">
-                  Position:
+                <span className="text-[11px] font-bold text-indigo-700 bg-indigo-50 px-2.5 py-1 rounded-lg uppercase tracking-wider whitespace-nowrap flex items-center gap-1.5 border border-indigo-200/80 shadow-2xs">
+                  <Briefcase size={12} className="text-indigo-600" />
+                  Positions:
                 </span>
                 <button
                   onClick={() => setSelectedVacancyId("ALL")}
@@ -818,67 +819,59 @@ export default function RecruitmentApplications() {
               return (
                 <div
                   key={group.key}
-                  className="bg-white rounded-3xl border border-slate-200/80 shadow-sm overflow-hidden transition-all duration-200 hover:border-slate-300"
+                  className="bg-white rounded-3xl border-2 border-indigo-100 shadow-md overflow-hidden transition-all duration-200 hover:shadow-lg"
                 >
-                  {/* ── Vacancy Group Header ── */}
+                  {/* ── Vacancy Group Header (Prominently Highlighted Position Topic) ── */}
                   <div
                     onClick={() => toggleGroup(group.key)}
-                    className="p-5 bg-gradient-to-r from-slate-50 via-indigo-50/20 to-white border-b border-slate-200/80 flex flex-col md:flex-row md:items-center justify-between gap-4 cursor-pointer hover:bg-slate-100/60 transition-colors"
+                    className="p-5 sm:p-6 bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white flex flex-col md:flex-row md:items-center justify-between gap-4 cursor-pointer hover:from-slate-800 hover:to-indigo-900 transition-all border-b border-indigo-900/60"
                   >
-                    {/* Left: Vacancy title, Department & Meta */}
-                    <div className="flex items-start sm:items-center gap-3.5">
-                      <div className="w-12 h-12 rounded-2xl bg-indigo-600 text-white flex items-center justify-center shrink-0 shadow-md shadow-indigo-200">
-                        <Briefcase size={22} />
+                    {/* Left: Highlighted Position Topic Field */}
+                    <div className="flex items-start sm:items-center gap-4">
+                      <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-gradient-to-br from-indigo-500 to-indigo-700 text-white flex items-center justify-center shrink-0 shadow-lg shadow-indigo-500/30 border border-indigo-400/40">
+                        <Briefcase size={24} />
                       </div>
-                      <div>
+                      <div className="space-y-1.5">
+                        {/* Topic Category & Meta Pills */}
                         <div className="flex flex-wrap items-center gap-2">
-                          <h3 className="text-lg font-bold text-slate-900 group-hover:text-indigo-600 transition-colors">
-                            {group.title}
-                          </h3>
-                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-100">
-                            <Building2 size={12} />
+                          <span className="px-2.5 py-0.5 rounded-full bg-indigo-500/30 border border-indigo-400/40 text-indigo-200 text-[10px] font-extrabold uppercase tracking-widest flex items-center gap-1 shadow-xs">
+                            <Layers size={11} className="text-amber-400" />
+                            Applied Position
+                          </span>
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-white/10 text-indigo-200 border border-white/10">
+                            <Building2 size={12} className="text-indigo-300" />
                             <span>{group.department}</span>
                           </span>
                           {group.jobType && (
-                            <span className="text-[11px] font-semibold px-2 py-0.5 rounded-lg bg-slate-100 text-slate-600 border border-slate-200">
+                            <span className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-400/30">
                               {group.jobType}
                             </span>
                           )}
-                        </div>
-                        <div className="flex items-center gap-3 text-xs text-slate-400 mt-1">
-                          <span>
-                            Target Position: <strong className="text-slate-600 font-semibold">{group.title}</strong>
-                          </span>
                           {group.vacancyCount > 1 && (
-                            <>
-                              <span>•</span>
-                              <span>{group.vacancyCount} Openings</span>
-                            </>
+                            <span className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-white/10 text-slate-300">
+                              {group.vacancyCount} Openings
+                            </span>
                           )}
                         </div>
+
+                        {/* Bold Prominent Position Title */}
+                        <h3 className="text-xl sm:text-2xl font-black text-white tracking-tight flex items-center gap-2">
+                          <span>{group.title}</span>
+                        </h3>
                       </div>
                     </div>
 
-                    {/* Right: Summary pill, action shortcut & Collapse toggle */}
-                    <div className="flex items-center gap-3 self-end md:self-auto" onClick={(e) => e.stopPropagation()}>
-                      <span className="px-3 py-1.5 rounded-xl bg-slate-100 text-slate-800 text-xs font-bold border border-slate-200">
-                        {totalForGroup} {totalForGroup === 1 ? "Applicant" : "Applicants"}
+                    {/* Right: Summary pill & Collapse toggle */}
+                    <div className="flex items-center gap-2.5 self-end md:self-auto" onClick={(e) => e.stopPropagation()}>
+                      <span className="px-3.5 py-1.5 rounded-xl bg-white/15 text-white text-xs font-bold border border-white/20 backdrop-blur-sm shadow-xs flex items-center gap-1.5">
+                        <Users size={14} className="text-indigo-300" />
+                        <span>{totalForGroup} {totalForGroup === 1 ? "Applicant" : "Applicants"}</span>
                       </span>
-
-                      {/* Shortcut to screen applications */}
-                      <Link
-                        to={`/recruitment/applications/review${group.id ? `?vacancyId=${group.id}` : ""}`}
-                        className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-semibold transition-colors"
-                        title="Screen and review candidates for this vacancy"
-                      >
-                        <ClipboardCheck size={14} />
-                        <span className="hidden lg:inline">Review Position</span>
-                      </Link>
 
                       {/* Collapse/Expand button */}
                       <button
                         onClick={() => toggleGroup(group.key)}
-                        className="p-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-200/60 transition-colors"
+                        className="p-2 rounded-xl text-slate-300 hover:text-white hover:bg-white/10 transition-colors"
                         title={isCollapsed ? "Expand table" : "Collapse table"}
                       >
                         {isCollapsed ? <ChevronDown size={18} /> : <ChevronUp size={18} />}
@@ -895,8 +888,8 @@ export default function RecruitmentApplications() {
                           {[
                             { id: "ALL", label: "All Applicants", count: totalForGroup },
                             { id: "NEW", label: "New", count: newCount },
-                            { id: "UNDER_REVIEW", label: "Under Review", count: reviewCount },
                             { id: "SHORTLISTED", label: "Shortlisted", count: shortlistedCount },
+                            { id: "UNDER_REVIEW", label: "Under Review", count: reviewCount },
                             { id: "REJECTED", label: "Rejected", count: rejectedCount },
                           ].map((tab) => {
                             const active = currentStatus === tab.id;
@@ -1178,7 +1171,7 @@ export default function RecruitmentApplications() {
             {/* Master list status tabs */}
             <div className="p-4 bg-slate-50/70 border-b border-slate-100 flex flex-wrap items-center justify-between gap-3">
               <div className="flex flex-wrap items-center gap-2">
-                {["ALL", "NEW", "UNDER_REVIEW", "SHORTLISTED", "REJECTED"].map((st) => {
+                {["ALL", "NEW", "SHORTLISTED", "UNDER_REVIEW", "REJECTED"].map((st) => {
                   const active = masterStatusFilter === st;
                   const count =
                     st === "ALL"
@@ -1290,13 +1283,18 @@ export default function RecruitmentApplications() {
 
                         {/* Vacancy */}
                         <td className="px-6 py-4">
-                          <div className="font-semibold text-slate-800">{jobName}</div>
-                          {app.department && (
-                            <div className="text-xs text-slate-400 mt-0.5 flex items-center gap-1">
-                              <Building2 size={12} />
-                              <span>{app.department}</span>
-                            </div>
-                          )}
+                          <div className="inline-flex flex-col items-start gap-1">
+                            <span className="px-2.5 py-1 rounded-xl bg-indigo-50 border border-indigo-200/90 text-indigo-900 font-bold text-xs flex items-center gap-1.5 shadow-2xs">
+                              <Briefcase size={12} className="text-indigo-600 shrink-0" />
+                              <span>{jobName}</span>
+                            </span>
+                            {app.department && (
+                              <span className="text-[11px] text-slate-500 pl-1 flex items-center gap-1">
+                                <Building2 size={11} className="text-slate-400" />
+                                <span>{app.department}</span>
+                              </span>
+                            )}
+                          </div>
                         </td>
 
                         {/* Experience */}

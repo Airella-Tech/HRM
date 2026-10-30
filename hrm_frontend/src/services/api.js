@@ -415,6 +415,22 @@ export const recruitmentApi = {
   getResumeDownloadUrl: (id) => `${RECRUITMENT_URL}/recruitment/applications/${id}/resume`,
   downloadResume: (id) => requestBlob(`${RECRUITMENT_URL}/recruitment/applications/${id}/resume?download=true`),
 
+  // ── Configurable Screening & Automatic Shortlisting ──
+  getScreeningConfig: (vacancyId) =>
+    request("GET", `${RECRUITMENT_URL}/recruitment/screening/config/${vacancyId}`),
+  saveScreeningConfig: (vacancyId, data) =>
+    request("PUT", `${RECRUITMENT_URL}/recruitment/screening/config/${vacancyId}`, data),
+  evaluateCandidate: (applicationId) =>
+    request("POST", `${RECRUITMENT_URL}/recruitment/screening/evaluate/${applicationId}`),
+  evaluateVacancy: (vacancyId) =>
+    request("POST", `${RECRUITMENT_URL}/recruitment/screening/evaluate-vacancy/${vacancyId}`),
+  rescreenVacancy: (vacancyId) =>
+    request("POST", `${RECRUITMENT_URL}/recruitment/screening/rescreen-vacancy/${vacancyId}`),
+  getScreeningResult: (applicationId) =>
+    request("GET", `${RECRUITMENT_URL}/recruitment/screening/results/${applicationId}`),
+  getVacancyScreeningResults: (vacancyId) =>
+    request("GET", `${RECRUITMENT_URL}/recruitment/screening/vacancy/${vacancyId}/results`),
+
   // ── Interviews, offers, reports (Member 3) ──
 };
 
