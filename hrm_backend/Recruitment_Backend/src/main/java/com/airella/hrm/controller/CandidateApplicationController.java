@@ -23,9 +23,12 @@ import java.util.List;
 public class CandidateApplicationController {
 
     private final CandidateApplicationService applicationService;
+    private final com.airella.hrm.service.CandidateScreeningService screeningService;
 
-    public CandidateApplicationController(CandidateApplicationService applicationService) {
+    public CandidateApplicationController(CandidateApplicationService applicationService,
+                                        com.airella.hrm.service.CandidateScreeningService screeningService) {
         this.applicationService = applicationService;
+        this.screeningService = screeningService;
     }
 
     /**
@@ -50,6 +53,32 @@ public class CandidateApplicationController {
     public ResponseEntity<ApiResponse<CandidateApplicationDTO>> getApplicationById(@PathVariable Long id) {
         CandidateApplicationDTO result = applicationService.getApplicationById(id);
         return ResponseEntity.ok(ApiResponse.success(result, "Candidate application retrieved successfully"));
+    }
+
+    /**
+     * Manual shortlist candidate with notes.
+     */
+    @PostMapping("/{id}/shortlist")
+    @PreAuthorize("@perm.has('APPLICATION_SHORTLIST')")
+    public ResponseEntity<ApiResponse<CandidateApplicationDTO>> shortlistCandidate(
+            @PathVariable Long id,
+            @RequestBody(required = false) com.airella.hrm.dto.ShortlistActionRequest request) {
+        String notes = request != null ? request.getNotes() : null;
+        CandidateApplicationDTO result = screeningService.shortlistCandidateManual(id, notes);
+        return ResponseEntity.ok(ApiResponse.success(result, "Candidate application shortlisted successfully"));
+    }
+
+    /**
+     * Manual reject candidate with structured reason.
+     */
+    @PostMapping("/{id}/reject")
+    @PreAuthorize("@perm.has('APPLICATION_SHORTLIST')")
+    public ResponseEntity<ApiResponse<CandidateApplicationDTO>> rejectCandidate(
+            @PathVariable Long id,
+            @RequestBody com.airella.hrm.dto.RejectActionRequest request) {
+        String reason = request != null ? request.getReason() : "Application rejected";
+        CandidateApplicationDTO result = screeningService.rejectCandidateManual(id, reason);
+        return ResponseEntity.ok(ApiResponse.success(result, "Candidate application rejected"));
     }
 
     /**
