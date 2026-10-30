@@ -599,30 +599,20 @@ export const recruitmentApi = {
 
   // â”€â”€ Vacancies (Member 1) â”€â”€
   getVacancies: (status) =>
-    request(
-      "GET",
-      `${RECRUITMENT_URL}/recruitment/jobs${status ? `?status=${encodeURIComponent(status)}` : ""}`,
-    ),
-  getVacancy: (id) =>
-    request("GET", `${RECRUITMENT_URL}/recruitment/jobs/${id}`),
-  createVacancy: (data) =>
-    request("POST", `${RECRUITMENT_URL}/recruitment/jobs`, data),
-  updateVacancy: (id, data) =>
-    request("PUT", `${RECRUITMENT_URL}/recruitment/jobs/${id}`, data),
-  deleteVacancy: (id) =>
-    request("DELETE", `${RECRUITMENT_URL}/recruitment/jobs/${id}`),
-  submitVacancy: (id) =>
-    request("POST", `${RECRUITMENT_URL}/recruitment/jobs/${id}/submit`),
-  approveVacancy: (id) =>
-    request("POST", `${RECRUITMENT_URL}/recruitment/jobs/${id}/approve`),
-  rejectVacancy: (id, reason) =>
-    request("POST", `${RECRUITMENT_URL}/recruitment/jobs/${id}/reject`, {
-      reason,
-    }),
-  publishVacancy: (id) =>
-    request("POST", `${RECRUITMENT_URL}/recruitment/jobs/${id}/publish`),
-  closeVacancy: (id) =>
-    request("POST", `${RECRUITMENT_URL}/recruitment/jobs/${id}/close`),
+    request("GET", `${RECRUITMENT_URL}/recruitment/jobs${status ? `?status=${encodeURIComponent(status)}` : ""}`),
+  getVacancy: (id) => request("GET", `${RECRUITMENT_URL}/recruitment/jobs/${id}`),
+    // Notifications (vacancy events)
+  getNotifications: () => request("GET", `${RECRUITMENT_URL}/recruitment/notifications`),
+  markNotificationRead: (id) => request("PUT", `${RECRUITMENT_URL}/recruitment/notifications/${id}/read`),
+  markAllNotificationsRead: () => request("PUT", `${RECRUITMENT_URL}/recruitment/notifications/read-all`),
+  createVacancy: (data) => request("POST", `${RECRUITMENT_URL}/recruitment/jobs`, data),
+  updateVacancy: (id, data) => request("PUT", `${RECRUITMENT_URL}/recruitment/jobs/${id}`, data),
+  deleteVacancy: (id) => request("DELETE", `${RECRUITMENT_URL}/recruitment/jobs/${id}`),
+    submitVacancy: (id) => request("POST", `${RECRUITMENT_URL}/recruitment/jobs/${id}/submit`),
+  approveVacancy: (id) => request("POST", `${RECRUITMENT_URL}/recruitment/jobs/${id}/approve`),
+  rejectVacancy: (id, reason) => request("POST", `${RECRUITMENT_URL}/recruitment/jobs/${id}/reject`, { reason }),
+    publishVacancy: (id) => request("POST", `${RECRUITMENT_URL}/recruitment/jobs/${id}/publish`),
+  closeVacancy: (id) => request("POST", `${RECRUITMENT_URL}/recruitment/jobs/${id}/close`),
 
   // ── Applications & Candidate Management (Member 2) ──
   getApplications: (params) => {

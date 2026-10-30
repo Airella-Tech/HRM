@@ -57,6 +57,7 @@ public class DepartmentController {
     }
 
     @GetMapping
+    @PreAuthorize("isAuthenticated()")
     @Transactional(readOnly = true)
     public ResponseEntity<ApiResponse<List<DepartmentDTO>>> getCompanyDepartments() {
         Employee hr = authService.getCurrentEmployee();
