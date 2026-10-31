@@ -48,6 +48,7 @@ import RecruitmentInterviews from "./Pages/recruitment/Interviews.jsx";
 import RecruitmentEvaluations from "./Pages/recruitment/Evaluations.jsx";
 import RecruitmentOffers from "./Pages/recruitment/Offers.jsx";
 import RecruitmentReports from "./Pages/recruitment/Reports.jsx";
+import RecruitmentAuditLog from "./Pages/recruitment/AuditLog.jsx";
 import RecruitmentRolesPermissions from "./Pages/hr/RecruitmentRolesPermissions.jsx";
 import Careers from "./Pages/careers/Careers.jsx";
 import CareerJob from "./Pages/careers/CareerJob.jsx";
@@ -117,6 +118,14 @@ function App() {
       <Route path="/recruitment/reports" element={<RecruitmentReports />} />
 
       <Route path="/recruitment/roles-permissions" element={<RecruitmentRolesPermissions />}/>
+            <Route
+        path="/recruitment/audit-log"
+        element={
+          <RecruitmentRouteGuard requiredAny={["AUDIT_VIEW"]}>
+            <RecruitmentAuditLog />
+          </RecruitmentRouteGuard>
+        }
+      />
       <Route path="/hr/roles-permissions" element={<RecruitmentRolesPermissions />}/>
     </Routes>
   );
