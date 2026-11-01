@@ -106,7 +106,7 @@ public class InterviewController {
     // Change only the interview status.
     // Does not require candidate name or other interview fields.
     @PatchMapping("/{id}/status")
-    @PreAuthorize("@perm.canUpdateInterviewStatus(#id, #request.status())")
+    @PreAuthorize("@perm.has('INTERVIEW_SCHEDULE')")
     public ResponseEntity<ApiResponse<InterviewDTO>> updateStatus(
             @PathVariable Long id,
             @Valid @RequestBody InterviewStatusUpdateDTO request) {

@@ -131,6 +131,9 @@ const getResponseData = (response) => {
   return Array.isArray(result) ? result : [];
 };
 
+// Extract evaluation records from common API response shapes. Some endpoints
+// return an array, while others wrap it in data/result/payload or return one
+// evaluation object directly.
 const getEvaluationRecords = (response) => {
   let result = response?.data ?? response;
 
@@ -146,18 +149,18 @@ const getEvaluationRecords = (response) => {
       "results",
       "records",
     ].find((key) => Array.isArray(result[key]));
-
     if (listKey) return result[listKey].filter(Boolean);
 
     const nestedKey = ["data", "result", "payload"].find(
       (key) => result[key] && typeof result[key] === "object",
     );
-
     if (nestedKey) {
       result = result[nestedKey];
       continue;
     }
 
+    // A single evaluation DTO usually has an id, status, recommendation,
+    // submittedAt, or evaluation criteria fields.
     if (
       [
         "id",
@@ -171,10 +174,8 @@ const getEvaluationRecords = (response) => {
     ) {
       return [result];
     }
-
     return [];
   }
-
   return [];
 };
 
@@ -224,6 +225,7 @@ const normalizeRound = (round) => {
 
 // --------------------------------------------------
 // APPLICATION NORMALIZATION
+// CandidateApplicationDTO.id represents application ID.
 // --------------------------------------------------
 
 const normalizeCandidate = (item = {}) => {
@@ -270,6 +272,7 @@ const normalizeCandidate = (item = {}) => {
 
   return {
     ...item,
+
     id: applicationId ?? candidateId ?? email ?? null,
     applicationId: applicationId ?? null,
     candidateId: candidateId ?? null,
@@ -347,6 +350,8 @@ const isTruthyFlag = (value) =>
   (typeof value === "string" && value.trim().toLowerCase() === "true");
 
 const getEvaluation = (item = {}) => {
+  // Prefer submitted evaluations from collections. A direct `evaluation`
+  // property can be stale when the backend also returns evaluation history.
   const evaluationLists = [
     item.evaluations,
     item.interviewEvaluations,
@@ -392,20 +397,14 @@ const getEvaluation = (item = {}) => {
           evaluation.createdAt,
           evaluation.created_at,
         );
-
         const parsed = raw ? new Date(raw).getTime() : 0;
-
-        return Number.isFinite(parsed)
-          ? parsed
-          : Number(evaluation.id) || 0;
+        return Number.isFinite(parsed) ? parsed : Number(evaluation.id) || 0;
       };
 
       return getTime(b) - getTime(a);
     });
 
-  if (submittedEvaluations.length) {
-    return submittedEvaluations[0];
-  }
+  if (submittedEvaluations.length) return submittedEvaluations[0];
 
   const directEvaluations = [
     item.latestEvaluation,
@@ -421,6 +420,8 @@ const getEvaluation = (item = {}) => {
 
   if (direct) return direct;
 
+  // If the backend returns a collection but no submission flag, use the
+  // newest entry rather than blindly using the first entry.
   if (allEvaluations.length) {
     return [...allEvaluations].sort((a, b) => {
       const getTime = (evaluation) => {
@@ -430,14 +431,9 @@ const getEvaluation = (item = {}) => {
           evaluation.createdAt,
           evaluation.created_at,
         );
-
         const parsed = raw ? new Date(raw).getTime() : 0;
-
-        return Number.isFinite(parsed)
-          ? parsed
-          : Number(evaluation.id) || 0;
+        return Number.isFinite(parsed) ? parsed : Number(evaluation.id) || 0;
       };
-
       return getTime(b) - getTime(a);
     })[0];
   }
@@ -496,34 +492,6 @@ const getRecommendation = (interview) => {
       "",
     ),
   );
-};
-
-// --------------------------------------------------
-// INTERVIEW STATUS HELPERS
-// --------------------------------------------------
-
-const getInterviewStatus = (interview = {}) =>
-  normalizeStatus(
-    first(
-      interview.interviewStatus,
-      interview.interview_status,
-      interview.status,
-      interview.statusName,
-      interview.status_name,
-      "",
-    ),
-  );
-
-const isCancelledInterview = (interview) => {
-  const status = getInterviewStatus(interview);
-
-  return ["cancelled", "canceled", "deleted"].includes(status);
-};
-
-const isInterviewStatusCompleted = (interview) => {
-  const status = getInterviewStatus(interview);
-
-  return ["completed", "complete", "done"].includes(status);
 };
 
 // --------------------------------------------------
@@ -644,7 +612,14 @@ const normalizeInterview = (item = {}) => {
 
     round: normalizeRound(rawRound),
 
-    status: getInterviewStatus(item),
+    status: first(
+      item.interviewStatus,
+      item.interview_status,
+      item.status,
+      item.statusName,
+      item.status_name,
+      "",
+    ),
 
     evaluation: getEvaluation(item),
   };
@@ -654,17 +629,33 @@ const normalizeInterview = (item = {}) => {
 // COMPLETION AND REJECTION LOGIC
 // --------------------------------------------------
 
+const isCancelledInterview = (interview) => {
+  const status = normalizeStatus(
+    first(
+      interview.status,
+      interview.interviewStatus,
+      interview.interview_status,
+      "",
+    ),
+  );
+
+  return ["cancelled", "canceled", "deleted"].includes(status);
+};
+
 const isRejectedInterview = (interview) => {
   if (isCancelledInterview(interview)) return false;
 
   const recommendation = getRecommendation(interview);
   const evaluation = getEvaluation(interview);
 
-  const evaluationStatus = normalizeStatus(
+  const status = normalizeStatus(
     first(
       evaluation.status,
       evaluation.evaluationStatus,
       evaluation.evaluation_status,
+      interview.interviewStatus,
+      interview.interview_status,
+      interview.status,
       "",
     ),
   );
@@ -677,32 +668,19 @@ const isRejectedInterview = (interview) => {
       "REJECTED",
       "NOT_RECOMMENDED",
     ].includes(recommendation) ||
-    evaluationStatus.includes("reject") ||
-    evaluationStatus.includes("not recommend") ||
-    evaluationStatus === "no hire" ||
-    evaluationStatus === "strong no hire"
+    status.includes("reject") ||
+    status.includes("not recommend") ||
+    status === "no hire" ||
+    status === "strong no hire"
   );
 };
 
-// A round is passed only when a submitted evaluation recommends HIRE
-// or STRONG_HIRE. Interview status COMPLETED alone is not enough.
 const isCompletedInterview = (interview) => {
   if (isCancelledInterview(interview)) return false;
   if (isRejectedInterview(interview)) return false;
   if (!hasSubmittedEvaluation(interview)) return false;
 
   return ["HIRE", "STRONG_HIRE"].includes(getRecommendation(interview));
-};
-
-// Completed interview without a submitted evaluation.
-// This must be displayed separately from a passed interview.
-const isCompletedEvaluationPending = (interview) => {
-  if (isCancelledInterview(interview)) return false;
-  if (isRejectedInterview(interview)) return false;
-  if (!isInterviewStatusCompleted(interview)) return false;
-  if (isCompletedInterview(interview)) return false;
-
-  return !hasSubmittedEvaluation(interview);
 };
 
 // --------------------------------------------------
@@ -725,6 +703,7 @@ const isSameCandidate = (candidate, interview) => {
   }
 
   const candidateEmail = first(candidate.email, candidate.candidateEmail, "");
+
   const interviewEmail = first(interview.email, interview.candidateEmail, "");
 
   return (
@@ -790,7 +769,7 @@ const candidateFromInterview = (interview) =>
   });
 
 // --------------------------------------------------
-// SHORTLISTED CANDIDATES PAGE
+// SHORTLISTED CANDIDATES / INTERVIEW PROGRESS PAGE
 // --------------------------------------------------
 
 export default function ShortlistedCandidates() {
@@ -852,6 +831,7 @@ export default function ShortlistedCandidates() {
         );
 
         const applicationsFailed = applicationsResult.status === "rejected";
+
         const interviewsFailed = interviewsResult.status === "rejected";
 
         const applicationItems = applicationsFailed
@@ -879,7 +859,9 @@ export default function ShortlistedCandidates() {
 
         const normalizedApplications = applicationItems.map(normalizeCandidate);
 
-        // Load evaluation records separately for each interview.
+        // The interviews list endpoint may not embed evaluation history.
+        // Fetch each interview's evaluation collection explicitly, then attach
+        // it before normalization so progress reflects submitted evaluations.
         const interviewsWithEvaluations = await Promise.all(
           interviewItems.map(async (item) => {
             const interviewId = first(
@@ -887,7 +869,6 @@ export default function ShortlistedCandidates() {
               item.interviewId,
               item.interview_id,
             );
-
             const embedded =
               [
                 item.evaluations,
@@ -905,10 +886,8 @@ export default function ShortlistedCandidates() {
             try {
               const evaluationResponse =
                 await recruitmentApi.getInterviewEvaluations(interviewId);
-
               const fetchedEvaluations =
                 getEvaluationRecords(evaluationResponse);
-
               return {
                 ...item,
                 evaluations: fetchedEvaluations.length
@@ -916,11 +895,12 @@ export default function ShortlistedCandidates() {
                   : embedded,
               };
             } catch (evaluationError) {
+              // Keep embedded evaluations if the separate endpoint is forbidden,
+              // unavailable, or not implemented; do not fail the whole page.
               console.warn(
                 `Could not load evaluations for interview ${interviewId}:`,
                 evaluationError,
               );
-
               return { ...item, evaluations: embedded };
             }
           }),
@@ -928,9 +908,6 @@ export default function ShortlistedCandidates() {
 
         const interviewRecords =
           interviewsWithEvaluations.map(normalizeInterview);
-
-        // Debug information: inspect this output if progress does not update.
-        
 
         if (!mountedRef.current) return;
 
@@ -1073,38 +1050,8 @@ export default function ShortlistedCandidates() {
     [interviews],
   );
 
-  // Returns the state of a particular round.
-  const getRoundState = useCallback(
-    (candidate, round) => {
-      const roundInterviews = getCandidateInterviews(candidate).filter(
-        (interview) =>
-          sameText(normalizeRound(interview.round), round) &&
-          !isCancelledInterview(interview),
-      );
-
-      if (roundInterviews.some(isRejectedInterview)) {
-        return "rejected";
-      }
-
-      if (roundInterviews.some(isCompletedInterview)) {
-        return "passed";
-      }
-
-      if (roundInterviews.some(isCompletedEvaluationPending)) {
-        return "evaluation-pending";
-      }
-
-      if (roundInterviews.length > 0) {
-        return "scheduled";
-      }
-
-      return "not-started";
-    },
-    [getCandidateInterviews],
-  );
-
-  // A completed interview with a pending evaluation remains an existing
-  // schedule. This prevents creating a duplicate interview for the same round.
+  // Check whether this candidate already has an active schedule
+  // for the specified round.
   const hasExistingRoundSchedule = useCallback(
     (candidate, round) => {
       if (!candidate || !round) return false;
@@ -1125,25 +1072,30 @@ export default function ShortlistedCandidates() {
 
   const getCompletedRounds = useCallback(
     (candidate) => {
+      const relatedInterviews = getCandidateInterviews(candidate);
       const completedRounds = [];
 
       for (const round of ROUNDS) {
-        const roundState = getRoundState(candidate, round);
+        const interviewsForRound = relatedInterviews.filter(
+          (interview) =>
+            sameText(normalizeRound(interview.round), round) &&
+            !isCancelledInterview(interview),
+        );
 
-        if (roundState === "rejected") {
+        if (interviewsForRound.some(isRejectedInterview)) {
           break;
         }
 
-        if (roundState !== "passed") {
-          break;
-        }
+        const roundPassed = interviewsForRound.some(isCompletedInterview);
+
+        if (!roundPassed) break;
 
         completedRounds.push(round);
       }
 
       return completedRounds;
     },
-    [getRoundState],
+    [getCandidateInterviews],
   );
 
   const getNextRound = useCallback(
@@ -1159,12 +1111,6 @@ export default function ShortlistedCandidates() {
       return ROUNDS[completedRounds.length] ?? null;
     },
     [getCandidateInterviews, getCompletedRounds],
-  );
-
-  const hasPendingEvaluation = useCallback(
-    (candidate, round) =>
-      getRoundState(candidate, round) === "evaluation-pending",
-    [getRoundState],
   );
 
   // --------------------------------------------------
@@ -1213,15 +1159,11 @@ export default function ShortlistedCandidates() {
       return;
     }
 
+    // Prevent duplicate active schedules for the same round.
     if (hasExistingRoundSchedule(candidate, nextRound)) {
-      const pendingEvaluation = hasPendingEvaluation(candidate, nextRound);
-
       setNotice(
-        pendingEvaluation
-          ? `${candidate.name}'s ${nextRound} interview is completed, but its evaluation is still pending. Submit the evaluation before scheduling the next stage.`
-          : `${candidate.name} already has a ${nextRound} scheduled. You cannot schedule the same round again.`,
+        `${candidate.name} already has a ${nextRound} scheduled. You cannot schedule the same round again.`,
       );
-
       setSelectedCandidate(null);
       return;
     }
@@ -1504,10 +1446,6 @@ export default function ShortlistedCandidates() {
                         Boolean(nextRound) &&
                         hasExistingRoundSchedule(candidate, nextRound);
 
-                      const evaluationPending =
-                        Boolean(nextRound) &&
-                        hasPendingEvaluation(candidate, nextRound);
-
                       return (
                         <tr
                           key={
@@ -1537,43 +1475,23 @@ export default function ShortlistedCandidates() {
                             {candidate.vacancy}
                           </td>
 
-                          {/* INTERVIEW PROGRESS */}
                           <td className="px-5 py-4">
                             <div className="flex items-center gap-1.5">
-                              {ROUNDS.map((round) => {
-                                const state = getRoundState(candidate, round);
-
-                                const progressColor =
-                                  state === "passed"
-                                    ? "bg-green-500"
-                                    : state === "evaluation-pending"
-                                      ? "bg-amber-500"
-                                      : state === "scheduled"
-                                        ? "bg-blue-500"
-                                        : state === "rejected"
-                                          ? "bg-red-500"
-                                          : "bg-slate-200";
-
-                                const progressLabel =
-                                  state === "passed"
-                                    ? "Passed"
-                                    : state === "evaluation-pending"
-                                      ? "Interview completed - evaluation pending"
-                                      : state === "scheduled"
-                                        ? "Scheduled or in progress"
-                                        : state === "rejected"
-                                          ? "Rejected"
-                                          : "Not started";
-
-                                return (
-                                  <span
-                                    key={round}
-                                    title={`${round}: ${progressLabel}`}
-                                    className={`h-2.5 w-7 rounded-full ${progressColor}`}
-                                  />
-                                );
-                              })}
-
+                              {ROUNDS.map((round) => (
+                                <span
+                                  key={round}
+                                  title={
+                                    completedRounds.includes(round)
+                                      ? `${round}: Passed`
+                                      : `${round}: Not passed`
+                                  }
+                                  className={`h-2.5 w-7 rounded-full ${
+                                    completedRounds.includes(round)
+                                      ? "bg-green-500"
+                                      : "bg-slate-200"
+                                  }`}
+                                />
+                              ))}
                               <span className="ml-1 text-xs text-slate-500">
                                 {completed}/{ROUNDS.length}
                               </span>
@@ -1582,29 +1500,21 @@ export default function ShortlistedCandidates() {
                             <p className="mt-2 text-xs text-slate-500">
                               {rejected
                                 ? "Recruitment stopped"
-                                : evaluationPending
-                                  ? `${nextRound} completed - evaluation pending`
-                                  : alreadyScheduled
-                                    ? `${nextRound} scheduled or in progress`
-                                    : completed === 0
-                                      ? "No passing evaluations recorded"
-                                      : `${completed} stage(s) passed`}
+                                : alreadyScheduled
+                                  ? `${nextRound} already scheduled`
+                                  : completed === 0
+                                    ? "No passing evaluations recorded"
+                                    : `${completed} stage(s) passed`}
                             </p>
                           </td>
 
-                          {/* NEXT STAGE */}
                           <td className="px-5 py-4">
                             {rejected ? (
                               <span className="inline-flex items-center gap-1.5 rounded-lg bg-red-50 px-3 py-2 text-xs font-semibold text-red-700">
                                 Recruitment stopped
                               </span>
-                            ) : evaluationPending ? (
-                              <span className="inline-flex items-center gap-1.5 rounded-lg bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-700">
-                                <Clock3 size={14} />
-                                Evaluation pending
-                              </span>
                             ) : alreadyScheduled ? (
-                              <span className="inline-flex items-center gap-1.5 rounded-lg bg-blue-50 px-3 py-2 text-xs font-semibold text-blue-700">
+                              <span className="inline-flex items-center gap-1.5 rounded-lg bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-700">
                                 <Clock3 size={14} />
                                 Already scheduled
                               </span>
@@ -1652,17 +1562,16 @@ export default function ShortlistedCandidates() {
                                   !isValidApplicationId(
                                     candidate.applicationId,
                                   ) ||
-                                  alreadyScheduled
+                                  hasExistingRoundSchedule(candidate, nextRound)
                                 }
                                 onClick={() => scheduleNextStage(candidate)}
                                 className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-lg bg-indigo-600 px-3 py-2.5 text-xs font-semibold text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-slate-300"
                               >
                                 <CalendarCheck size={15} />
-                                {evaluationPending
-                                  ? "Evaluation pending"
-                                  : alreadyScheduled
-                                    ? "Already scheduled"
-                                    : "Schedule next stage"}
+                                {nextRound &&
+                                hasExistingRoundSchedule(candidate, nextRound)
+                                  ? "Already scheduled"
+                                  : "Schedule next stage"}
                               </button>
                             </div>
                           </td>
@@ -1732,35 +1641,6 @@ export default function ShortlistedCandidates() {
           )}
         </section>
 
-        {/* PROGRESS LEGEND */}
-        <div className="mt-5 rounded-xl border border-slate-200 bg-white p-4">
-          <p className="mb-3 text-sm font-semibold text-slate-800">
-            Interview progress legend
-          </p>
-
-          <div className="flex flex-wrap gap-x-6 gap-y-3 text-xs text-slate-600">
-            <div className="flex items-center gap-2">
-              <span className="h-2.5 w-7 rounded-full bg-green-500" />
-              Passed evaluation
-            </div>
-
-            <div className="flex items-center gap-2">
-              <span className="h-2.5 w-7 rounded-full bg-amber-500" />
-              Completed - evaluation pending
-            </div>
-
-            <div className="flex items-center gap-2">
-              <span className="h-2.5 w-7 rounded-full bg-blue-500" />
-              Scheduled / in progress
-            </div>
-
-            <div className="flex items-center gap-2">
-              <span className="h-2.5 w-7 rounded-full bg-slate-200" />
-              Not started
-            </div>
-          </div>
-        </div>
-
         {/* WORKFLOW INFORMATION */}
         <div className="mt-5 rounded-xl border border-blue-100 bg-blue-50/70 p-4">
           <div className="flex items-start gap-3">
@@ -1771,15 +1651,12 @@ export default function ShortlistedCandidates() {
               </p>
               <p className="mt-1 text-sm leading-6 text-blue-700">
                 Candidates progress through Technical Interview, HR Interview,
-                Hiring Manager Interview, and Final Interview in that order.
-                A stage is marked as passed only after its evaluation is
-                submitted with a HIRE or STRONG_HIRE recommendation. If an
-                interview is marked as completed but its evaluation has not
-                been submitted, the stage is displayed as Evaluation Pending.
-                The next stage cannot be scheduled until the evaluation is
-                submitted and the candidate receives a passing recommendation.
-                Cancelled interviews may be scheduled again. Rejected
-                candidates cannot progress to further stages.
+                Hiring Manager Interview, and Final Interview in that order. A
+                stage counts as passed when its evaluation is submitted with a
+                HIRE or STRONG_HIRE recommendation. An active schedule prevents
+                another schedule for the same round. Cancelled interviews may be
+                scheduled again. Rejected candidates cannot progress to further
+                stages. The backend must enforce the same workflow rules.
               </p>
             </div>
           </div>
@@ -1829,45 +1706,44 @@ export default function ShortlistedCandidates() {
 
               <div className="space-y-3 p-5">
                 {ROUNDS.map((round, index) => {
-                  const state = getRoundState(selectedCandidate, round);
+                  const completed =
+                    getCompletedRounds(selectedCandidate).includes(round);
 
-                  const completed = state === "passed";
-                  const evaluationPending = state === "evaluation-pending";
-                  const scheduled = state === "scheduled";
-                  const rejected = state === "rejected";
                   const next = getNextRound(selectedCandidate) === round;
 
-                  const stateStyle = completed
-                    ? "border-green-200 bg-green-50"
-                    : evaluationPending
-                      ? "border-amber-200 bg-amber-50"
-                      : scheduled
-                        ? "border-blue-200 bg-blue-50"
-                        : rejected
-                          ? "border-red-200 bg-red-50"
-                          : next
-                            ? "border-indigo-200 bg-indigo-50"
-                            : "border-slate-200";
+                  const rejected =
+                    getCandidateInterviews(selectedCandidate).some(
+                      isRejectedInterview,
+                    );
 
-                  const iconStyle = completed
-                    ? "bg-green-100 text-green-700"
-                    : evaluationPending
-                      ? "bg-amber-100 text-amber-700"
-                      : scheduled
-                        ? "bg-blue-100 text-blue-700"
-                        : rejected
-                          ? "bg-red-100 text-red-700"
-                          : next
-                            ? "bg-indigo-100 text-indigo-700"
-                            : "bg-slate-100 text-slate-500";
+                  const scheduled = hasExistingRoundSchedule(
+                    selectedCandidate,
+                    round,
+                  );
 
                   return (
                     <div
                       key={round}
-                      className={`flex items-center gap-3 rounded-xl border p-3 ${stateStyle}`}
+                      className={`flex items-center gap-3 rounded-xl border p-3 ${
+                        completed
+                          ? "border-green-200 bg-green-50"
+                          : scheduled
+                            ? "border-amber-200 bg-amber-50"
+                            : next
+                              ? "border-indigo-200 bg-indigo-50"
+                              : "border-slate-200"
+                      }`}
                     >
                       <div
-                        className={`flex h-9 w-9 items-center justify-center rounded-full ${iconStyle}`}
+                        className={`flex h-9 w-9 items-center justify-center rounded-full ${
+                          completed
+                            ? "bg-green-100 text-green-700"
+                            : scheduled
+                              ? "bg-amber-100 text-amber-700"
+                              : next
+                                ? "bg-indigo-100 text-indigo-700"
+                                : "bg-slate-100 text-slate-500"
+                        }`}
                       >
                         {completed ? <CheckCircle2 size={18} /> : index + 1}
                       </div>
@@ -1876,23 +1752,20 @@ export default function ShortlistedCandidates() {
                         <p className="text-sm font-semibold text-slate-800">
                           {round}
                         </p>
-
                         <p className="mt-1 text-xs text-slate-500">
                           {completed
                             ? "Passing evaluation submitted"
-                            : evaluationPending
-                              ? "Interview completed - evaluation pending"
-                              : rejected
-                                ? "Recruitment process stopped"
-                                : scheduled
-                                  ? "Interview scheduled or in progress"
-                                  : next
-                                    ? "Next stage to schedule"
-                                    : "Awaiting previous stages"}
+                            : rejected
+                              ? "Recruitment process stopped"
+                              : scheduled
+                                ? "An interview is already scheduled or in progress"
+                                : next
+                                  ? "Next stage to schedule"
+                                  : "Awaiting previous stages"}
                         </p>
                       </div>
 
-                      {next && !scheduled && !evaluationPending && (
+                      {next && !scheduled && (
                         <ChevronRight size={18} className="text-indigo-600" />
                       )}
                     </div>
@@ -1922,18 +1795,12 @@ export default function ShortlistedCandidates() {
                     className="rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-slate-300"
                   >
                     {getNextRound(selectedCandidate) &&
-                    hasPendingEvaluation(
+                    hasExistingRoundSchedule(
                       selectedCandidate,
                       getNextRound(selectedCandidate),
                     )
-                      ? "Evaluation pending"
-                      : getNextRound(selectedCandidate) &&
-                          hasExistingRoundSchedule(
-                            selectedCandidate,
-                            getNextRound(selectedCandidate),
-                          )
-                        ? "Already scheduled"
-                        : "Schedule next stage"}
+                      ? "Already scheduled"
+                      : "Schedule next stage"}
                   </button>
                 </div>
               </div>

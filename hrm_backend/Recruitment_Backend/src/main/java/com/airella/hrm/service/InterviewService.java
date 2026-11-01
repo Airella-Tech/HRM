@@ -23,7 +23,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
-import java.time.LocalDateTime;
 
 @Service
 @Transactional
@@ -206,38 +205,14 @@ public class InterviewService {
 
         String currentStatus = interview.getStatus();
 
-        // Prevent reopening completed or cancelled interviews.
         if (currentStatus != null
                 && (currentStatus.equalsIgnoreCase("Completed")
                 || currentStatus.equalsIgnoreCase("Cancelled"))
                 && !currentStatus.equalsIgnoreCase(newStatus)) {
-
             throw new BusinessException(
                     "A completed or cancelled interview cannot be reopened "
                             + "or changed to another status."
             );
-        }
-
-        // An interview cannot be completed before its scheduled date and time.
-        if ("Completed".equalsIgnoreCase(newStatus)) {
-
-            if (interview.getInterviewDate() == null
-                    || interview.getInterviewTime() == null) {
-                throw new BusinessException(
-                        "Interview date and time must be available before completion."
-                );
-            }
-
-            LocalDateTime scheduledDateTime = LocalDateTime.of(
-                    interview.getInterviewDate(),
-                    interview.getInterviewTime()
-            );
-
-            if (LocalDateTime.now().isBefore(scheduledDateTime)) {
-                throw new BusinessException(
-                        "An interview cannot be marked as completed before its scheduled date and time."
-                );
-            }
         }
 
         if (!Objects.equals(currentStatus, newStatus)) {
