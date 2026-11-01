@@ -167,8 +167,6 @@ export default function RecruitmentApplicationReview() {
     setRejectingCandidate(null);
   };
 
-  // Vacancy screening configs cached
-  const [screeningConfigs, setScreeningConfigs] = useState({});
 
   // Load Confirmed Shortlisted Candidates ONLY (with real evaluation & config data)
   const fetchConfirmedCandidates = useCallback(async (isRefresh = false) => {
@@ -211,7 +209,6 @@ export default function RecruitmentApplicationReview() {
               configMap[String(vId)] = cfg;
             }
           });
-          setScreeningConfigs(configMap);
 
           const allSavedResults = [];
           resultsSettled.forEach((res) => {
@@ -258,7 +255,9 @@ export default function RecruitmentApplicationReview() {
                 if (parsed && typeof parsed === "object" && ("experienceMatch" in parsed || "coreSkillsMatch" in parsed)) {
                   parsedCriteria = parsed;
                 }
-              } catch {}
+              } catch {
+                parsedCriteria = null;
+              }
             }
 
             const vacConfig = configMap[c.vacancyId] || configMap[String(c.vacancyId)];
@@ -522,7 +521,7 @@ export default function RecruitmentApplicationReview() {
         return scoreB - scoreA;
       }),
     }));
-  }, [filteredCandidates]);
+  }, [filteredCandidates, vacancies]);
 
   // KPI Metrics & Counts for all readiness recommendation categories
   const totalConfirmed = candidates.length;
@@ -530,7 +529,6 @@ export default function RecruitmentApplicationReview() {
   const needsEvalCount = candidates.filter((c) => c.readinessStatus === "UNDER_REVIEW").length;
   const secondOpinionCount = candidates.filter((c) => c.readinessStatus === "SECOND_OPINION").length;
   const holdCount = candidates.filter((c) => c.readinessStatus === "HOLD").length;
-  const pendingNotesCount = candidates.filter((c) => !c.screeningNotes || c.screeningNotes.trim() === "").length;
   const reviewedCount = candidates.filter((c) => Boolean(c.screeningNotes && c.screeningNotes.trim() !== "")).length;
   const avgMatchScore = totalConfirmed > 0
     ? Math.round(candidates.reduce((acc, c) => acc + (c.matchScore || 0), 0) / totalConfirmed)
@@ -868,7 +866,6 @@ export default function RecruitmentApplicationReview() {
                             const gradient = AVATAR_GRADIENTS[idx % AVATAR_GRADIENTS.length];
                             const score = Number(cand.matchScore || 85);
                             const scoreBadge = getScoreBadge(score);
-                            const isReadyInterview = cand.readinessStatus === "READY_FOR_INTERVIEW";
 
                             return (
                               <tr key={cand.id} className="hover:bg-slate-50/70 transition-colors">

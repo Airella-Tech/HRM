@@ -211,7 +211,6 @@ export default function RecruitmentCandidateShortlist() {
   // Global search & vacancy filter
   const [search, setSearch] = useState("");
   const [selectedVacancyFilter, setSelectedVacancyFilter] = useState("ALL");
-  const [outcomeFilter, setOutcomeFilter] = useState("ALL"); // ALL | RECOMMENDED | MANUAL_REVIEW | SHORTLISTED | REJECTED
 
   // Per-vacancy UI state
   const [collapsedGroups, setCollapsedGroups] = useState({});
@@ -246,7 +245,6 @@ export default function RecruitmentCandidateShortlist() {
   const [customReason, setCustomReason] = useState("");
 
   // 4. Candidate Details Modal
-  const [detailCandidate, setDetailCandidate] = useState(null);
 
   // Selected Vacancy Modal (Job Vacancy Details like Public Career Page)
   const [selectedVacancyModal, setSelectedVacancyModal] = useState(null);
@@ -1015,11 +1013,8 @@ export default function RecruitmentCandidateShortlist() {
               const vacTotal = group.candidates.length;
               const vacSuitable = group.candidates.filter((c) => getCandidateSuitability(c, minScore).isSuitable).length;
               const vacNotSuitable = group.candidates.filter((c) => !getCandidateSuitability(c, minScore).isSuitable).length;
-              const vacUnderReview = group.candidates.filter((c) => c.status === "NEW" || c.status === "UNDER_REVIEW").length;
               const vacShortlisted = group.candidates.filter((c) => c.status === "SHORTLISTED").length;
               const vacRejected = group.candidates.filter((c) => c.status === "REJECTED").length;
-              const vacRecommended = group.candidates.filter((c) => c.recommendation === "RECOMMENDED_FOR_SHORTLIST").length;
-              const vacManualReview = group.candidates.filter((c) => c.recommendation === "REQUIRES_MANUAL_REVIEW").length;
 
               return (
                 <div
@@ -1091,11 +1086,12 @@ export default function RecruitmentCandidateShortlist() {
                         <button
                           type="button"
                           onClick={() => handleOpenConfigModal(group.rawVacancy || { id: group.vacancyId, title: group.title })}
-                          className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold bg-slate-800/90 hover:bg-slate-700 text-slate-200 hover:text-white border border-slate-700/70 shadow-xs transition-all cursor-pointer"
+                          disabled={loadingConfigFor === group.vacancyId}
+                          className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold bg-slate-800/90 hover:bg-slate-700 text-slate-200 hover:text-white border border-slate-700/70 shadow-xs transition-all cursor-pointer disabled:opacity-50"
                           title="Define screening criteria, weights, mandatory rules, and thresholds for this vacancy"
                         >
                           <SlidersHorizontal size={14} className="text-indigo-400 shrink-0" />
-                          <span>Define Screening Rules</span>
+                          <span>{loadingConfigFor === group.vacancyId ? "Loading..." : "Define Screening Rules"}</span>
                         </button>
                       </div>
 
