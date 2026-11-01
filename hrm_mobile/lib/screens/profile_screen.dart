@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../services/api_service.dart';
 import 'login_screen.dart';
 
@@ -65,8 +66,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
     try {
       final dt = DateTime.parse(dateStr);
       final months = [
-        'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+        'Jan',
+        'Feb',
+        'Mar',
+        'Apr',
+        'May',
+        'Jun',
+        'Jul',
+        'Aug',
+        'Sep',
+        'Oct',
+        'Nov',
+        'Dec',
       ];
       return '${dt.day} ${months[dt.month - 1]} ${dt.year}';
     } catch (_) {
@@ -87,7 +98,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final email = userObj['email'] ?? 'N/A';
     final phone = userObj['phone'] ?? 'N/A';
     final role = userObj['role'] ?? 'EMPLOYEE';
-    final departmentName = userObj['department'] != null && userObj['department']['name'] != null
+    final departmentName =
+        userObj['department'] != null && userObj['department']['name'] != null
         ? userObj['department']['name']
         : 'IT Department';
     final joiningDate = userObj['joiningDate'] ?? userObj['hireDate'];
@@ -108,25 +120,45 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     radius: 50,
                     backgroundColor: const Color(0xFF3F51B5),
                     child: Text(
-                      fullName.isNotEmpty ? fullName.substring(0, 1).toUpperCase() : 'E',
-                      style: const TextStyle(fontSize: 40, fontWeight: FontWeight.bold, color: Colors.white),
+                      fullName.isNotEmpty
+                          ? fullName.substring(0, 1).toUpperCase()
+                          : 'E',
+                      style: const TextStyle(
+                        fontSize: 40,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
                     ),
                   ),
                   const SizedBox(height: 16),
                   Text(
                     fullName,
-                    style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.black87),
+                    style: const TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                    ),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     designation,
-                    style: TextStyle(fontSize: 14, color: Colors.grey[600], fontWeight: FontWeight.w500),
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.grey[600],
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
                   const SizedBox(height: 8),
                   Chip(
                     label: Text(role),
-                    backgroundColor: const Color(0xFF3F51B5).withOpacity(0.1),
-                    labelStyle: const TextStyle(color: Color(0xFF3F51B5), fontWeight: FontWeight.bold, fontSize: 11),
+                    backgroundColor: const Color(
+                      0xFF3F51B5,
+                    ).withValues(alpha: 0.1),
+                    labelStyle: const TextStyle(
+                      color: Color(0xFF3F51B5),
+                      fontWeight: FontWeight.bold,
+                      fontSize: 11,
+                    ),
                   ),
                 ],
               ),
@@ -136,25 +168,43 @@ class _ProfileScreenState extends State<ProfileScreen> {
             // Profile details card
             const Text(
               'Personal Information',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87),
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: Colors.black87,
+              ),
             ),
             const SizedBox(height: 12),
             Card(
               elevation: 2,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: Column(
                   children: [
-                    _buildInfoRow(Icons.badge_outlined, 'Employee ID', employeeId),
+                    _buildInfoRow(
+                      Icons.badge_outlined,
+                      'Employee ID',
+                      employeeId,
+                    ),
                     const Divider(height: 24),
                     _buildInfoRow(Icons.email_outlined, 'Email Address', email),
                     const Divider(height: 24),
                     _buildInfoRow(Icons.phone_outlined, 'Phone Number', phone),
                     const Divider(height: 24),
-                    _buildInfoRow(Icons.business_outlined, 'Department', departmentName),
+                    _buildInfoRow(
+                      Icons.business_outlined,
+                      'Department',
+                      departmentName,
+                    ),
                     const Divider(height: 24),
-                    _buildInfoRow(Icons.calendar_month_outlined, 'Joining Date', _formatDate(joiningDate)),
+                    _buildInfoRow(
+                      Icons.calendar_month_outlined,
+                      'Joining Date',
+                      _formatDate(joiningDate),
+                    ),
                   ],
                 ),
               ),
@@ -165,12 +215,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ElevatedButton.icon(
               onPressed: _handleLogout,
               icon: const Icon(Icons.logout),
-              label: const Text('LOG OUT', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+              label: const Text(
+                'LOG OUT',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+              ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.red[800],
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
                 elevation: 2,
               ),
             ),
@@ -196,7 +251,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
             const SizedBox(height: 4),
             Text(
               value,
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.black87),
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 14,
+                color: Colors.black87,
+              ),
             ),
           ],
         ),

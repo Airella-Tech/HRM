@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
+
 import 'services/api_service.dart';
 import 'screens/login_screen.dart';
 import 'screens/dashboard_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   // Initialize auth storage
   await ApiService.init();
-  
+
   runApp(const MyApp());
 }
 

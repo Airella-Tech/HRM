@@ -393,6 +393,11 @@ export const recruitmentApi = {
   getVacancies: (status) =>
     request("GET", `${RECRUITMENT_URL}/recruitment/jobs${status ? `?status=${encodeURIComponent(status)}` : ""}`),
   getVacancy: (id) => request("GET", `${RECRUITMENT_URL}/recruitment/jobs/${id}`),
+    getAuditLogs: () => request("GET", `${RECRUITMENT_URL}/recruitment/audit-logs`),
+    // Notifications (vacancy events)
+  getNotifications: () => request("GET", `${RECRUITMENT_URL}/recruitment/notifications`),
+  markNotificationRead: (id) => request("PUT", `${RECRUITMENT_URL}/recruitment/notifications/${id}/read`),
+  markAllNotificationsRead: () => request("PUT", `${RECRUITMENT_URL}/recruitment/notifications/read-all`),
   createVacancy: (data) => request("POST", `${RECRUITMENT_URL}/recruitment/jobs`, data),
   updateVacancy: (id, data) => request("PUT", `${RECRUITMENT_URL}/recruitment/jobs/${id}`, data),
   deleteVacancy: (id) => request("DELETE", `${RECRUITMENT_URL}/recruitment/jobs/${id}`),

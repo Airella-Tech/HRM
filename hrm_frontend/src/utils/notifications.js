@@ -4,7 +4,7 @@
  *   id, title, message, type, isRead, createdAt, category, link, refId,
  *   subjectName / subjectEmployeeCode / subjectDepartment / subjectJobRole (birthdays)
  */
-import { CalendarDays, Wallet, CheckCircle2, XCircle, Cake, Gift, Receipt, Building2, Bell } from "lucide-react";
+  import { CalendarDays, Wallet, CheckCircle2, XCircle, Cake, Gift, Receipt, Building2, Bell, Send, Megaphone } from "lucide-react";
 
 export const NOTIFICATIONS_CHANGED = "hrm:notifications-changed";
 
@@ -25,6 +25,10 @@ const KIND = {
   BIRTHDAY_WISH:      { icon: Gift,         chip: "bg-pink-100 text-pink-600" },
   PAYSLIP:            { icon: Receipt,      chip: "bg-sky-100 text-sky-700" },
   COMPANY_REQUEST:    { icon: Building2,    chip: "bg-amber-100 text-amber-700" },
+  VACANCY_SUBMITTED:  { icon: Send,         chip: "bg-amber-100 text-amber-700" },
+  VACANCY_APPROVED:   { icon: CheckCircle2, chip: "bg-emerald-100 text-emerald-700" },
+  VACANCY_REJECTED:   { icon: XCircle,      chip: "bg-red-100 text-red-700" },
+  VACANCY_PUBLISHED:  { icon: Megaphone,    chip: "bg-indigo-100 text-indigo-700" },
 };
 const DEFAULT_KIND = { icon: Bell, chip: "bg-slate-100 text-slate-600" };
 
@@ -76,6 +80,10 @@ export const linkLabel = (n) => {
     case "ALLOWANCE_APPROVED":
     case "ALLOWANCE_REJECTED": return "Open my allowance requests";
     case "PAYSLIP": return "Open payslip";
+          case "VACANCY_SUBMITTED": return "Review vacancy";
+      case "VACANCY_APPROVED": return "Open vacancies";
+      case "VACANCY_REJECTED": return "Fix and resubmit";
+      case "VACANCY_PUBLISHED": return "View vacancies";
     default: return n.link && n.link.startsWith("/admin") ? "Open companies" : "Open";
   }
 };
@@ -118,4 +126,16 @@ export const NOTIF_THEME = {
     action: "text-indigo-600 hover:text-indigo-800",
     ring: "focus:ring-indigo-500",
   },
+      recruiter: {
+      header: "from-indigo-600 to-violet-600",
+      headerSub: "text-indigo-100",
+      headerIcon: "text-indigo-100",
+      unreadRow: "bg-indigo-50/70 border-indigo-100",
+      hoverRow: "hover:bg-indigo-50",
+      link: "text-indigo-700 hover:text-indigo-900",
+      dot: "bg-indigo-500",
+      tabOn: "bg-gradient-to-r from-indigo-500 to-violet-600 text-white shadow",
+      action: "text-indigo-600 hover:text-indigo-800",
+      ring: "focus:ring-indigo-500",
+    },
 };

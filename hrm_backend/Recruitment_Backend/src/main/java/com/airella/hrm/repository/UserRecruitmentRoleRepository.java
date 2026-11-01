@@ -39,4 +39,7 @@ public interface UserRecruitmentRoleRepository extends JpaRepository<UserRecruit
 
     @Query("select r.roleName from UserRecruitmentRole ur join ur.role r where ur.userId = :userId order by r.roleName")
     List<String> findRoleNamesByUserId(@Param("userId") Long userId);
+    
+    @Query("select distinct ur.userId from UserRecruitmentRole ur join ur.role r join r.permissions p where ur.companyId = :companyId and p.permissionCode = :code")
+    List<Long> findUserIdsByCompanyIdAndPermissionCode(@Param("companyId") Long companyId, @Param("code") String code);
 }
