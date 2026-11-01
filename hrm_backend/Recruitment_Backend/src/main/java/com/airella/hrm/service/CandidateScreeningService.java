@@ -52,23 +52,7 @@ public class CandidateScreeningService {
     private final AuditService auditService;
     private final ObjectMapper objectMapper;
 
-    // Common skill aliases / synonyms mapping for explainable normalization
-    private static final Map<String, List<String>> DEFAULT_SKILL_ALIASES = Map.ofEntries(
-            Map.entry("java", List.of("core java", "j2se", "jdk", "java 8", "java 11", "java 17", "java 21")),
-            Map.entry("spring boot", List.of("springboot", "spring-boot", "spring framework", "spring")),
-            Map.entry("react", List.of("react.js", "reactjs", "react-js")),
-            Map.entry("angular", List.of("angular.js", "angularjs", "angular 2+")),
-            Map.entry("vue", List.of("vue.js", "vuejs")),
-            Map.entry("node.js", List.of("nodejs", "node", "express.js", "express")),
-            Map.entry("python", List.of("python3", "py", "django", "fastapi", "flask")),
-            Map.entry("postgresql", List.of("postgres", "psql", "postgresql 14", "postgresql 15")),
-            Map.entry("sql", List.of("relational database", "rdbms", "mysql", "mssql", "oracle")),
-            Map.entry("docker", List.of("containers", "dockerfile", "containerization")),
-            Map.entry("kubernetes", List.of("k8s", "kubectl", "container orchestration")),
-            Map.entry("aws", List.of("amazon web services", "ec2", "s3", "lambda", "ecs")),
-            Map.entry("ci/cd", List.of("cicd", "continuous integration", "github actions", "gitlab ci", "jenkins")),
-            Map.entry("selenium", List.of("selenium webdriver", "automation testing", "test automation"))
-    );
+
 
     public CandidateScreeningService(VacancyScreeningConfigRepository configRepo,
                                      CandidateScreeningResultRepository resultRepo,
@@ -173,6 +157,7 @@ public class CandidateScreeningService {
 
         VacancyScreeningConfig saved = configRepo.save(config);
 
+
         auditService.logAction(
                 "SCREENING_CONFIG_UPDATED",
                 "VacancyScreeningConfig",
@@ -269,6 +254,13 @@ public class CandidateScreeningService {
             }
         }
 
+        LocalDateTime now = LocalDateTime.now();
+        String summary = String.format("%d evaluated • %d auto-shortlisted • %d recommended",
+                applications.size(), autoShortlistedCount, recommendedCount);
+        config.setLastScreenedAt(now);
+        config.setLastScreenedSummary(summary);
+        configRepo.save(config);
+
         auditService.logAction(
                 "VACANCY_SCREENING_EVALUATED",
                 "JobVacancy",
@@ -285,6 +277,8 @@ public class CandidateScreeningService {
                 .autoShortlistedCount(autoShortlistedCount)
                 .stagedOrRecommendedCount(recommendedCount)
                 .manualReviewCount(manualReviewCount)
+                .screenedAt(now)
+                .lastScreenedSummary(summary)
                 .results(results)
                 .build();
     }
@@ -579,25 +573,23 @@ public class CandidateScreeningService {
         // Direct match in candidate structured skills
         if (candidateSkills.contains(skillName)) return true;
 
-        // Check alias matches in structured skills
-        List<String> allAliases = new ArrayList<>();
-        if (aliases != null) allAliases.addAll(aliases);
-        if (DEFAULT_SKILL_ALIASES.containsKey(skillName)) {
-            allAliases.addAll(DEFAULT_SKILL_ALIASES.get(skillName));
-        }
-
-        for (String alias : allAliases) {
-            if (candidateSkills.contains(alias.toLowerCase(Locale.ROOT))) {
-                return true;
+        // Check vacancy-configured aliases in structured skills if present
+        if (aliases != null) {
+            for (String alias : aliases) {
+                if (alias != null && !alias.isBlank() && candidateSkills.contains(alias.trim().toLowerCase(Locale.ROOT))) {
+                    return true;
+                }
             }
         }
 
-        // Match in extracted resume text with word boundaries
+        // Direct keyword match in extracted resume text with word boundaries
         if (!resumeText.isBlank()) {
             if (containsWord(resumeText, skillName)) return true;
-            for (String alias : allAliases) {
-                if (containsWord(resumeText, alias.toLowerCase(Locale.ROOT))) {
-                    return true;
+            if (aliases != null) {
+                for (String alias : aliases) {
+                    if (alias != null && !alias.isBlank() && containsWord(resumeText, alias.trim().toLowerCase(Locale.ROOT))) {
+                        return true;
+                    }
                 }
             }
         }
@@ -801,6 +793,7 @@ public class CandidateScreeningService {
         manualRecord.setEvaluatedBy(permissionService.currentUserId());
         resultRepo.save(manualRecord);
 
+
         auditService.logAction(
                 "CANDIDATE_SHORTLISTED_MANUAL",
                 "CandidateApplication",
@@ -843,6 +836,7 @@ public class CandidateScreeningService {
         rejectRecord.setEvaluatedBy(permissionService.currentUserId());
         resultRepo.save(rejectRecord);
 
+
         auditService.logAction(
                 "CANDIDATE_REJECTED",
                 "CandidateApplication",
@@ -884,7 +878,15 @@ public class CandidateScreeningService {
         Map<Long, String> candidateNames = new HashMap<>();
         applicationRepo.findAllByCompany(vacancy.getCompanyRef(), null).forEach(a -> candidateNames.put(a.getId(), a.getCandidateName()));
 
-        return results.stream()
+        // Keep only the latest screening evaluation for each candidate application
+        Map<Long, CandidateScreeningResult> latestMap = new LinkedHashMap<>();
+        for (CandidateScreeningResult r : results) {
+            if (r.getApplicationId() != null && !latestMap.containsKey(r.getApplicationId())) {
+                latestMap.put(r.getApplicationId(), r);
+            }
+        }
+
+        return latestMap.values().stream()
                 .map(r -> toResultDto(r, candidateNames.getOrDefault(r.getApplicationId(), "Applicant"), vacancy.getTitle(), config))
                 .toList();
     }
@@ -942,7 +944,7 @@ public class CandidateScreeningService {
                     requiredSkills.add(ScreeningSkillCriterionDTO.builder()
                             .name(s.trim())
                             .mandatory(true)
-                            .aliases(DEFAULT_SKILL_ALIASES.getOrDefault(s.trim().toLowerCase(Locale.ROOT), List.of()))
+                            .aliases(List.of())
                             .build());
                 }
             }
@@ -1028,6 +1030,8 @@ public class CandidateScreeningService {
                 .createdAt(c.getCreatedAt())
                 .updatedAt(c.getUpdatedAt())
                 .updatedBy(c.getUpdatedBy())
+                .lastScreenedAt(c.getLastScreenedAt())
+                .lastScreenedSummary(c.getLastScreenedSummary())
                 .build();
 
         if (c.getCriteriaJson() != null && !c.getCriteriaJson().isBlank()) {

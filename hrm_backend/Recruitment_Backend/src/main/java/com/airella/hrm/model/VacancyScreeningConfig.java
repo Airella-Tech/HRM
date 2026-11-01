@@ -94,6 +94,12 @@ public class VacancyScreeningConfig {
     @Column(name = "config_version", nullable = false)
     private Integer configVersion = 1;
 
+    @Column(name = "last_screened_at")
+    private LocalDateTime lastScreenedAt;
+
+    @Column(name = "last_screened_summary", length = 255)
+    private String lastScreenedSummary;
+
     @Column(name = "created_at", updatable = false, nullable = false)
     private LocalDateTime createdAt;
 

@@ -22,6 +22,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import com.airella.hrm.dto.ScreenApplicationRequest;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -46,6 +48,7 @@ public class CandidateApplicationService {
     private final AuthService authService;
     private final AuditService auditService;
     private final EmailService emailService;
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     public CandidateApplicationService(CandidateApplicationRepository applicationRepo,
             CandidateApplicationDocumentRepository documentRepo,
@@ -347,6 +350,59 @@ public class CandidateApplicationService {
     /**
      * Retrieves a single candidate application profile by ID.
      */
+    @Transactional
+    public CandidateApplicationDTO screenApplication(Long id, ScreenApplicationRequest request) {
+        CandidateApplication app = findApplicationForCurrentStaff(id);
+
+        if (request != null) {
+            if (request.getScreeningScore() != null) {
+                app.setScreeningScore(request.getScreeningScore());
+            }
+            if (request.getScreeningNotes() != null) {
+                app.setScreeningNotes(request.getScreeningNotes());
+            }
+            if (request.getReadinessStatus() != null && !request.getReadinessStatus().isBlank()) {
+                app.setReadinessStatus(request.getReadinessStatus().trim());
+            }
+            if (request.getEligibilityStatus() != null && !request.getEligibilityStatus().isBlank()) {
+                try {
+                    app.setEligibilityStatus(EligibilityStatus.valueOf(request.getEligibilityStatus().trim()));
+                } catch (Exception ignored) {}
+            }
+            if (request.getCriteria() != null) {
+                try {
+                    if (request.getCriteria() instanceof String s) {
+                        app.setCriteriaJson(s);
+                    } else {
+                        app.setCriteriaJson(objectMapper.writeValueAsString(request.getCriteria()));
+                    }
+                } catch (Exception e) {
+                    log.warn("Could not serialize criteria: {}", e.getMessage());
+                }
+            }
+        }
+
+        Long userId = null;
+        try {
+            userId = authService.getCurrentUser().getId();
+        } catch (Exception ignored) {}
+
+        app.setReviewedBy(userId);
+        app.setReviewedAt(LocalDateTime.now());
+
+        CandidateApplication saved = applicationRepo.save(app);
+
+        auditService.logAction(
+                "APPLICATION_SCREENED_REVIEWED",
+                "CandidateApplication",
+                saved.getId(),
+                "Updated review assessment & readiness for " + saved.getCandidateName() + " (" + saved.getReadinessStatus() + ")",
+                saved.getCompanyRef()
+        );
+
+        return toDto(saved);
+    }
+
     @Transactional(readOnly = true)
     public CandidateApplicationDTO getApplicationById(Long id) {
         CandidateApplication app = findApplicationForCurrentStaff(id);
@@ -443,6 +499,9 @@ public class CandidateApplicationService {
         dto.setMatchScore(a.getScreeningScore());
         dto.setScreeningNotes(a.getScreeningNotes());
         dto.setRejectionReason(a.getRejectionReason());
+        dto.setCriteriaJson(a.getCriteriaJson());
+        dto.setCriteria(a.getCriteriaJson());
+        dto.setReadinessStatus(a.getReadinessStatus());
 
         dto.setResumeFileName(a.getResumeFileName());
         dto.setResumeFileType(a.getResumeFileType());

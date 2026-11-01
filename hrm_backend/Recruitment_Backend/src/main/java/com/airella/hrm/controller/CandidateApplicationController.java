@@ -56,6 +56,18 @@ public class CandidateApplicationController {
     }
 
     /**
+     * Screen & review candidate application (eligibility checkpoints, readiness, notes).
+     */
+    @PutMapping("/{id}/screen")
+    @PreAuthorize("@perm.has('APPLICATION_SHORTLIST') or @perm.has('APPLICATION_VIEW')")
+    public ResponseEntity<ApiResponse<CandidateApplicationDTO>> screenApplication(
+            @PathVariable Long id,
+            @RequestBody com.airella.hrm.dto.ScreenApplicationRequest request) {
+        CandidateApplicationDTO result = applicationService.screenApplication(id, request);
+        return ResponseEntity.ok(ApiResponse.success(result, "Application assessment saved successfully"));
+    }
+
+    /**
      * Manual shortlist candidate with notes.
      */
     @PostMapping("/{id}/shortlist")
