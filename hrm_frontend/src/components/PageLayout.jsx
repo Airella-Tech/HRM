@@ -151,7 +151,7 @@ const NAV = {
       name: "Interview Progress",
       icon: ClipboardCheck,
       path: "/recruitment/interview-progress",
-      requiresAny: ["INTERVIEW_EVALUATE", "EVALUATE_INTERVIEWS"],
+      requiresAny: ["INTERVIEW_PROGRESS_VIEW"],
     },
     {
       name: "Evaluate Interviews",

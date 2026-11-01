@@ -1,3 +1,4 @@
+
 import React, {
   useCallback,
   useEffect,
@@ -122,128 +123,6 @@ const unwrap = (response) => {
   return [];
 };
 
-const getCurrentUser = () => {
-  try {
-    return JSON.parse(localStorage.getItem("user") || "{}");
-  } catch {
-    return {};
-  }
-};
-
-const normalizeId = (value) => {
-  if (value == null || value === "") return null;
-
-  if (typeof value === "object") {
-    return normalizeId(
-      value.employeeId ??
-        value.employeeCode ??
-        value.employee?.employeeId ??
-        value.employee?.employeeCode ??
-        value.employee?.id ??
-        value.interviewerId ??
-        value.interviewerUserId ??
-        value.userId ??
-        value.id
-    );
-  }
-
-  return String(value).trim().toLowerCase() || null;
-};
-
-const getCurrentUserIds = (user) => {
-  const values = [
-    user?.employeeId,
-    user?.employeeCode,
-    user?.employee?.employeeId,
-    user?.employee?.employeeCode,
-    user?.employee?.id,
-    user?.userId,
-    user?.user?.userId,
-    user?.user?.id,
-    user?.id,
-  ];
-
-  return [
-    ...new Set(values.map(normalizeId).filter(Boolean)),
-  ];
-};
-
-const getEmployeeId = (user) =>
-  user?.employeeId ??
-  user?.employee?.employeeId ??
-  user?.employee?.id ??
-  user?.user?.employeeId ??
-  null;
-
-const getInterviewerIds = (item) => {
-  const assigned =
-    item?.interviewers ??
-    item?.assignedInterviewers ??
-    item?.interviewerAssignments ??
-    item?.assignments ??
-    item?.evaluators ??
-    item?.assignedEvaluators;
-
-  const extractIds = (entry) => {
-    if (entry == null) return [];
-
-    if (typeof entry !== "object") {
-      const id = normalizeId(entry);
-      return id ? [id] : [];
-    }
-
-    return [
-      entry.employeeId,
-      entry.employeeCode,
-      entry.employee?.employeeId,
-      entry.employee?.employeeCode,
-      entry.employee?.id,
-      entry.interviewerId,
-      entry.interviewerUserId,
-      entry.userId,
-      entry.interviewer?.employeeId,
-      entry.interviewer?.employeeCode,
-      entry.interviewer?.id,
-      entry.interviewer?.userId,
-      entry.assignedEmployee?.employeeId,
-      entry.assignedEmployee?.employeeCode,
-      entry.assignedEmployee?.id,
-      entry.assignedInterviewer?.employeeId,
-      entry.assignedInterviewer?.employeeCode,
-      entry.assignedInterviewer?.id,
-      entry.assignedInterviewer?.userId,
-      entry.id,
-    ]
-      .map(normalizeId)
-      .filter(Boolean);
-  };
-
-  const fromArray = Array.isArray(assigned)
-    ? assigned.flatMap(extractIds)
-    : assigned
-      ? extractIds(assigned)
-      : [];
-
-  const singleFields = [
-    item?.interviewerId,
-    item?.interviewerUserId,
-    item?.assignedInterviewerId,
-    item?.assignedEmployeeId,
-    item?.employeeId,
-    item?.interviewerEmployeeId,
-    item?.interviewer,
-    item?.assignedInterviewer,
-    item?.assignedEmployee,
-  ];
-
-  return [
-    ...new Set([
-      ...fromArray,
-      ...singleFields.flatMap(extractIds),
-    ]),
-  ];
-};
-
 const normalizeInterviewStatus = (status) =>
   String(status ?? "PENDING")
     .trim()
@@ -252,6 +131,7 @@ const normalizeInterviewStatus = (status) =>
 
 const normalizeInterview = (item) => {
   const candidate = item?.candidate ?? item?.applicant ?? {};
+
   const application =
     item?.application ??
     item?.jobApplication ??
@@ -331,7 +211,7 @@ const normalizeInterview = (item) => {
       candidate?.candidateId ??
       null,
 
-    // Required by downloadResume(): this must be the application ID.
+    // This must be the candidate application ID for CV downloads.
     applicationId:
       item?.applicationId ??
       item?.application?.id ??
@@ -371,8 +251,6 @@ const normalizeInterview = (item) => {
       interviewer?.fullName ??
       interviewer?.name ??
       "",
-
-    interviewerIds: getInterviewerIds(item),
   };
 };
 
@@ -388,6 +266,7 @@ const normalizeEvaluation = (item) => {
     );
 
     const number = Number(value ?? 0);
+
     return Number.isFinite(number) ? number : 0;
   };
 
@@ -457,8 +336,16 @@ const normalizeEvaluation = (item) => {
     item?.overallScore
   );
 
+  const recommendation =
+    item?.recommendation ??
+    item?.hiringRecommendation ??
+    item?.recommendationStatus ??
+    item?.decision ??
+    "";
+
   return {
     ...item,
+
     id: item?.id ?? item?.evaluationId ?? null,
     interviewId,
 
@@ -476,11 +363,13 @@ const normalizeEvaluation = (item) => {
       item?.strengthsDescription ??
       "",
 
-    feedback: item?.feedback ?? item?.comments ?? "",
+    feedback:
+      item?.feedback ??
+      item?.comments ??
+      item?.interviewerFeedback ??
+      "",
 
-    recommendation: normalizeRecommendation(
-      item?.recommendation
-    ),
+    recommendation: normalizeRecommendation(recommendation),
 
     averageScore:
       averageScore ||
@@ -563,10 +452,12 @@ function SummaryCard({ label, value, icon: Icon, color }) {
     <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
       <div className="flex items-center justify-between gap-3">
         <p className="text-sm text-slate-500">{label}</p>
+
         <div className={`rounded-xl p-2.5 ${styles[color]}`}>
           <Icon size={20} />
         </div>
       </div>
+
       <p className="mt-4 text-3xl font-bold text-slate-900">
         {value}
       </p>
@@ -590,6 +481,7 @@ function StatusBadge({ status }) {
       ) : (
         <Clock size={13} />
       )}
+
       {status}
     </span>
   );
@@ -621,8 +513,10 @@ function InfoItem({ icon: Icon, label, value }) {
         size={17}
         className="mt-0.5 shrink-0 text-indigo-500"
       />
+
       <div className="min-w-0">
         <p className="text-xs text-slate-500">{label}</p>
+
         <p className="mt-1 break-words text-sm font-semibold text-slate-800">
           {value || "Not available"}
         </p>
@@ -632,28 +526,25 @@ function InfoItem({ icon: Icon, label, value }) {
 }
 
 export default function RecruitmentEvaluations() {
-  const [user] = useState(getCurrentUser);
-
-  const employeeId = getEmployeeId(user);
-
-  const currentUserIds = useMemo(
-    () => getCurrentUserIds(user),
-    [user]
-  );
-
   const [interviews, setInterviews] = useState([]);
   const [evaluations, setEvaluations] = useState([]);
+
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
   const [roundFilter, setRoundFilter] = useState("All");
+
   const [selectedInterview, setSelectedInterview] = useState(null);
   const [form, setForm] = useState(emptyEvaluation);
+
   const [notice, setNotice] = useState("");
   const [noticeType, setNoticeType] = useState("warning");
+
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+
   const [downloadingApplicationId, setDownloadingApplicationId] =
     useState(null);
+
   const [updatingStatusId, setUpdatingStatusId] = useState(null);
 
   const loadData = useCallback(
@@ -661,30 +552,20 @@ export default function RecruitmentEvaluations() {
       if (!silent) setLoading(true);
 
       try {
-        let rawInterviews = [];
-        let usingAssignedEndpoint = false;
-
         if (
-          typeof recruitmentApi?.getMyAssignedInterviews ===
+          typeof recruitmentApi?.getMyAssignedInterviews !==
           "function"
         ) {
-          const response =
-            await recruitmentApi.getMyAssignedInterviews();
-
-          rawInterviews = unwrap(response);
-          usingAssignedEndpoint = true;
-        } else if (
-          typeof recruitmentApi?.getInterviews === "function"
-        ) {
-          const response = await recruitmentApi.getInterviews();
-          rawInterviews = unwrap(response);
-        } else {
           throw new Error(
-            "Interview API methods are missing. Add getMyAssignedInterviews() to src/services/api.js."
+            "getMyAssignedInterviews() is missing from src/services/api.js. Please add the assigned-interviews API method."
           );
         }
 
-        const normalizedInterviews = rawInterviews
+        // The backend returns only interviews assigned to the logged-in interviewer.
+        const interviewResponse =
+          await recruitmentApi.getMyAssignedInterviews();
+
+        const normalizedInterviews = unwrap(interviewResponse)
           .filter(
             (item) => item && typeof item === "object"
           )
@@ -695,20 +576,7 @@ export default function RecruitmentEvaluations() {
               String(interview.id).trim() !== ""
           );
 
-        let visibleInterviews = [];
-
-        if (usingAssignedEndpoint) {
-          visibleInterviews = normalizedInterviews;
-        } else if (currentUserIds.length > 0) {
-          visibleInterviews = normalizedInterviews.filter(
-            (interview) =>
-              interview.interviewerIds.some((assignedId) =>
-                currentUserIds.includes(assignedId)
-              )
-          );
-        }
-
-        setInterviews(visibleInterviews);
+        setInterviews(normalizedInterviews);
 
         let allEvaluations = [];
 
@@ -721,19 +589,21 @@ export default function RecruitmentEvaluations() {
             );
           } catch (error) {
             console.warn(
-              "Could not load current employee evaluations:",
+              "Could not load current user's evaluations:",
               error
             );
           }
         }
 
+        // If the current-user endpoint returned no evaluations,
+        // try loading the evaluations for each assigned interview.
         if (
           allEvaluations.length === 0 &&
           typeof recruitmentApi?.getInterviewEvaluations ===
             "function"
         ) {
           const responses = await Promise.all(
-            visibleInterviews.map(async (interview) => {
+            normalizedInterviews.map(async (interview) => {
               if (!/^\d+$/.test(String(interview.id))) {
                 return [];
               }
@@ -749,6 +619,7 @@ export default function RecruitmentEvaluations() {
                   `Could not load evaluations for interview ${interview.id}:`,
                   error
                 );
+
                 return [];
               }
             })
@@ -778,19 +649,10 @@ export default function RecruitmentEvaluations() {
 
         setEvaluations(uniqueEvaluations);
 
-        if (visibleInterviews.length === 0 && !silent) {
-          if (
-            !usingAssignedEndpoint &&
-            currentUserIds.length === 0
-          ) {
-            setNotice(
-              "Your employee/user ID could not be found. Check the logged-in user object or add the assigned-interviews backend endpoint."
-            );
-          } else {
-            setNotice(
-              "No interviews are currently assigned to your account."
-            );
-          }
+        if (normalizedInterviews.length === 0 && !silent) {
+          setNotice(
+            "No interviews are currently assigned to your account."
+          );
 
           setNoticeType("warning");
         } else if (!silent) {
@@ -805,17 +667,19 @@ export default function RecruitmentEvaluations() {
         if (!silent) {
           setInterviews([]);
           setEvaluations([]);
+
           setNotice(
             error?.message ||
-              "Could not load interview data from the backend."
+              "Could not load assigned interviews from the backend."
           );
+
           setNoticeType("error");
         }
       } finally {
         if (!silent) setLoading(false);
       }
     },
-    [currentUserIds]
+    []
   );
 
   useEffect(() => {
@@ -893,16 +757,17 @@ export default function RecruitmentEvaluations() {
       existing
         ? {
             ...emptyEvaluation(),
-            technicalSkills: existing.technicalSkills,
-            communication: existing.communication,
-            problemSolving: existing.problemSolving,
-            experience: existing.experience,
-            cultureFit: existing.cultureFit,
+
+            ...Object.fromEntries(
+              CRITERIA.map((criterion) => [
+                criterion.key,
+                Number(existing[criterion.key] ?? 0),
+              ])
+            ),
+
             strengths: existing.strengths ?? "",
             feedback: existing.feedback ?? "",
-            roleSpecificSkills:
-              existing.roleSpecificSkills ?? 0,
-            professionalism: existing.professionalism ?? 0,
+
             recommendation: normalizeRecommendation(
               existing.recommendation
             ),
@@ -921,7 +786,6 @@ export default function RecruitmentEvaluations() {
     }));
   };
 
-  // Download the candidate's CV using the application ID.
   const downloadCandidateCV = async (interview) => {
     const applicationId = interview?.applicationId;
 
@@ -932,6 +796,7 @@ export default function RecruitmentEvaluations() {
       setNotice(
         `Cannot download ${interview?.candidateName || "candidate"}'s CV because the interview response does not contain an application ID.`
       );
+
       setNoticeType("error");
       return;
     }
@@ -942,6 +807,7 @@ export default function RecruitmentEvaluations() {
       setNotice(
         "recruitmentApi.downloadResume() is missing in src/services/api.js."
       );
+
       setNoticeType("error");
       return;
     }
@@ -974,11 +840,11 @@ export default function RecruitmentEvaluations() {
 
       link.href = fileUrl;
       link.download = `CV_${candidateName}.${extension}`;
+
       document.body.appendChild(link);
       link.click();
       link.remove();
 
-      // Revoke after the browser has had time to start the download.
       window.setTimeout(
         () => window.URL.revokeObjectURL(fileUrl),
         1000
@@ -987,6 +853,7 @@ export default function RecruitmentEvaluations() {
       setNotice(
         `CV download started for ${interview.candidateName}.`
       );
+
       setNoticeType("success");
     } catch (error) {
       console.error("Candidate CV download failed:", error);
@@ -995,6 +862,7 @@ export default function RecruitmentEvaluations() {
         error?.message ||
           "Could not download the candidate's CV. Check your permissions and try again."
       );
+
       setNoticeType("error");
     } finally {
       setDownloadingApplicationId(null);
@@ -1008,6 +876,7 @@ export default function RecruitmentEvaluations() {
       setNotice(
         "You can mark this interview as completed only after its scheduled date and time."
       );
+
       setNoticeType("warning");
       return;
     }
@@ -1026,6 +895,7 @@ export default function RecruitmentEvaluations() {
       setNotice(
         "A cancelled interview cannot be marked as completed."
       );
+
       setNoticeType("warning");
       return;
     }
@@ -1037,6 +907,7 @@ export default function RecruitmentEvaluations() {
       setNotice(
         "recruitmentApi.updateInterviewStatus() is missing in src/services/api.js."
       );
+
       setNoticeType("error");
       return;
     }
@@ -1079,6 +950,7 @@ export default function RecruitmentEvaluations() {
         error?.message ||
           "Could not update interview status."
       );
+
       setNoticeType("error");
     } finally {
       setUpdatingStatusId(null);
@@ -1099,6 +971,7 @@ export default function RecruitmentEvaluations() {
       setNotice(
         "This interview has no valid numeric backend ID. Check the interview API response."
       );
+
       setNoticeType("error");
       return;
     }
@@ -1116,6 +989,7 @@ export default function RecruitmentEvaluations() {
       setNotice(
         "You can submit an evaluation only after the interview is marked as completed."
       );
+
       setNoticeType("warning");
       return;
     }
@@ -1133,19 +1007,24 @@ export default function RecruitmentEvaluations() {
       setNotice(
         "Please provide a score from 1 to 5 for every criterion."
       );
+
       setNoticeType("warning");
       return;
     }
 
-    if (!String(form.strengths ?? "").trim()) {
+    const strengths = String(form.strengths ?? "").trim();
+    const feedback = String(form.feedback ?? "").trim();
+
+    if (!strengths) {
       setNotice(
         "Please describe the candidate's strengths before submitting."
       );
+
       setNoticeType("warning");
       return;
     }
 
-    if (!String(form.feedback ?? "").trim()) {
+    if (!feedback) {
       setNotice("Please enter interview feedback.");
       setNoticeType("warning");
       return;
@@ -1168,6 +1047,7 @@ export default function RecruitmentEvaluations() {
       setNotice(
         "recruitmentApi.submitInterviewEvaluation() is missing in src/services/api.js."
       );
+
       setNoticeType("error");
       return;
     }
@@ -1176,9 +1056,17 @@ export default function RecruitmentEvaluations() {
       scores.reduce((sum, score) => sum + score, 0) /
       scores.length;
 
-    const strengths = String(form.strengths).trim();
-    const feedback = String(form.feedback).trim();
+    const technicalScore = Number(form.technicalSkills);
+    const roleSkillsScore = Number(form.roleSpecificSkills);
+    const professionalismScore = Number(form.professionalism);
+    const communicationScore = Number(form.communication);
+    const problemSolvingScore = Number(form.problemSolving);
+    const experienceScore = Number(form.experience);
+    const cultureFitScore = Number(form.cultureFit);
 
+    // Do not send interviewerId from localStorage.
+    // The backend must identify the logged-in interviewer
+    // from the authenticated request and verify the assignment.
     const payload = {
       interviewId,
 
@@ -1186,48 +1074,34 @@ export default function RecruitmentEvaluations() {
         candidateId: selectedInterview.candidateId,
       }),
 
-      ...(employeeId != null &&
-        String(employeeId).trim() !== "" && {
-          interviewerId: employeeId,
-        }),
+      technicalKnowledgeScore: technicalScore,
+      technicalKnowledge: technicalScore,
+      technicalSkills: technicalScore,
 
-      technicalKnowledgeScore: Number(form.technicalSkills),
-      technicalKnowledge: Number(form.technicalSkills),
-      technicalSkills: Number(form.technicalSkills),
+      roleSpecificSkillsScore: roleSkillsScore,
+      roleSpecificSkillScore: roleSkillsScore,
+      roleSpecificSkills: roleSkillsScore,
 
-      roleSpecificSkillsScore: Number(
-        form.roleSpecificSkills
-      ),
-      roleSpecificSkillScore: Number(
-        form.roleSpecificSkills
-      ),
-      roleSpecificSkills: Number(form.roleSpecificSkills),
-      roleSpecificSkill: Number(form.roleSpecificSkills),
-      roleSkillsScore: Number(form.roleSpecificSkills),
-      roleSpecificScore: Number(form.roleSpecificSkills),
+      professionalismScore,
+      professionalism: professionalismScore,
 
-      professionalismScore: Number(form.professionalism),
-      professionalism: Number(form.professionalism),
-      professionalismRating: Number(form.professionalism),
+      communicationSkillsScore: communicationScore,
+      communicationScore,
+      communication: communicationScore,
 
-      communicationSkillsScore: Number(form.communication),
-      communicationScore: Number(form.communication),
-      communication: Number(form.communication),
+      problemSolvingScore,
+      problemSolving: problemSolvingScore,
 
-      problemSolvingScore: Number(form.problemSolving),
-      problemSolving: Number(form.problemSolving),
+      relevantExperienceScore: experienceScore,
+      experienceScore,
+      experience: experienceScore,
 
-      relevantExperienceScore: Number(form.experience),
-      experienceScore: Number(form.experience),
-      experience: Number(form.experience),
-
-      cultureFitScore: Number(form.cultureFit),
-      teamworkScore: Number(form.cultureFit),
-      cultureFit: Number(form.cultureFit),
+      cultureFitScore,
+      teamworkScore: cultureFitScore,
+      cultureFit: cultureFitScore,
 
       strengths,
       candidateStrengths: strengths,
-      strengthsDescription: strengths,
 
       feedback,
       recommendation: form.recommendation,
@@ -1261,6 +1135,7 @@ export default function RecruitmentEvaluations() {
         error?.message ||
           "Could not submit evaluation to the backend."
       );
+
       setNoticeType("error");
     } finally {
       setSaving(false);
@@ -1436,8 +1311,7 @@ export default function RecruitmentEvaluations() {
               <p className="mx-auto mt-2 max-w-lg text-sm text-slate-500">
                 There are no interviews matching your account and
                 current filters. Check the backend assignment records
-                and logged-in interviewer identity if you expect
-                interviews here.
+                if you expect interviews here.
               </p>
             </div>
           ) : (
@@ -1458,6 +1332,7 @@ export default function RecruitmentEvaluations() {
                   {filteredInterviews.map((interview) => {
                     const evaluationStatus = getStatus(interview);
                     const evaluation = getEvaluation(interview.id);
+
                     const interviewStatus =
                       normalizeInterviewStatus(interview.status);
 
@@ -1590,15 +1465,17 @@ export default function RecruitmentEvaluations() {
                               onClick={() =>
                                 openEvaluation(interview)
                               }
+                              // Submitted evaluations remain viewable,
+                              // even if the interview status is different.
                               disabled={
-                                !isCompleted ||
-                                evaluationStatus === "Submitted"
+                                !isCompleted &&
+                                evaluationStatus !== "Submitted"
                               }
                               title={
-                                !isCompleted
-                                  ? "Mark the interview completed before evaluating"
-                                  : evaluationStatus === "Submitted"
-                                    ? "Evaluation already submitted"
+                                evaluationStatus === "Submitted"
+                                  ? "View submitted evaluation"
+                                  : !isCompleted
+                                    ? "Mark the interview completed before evaluating"
                                     : "Evaluate interview"
                               }
                               className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-3 py-2 text-xs font-medium text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-40"
@@ -1608,18 +1485,6 @@ export default function RecruitmentEvaluations() {
                                 ? "View Evaluation"
                                 : "Evaluate"}
                             </button>
-
-                            {evaluationStatus === "Submitted" && (
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  openEvaluation(interview)
-                                }
-                                className="inline-flex items-center gap-1 rounded-xl border border-slate-200 px-3 py-2 text-xs font-medium text-slate-600 hover:bg-slate-50"
-                              >
-                                View
-                              </button>
-                            )}
                           </div>
                         </td>
                       </tr>
@@ -1692,21 +1557,25 @@ export default function RecruitmentEvaluations() {
                       label="Candidate"
                       value={selectedInterview.candidateName}
                     />
+
                     <InfoItem
                       icon={BriefcaseBusiness}
                       label="Position"
                       value={selectedInterview.jobTitle}
                     />
+
                     <InfoItem
                       icon={ClipboardCheck}
                       label="Interview Round"
                       value={selectedInterview.round}
                     />
+
                     <InfoItem
                       icon={CalendarDays}
                       label="Interview Date"
                       value={formatDate(selectedInterview.date)}
                     />
+
                     <InfoItem
                       icon={CheckCircle2}
                       label="Interview Status"
@@ -1746,8 +1615,7 @@ export default function RecruitmentEvaluations() {
                     </h3>
 
                     <p className="whitespace-pre-wrap break-words rounded-xl bg-slate-50 p-4 text-sm leading-6 text-slate-600">
-                      {form.strengths ||
-                        "No strengths provided."}
+                      {form.strengths || "No strengths provided."}
                     </p>
                   </div>
 
@@ -1804,21 +1672,25 @@ export default function RecruitmentEvaluations() {
                       label="Candidate"
                       value={selectedInterview.candidateName}
                     />
+
                     <InfoItem
                       icon={BriefcaseBusiness}
                       label="Position"
                       value={selectedInterview.jobTitle}
                     />
+
                     <InfoItem
                       icon={ClipboardCheck}
                       label="Interview Round"
                       value={selectedInterview.round}
                     />
+
                     <InfoItem
                       icon={CalendarDays}
                       label="Interview Date"
                       value={formatDate(selectedInterview.date)}
                     />
+
                     <InfoItem
                       icon={CheckCircle2}
                       label="Interview Status"
@@ -2006,6 +1878,7 @@ export default function RecruitmentEvaluations() {
                       className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-50"
                     >
                       <Send size={15} />
+
                       {saving
                         ? "Submitting..."
                         : "Submit Evaluation"}

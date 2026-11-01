@@ -231,25 +231,39 @@ public class InterviewEvaluationService {
                 .toList();
     }
 
+
     /**
      * List every evaluation for an interview.
-     * Requires evaluation or interview-scheduling permission.
+     *
+     * Recruitment Officers and users with INTERVIEW_SCHEDULE:
+     * Can view all evaluations for interviews within their company.
+     *
+     * Interviewers/Evaluators:
+     * Can view evaluations only for interviews assigned to them.
      */
     @Transactional(readOnly = true)
     public List<InterviewEvaluationDTO> listForInterview(Long interviewId) {
 
         Long companyId = authService.getCurrentCompanyId();
 
-        permissionService.requireAny(
-                "INTERVIEW_EVALUATE",
-                "INTERVIEW_SCHEDULE"
-        );
-
+        // Confirm that the interview belongs to the logged-in user's company.
         Interview interview = findInterview(interviewId, companyId);
 
-        if (!permissionService.isFullAccess()) {
-            requireAssigned(interviewId, requireCurrentUserId());
+        // Users who can manage/schedule interviews can view all evaluations.
+        if (permissionService.has("INTERVIEW_SCHEDULE")) {
+
+            return evaluationRepository
+                    .findByCompanyIdAndInterviewIdOrderByCreatedAtAsc(
+                            companyId, interviewId)
+                    .stream()
+                    .map(e -> toDto(e, interview))
+                    .toList();
         }
+
+        // Other users must have evaluation permission and be assigned.
+        permissionService.require("INTERVIEW_EVALUATE");
+
+        requireAssigned(interviewId, requireCurrentUserId());
 
         return evaluationRepository
                 .findByCompanyIdAndInterviewIdOrderByCreatedAtAsc(

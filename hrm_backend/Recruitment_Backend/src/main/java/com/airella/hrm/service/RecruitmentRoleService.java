@@ -387,7 +387,7 @@ public class RecruitmentRoleService {
                             new DefaultRoleSeed(
                                     "Recruitment Officer",
                                     "Manages recruitment activities, reviews applications, and supports candidate screening and shortlisting.",
-                                    List.of("APPLICATION_VIEW", "APPLICATION_SCREEN", "APPLICATION_SHORTLIST", "INTERVIEW_SCHEDULE")
+                                    List.of("APPLICATION_VIEW", "APPLICATION_SCREEN", "APPLICATION_SHORTLIST", "INTERVIEW_SCHEDULE","INTERVIEW_PROGRESS_VIEW")
                             ),
                             new DefaultRoleSeed(
                                     "Interviewer / Evaluator",
@@ -399,22 +399,63 @@ public class RecruitmentRoleService {
                                     "Oversees recruitment activities and manages recruitment responsibilities according to assigned permissions.",
                                     List.of("VACANCY_CREATE", "VACANCY_APPROVE", "VACANCY_PUBLISH", "APPLICATION_VIEW", "APPLICATION_SCREEN",
                                             "APPLICATION_SHORTLIST", "INTERVIEW_SCHEDULE", "INTERVIEW_ASSIGN",
-                                            "INTERVIEW_EVALUATE", "OFFER_MANAGE", "RECRUITMENT_ROLE_ADMIN")
+                                            "INTERVIEW_EVALUATE", "INTERVIEW_PROGRESS_VIEW", "OFFER_MANAGE", "RECRUITMENT_ROLE_ADMIN")
                             )
                     );
 
                     for (DefaultRoleSeed seed : defaultRoles) {
-                        if (!roleRepo.existsByCompanyIdAndRoleNameIgnoreCase(companyId, seed.roleName())) {
-                            List<RecruitmentPermission> perms = permissionRepo.findByPermissionCodeIn(seed.permissions());
-                            RecruitmentRole r = new RecruitmentRole(companyId, seed.roleName(), seed.description());
-                            r.setIsSystemDefault(true);
-                            r.setPermissions(new HashSet<>(perms));
-                            try {
-                                roleRepo.save(r);
-                                log.info("[COMPANY_SEED] Created default role '{}' for company ID {}", seed.roleName(), companyId);
-                            } catch (org.springframework.dao.DataIntegrityViolationException dive) {
-                                log.debug("[COMPANY_SEED] Role '{}' already exists for company ID {}", seed.roleName(), companyId);
+
+                        Optional<RecruitmentRole> existingRole =
+                                roleRepo.findByCompanyIdAndRoleNameIgnoreCase(
+                                        companyId,
+                                        seed.roleName()
+                                );
+
+                        if (existingRole.isPresent()) {
+
+                            // Update only the two roles that need Interview Progress access.
+                            if (seed.roleName().equals("Recruitment Officer")
+                                    || seed.roleName().equals("Recruitment Manager")) {
+
+                                permissionRepo.findByPermissionCode("INTERVIEW_PROGRESS_VIEW")
+                                        .ifPresent(permission -> {
+                                            RecruitmentRole role = existingRole.get();
+
+                                            // Add the permission without removing existing permissions.
+                                            if (role.getPermissions().add(permission)) {
+                                                roleRepo.save(role);
+
+                                                log.info(
+                                                        "[COMPANY_SEED] Added INTERVIEW_PROGRESS_VIEW to '{}' for company ID {}",
+                                                        seed.roleName(),
+                                                        companyId
+                                                );
+                                            }
+                                        });
                             }
+
+                        } else {
+
+                            // Create the default role if it does not exist.
+                            List<RecruitmentPermission> perms =
+                                    permissionRepo.findByPermissionCodeIn(seed.permissions());
+
+                            RecruitmentRole role = new RecruitmentRole(
+                                    companyId,
+                                    seed.roleName(),
+                                    seed.description()
+                            );
+
+                            role.setIsSystemDefault(true);
+                            role.setPermissions(new HashSet<>(perms));
+
+                            roleRepo.save(role);
+
+                            log.info(
+                                    "[COMPANY_SEED] Created default role '{}' for company ID {}",
+                                    seed.roleName(),
+                                    companyId
+                            );
                         }
                     }
                     return null;

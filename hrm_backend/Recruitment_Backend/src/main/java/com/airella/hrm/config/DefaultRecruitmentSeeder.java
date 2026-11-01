@@ -32,6 +32,7 @@ public class DefaultRecruitmentSeeder implements CommandLineRunner {
                 new RecruitmentPermission("INTERVIEW_SCHEDULE", "INTERVIEW", "Schedule interview rounds and set session logistics"),
                 new RecruitmentPermission("INTERVIEW_ASSIGN", "INTERVIEW", "Assign and change evaluators for specific interviews"),
                 new RecruitmentPermission("INTERVIEW_EVALUATE", "INTERVIEW", "Submit feedback and ratings for assigned interviews"),
+                new RecruitmentPermission("INTERVIEW_PROGRESS_VIEW", "INTERVIEW", "View interview progress and candidate interview status"),
                 new RecruitmentPermission("OFFER_MANAGE", "OFFER", "Create, issue, and manage formal job offers"),
                 new RecruitmentPermission("RECRUITMENT_ROLE_ADMIN", "SETTINGS", "Create and manage custom recruitment roles and assign users")
         );

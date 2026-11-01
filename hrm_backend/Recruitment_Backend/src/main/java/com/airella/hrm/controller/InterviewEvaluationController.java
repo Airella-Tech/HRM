@@ -8,6 +8,7 @@ import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 import java.util.List;
 
@@ -82,8 +83,17 @@ public class InterviewEvaluationController {
      * Get all evaluations for a particular interview.
      *
      * GET /api/recruitment/interviews/{interviewId}/evaluations
+     *
+     * Recruitment Officers and users with INTERVIEW_SCHEDULE:
+     * Can view evaluations for recruitment progress.
+     *
+     * Interviewers/Evaluators:
+     * Can view evaluations only for interviews assigned to them.
      */
     @GetMapping("/interviews/{interviewId}/evaluations")
+    @PreAuthorize("@perm.has('INTERVIEW_SCHEDULE') or " +
+            "(@perm.has('INTERVIEW_EVALUATE') and " +
+            "@perm.isAssignedToInterview(#interviewId))")
     public ResponseEntity<List<InterviewEvaluationDTO>> listForInterview(
             @PathVariable Long interviewId) {
 
