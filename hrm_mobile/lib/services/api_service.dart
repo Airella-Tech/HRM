@@ -1,7 +1,9 @@
 import 'dart:convert';
+
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/foundation.dart';
+
 class ApiService {
   // Base URLs for the backend microservices on localhost
   static String get _host {
@@ -10,8 +12,9 @@ class ApiService {
     return '127.0.0.1';
   }
 
-  static String get authBaseUrl => 'http://$_host:5004/api';     // User_Backend
-  static String get employeeBaseUrl => 'http://$_host:5006/api'; // Employee_Backend
+  static String get authBaseUrl => 'http://$_host:5004/api'; // User_Backend
+  static String get employeeBaseUrl =>
+      'http://$_host:5006/api'; // Employee_Backend
 
   static String? _token;
 
@@ -41,12 +44,18 @@ class ApiService {
     if (response.statusCode >= 200 && response.statusCode < 300) {
       return body;
     } else {
-      throw Exception(body['message'] ?? 'An error occurred. Status code: ${response.statusCode}');
+      throw Exception(
+        body['message'] ??
+            'An error occurred. Status code: ${response.statusCode}',
+      );
     }
   }
 
   // Login Endpoint (User_Backend)
-  static Future<Map<String, dynamic>> login(String email, String password) async {
+  static Future<Map<String, dynamic>> login(
+    String email,
+    String password,
+  ) async {
     final url = Uri.parse('$authBaseUrl/auth/login');
     final response = await http.post(
       url,
@@ -58,7 +67,7 @@ class ApiService {
     if (result['success'] == true) {
       final data = result['data'];
       _token = data['token'];
-      
+
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('token', _token!);
       await prefs.setString('user', json.encode(data));
@@ -127,7 +136,12 @@ class ApiService {
   }
 
   // Apply Leave (Employee_Backend)
-  static Future<Map<String, dynamic>> applyLeave(int leaveTypeId, String startDate, String endDate, String reason) async {
+  static Future<Map<String, dynamic>> applyLeave(
+    int leaveTypeId,
+    String startDate,
+    String endDate,
+    String reason,
+  ) async {
     final url = Uri.parse('$employeeBaseUrl/employee/leave/apply');
     final response = await http.post(
       url,

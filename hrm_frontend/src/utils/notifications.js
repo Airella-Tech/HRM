@@ -25,10 +25,10 @@ const KIND = {
   BIRTHDAY_WISH:      { icon: Gift,         chip: "bg-pink-100 text-pink-600" },
   PAYSLIP:            { icon: Receipt,      chip: "bg-sky-100 text-sky-700" },
   COMPANY_REQUEST:    { icon: Building2,    chip: "bg-amber-100 text-amber-700" },
-      VACANCY_SUBMITTED:  { icon: Send,         chip: "bg-amber-100 text-amber-700" },
-    VACANCY_APPROVED:   { icon: CheckCircle2, chip: "bg-emerald-100 text-emerald-700" },
-    VACANCY_REJECTED:   { icon: XCircle,      chip: "bg-red-100 text-red-700" },
-    VACANCY_PUBLISHED:  { icon: Megaphone,    chip: "bg-indigo-100 text-indigo-700" },
+  VACANCY_SUBMITTED:  { icon: Send,         chip: "bg-amber-100 text-amber-700" },
+  VACANCY_APPROVED:   { icon: CheckCircle2, chip: "bg-emerald-100 text-emerald-700" },
+  VACANCY_REJECTED:   { icon: XCircle,      chip: "bg-red-100 text-red-700" },
+  VACANCY_PUBLISHED:  { icon: Megaphone,    chip: "bg-indigo-100 text-indigo-700" },
 };
 const DEFAULT_KIND = { icon: Bell, chip: "bg-slate-100 text-slate-600" };
 
