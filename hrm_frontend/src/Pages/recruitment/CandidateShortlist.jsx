@@ -208,7 +208,6 @@ export default function RecruitmentCandidateShortlist() {
   // Global search & vacancy filter
   const [search, setSearch] = useState("");
   const [selectedVacancyFilter, setSelectedVacancyFilter] = useState("ALL");
-  const [outcomeFilter, setOutcomeFilter] = useState("ALL"); // ALL | RECOMMENDED | MANUAL_REVIEW | SHORTLISTED | REJECTED
 
   // Per-vacancy UI state
   const [collapsedGroups, setCollapsedGroups] = useState({});
@@ -220,7 +219,7 @@ export default function RecruitmentCandidateShortlist() {
 
   // Vacancy screening configs cached: { [vacId]: configObject }
   const [screeningConfigs, setScreeningConfigs] = useState({});
-  const [loadingConfigFor, setLoadingConfigFor] = useState(null);
+  const [_loadingConfigFor, setLoadingConfigFor] = useState(null);
 
   // Modals & Panels
   // 1. Vacancy Screening Config Drawer / Modal
@@ -241,9 +240,6 @@ export default function RecruitmentCandidateShortlist() {
   const [rejectingCandidate, setRejectingCandidate] = useState(null);
   const [selectedReason, setSelectedReason] = useState(REJECTION_REASONS[0]);
   const [customReason, setCustomReason] = useState("");
-
-  // 4. Candidate Details Modal
-  const [detailCandidate, setDetailCandidate] = useState(null);
 
   // Load applications and vacancies
   const fetchData = useCallback(async (isRefresh = false) => {
@@ -418,7 +414,7 @@ export default function RecruitmentCandidateShortlist() {
   /**
    * Run Vacancy Screening Evaluation & Automatic Shortlisting
    */
-  const handleRunScreeningForVacancy = async (vacKey, vacancyTitle, vacancyCandidates) => {
+  const handleRunScreeningForVacancy = async (vacKey, vacancyTitle) => {
     setRunningAutoForVacancy((prev) => ({ ...prev, [vacKey]: true }));
     setVacancyAlerts((prev) => ({ ...prev, [vacKey]: null }));
 
@@ -912,11 +908,8 @@ export default function RecruitmentCandidateShortlist() {
               const vacTotal = group.candidates.length;
               const vacSuitable = group.candidates.filter((c) => getCandidateSuitability(c, minScore).isSuitable).length;
               const vacNotSuitable = group.candidates.filter((c) => !getCandidateSuitability(c, minScore).isSuitable).length;
-              const vacUnderReview = group.candidates.filter((c) => c.status === "NEW" || c.status === "UNDER_REVIEW").length;
               const vacShortlisted = group.candidates.filter((c) => c.status === "SHORTLISTED").length;
               const vacRejected = group.candidates.filter((c) => c.status === "REJECTED").length;
-              const vacRecommended = group.candidates.filter((c) => c.recommendation === "RECOMMENDED_FOR_SHORTLIST").length;
-              const vacManualReview = group.candidates.filter((c) => c.recommendation === "REQUIRES_MANUAL_REVIEW").length;
 
               return (
                 <div

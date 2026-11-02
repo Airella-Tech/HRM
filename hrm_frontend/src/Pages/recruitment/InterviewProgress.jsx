@@ -477,7 +477,11 @@ function normalizeInterviews(rows) {
     }
 
     candidate.currentRound = getCurrentStage(candidate);
-    candidate.stages = candidate.stages.map(({ _timestamp, ...stage }) => stage);
+    candidate.stages = candidate.stages.map((stage) => {
+      const cleanStage = { ...stage };
+      delete cleanStage._timestamp;
+      return cleanStage;
+    });
 
     return candidate;
   });

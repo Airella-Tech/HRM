@@ -59,7 +59,7 @@ function getScoreBadge(score) {
 export default function RecruitmentApplicationReview() {
   const navigate = useNavigate();
   const [candidates, setCandidates] = useState([]);
-  const [vacancies, setVacancies] = useState([]);
+  const [_vacancies, setVacancies] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
