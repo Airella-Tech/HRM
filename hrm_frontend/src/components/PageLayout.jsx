@@ -11,7 +11,7 @@
  *   children    : ReactNode — page content
  */
 import React, { useEffect, useState } from "react";
-import { recruitmentApi } from "../services/api";
+import { useRecruitmentAccess, fetchRecruitmentAccess } from "../utils/useRecruitmentAccess";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
   ChevronLeft,
@@ -246,94 +246,51 @@ export const PageLayout = ({
   actions,
   children,
 }) => {
-  const [collapsed, setCollapsed] = useState(false);
+    // Remember the collapsed/expanded sidebar between pages
+  const [collapsed, setCollapsed] = useState(() => {
+    try {
+      return sessionStorage.getItem("sidebar_collapsed") === "1";
+    } catch {
+      return false;
+    }
+  });
+  const toggleCollapsed = () =>
+    setCollapsed((c) => {
+      const next = !c;
+      try {
+        sessionStorage.setItem("sidebar_collapsed", next ? "1" : "0");
+      } catch {
+        // Ignore — the sidebar still toggles for this page
+      }
+      return next;
+    });
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const navigate = useNavigate();
   const location = useLocation();
   const accent = ACCENT[role];
 
-  const [recruitmentAccess, setRecruitmentAccess] = useState(null);
+  // Shared, cached access: the menu stays on screen while access refreshes in the background
+  const sharedAccess = useRecruitmentAccess();
 
   useEffect(() => {
-    if (role !== "recruiter") {
-      setRecruitmentAccess(null);
-      return;
-    }
-
-    let cancelled = false;
-
-    recruitmentApi
-      .getMyAccess()
-      .then((response) => {
-        if (cancelled) return;
-
-        // Supports the API response wrapper used by your backend.
-        const access = response?.data?.data ?? response?.data ?? response;
-        const perms = Array.isArray(access?.permissions) ? access.permissions : [];
-
-        setRecruitmentAccess({
-          fullAccess: access?.fullAccess === true,
-          hasRecruitmentAccess: access?.hasRecruitmentAccess === true || perms.length > 0,
-          permissions: perms.length > 0
-            ? perms
-            : [
-                "APPLICATION_VIEW",
-                "VIEW_APPLICATIONS",
-                "APPLICATION_SCREEN",
-                "REVIEW_APPLICATIONS",
-                "APPLICATION_SHORTLIST",
-                "SHORTLIST_CANDIDATES",
-                "VACANCY_CREATE",
-                "CREATE_VACANCIES",
-                "VACANCY_APPROVE",
-                "APPROVE_VACANCIES",
-                "VACANCY_PUBLISH",
-                "PUBLISH_CLOSE_VACANCIES",
-              ],
-        });
-      })
-      .catch((error) => {
-        console.warn("Recruitment access endpoint note, using role-based defaults:", error);
-
-        if (!cancelled) {
-          const stored = localStorage.getItem("user");
-          const u = stored ? JSON.parse(stored) : {};
-          const isFull = u?.role === "HR_MANAGER" || u?.role === "ADMIN";
-
-          setRecruitmentAccess({
-            fullAccess: isFull,
-            hasRecruitmentAccess: true,
-            permissions: [
-              "APPLICATION_VIEW",
-              "VIEW_APPLICATIONS",
-              "APPLICATION_SCREEN",
-              "REVIEW_APPLICATIONS",
-              "APPLICATION_SHORTLIST",
-              "SHORTLIST_CANDIDATES",
-              "VACANCY_CREATE",
-              "CREATE_VACANCIES",
-              "VACANCY_APPROVE",
-              "APPROVE_VACANCIES",
-              "VACANCY_PUBLISH",
-              "PUBLISH_CLOSE_VACANCIES",
-              "INTERVIEW_SCHEDULE",
-              "SCHEDULE_INTERVIEWS",
-              "INTERVIEW_ASSIGN",
-              "ASSIGN_INTERVIEWERS",
-              "INTERVIEW_EVALUATE",
-              "EVALUATE_INTERVIEWS",
-              "OFFER_MANAGE",
-              "MANAGE_JOB_OFFERS",
-            ],
-          });
-        }
-      });
-
-    return () => {
-      cancelled = true;
-    };
+    if (role === "recruiter") fetchRecruitmentAccess(true);
   }, [role]);
+
+  // Before the first answer arrives, HR Managers and Admins already know they have full access
+  let storedRole;
+  try {
+    storedRole = JSON.parse(localStorage.getItem("user") || "{}")?.role;
+  } catch {
+    storedRole = undefined;
+  }
+  const recruitmentAccess =
+    role !== "recruiter"
+      ? null
+      : sharedAccess ||
+        (storedRole === "HR_MANAGER" || storedRole === "ADMIN"
+          ? { fullAccess: true, hasRecruitmentAccess: true, permissions: [] }
+          : null);
 
   const navItems =
     role !== "recruiter"
@@ -407,7 +364,7 @@ export const PageLayout = ({
             </span>
           )}
           <button
-            onClick={() => setCollapsed(!collapsed)}
+            onClick={toggleCollapsed}
             className="ml-auto p-1.5 rounded-lg text-gray-500 hover:text-white hover:bg-white/10 transition-colors"
           >
             {collapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
@@ -416,6 +373,11 @@ export const PageLayout = ({
 
         {/* Nav items */}
         <ul className="flex-1 py-4 space-y-1 px-3 overflow-y-auto">
+                  {role === "recruiter" &&
+            !recruitmentAccess &&
+            [0, 1, 2, 3, 4].map((i) => (
+              <li key={i} className="h-11 rounded-xl bg-white/5 animate-pulse" />
+            ))}
           {navItems.map((item) => {
             const currentFullPath = location.pathname + location.search;
             const currentBase = location.pathname;
