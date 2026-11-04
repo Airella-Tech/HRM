@@ -74,18 +74,20 @@ export const RoleSwitch = ({
       : []),
   ];
 
-    // Three or more options (or a collapsed sidebar) are stacked so nothing overflows
-  const stacked = sidebar && (collapsed || options.length > 2);
+  // In the sidebar the options are always stacked (and icon-only when collapsed) so nothing overflows
+  const stacked = sidebar && (collapsed || options.length > 1);
 
   return (
     <div
-      className={`${sidebar
-        ? `flex ${stacked ? "flex-col" : "flex-row"} items-stretch bg-white/5 rounded-xl p-1 gap-1`
-        : "flex items-center bg-gray-100 rounded-xl p-1 gap-1"}`}
+      className={`${
+        sidebar
+          ? `flex ${stacked ? "flex-col" : "flex-row"} items-stretch bg-white/5 rounded-xl p-1 gap-1`
+          : "flex items-center bg-gray-100 rounded-xl p-1 gap-1"
+      }`}
       role="group"
       aria-label="Switch dashboard"
     >
-            {sidebar && stacked && !collapsed && (
+      {sidebar && stacked && !collapsed && (
         <p className="px-2 pt-1 text-[10px] font-semibold uppercase tracking-wider text-gray-500">
           Switch area
         </p>
@@ -100,7 +102,11 @@ export const RoleSwitch = ({
             aria-pressed={isActive}
             title={`Switch to ${label} dashboard`}
             className={`flex ${stacked ? "w-full" : "flex-1"} ${
-              collapsed ? "justify-center" : stacked ? "justify-start" : "justify-center"
+              collapsed
+                ? "justify-center"
+                : stacked
+                  ? "justify-start"
+                  : "justify-center"
             } items-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold transition-all ${
               isActive
                 ? active
