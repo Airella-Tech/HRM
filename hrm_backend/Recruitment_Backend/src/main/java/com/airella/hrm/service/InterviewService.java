@@ -8,15 +8,19 @@ import com.airella.hrm.exception.BusinessException;
 import com.airella.hrm.exception.ResourceNotFoundException;
 import com.airella.hrm.model.Interview;
 import com.airella.hrm.model.InterviewEvaluatorAssignment;
+import com.airella.hrm.model.InterviewRoundDecision;
 import com.airella.hrm.repository.InterviewEvaluatorAssignmentRepository;
 import com.airella.hrm.repository.InterviewRepository;
+import com.airella.hrm.repository.InterviewRoundDecisionRepository;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -37,31 +41,37 @@ public class InterviewService {
 
     private final InterviewRepository interviewRepository;
     private final InterviewEvaluatorAssignmentRepository assignmentRepository;
+    private final InterviewRoundDecisionRepository decisionRepository;
     private final EmployeeDirectory employeeDirectory;
     private final AuthService authService;
     private final PermissionService permissionService;
     private final AuditService auditService;
     private final InterviewEmailService interviewEmailService;
     private final InterviewEvaluationService interviewEvaluationService;
+    private final RecruitmentNotificationService notificationService;
 
     public InterviewService(
             InterviewRepository interviewRepository,
             InterviewEvaluatorAssignmentRepository assignmentRepository,
+            InterviewRoundDecisionRepository decisionRepository,
             EmployeeDirectory employeeDirectory,
             AuthService authService,
             PermissionService permissionService,
             AuditService auditService,
             InterviewEmailService interviewEmailService,
-            InterviewEvaluationService interviewEvaluationService) {
+            InterviewEvaluationService interviewEvaluationService,
+            RecruitmentNotificationService notificationService) {
 
         this.interviewRepository = interviewRepository;
         this.assignmentRepository = assignmentRepository;
+        this.decisionRepository = decisionRepository;
         this.employeeDirectory = employeeDirectory;
         this.authService = authService;
         this.permissionService = permissionService;
         this.auditService = auditService;
         this.interviewEmailService = interviewEmailService;
         this.interviewEvaluationService = interviewEvaluationService;
+        this.notificationService = notificationService;
     }
 
     // ------------------------------------------------------------
@@ -69,6 +79,7 @@ public class InterviewService {
     // ------------------------------------------------------------
 
     public InterviewDTO create(InterviewRequestDTO request) {
+
         Long companyId = authService.getCurrentCompanyId();
 
         Interview interview = new Interview();
@@ -78,9 +89,14 @@ public class InterviewService {
         apply(interview, request, companyId);
         validateRoundProgression(interview, companyId);
 
+        // Save first to generate the interview ID.
         interview = interviewRepository.save(interview);
 
+        // Save interviewer assignments once.
         syncAssignments(interview, request, companyId);
+
+        // Notify assigned interviewers after assignments are saved.
+        notificationService.interviewScheduled(interview);
 
         audit(
                 "INTERVIEW_CREATED",
@@ -88,9 +104,11 @@ public class InterviewService {
                 "Created interview for " + interview.getCandidateName()
         );
 
+        // Send candidate invitation email.
         try {
             interviewEmailService.sendInvitation(interview, false);
             interview = interviewRepository.save(interview);
+
         } catch (Exception exception) {
             interview.setInvitationStatus("Failed");
             interview = interviewRepository.save(interview);
@@ -104,11 +122,13 @@ public class InterviewService {
     // ------------------------------------------------------------
 
     public InterviewDTO update(Long id, InterviewRequestDTO request) {
+
         Long companyId = authService.getCurrentCompanyId();
         Interview interview = find(id, companyId);
 
         if ("Completed".equalsIgnoreCase(interview.getStatus())
                 || "Cancelled".equalsIgnoreCase(interview.getStatus())) {
+
             throw new BusinessException(
                     "Completed or cancelled interviews cannot be rescheduled."
             );
@@ -116,6 +136,18 @@ public class InterviewService {
 
         String originalRound = interview.getInterviewRound();
 
+        // Preserve existing interviewer assignments before updating.
+        Set<Long> oldAssignmentIds =
+                assignmentRepository.findByCompanyIdAndInterviewId(
+                                companyId,
+                                interview.getId()
+                        )
+                        .stream()
+                        .map(InterviewEvaluatorAssignment::getEmployeeId)
+                        .filter(Objects::nonNull)
+                        .collect(Collectors.toSet());
+
+        // Store old interview details.
         String oldCandidateName = interview.getCandidateName();
         String oldCandidateEmail = interview.getCandidateEmail();
         String oldVacancyTitle = interview.getVacancyTitle();
@@ -133,6 +165,7 @@ public class InterviewService {
         if (!Objects.equals(
                 normalizeRound(originalRound),
                 normalizeRound(interview.getInterviewRound()))) {
+
             throw new BusinessException(
                     "An existing interview's round cannot be changed. "
                             + "Create a separate interview for another round."
@@ -141,6 +174,7 @@ public class InterviewService {
 
         validateRoundProgression(interview, companyId);
 
+        // Check whether the candidate invitation details changed.
         boolean invitationDetailsChanged =
                 !Objects.equals(oldCandidateName, interview.getCandidateName())
                         || !Objects.equals(oldCandidateEmail, interview.getCandidateEmail())
@@ -156,7 +190,34 @@ public class InterviewService {
 
         interview = interviewRepository.save(interview);
 
+        // Synchronize assignments if interviewer IDs were included.
         syncAssignments(interview, request, companyId);
+
+        // Find newly assigned interviewers.
+        Set<Long> newAssignmentIds =
+                assignmentRepository.findByCompanyIdAndInterviewId(
+                                companyId,
+                                interview.getId()
+                        )
+                        .stream()
+                        .map(InterviewEvaluatorAssignment::getEmployeeId)
+                        .filter(Objects::nonNull)
+                        .filter(employeeId -> !oldAssignmentIds.contains(employeeId))
+                        .collect(Collectors.toCollection(LinkedHashSet::new));
+
+        // Notify about changed interview details.
+        if (invitationDetailsChanged) {
+
+            notificationService.interviewRescheduled(interview);
+
+        } else if (!newAssignmentIds.isEmpty()) {
+
+            // If only interviewer assignments changed, notify new interviewers.
+            notificationService.interviewerAssigned(
+                    interview,
+                    newAssignmentIds
+            );
+        }
 
         audit(
                 "INTERVIEW_UPDATED",
@@ -164,10 +225,13 @@ public class InterviewService {
                 "Updated interview for " + interview.getCandidateName()
         );
 
+        // Send an updated invitation only when invitation details changed.
         if (invitationDetailsChanged) {
+
             try {
                 interviewEmailService.sendInvitation(interview, true);
                 interview = interviewRepository.save(interview);
+
             } catch (Exception exception) {
                 interview.setInvitationStatus("Failed");
                 interview = interviewRepository.save(interview);
@@ -182,6 +246,7 @@ public class InterviewService {
     // ------------------------------------------------------------
 
     public InterviewDTO updateStatus(Long id, String requestedStatus) {
+
         Long companyId = authService.getCurrentCompanyId();
         Interview interview = find(id, companyId);
 
@@ -192,30 +257,70 @@ public class InterviewService {
         String newStatus;
 
         switch (requestedStatus.trim().toLowerCase(Locale.ROOT)) {
-            case "scheduled" -> newStatus = "Scheduled";
-            case "pending" -> newStatus = "Pending";
-            case "in_progress", "in progress" -> newStatus = "In Progress";
-            case "completed" -> newStatus = "Completed";
-            case "cancelled", "canceled" -> newStatus = "Cancelled";
-            default -> throw new BusinessException(
-                    "Invalid interview status. Choose Scheduled, Pending, "
-                            + "In Progress, Completed, or Cancelled."
-            );
+
+            case "scheduled" ->
+                    newStatus = "Scheduled";
+
+            case "pending" ->
+                    newStatus = "Pending";
+
+            case "in_progress", "in progress" ->
+                    newStatus = "In Progress";
+
+            case "completed" ->
+                    newStatus = "Completed";
+
+            case "cancelled", "canceled" ->
+                    newStatus = "Cancelled";
+
+            default ->
+                    throw new BusinessException(
+                            "Invalid interview status. Choose Scheduled, Pending, "
+                                    + "In Progress, Completed, or Cancelled."
+                    );
         }
 
         String currentStatus = interview.getStatus();
 
+        // Prevent reopening completed or cancelled interviews.
         if (currentStatus != null
                 && (currentStatus.equalsIgnoreCase("Completed")
                 || currentStatus.equalsIgnoreCase("Cancelled"))
                 && !currentStatus.equalsIgnoreCase(newStatus)) {
+
             throw new BusinessException(
                     "A completed or cancelled interview cannot be reopened "
                             + "or changed to another status."
             );
         }
 
+        // Validate completion date and time.
+        if ("Completed".equalsIgnoreCase(newStatus)) {
+
+            if (interview.getInterviewDate() == null
+                    || interview.getInterviewTime() == null) {
+
+                throw new BusinessException(
+                        "Interview date and time must be available before completion."
+                );
+            }
+
+            LocalDateTime scheduledDateTime = LocalDateTime.of(
+                    interview.getInterviewDate(),
+                    interview.getInterviewTime()
+            );
+
+            if (LocalDateTime.now().isBefore(scheduledDateTime)) {
+
+                throw new BusinessException(
+                        "An interview cannot be marked as completed before its scheduled date and time."
+                );
+            }
+        }
+
+        // Save and notify only when the status actually changes.
         if (!Objects.equals(currentStatus, newStatus)) {
+
             interview.setStatus(newStatus);
             interview = interviewRepository.save(interview);
 
@@ -225,6 +330,11 @@ public class InterviewService {
                     "Interview status changed from "
                             + (currentStatus == null ? "Unknown" : currentStatus)
                             + " to " + newStatus
+            );
+
+            notificationService.interviewStatusUpdated(
+                    interview,
+                    currentStatus == null ? "Unknown" : currentStatus
             );
         }
 
@@ -244,6 +354,7 @@ public class InterviewService {
 
         if ("Completed".equalsIgnoreCase(interview.getStatus())
                 || "Cancelled".equalsIgnoreCase(interview.getStatus())) {
+
             throw new BusinessException(
                     "Interviewers cannot be reassigned to completed or cancelled interviews."
             );
@@ -256,6 +367,25 @@ public class InterviewService {
         List<UserSummaryDTO> selectedUsers =
                 resolveInterviewerUsers(employeeIds);
 
+        // Get existing interviewer assignments.
+        Set<Long> existingIds =
+                assignmentRepository.findByCompanyIdAndInterviewId(
+                                companyId,
+                                interview.getId()
+                        )
+                        .stream()
+                        .map(InterviewEvaluatorAssignment::getEmployeeId)
+                        .filter(Objects::nonNull)
+                        .collect(Collectors.toSet());
+
+        // Identify only newly assigned interviewers.
+        Set<Long> newlyAssignedIds = selectedUsers.stream()
+                .map(UserSummaryDTO::getId)
+                .filter(Objects::nonNull)
+                .filter(employeeId -> !existingIds.contains(employeeId))
+                .collect(Collectors.toCollection(LinkedHashSet::new));
+
+        // Synchronize interviewer assignments.
         syncAssignmentUsers(interview, selectedUsers, companyId);
 
         String interviewerNames = selectedUsers.stream()
@@ -265,6 +395,15 @@ public class InterviewService {
 
         interview.setInterviewerName(blankToNull(interviewerNames));
         interview = interviewRepository.save(interview);
+
+        // Notify only newly assigned interviewers.
+        if (!newlyAssignedIds.isEmpty()) {
+
+            notificationService.interviewerAssigned(
+                    interview,
+                    newlyAssignedIds
+            );
+        }
 
         audit(
                 "INTERVIEW_INTERVIEWERS_ASSIGNED",
@@ -289,24 +428,27 @@ public class InterviewService {
         int currentIndex = getRoundIndex(round);
 
         if (currentIndex == -1) {
+
             throw new BusinessException(
                     "Invalid interview round. Choose Technical Interview, "
                             + "HR Interview, Hiring Manager Interview, or Final Interview."
             );
         }
 
-        // The Technical Interview is the first round.
+        // Technical Interview is the first round.
         if (currentIndex == 0) {
             return;
         }
 
         if (interview.getApplicationId() == null) {
+
             throw new BusinessException(
                     "An application ID is required to validate interview progression."
             );
         }
 
         if (interview.getVacancyId() == null) {
+
             throw new BusinessException(
                     "A vacancy ID is required to validate interview progression."
             );
@@ -335,6 +477,7 @@ public class InterviewService {
                         .toList();
 
         if (previousRoundInterviews.isEmpty()) {
+
             throw new BusinessException(
                     "The candidate must have a " + previousRound
                             + " interview before the " + round
@@ -342,27 +485,38 @@ public class InterviewService {
             );
         }
 
-        boolean passedPreviousRound =
+        // Previous round must be completed and manager-approved.
+        boolean previousRoundApproved =
                 previousRoundInterviews.stream()
-                        .anyMatch(previousInterview ->
-                                "Completed".equalsIgnoreCase(
-                                        previousInterview.getStatus())
-                                        && interviewEvaluationService
-                                        .hasPassingSubmittedEvaluation(
-                                                previousInterview.getId()
-                                        ));
+                        .anyMatch(previousInterview -> {
 
-        if (!passedPreviousRound) {
+                            if (!"Completed".equalsIgnoreCase(
+                                    previousInterview.getStatus())) {
+                                return false;
+                            }
+
+                            return decisionRepository
+                                    .existsByCompanyIdAndInterviewIdAndDecision(
+                                            companyId,
+                                            previousInterview.getId(),
+                                            InterviewRoundDecision.Decision.APPROVED
+                                    );
+                        });
+
+        if (!previousRoundApproved) {
+
             throw new BusinessException(
                     "The candidate cannot proceed to " + round
                             + ". The " + previousRound
-                            + " must be completed and have a submitted "
-                            + "HIRE or STRONG_HIRE evaluation."
+                            + " must be completed, all assigned interviewers "
+                            + "must submit their evaluations, and the "
+                            + "Recruitment Manager must approve the round."
             );
         }
     }
 
     private int getRoundIndex(String round) {
+
         if (round == null || round.isBlank()) {
             return -1;
         }
@@ -379,6 +533,7 @@ public class InterviewService {
     }
 
     private String normalizeRound(String round) {
+
         if (round == null) {
             return null;
         }
@@ -394,7 +549,9 @@ public class InterviewService {
 
     @Transactional(readOnly = true)
     public InterviewDTO get(Long id) {
+
         Long companyId = authService.getCurrentCompanyId();
+
         return toDto(find(id, companyId));
     }
 
@@ -404,6 +561,7 @@ public class InterviewService {
 
     @Transactional(readOnly = true)
     public List<InterviewDTO> list(String status, LocalDate date) {
+
         Long companyId = authService.getCurrentCompanyId();
 
         return interviewRepository
@@ -424,15 +582,17 @@ public class InterviewService {
     }
 
     // ------------------------------------------------------------
-    // GET INTERVIEWS ASSIGNED TO THE CURRENT INTERVIEWER
+    // GET INTERVIEWS ASSIGNED TO CURRENT INTERVIEWER
     // ------------------------------------------------------------
 
     @Transactional(readOnly = true)
     public List<InterviewDTO> getMyAssignedInterviews() {
+
         Long companyId = authService.getCurrentCompanyId();
         Long employeeId = permissionService.currentUserId();
 
         if (employeeId == null) {
+
             throw new BusinessException(
                     "Unable to identify the logged-in employee."
             );
@@ -457,10 +617,12 @@ public class InterviewService {
     // ------------------------------------------------------------
 
     public void delete(Long id) {
+
         Long companyId = authService.getCurrentCompanyId();
         Interview interview = find(id, companyId);
 
         if ("Completed".equalsIgnoreCase(interview.getStatus())) {
+
             throw new BusinessException(
                     "Completed interviews cannot be deleted."
             );
@@ -506,6 +668,7 @@ public class InterviewService {
         String email = request.candidateEmail().trim();
 
         if (!email.matches("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$")) {
+
             throw new BusinessException(
                     "Enter a valid candidate email address."
             );
@@ -516,6 +679,7 @@ public class InterviewService {
                 : request.durationMinutes();
 
         if (duration <= 0 || duration > 480) {
+
             throw new BusinessException(
                     "Interview duration must be between 1 and 480 minutes."
             );
@@ -525,6 +689,7 @@ public class InterviewService {
 
         if (!type.equalsIgnoreCase("Online")
                 && !type.equalsIgnoreCase("Physical")) {
+
             throw new BusinessException(
                     "Interview type must be Online or Physical."
             );
@@ -533,6 +698,7 @@ public class InterviewService {
         String interviewerName = blankToNull(request.interviewerName());
 
         if (request.interviewerIds() != null) {
+
             List<UserSummaryDTO> selectedUsers =
                     resolveInterviewerUsers(request.interviewerIds());
 
@@ -544,7 +710,6 @@ public class InterviewService {
             interviewerName = blankToNull(interviewerName);
         }
 
-        // Use the application ID rather than a separate candidate ID.
         interview.setApplicationId(request.applicationId());
         interview.setCandidateName(request.candidateName().trim());
         interview.setCandidateEmail(email);
@@ -555,9 +720,11 @@ public class InterviewService {
         interview.setInterviewTime(request.interviewTime());
         interview.setDurationMinutes(duration);
         interview.setInterviewerName(interviewerName);
+
         interview.setInterviewType(
                 type.equalsIgnoreCase("online") ? "Online" : "Physical"
         );
+
         interview.setMeetingLink(blankToNull(request.meetingLink()));
         interview.setLocation(blankToNull(request.location()));
         interview.setNotes(blankToNull(request.notes()));
@@ -590,6 +757,7 @@ public class InterviewService {
                 .toList();
 
         if (ids.size() != requestedIds.size()) {
+
             throw new BusinessException(
                     "Interviewer IDs must be valid and unique."
             );
@@ -607,6 +775,7 @@ public class InterviewService {
         Map<Long, UserSummaryDTO> usersById = new LinkedHashMap<>();
 
         for (UserSummaryDTO user : companyUsers) {
+
             if (user.getId() != null) {
                 usersById.put(user.getId(), user);
             }
@@ -615,15 +784,19 @@ public class InterviewService {
         List<UserSummaryDTO> selectedUsers = new ArrayList<>();
 
         for (Long id : ids) {
+
             UserSummaryDTO user = usersById.get(id);
 
             if (user == null) {
+
                 throw new BusinessException(
                         "One or more selected interviewers do not belong to your company."
                 );
             }
 
-            if (user.getFullName() == null || user.getFullName().isBlank()) {
+            if (user.getFullName() == null
+                    || user.getFullName().isBlank()) {
+
                 throw new BusinessException(
                         "A selected interviewer does not have a valid display name."
                 );
@@ -667,6 +840,7 @@ public class InterviewService {
                         .toList();
 
         if (!assignmentsToRemove.isEmpty()) {
+
             assignmentRepository.deleteAll(assignmentsToRemove);
             assignmentRepository.flush();
         }
@@ -674,7 +848,9 @@ public class InterviewService {
         Long assignedBy = permissionService.currentUserId();
 
         for (UserSummaryDTO user : selectedUsers) {
+
             if (!existingIds.contains(user.getId())) {
+
                 assignmentRepository.save(
                         new InterviewEvaluatorAssignment(
                                 companyId,
@@ -707,6 +883,7 @@ public class InterviewService {
     // ------------------------------------------------------------
 
     private Interview find(Long id, Long companyId) {
+
         return interviewRepository.findByIdAndCompanyId(id, companyId)
                 .orElseThrow(() ->
                         new ResourceNotFoundException(
@@ -722,12 +899,14 @@ public class InterviewService {
     // ------------------------------------------------------------
 
     private void requireText(String value, String field) {
+
         if (value == null || value.isBlank()) {
             throw new BusinessException(field + " is required.");
         }
     }
 
     private String blankToNull(String value) {
+
         return value == null || value.isBlank()
                 ? null
                 : value.trim();
@@ -738,6 +917,7 @@ public class InterviewService {
     // ------------------------------------------------------------
 
     private InterviewDTO toDto(Interview interview) {
+
         List<Long> interviewerIds =
                 assignmentRepository.findByCompanyIdAndInterviewId(
                                 interview.getCompanyId(),
@@ -784,6 +964,7 @@ public class InterviewService {
             String description) {
 
         try {
+
             auditService.logAction(
                     action,
                     "Interview",
@@ -791,6 +972,7 @@ public class InterviewService {
                     description,
                     authService.getCurrentCompanyRef()
             );
+
         } catch (Exception ignored) {
             // Audit failure should not prevent the interview operation.
         }

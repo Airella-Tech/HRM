@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import {
   ShieldCheck,
   Users,
@@ -380,6 +380,7 @@ const ConfirmationModal = ({ confirmation, loading, onCancel, onConfirm }) => {
 
 const RecruitmentRolesPermissions = () => {
   const navigate = useNavigate();
+    const location = useLocation();
 
   // Navigation and active tab
   const [activeTab, setActiveTab] = useState("roles");
@@ -1080,14 +1081,17 @@ const RecruitmentRolesPermissions = () => {
   // ======================================================
   // PAGE UI
   const storedUser = localStorage.getItem("user");
+    // The page is reachable from both sidebars, so show the one the user came from
   let layoutRole = "recruiter";
-  try {
-    const parsed = storedUser ? JSON.parse(storedUser) : null;
-    if (parsed?.role === "HR_MANAGER" || parsed?.role === "ADMIN") {
-      layoutRole = "hr";
+  if (!location.pathname.startsWith("/recruitment")) {
+    try {
+      const parsed = storedUser ? JSON.parse(storedUser) : null;
+      if (parsed?.role === "HR_MANAGER" || parsed?.role === "ADMIN") {
+        layoutRole = "hr";
+      }
+    } catch {
+      // Ignore — keep the default layoutRole
     }
-  } catch {
-    // Ignore — keep the default layoutRole
   }
 
   return (

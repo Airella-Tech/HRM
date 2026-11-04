@@ -387,7 +387,7 @@ public class RecruitmentRoleService {
                             new DefaultRoleSeed(
                                     "Recruitment Officer",
                                     "Manages recruitment activities, reviews applications, and supports candidate screening and shortlisting.",
-                                    List.of("APPLICATION_VIEW", "APPLICATION_SCREEN", "APPLICATION_SHORTLIST", "INTERVIEW_SCHEDULE")
+                                    List.of("APPLICATION_VIEW", "APPLICATION_SCREEN", "APPLICATION_SHORTLIST", "INTERVIEW_SCHEDULE","INTERVIEW_PROGRESS_VIEW")
                             ),
                             new DefaultRoleSeed(
                                     "Interviewer / Evaluator",
@@ -399,22 +399,88 @@ public class RecruitmentRoleService {
                                     "Oversees recruitment activities and manages recruitment responsibilities according to assigned permissions.",
                                     List.of("VACANCY_CREATE", "VACANCY_APPROVE", "VACANCY_PUBLISH", "APPLICATION_VIEW", "APPLICATION_SCREEN",
                                             "APPLICATION_SHORTLIST", "INTERVIEW_SCHEDULE", "INTERVIEW_ASSIGN",
-                                            "INTERVIEW_EVALUATE", "OFFER_MANAGE", "RECRUITMENT_ROLE_ADMIN")
+                                            "INTERVIEW_EVALUATE", "INTERVIEW_PROGRESS_VIEW", "INTERVIEW_DECIDE", "OFFER_MANAGE", "RECRUITMENT_ROLE_ADMIN")
                             )
                     );
 
                     for (DefaultRoleSeed seed : defaultRoles) {
-                        if (!roleRepo.existsByCompanyIdAndRoleNameIgnoreCase(companyId, seed.roleName())) {
-                            List<RecruitmentPermission> perms = permissionRepo.findByPermissionCodeIn(seed.permissions());
-                            RecruitmentRole r = new RecruitmentRole(companyId, seed.roleName(), seed.description());
-                            r.setIsSystemDefault(true);
-                            r.setPermissions(new HashSet<>(perms));
-                            try {
-                                roleRepo.save(r);
-                                log.info("[COMPANY_SEED] Created default role '{}' for company ID {}", seed.roleName(), companyId);
-                            } catch (org.springframework.dao.DataIntegrityViolationException dive) {
-                                log.debug("[COMPANY_SEED] Role '{}' already exists for company ID {}", seed.roleName(), companyId);
+
+                        Optional<RecruitmentRole> existingRole =
+                                roleRepo.findByCompanyIdAndRoleNameIgnoreCase(
+                                        companyId,
+                                        seed.roleName()
+                                );
+
+                        if (existingRole.isPresent()) {
+
+                            RecruitmentRole role = existingRole.get();
+                            boolean updated = false;
+
+                            // Recruitment Officer and Recruitment Manager can view interview progress.
+                            if (seed.roleName().equals("Recruitment Officer")
+                                    || seed.roleName().equals("Recruitment Manager")) {
+
+                                Optional<RecruitmentPermission> progressPermission =
+                                        permissionRepo.findByPermissionCode("INTERVIEW_PROGRESS_VIEW");
+
+                                if (progressPermission.isPresent()
+                                        && role.getPermissions().add(progressPermission.get())) {
+
+                                    updated = true;
+
+                                    log.info(
+                                            "[COMPANY_SEED] Added INTERVIEW_PROGRESS_VIEW to '{}' for company ID {}",
+                                            seed.roleName(),
+                                            companyId
+                                    );
+                                }
                             }
+
+                            // Only Recruitment Manager can approve or reject interview progression.
+                            if (seed.roleName().equals("Recruitment Manager")) {
+
+                                Optional<RecruitmentPermission> decisionPermission =
+                                        permissionRepo.findByPermissionCode("INTERVIEW_DECIDE");
+
+                                if (decisionPermission.isPresent()
+                                        && role.getPermissions().add(decisionPermission.get())) {
+
+                                    updated = true;
+
+                                    log.info(
+                                            "[COMPANY_SEED] Added INTERVIEW_DECIDE to Recruitment Manager for company ID {}",
+                                            companyId
+                                    );
+                                }
+                            }
+
+                            // Save only when new permissions have been added.
+                            if (updated) {
+                                roleRepo.save(role);
+                            }
+
+                        } else {
+
+                            // Create the default role if it does not exist.
+                            List<RecruitmentPermission> perms =
+                                    permissionRepo.findByPermissionCodeIn(seed.permissions());
+
+                            RecruitmentRole role = new RecruitmentRole(
+                                    companyId,
+                                    seed.roleName(),
+                                    seed.description()
+                            );
+
+                            role.setIsSystemDefault(true);
+                            role.setPermissions(new HashSet<>(perms));
+
+                            roleRepo.save(role);
+
+                            log.info(
+                                    "[COMPANY_SEED] Created default role '{}' for company ID {}",
+                                    seed.roleName(),
+                                    companyId
+                            );
                         }
                     }
                     return null;

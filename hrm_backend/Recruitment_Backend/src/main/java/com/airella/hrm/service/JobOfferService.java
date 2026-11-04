@@ -7,9 +7,11 @@ import com.airella.hrm.dto.JobOfferRequestDTO;
 import com.airella.hrm.exception.BusinessException;
 import com.airella.hrm.exception.ResourceNotFoundException;
 import com.airella.hrm.model.Interview;
+import com.airella.hrm.model.InterviewRoundDecision;
 import com.airella.hrm.model.JobOffer;
 import com.airella.hrm.model.JobOfferStatus;
 import com.airella.hrm.repository.InterviewRepository;
+import com.airella.hrm.repository.InterviewRoundDecisionRepository;
 import com.airella.hrm.repository.JobOfferRepository;
 
 import org.springframework.mail.SimpleMailMessage;
@@ -21,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 @Service
@@ -29,7 +32,7 @@ public class JobOfferService {
 
     private final JobOfferRepository jobOfferRepository;
     private final InterviewRepository interviewRepository;
-    private final InterviewEvaluationService interviewEvaluationService;
+    private final InterviewRoundDecisionRepository decisionRepository;
     private final AuthService authService;
     private final JavaMailSender mailSender;
 
@@ -45,30 +48,34 @@ public class JobOfferService {
             AuthService authService,
             JavaMailSender mailSender,
             InterviewRepository interviewRepository,
-            InterviewEvaluationService interviewEvaluationService) {
+            InterviewRoundDecisionRepository decisionRepository) {
 
         this.jobOfferRepository = jobOfferRepository;
         this.authService = authService;
         this.mailSender = mailSender;
         this.interviewRepository = interviewRepository;
-        this.interviewEvaluationService = interviewEvaluationService;
+        this.decisionRepository = decisionRepository;
     }
 
-    // Create a new job offer
+    // ------------------------------------------------------------
+    // CREATE A NEW JOB OFFER
+    // ------------------------------------------------------------
+
     public JobOfferDTO create(JobOfferRequestDTO request) {
 
         validateDates(request);
 
         Long companyId = authService.getCurrentCompanyId();
 
-        // Prevent duplicate offers for the same application
+        // Prevent duplicate offers for the same application.
         if (request.applicationId() != null
                 && jobOfferRepository.existsByCompanyIdAndApplicationId(
                 companyId,
                 request.applicationId())) {
 
             throw new BusinessException(
-                    "A job offer already exists for this application.");
+                    "A job offer already exists for this application."
+            );
         }
 
         JobOffer offer = new JobOffer();
@@ -81,7 +88,16 @@ public class JobOfferService {
         return toDto(jobOfferRepository.save(offer));
     }
 
-    // Get candidates who successfully completed all four interview rounds
+    // ------------------------------------------------------------
+    // GET CANDIDATES ELIGIBLE FOR JOB OFFERS
+    //
+    // A candidate must have:
+    // 1. Completed Technical Interview + manager approval.
+    // 2. Completed HR Interview + manager approval.
+    // 3. Completed Hiring Manager Interview + manager approval.
+    // 4. Completed Final Interview + manager approval.
+    // ------------------------------------------------------------
+
     @Transactional(readOnly = true)
     public List<EligibleCandidateDTO> getEligibleCandidates() {
 
@@ -93,7 +109,7 @@ public class JobOfferService {
                                 companyId
                         );
 
-        // Group interviews by application ID and vacancy ID
+        // Group interviews by application ID and vacancy ID.
         Map<String, List<Interview>> groupedInterviews =
                 new LinkedHashMap<>();
 
@@ -120,42 +136,47 @@ public class JobOfferService {
 
             Interview firstInterview = candidateInterviews.get(0);
 
-            List<String> completedRounds = new ArrayList<>();
+            List<String> approvedRounds = new ArrayList<>();
 
-            // Check whether each interview round was successfully passed
+            // Every round must be completed and approved
+            // by the Recruitment Manager.
             for (String round : INTERVIEW_ROUNDS) {
 
-                boolean passed = candidateInterviews.stream()
+                boolean roundApproved = candidateInterviews.stream()
 
+                        // Match the required interview round.
                         .filter(interview ->
                                 interview.getInterviewRound() != null
-                                        && interview.getInterviewRound()
-                                        .trim()
-                                        .equalsIgnoreCase(round))
+                                        && normalizeRound(
+                                        interview.getInterviewRound()
+                                ).equals(normalizeRound(round)))
 
+                        // The interview must be completed.
                         .filter(interview ->
                                 interview.getStatus() != null
                                         && interview.getStatus()
-                                        .trim()
                                         .equalsIgnoreCase("Completed"))
 
+                        // The Recruitment Manager must approve it.
                         .anyMatch(interview ->
-                                interviewEvaluationService
-                                        .hasPassingSubmittedEvaluation(
-                                                interview.getId()
+                                decisionRepository
+                                        .existsByCompanyIdAndInterviewIdAndDecision(
+                                                companyId,
+                                                interview.getId(),
+                                                InterviewRoundDecision.Decision.APPROVED
                                         ));
 
-                if (passed) {
-                    completedRounds.add(round);
+                if (roundApproved) {
+                    approvedRounds.add(round);
                 }
             }
 
-            // Candidate must pass all four rounds
-            if (completedRounds.size() != INTERVIEW_ROUNDS.size()) {
+            // All four rounds must be approved.
+            if (approvedRounds.size() != INTERVIEW_ROUNDS.size()) {
                 continue;
             }
 
-            // Exclude applications that already have a job offer
+            // Exclude applications that already have a job offer.
             boolean alreadyHasOffer =
                     jobOfferRepository.existsByCompanyIdAndApplicationId(
                             companyId,
@@ -173,7 +194,7 @@ public class JobOfferService {
                             firstInterview.getCandidateName(),
                             firstInterview.getCandidateEmail(),
                             firstInterview.getVacancyTitle(),
-                            completedRounds
+                            approvedRounds
                     )
             );
         }
@@ -181,7 +202,25 @@ public class JobOfferService {
         return eligibleCandidates;
     }
 
-    // Get job offers belonging to the authenticated company
+    // ------------------------------------------------------------
+    // NORMALIZE INTERVIEW ROUND NAMES
+    // ------------------------------------------------------------
+
+    private String normalizeRound(String round) {
+
+        if (round == null) {
+            return "";
+        }
+
+        return round.trim()
+                .replaceAll("\\s+", " ")
+                .toLowerCase(Locale.ROOT);
+    }
+
+    // ------------------------------------------------------------
+    // GET JOB OFFERS BELONGING TO THE AUTHENTICATED COMPANY
+    // ------------------------------------------------------------
+
     @Transactional(readOnly = true)
     public List<JobOfferDTO> list(JobOfferStatus status) {
 
@@ -192,20 +231,27 @@ public class JobOfferService {
                 .findByCompanyIdOrderByCreatedAtDesc(companyId)
                 : jobOfferRepository
                 .findByCompanyIdAndStatusOrderByCreatedAtDesc(
-                        companyId, status);
+                        companyId, status
+                );
 
         return offers.stream()
                 .map(this::toDto)
                 .toList();
     }
 
-    // Get one job offer
+    // ------------------------------------------------------------
+    // GET ONE JOB OFFER
+    // ------------------------------------------------------------
+
     @Transactional(readOnly = true)
     public JobOfferDTO get(Long id) {
         return toDto(findOffer(id));
     }
 
-    // Update a draft job offer
+    // ------------------------------------------------------------
+    // UPDATE A DRAFT JOB OFFER
+    // ------------------------------------------------------------
+
     public JobOfferDTO update(
             Long id,
             JobOfferRequestDTO request) {
@@ -214,12 +260,13 @@ public class JobOfferService {
 
         if (offer.getStatus() != JobOfferStatus.DRAFT) {
             throw new BusinessException(
-                    "Only draft job offers can be edited.");
+                    "Only draft job offers can be edited."
+            );
         }
 
         validateDates(request);
 
-        // Prevent linking another offer to the same application
+        // Prevent linking another offer to the same application.
         if (request.applicationId() != null
                 && !request.applicationId().equals(
                 offer.getApplicationId())
@@ -230,7 +277,8 @@ public class JobOfferService {
                         offer.getId())) {
 
             throw new BusinessException(
-                    "A job offer already exists for this application.");
+                    "A job offer already exists for this application."
+            );
         }
 
         applyRequest(offer, request);
@@ -238,14 +286,18 @@ public class JobOfferService {
         return toDto(jobOfferRepository.save(offer));
     }
 
-    // Change a job offer's status
+    // ------------------------------------------------------------
+    // CHANGE A JOB OFFER'S STATUS
+    // ------------------------------------------------------------
+
     public JobOfferDTO updateStatus(
             Long id,
             JobOfferStatus newStatus) {
 
         if (newStatus == null) {
             throw new BusinessException(
-                    "Offer status is required.");
+                    "Offer status is required."
+            );
         }
 
         JobOffer offer = findOffer(id);
@@ -269,7 +321,8 @@ public class JobOfferService {
             throw new BusinessException(
                     "Cannot change offer status from "
                             + currentStatus + " to "
-                            + newStatus + ".");
+                            + newStatus + "."
+            );
         }
 
         offer.setStatus(newStatus);
@@ -277,14 +330,18 @@ public class JobOfferService {
         return toDto(jobOfferRepository.save(offer));
     }
 
-    // Send the job offer email to the candidate
+    // ------------------------------------------------------------
+    // SEND THE JOB OFFER EMAIL TO THE CANDIDATE
+    // ------------------------------------------------------------
+
     public void sendOfferEmail(Long id) {
 
         JobOffer offer = findOffer(id);
 
         if (offer.getStatus() != JobOfferStatus.DRAFT) {
             throw new BusinessException(
-                    "Only draft job offers can be emailed.");
+                    "Only draft job offers can be emailed."
+            );
         }
 
         String candidateEmail = offer.getCandidateEmail();
@@ -293,7 +350,8 @@ public class JobOfferService {
                 || candidateEmail.isBlank()) {
 
             throw new BusinessException(
-                    "The candidate email address is missing.");
+                    "The candidate email address is missing."
+            );
         }
 
         SimpleMailMessage message = new SimpleMailMessage();
@@ -301,7 +359,8 @@ public class JobOfferService {
         message.setTo(candidateEmail.trim());
 
         message.setSubject(
-                "Job Offer - " + offer.getJobTitle());
+                "Job Offer - " + offer.getJobTitle()
+        );
 
         StringBuilder body = new StringBuilder();
 
@@ -310,7 +369,8 @@ public class JobOfferService {
                 .append(",\n\n");
 
         body.append(
-                "We are pleased to offer you the following position.\n\n");
+                "We are pleased to offer you the following position.\n\n"
+        );
 
         body.append("Job Title: ")
                 .append(offer.getJobTitle())
@@ -355,7 +415,8 @@ public class JobOfferService {
         }
 
         body.append(
-                "\nPlease contact our recruitment team if you have any questions.\n\n");
+                "\nPlease contact our recruitment team if you have any questions.\n\n"
+        );
 
         body.append("Kind regards,\n")
                 .append("Recruitment Team");
@@ -369,29 +430,37 @@ public class JobOfferService {
 
             throw new BusinessException(
                     "Unable to send the job offer email. "
-                            + "Please check the email configuration and try again.");
+                            + "Please check the email configuration and try again."
+            );
         }
 
-        // Mark the offer as SENT only after email sending succeeds
+        // Mark the offer as SENT only after email sending succeeds.
         offer.setStatus(JobOfferStatus.SENT);
 
         jobOfferRepository.save(offer);
     }
 
-    // Delete a draft job offer
+    // ------------------------------------------------------------
+    // DELETE A DRAFT JOB OFFER
+    // ------------------------------------------------------------
+
     public void deleteDraft(Long id) {
 
         JobOffer offer = findOffer(id);
 
         if (offer.getStatus() != JobOfferStatus.DRAFT) {
             throw new BusinessException(
-                    "Only draft job offers can be deleted.");
+                    "Only draft job offers can be deleted."
+            );
         }
 
         jobOfferRepository.delete(offer);
     }
 
-    // Find an offer belonging to the current company
+    // ------------------------------------------------------------
+    // FIND AN OFFER BELONGING TO THE CURRENT COMPANY
+    // ------------------------------------------------------------
+
     private JobOffer findOffer(Long id) {
 
         Long companyId = authService.getCurrentCompanyId();
@@ -400,11 +469,16 @@ public class JobOfferService {
                 .findByIdAndCompanyId(id, companyId)
                 .orElseThrow(() ->
                         new ResourceNotFoundException(
-                                "Job offer", "id", id));
+                                "Job offer", "id", id
+                        )
+                );
     }
 
-    // Validate job offer dates
+    // ------------------------------------------------------------
+    // VALIDATE JOB OFFER DATES
     // Offer expiry date must be before the proposed start date.
+    // ------------------------------------------------------------
+
     private void validateDates(JobOfferRequestDTO request) {
 
         if (request.startDate() != null
@@ -413,11 +487,15 @@ public class JobOfferService {
                 request.startDate())) {
 
             throw new BusinessException(
-                    "Offer expiry date must be before the start date.");
+                    "Offer expiry date must be before the start date."
+            );
         }
     }
 
-    // Copy request data to the entity
+    // ------------------------------------------------------------
+    // COPY REQUEST DATA TO THE ENTITY
+    // ------------------------------------------------------------
+
     private void applyRequest(
             JobOffer offer,
             JobOfferRequestDTO request) {
@@ -425,19 +503,24 @@ public class JobOfferService {
         offer.setApplicationId(request.applicationId());
 
         offer.setCandidateName(
-                request.candidateName().trim());
+                request.candidateName().trim()
+        );
 
         offer.setCandidateEmail(
-                request.email().trim());
+                request.email().trim()
+        );
 
         offer.setJobTitle(
-                request.jobTitle().trim());
+                request.jobTitle().trim()
+        );
 
         offer.setDepartment(
-                clean(request.department()));
+                clean(request.department())
+        );
 
         offer.setEmploymentType(
-                clean(request.employmentType()));
+                clean(request.employmentType())
+        );
 
         offer.setSalary(request.salary());
 
@@ -455,7 +538,10 @@ public class JobOfferService {
                 : value.trim();
     }
 
-    // Convert the entity to a response DTO
+    // ------------------------------------------------------------
+    // CONVERT ENTITY TO RESPONSE DTO
+    // ------------------------------------------------------------
+
     private JobOfferDTO toDto(JobOffer offer) {
 
         return new JobOfferDTO(

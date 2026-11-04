@@ -10,10 +10,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.airella.hrm.model.Interview;
+import com.airella.hrm.model.InterviewEvaluatorAssignment;
+import com.airella.hrm.repository.InterviewEvaluatorAssignmentRepository;
 
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * In-app notifications for vacancy events. Sending never breaks the action that caused it:
@@ -29,17 +33,20 @@ public class RecruitmentNotificationService {
     private final EmployeeDirectory employeeDirectory;
     private final AuthService authService;
     private final PermissionService permissionService;
+    private final InterviewEvaluatorAssignmentRepository assignmentRepository;
 
     public RecruitmentNotificationService(RecruitmentNotificationRepository notificationRepo,
                                           UserRecruitmentRoleRepository userRoleRepo,
                                           EmployeeDirectory employeeDirectory,
                                           AuthService authService,
-                                          PermissionService permissionService) {
+                                          PermissionService permissionService,
+                                          InterviewEvaluatorAssignmentRepository assignmentRepository) {
         this.notificationRepo = notificationRepo;
         this.userRoleRepo = userRoleRepo;
         this.employeeDirectory = employeeDirectory;
         this.authService = authService;
         this.permissionService = permissionService;
+        this.assignmentRepository = assignmentRepository;
     }
 
     // ── Vacancy events ───────────────────────────────────
@@ -150,5 +157,231 @@ public class RecruitmentNotificationService {
         } catch (Exception e) {
             log.warn("Could not send vacancy notification: {}", e.getMessage());
         }
+    }
+
+    // ------------------------------------------------------------
+// INTERVIEW NOTIFICATIONS
+// ------------------------------------------------------------
+
+    /** Notify assigned interviewers when an interview is scheduled. */
+    public void interviewScheduled(Interview interview) {
+        safely(() -> notifyInterviewers(
+                interview,
+                "INTERVIEW_SCHEDULED",
+                "New interview scheduled",
+                "An interview has been scheduled for "
+                        + interview.getCandidateName()
+                        + " - " + interview.getInterviewRound()
+                        + " on " + interview.getInterviewDate()
+                        + " at " + interview.getInterviewTime() + ".",
+                "/recruitment/interviews"
+        ));
+    }
+
+    /** Notify assigned interviewers when an interview is rescheduled. */
+    public void interviewRescheduled(Interview interview) {
+        safely(() -> notifyInterviewers(
+                interview,
+                "INTERVIEW_RESCHEDULED",
+                "Interview rescheduled",
+                "The interview for " + interview.getCandidateName()
+                        + " has been rescheduled to "
+                        + interview.getInterviewDate()
+                        + " at " + interview.getInterviewTime() + ".",
+                "/recruitment/interviews"
+        ));
+    }
+
+    /** Notify newly assigned interviewers. */
+    public void interviewerAssigned(
+            Interview interview,
+            Set<Long> employeeIds) {
+
+        safely(() -> {
+            if (employeeIds == null || employeeIds.isEmpty()) {
+                return;
+            }
+
+            for (Long employeeId : employeeIds) {
+                notifyInterviewUser(
+                        employeeId,
+                        interview,
+                        "INTERVIEWER_ASSIGNED",
+                        "You have been assigned an interview",
+                        "You have been assigned to interview "
+                                + interview.getCandidateName()
+                                + " for " + interview.getVacancyTitle()
+                                + " (" + interview.getInterviewRound() + ").",
+                        "/recruitment/interviews"
+                );
+            }
+        });
+    }
+
+    /** Notify assigned interviewers when the status changes. */
+    public void interviewStatusUpdated(
+            Interview interview,
+            String previousStatus) {
+
+        safely(() -> notifyInterviewers(
+                interview,
+                "INTERVIEW_STATUS_UPDATED",
+                "Interview status updated",
+                "The interview for " + interview.getCandidateName()
+                        + " changed from " + previousStatus
+                        + " to " + interview.getStatus() + ".",
+                "/recruitment/interviews"
+        ));
+    }
+
+    /** Notify users who can make interview decisions after evaluation submission. */
+    public void evaluationSubmitted(Interview interview) {
+        safely(() -> notifyInterviewPermissionHolders(
+                "INTERVIEW_DECIDE",
+                interview,
+                "INTERVIEW_EVALUATION_SUBMITTED",
+                "Interview evaluation submitted",
+                "An interviewer has submitted an evaluation for "
+                        + interview.getCandidateName()
+                        + " - " + interview.getInterviewRound()
+                        + ". A manager decision is now pending.",
+                "/recruitment/interviews?view=evaluations"
+        ));
+    }
+
+    /** Notify assigned interviewers when the manager makes a decision. */
+    public void roundDecisionMade(
+            Interview interview,
+            String decision,
+            String comments) {
+
+        safely(() -> {
+            boolean approved = "APPROVED".equalsIgnoreCase(decision);
+
+            String message = approved
+                    ? "The Recruitment Manager approved the "
+                    + interview.getInterviewRound()
+                    + " for " + interview.getCandidateName() + "."
+                    : "The Recruitment Manager rejected the "
+                    + interview.getInterviewRound()
+                    + " for " + interview.getCandidateName()
+                    + ". Reason: " + comments;
+
+            notifyInterviewers(
+                    interview,
+                    approved
+                            ? "INTERVIEW_ROUND_APPROVED"
+                            : "INTERVIEW_ROUND_REJECTED",
+                    approved
+                            ? "Interview round approved"
+                            : "Interview round rejected",
+                    message,
+                    "/recruitment/interviews"
+            );
+        });
+    }
+
+    // ------------------------------------------------------------
+// INTERVIEW NOTIFICATION HELPERS
+// ------------------------------------------------------------
+
+    private void notifyInterviewers(
+            Interview interview,
+            String category,
+            String title,
+            String message,
+            String link) {
+
+        if (interview == null || interview.getId() == null) {
+            return;
+        }
+
+        List<InterviewEvaluatorAssignment> assignments =
+                assignmentRepository.findByCompanyIdAndInterviewId(
+                        interview.getCompanyId(),
+                        interview.getId()
+                );
+
+        Set<Long> recipients = assignments.stream()
+                .map(InterviewEvaluatorAssignment::getEmployeeId)
+                .filter(id -> id != null)
+                .collect(Collectors.toCollection(LinkedHashSet::new));
+
+        for (Long userId : recipients) {
+            notifyInterviewUser(
+                    userId,
+                    interview,
+                    category,
+                    title,
+                    message,
+                    link
+            );
+        }
+    }
+
+    private void notifyInterviewPermissionHolders(
+            String permission,
+            Interview interview,
+            String category,
+            String title,
+            String message,
+            String link) {
+
+        Set<Long> recipients = new LinkedHashSet<>(
+                userRoleRepo.findUserIdsByCompanyIdAndPermissionCode(
+                        interview.getCompanyId(),
+                        permission
+                )
+        );
+
+        for (UserSummaryDTO user :
+                employeeDirectory.findByCompanyRef(
+                        authService.getCurrentCompanyRef())) {
+
+            if ("HR_MANAGER".equalsIgnoreCase(user.getRole())
+                    || "ADMIN".equalsIgnoreCase(user.getRole())) {
+
+                recipients.add(user.getId());
+            }
+        }
+
+        for (Long userId : recipients) {
+            notifyInterviewUser(
+                    userId,
+                    interview,
+                    category,
+                    title,
+                    message,
+                    link
+            );
+        }
+    }
+
+    private void notifyInterviewUser(
+            Long userId,
+            Interview interview,
+            String category,
+            String title,
+            String message,
+            String link) {
+
+        if (userId == null
+                || interview == null
+                || userId.equals(permissionService.currentUserId())) {
+            return;
+        }
+
+        RecruitmentNotification notification =
+                new RecruitmentNotification();
+
+        notification.setCompanyRef(authService.getCurrentCompanyRef());
+        notification.setUserId(userId);
+        notification.setTitle(title);
+        notification.setMessage(message);
+        notification.setCategory(category);
+        notification.setLink(link);
+        notification.setRefId(interview.getId());
+
+        notificationRepo.save(notification);
     }
 }

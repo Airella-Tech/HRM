@@ -4,7 +4,11 @@ package com.airella.hrm.model;
 import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.time.LocalDateTime;
 
 @Entity
@@ -40,6 +44,10 @@ public class InterviewEvaluation {
 
     @Column(name = "evaluator_id", nullable = false)
     private Long evaluatorId;
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "criteria_scores", columnDefinition = "jsonb")
+    private Map<String, Integer> criteriaScores = new HashMap<>();
 
     @Column(name = "technical_knowledge")
     private Integer technicalKnowledge;
@@ -99,6 +107,16 @@ public class InterviewEvaluation {
 
     public Long getEvaluatorId() { return evaluatorId; }
     public void setEvaluatorId(Long evaluatorId) { this.evaluatorId = evaluatorId; }
+
+    public Map<String, Integer> getCriteriaScores() {
+        return criteriaScores;
+    }
+
+    public void setCriteriaScores(Map<String, Integer> criteriaScores) {
+        this.criteriaScores = criteriaScores != null
+                ? criteriaScores
+                : new HashMap<>();
+    }
 
     public Integer getTechnicalKnowledge() { return technicalKnowledge; }
     public void setTechnicalKnowledge(Integer value) { this.technicalKnowledge = value; }

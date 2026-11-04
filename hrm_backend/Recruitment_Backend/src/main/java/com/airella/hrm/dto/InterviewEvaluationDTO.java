@@ -1,7 +1,7 @@
-
 package com.airella.hrm.dto;
 
 import java.time.LocalDateTime;
+import java.util.Map;
 
 public record InterviewEvaluationDTO(
         Long id,
@@ -12,11 +12,16 @@ public record InterviewEvaluationDTO(
         String vacancyTitle,
         String interviewRound,
         Long evaluatorId,
+
+        Map<String, Integer> criteriaScores,
+
+        // Existing fields retained for backward compatibility
         Integer technicalKnowledge,
         Integer problemSolving,
         Integer communication,
         Integer roleSpecificSkills,
         Integer professionalism,
+
         Double averageScore,
         String strengths,
         String areasForImprovement,
