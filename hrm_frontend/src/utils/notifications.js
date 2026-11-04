@@ -4,7 +4,7 @@
  *   id, title, message, type, isRead, createdAt, category, link, refId,
  *   subjectName / subjectEmployeeCode / subjectDepartment / subjectJobRole (birthdays)
  */
-  import { CalendarDays, Wallet, CheckCircle2, XCircle, Cake, Gift, Receipt, Building2, Bell, Send, Megaphone } from "lucide-react";
+  import { CalendarDays, Wallet, CheckCircle2, XCircle, Cake, Gift, Receipt, Building2, Bell, Send, Megaphone,CalendarClock,UserCheck,RefreshCw,ClipboardCheck, } from "lucide-react";
 
 export const NOTIFICATIONS_CHANGED = "hrm:notifications-changed";
 
@@ -29,6 +29,35 @@ const KIND = {
   VACANCY_APPROVED:   { icon: CheckCircle2, chip: "bg-emerald-100 text-emerald-700" },
   VACANCY_REJECTED:   { icon: XCircle,      chip: "bg-red-100 text-red-700" },
   VACANCY_PUBLISHED:  { icon: Megaphone,    chip: "bg-indigo-100 text-indigo-700" },
+    // Interview notifications
+  INTERVIEW_SCHEDULED: {
+    icon: CalendarDays,
+    chip: "bg-blue-100 text-blue-700",
+  },
+  INTERVIEW_RESCHEDULED: {
+    icon: CalendarClock,
+    chip: "bg-orange-100 text-orange-700",
+  },
+  INTERVIEWER_ASSIGNED: {
+    icon: UserCheck,
+    chip: "bg-purple-100 text-purple-700",
+  },
+  INTERVIEW_STATUS_UPDATED: {
+    icon: RefreshCw,
+    chip: "bg-blue-100 text-blue-700",
+  },
+  INTERVIEW_EVALUATION_SUBMITTED: {
+    icon: ClipboardCheck,
+    chip: "bg-emerald-100 text-emerald-700",
+  },
+  INTERVIEW_ROUND_APPROVED: {
+    icon: CheckCircle2,
+    chip: "bg-emerald-100 text-emerald-700",
+  },
+  INTERVIEW_ROUND_REJECTED: {
+    icon: XCircle,
+    chip: "bg-red-100 text-red-700",
+  },
 };
 const DEFAULT_KIND = { icon: Bell, chip: "bg-slate-100 text-slate-600" };
 
@@ -40,7 +69,7 @@ export const normalizeNotification = (n, role) => ({
   title: n.title || "Notification",
   message: n.message || "",
   category: n.category || "GENERAL",
-  read: !!n.isRead,
+  read: Boolean(n.isRead ?? n.seen ?? n.read),
   createdAt: n.createdAt || null,
   refId: n.refId || null,
   // Birthdays never navigate; everything else opens the page named by the backend.
@@ -84,6 +113,13 @@ export const linkLabel = (n) => {
       case "VACANCY_APPROVED": return "Open vacancies";
       case "VACANCY_REJECTED": return "Fix and resubmit";
       case "VACANCY_PUBLISHED": return "View vacancies";
+    case "INTERVIEW_SCHEDULED": return "View scheduled interview";
+    case "INTERVIEW_RESCHEDULED": return "View rescheduled interview";
+    case "INTERVIEWER_ASSIGNED":return "View assigned interview";
+    case "INTERVIEW_STATUS_UPDATED": return "View interview status";
+    case "INTERVIEW_EVALUATION_SUBMITTED": return "View evaluation";
+    case "INTERVIEW_ROUND_APPROVED":return "View approved interview round";
+    case "INTERVIEW_ROUND_REJECTED":return "View rejected interview round";
     default: return n.link && n.link.startsWith("/admin") ? "Open companies" : "Open";
   }
 };

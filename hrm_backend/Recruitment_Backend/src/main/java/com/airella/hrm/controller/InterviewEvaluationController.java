@@ -4,10 +4,13 @@ package com.airella.hrm.controller;
 import com.airella.hrm.dto.InterviewEvaluationDTO;
 import com.airella.hrm.dto.InterviewEvaluationRequestDTO;
 import com.airella.hrm.service.InterviewEvaluationService;
+
 import jakarta.validation.Valid;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 import java.util.List;
 
@@ -22,11 +25,8 @@ public class InterviewEvaluationController {
         this.evaluationService = evaluationService;
     }
 
-    /**
-     * Save or update the logged-in evaluator's draft.
-     *
-     * PUT /api/recruitment/interviews/{interviewId}/evaluations/draft
-     */
+    // Save or update the logged-in evaluator's draft.
+    // PUT /api/recruitment/interviews/{interviewId}/evaluations/draft
     @PutMapping("/interviews/{interviewId}/evaluations/draft")
     public ResponseEntity<InterviewEvaluationDTO> saveDraft(
             @PathVariable Long interviewId,
@@ -36,11 +36,8 @@ public class InterviewEvaluationController {
                 evaluationService.saveDraft(interviewId, request));
     }
 
-    /**
-     * Submit a completed evaluation.
-     *
-     * POST /api/recruitment/interviews/{interviewId}/evaluations/submit
-     */
+    // Submit a completed evaluation.
+    // POST /api/recruitment/interviews/{interviewId}/evaluations/submit
     @PostMapping("/interviews/{interviewId}/evaluations/submit")
     public ResponseEntity<InterviewEvaluationDTO> submit(
             @PathVariable Long interviewId,
@@ -50,11 +47,8 @@ public class InterviewEvaluationController {
                 .body(evaluationService.submit(interviewId, request));
     }
 
-    /**
-     * Get the logged-in evaluator's evaluation for an interview.
-     *
-     * GET /api/recruitment/interviews/{interviewId}/evaluations/mine
-     */
+    // Get the logged-in evaluator's evaluation for an interview.
+    // GET /api/recruitment/interviews/{interviewId}/evaluations/mine
     @GetMapping("/interviews/{interviewId}/evaluations/mine")
     public ResponseEntity<InterviewEvaluationDTO> getMyEvaluation(
             @PathVariable Long interviewId) {
@@ -63,13 +57,10 @@ public class InterviewEvaluationController {
                 evaluationService.getMyEvaluation(interviewId));
     }
 
-    /**
-     * Get evaluations for the logged-in evaluator.
-     *
-     * GET /api/recruitment/evaluations/mine
-     * GET /api/recruitment/evaluations/mine?status=DRAFT
-     * GET /api/recruitment/evaluations/mine?status=SUBMITTED
-     */
+    // Get evaluations for the logged-in evaluator.
+    // GET /api/recruitment/evaluations/mine
+    // GET /api/recruitment/evaluations/mine?status=DRAFT
+    // GET /api/recruitment/evaluations/mine?status=SUBMITTED
     @GetMapping("/evaluations/mine")
     public ResponseEntity<List<InterviewEvaluationDTO>> listMine(
             @RequestParam(required = false) String status) {
@@ -78,12 +69,18 @@ public class InterviewEvaluationController {
                 evaluationService.listMine(status));
     }
 
-    /**
-     * Get all evaluations for a particular interview.
-     *
-     * GET /api/recruitment/interviews/{interviewId}/evaluations
-     */
+    // Get all evaluations for a particular interview.
+    // Recruitment Officers and users with INTERVIEW_SCHEDULE
+    // or INTERVIEW_DECIDE can view evaluations for recruitment progress.
+    // Interviewers/Evaluators can view evaluations only
+    // for interviews assigned to them.
     @GetMapping("/interviews/{interviewId}/evaluations")
+    @PreAuthorize(
+            "@perm.has('INTERVIEW_SCHEDULE') or " +
+                    "@perm.has('INTERVIEW_DECIDE') or " +
+                    "(@perm.has('INTERVIEW_EVALUATE') and " +
+                    "@perm.isAssignedToInterview(#interviewId))"
+    )
     public ResponseEntity<List<InterviewEvaluationDTO>> listForInterview(
             @PathVariable Long interviewId) {
 

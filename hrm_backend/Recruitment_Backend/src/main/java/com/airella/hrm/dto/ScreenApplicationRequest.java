@@ -16,4 +16,3 @@ public class ScreenApplicationRequest {
     private Object criteria;
     private String readinessStatus;
 }
-

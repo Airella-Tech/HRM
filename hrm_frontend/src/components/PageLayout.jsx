@@ -151,13 +151,20 @@ const NAV = {
       name: "Interview Progress",
       icon: ClipboardCheck,
       path: "/recruitment/interview-progress",
-      requiresAny: ["INTERVIEW_EVALUATE", "EVALUATE_INTERVIEWS"],
+      requiresAny: ["INTERVIEW_PROGRESS_VIEW"],
     },
     {
       name: "Evaluate Interviews",
       icon: Award,
       path: "/recruitment/evaluations",
       requiresAny: ["INTERVIEW_EVALUATE", "EVALUATE_INTERVIEWS"],
+    },
+
+    {
+     name: "Interview Evaluation Review",
+     icon: CheckCircle2,
+     path: "/recruitment/evaluation-review",
+     requiresAny: ["INTERVIEW_DECIDE"],
     },
 
     // Job Offers
@@ -403,6 +410,8 @@ export const PageLayout = ({
               (activePage === "Evaluations" &&
                 (item.name === "Evaluate Interviews" ||
                   item.name === "Evaluations")) ||
+              (activePage === "Interview Evaluation Review" &&
+                  item.name === "Interview Evaluation Review") ||
               (activePage === "Job Offers" &&
                 (item.name === "Manage Job Offers" ||
                   item.name === "Job Offers"));

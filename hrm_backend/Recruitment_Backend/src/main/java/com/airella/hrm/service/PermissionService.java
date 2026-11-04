@@ -176,4 +176,24 @@ public class PermissionService {
         List<String> roles = (full || userId == null) ? List.of() : userRoleRepo.findRoleNamesByUserId(userId);
         return new MyAccessDTO(full, full || !permissions.isEmpty(), permissions, roles);
     }
+
+    /**
+     * Checks whether the current user can update an interview's status.
+     *
+     * Recruitment Officers and full-access users can update statuses.
+     * Assigned Interviewers/Evaluators can only mark their assigned
+     * interviews as COMPLETED.
+     */
+    public boolean canUpdateInterviewStatus(Long interviewId, String status) {
+
+        // Admin, HR Manager, Recruitment Officer, and Recruitment Manager
+        if (has("INTERVIEW_SCHEDULE")) {
+            return true;
+        }
+
+        // Assigned Interviewers/Evaluators can only complete interviews
+        return "COMPLETED".equalsIgnoreCase(status)
+                && has("INTERVIEW_EVALUATE")
+                && isAssignedToInterview(interviewId);
+    }
 }
