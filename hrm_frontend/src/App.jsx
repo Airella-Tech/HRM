@@ -118,7 +118,6 @@ function App() {
       <Route path="/recruitment/candidates" element={<RecruitmentCandidates />} />
       <Route path="/recruitment/interviews" element={<RecruitmentInterviews />} />
       <Route path="/recruitment/evaluations" element={<RecruitmentEvaluations />} />
-      <Route path="/recruitment/offers" element={<RecruitmentOffers />} />
       <Route path="/recruitment/reports" element={<RecruitmentReports />} />
       <Route path="/recruiter/interview-emails" element={<RecruitmentInterviewEmails />}/>
       <Route path="/recruitment/interview-progress" element={<RecruitmentInterviewProgress />}
