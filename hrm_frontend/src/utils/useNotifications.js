@@ -9,11 +9,6 @@ import { NOTIFICATIONS_CHANGED, announceNotificationsChanged, normalizeNotificat
  * role: "hr" | "employee" | "admin"
  */
 
-const getRows = (response) => {
-  if (Array.isArray(response)) return response;
-  if (Array.isArray(response?.data)) return response.data;
-  return [];
-};
 export default function useNotifications(role, { pollMs = 5000 } = {}) {
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);

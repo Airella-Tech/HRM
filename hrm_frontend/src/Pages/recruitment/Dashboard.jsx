@@ -156,12 +156,6 @@ const getId = (item) =>
   item?.vacancyId ||
   Math.random().toString(36).slice(2);
 
-const isWithinCurrentYear = (date) => {
-  return (
-    date &&
-    date.getFullYear() === new Date().getFullYear()
-  );
-};
 
 const getPercentage = (value, total) => {
   if (!total || total <= 0) return 0;
@@ -181,13 +175,6 @@ const isShortlistedStatus = (status) =>
 const isInterviewStatus = (status) =>
   status.includes("INTERVIEW");
 
-const getInitials = (name) =>
-  String(name || "C")
-    .split(" ")
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0].toUpperCase())
-    .join("");
 
 // ======================================================
 // STATUS BADGE

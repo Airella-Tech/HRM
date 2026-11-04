@@ -596,7 +596,7 @@ export default function RecruitmentEvaluations() {
       // The backend endpoint must enforce this user-level restriction.
       const uniqueEvaluations = Array.from(
         new Map(
-          normalizedEvaluations.map((evaluation, index) => [
+          normalizedEvaluations.map((evaluation) => [
             String(evaluation.interviewId),
             evaluation,
           ])

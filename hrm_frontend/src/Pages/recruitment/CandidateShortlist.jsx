@@ -559,30 +559,7 @@ export default function RecruitmentCandidateShortlist() {
           };
         });
 
-        // If auto-shortlist was disabled, stage recommended candidates for manual review
-        const evaluatedCount = res.data.evaluatedCount || vacancyCandidates?.length || res.data.results.length;
-        const summaryText = res.data.lastScreenedSummary ||
-          `${evaluatedCount} evaluated • ${autoShortlistedCount} auto-shortlisted • ${recommendedCount} recommended`;
 
-        setScreeningConfigs((prev) => {
-          const vId = res.data.vacancyId;
-          const current = (vId != null ? prev[vId] : null) || prev[vacKey] || {};
-          const updated = {
-            ...current,
-            lastScreenedAt: screenedTime,
-            lastScreenedSummary: summaryText,
-          };
-          return {
-            ...prev,
-            [vacKey]: updated,
-            ...(vId != null ? {
-              [vId]: updated,
-              [String(vId)]: updated,
-            } : {}),
-          };
-        });
-
-        // If auto-shortlist was disabled, stage recommended candidates for manual review
 
         if (autoShortlistedCount > 0) {
           setVacancyAlerts((prev) => ({
