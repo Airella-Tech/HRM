@@ -244,11 +244,8 @@ export default function RecruitmentCandidateShortlist() {
   const [selectedReason, setSelectedReason] = useState(REJECTION_REASONS[0]);
   const [customReason, setCustomReason] = useState("");
 
-  // 4. Candidate Details Modal
-
   // Selected Vacancy Modal (Job Vacancy Details like Public Career Page)
   const [selectedVacancyModal, setSelectedVacancyModal] = useState(null);
-
   // Load applications and vacancies
   const fetchData = useCallback(async (isRefresh = false) => {
     if (isRefresh) setRefreshing(true);
@@ -495,7 +492,7 @@ export default function RecruitmentCandidateShortlist() {
   /**
    * Run Vacancy Screening Evaluation & Automatic Shortlisting
    */
-  const handleRunScreeningForVacancy = async (vacKey, vacancyTitle, vacancyCandidates) => {
+  const handleRunScreeningForVacancy = async (vacKey, vacancyTitle) => {
     setRunningAutoForVacancy((prev) => ({ ...prev, [vacKey]: true }));
     setVacancyAlerts((prev) => ({ ...prev, [vacKey]: null }));
 
@@ -540,7 +537,7 @@ export default function RecruitmentCandidateShortlist() {
         const screenedTime = res.data.screenedAt || new Date().toISOString();
         const autoShortlistedCount = res.data.autoShortlistedCount || 0;
         const recommendedCount = res.data.stagedOrRecommendedCount || 0;
-        const evaluatedCount = res.data.evaluatedCount || vacancyCandidates?.length || res.data.results.length;
+        const evaluatedCount = res.data.evaluatedCount || res.data.results.length;
         const summaryText = res.data.lastScreenedSummary ||
           `${evaluatedCount} evaluated • ${autoShortlistedCount} auto-shortlisted • ${recommendedCount} recommended`;
 

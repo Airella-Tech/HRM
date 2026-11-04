@@ -14,13 +14,26 @@ import React, { useEffect, useState } from "react";
 import { recruitmentApi } from "../services/api";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
-  ChevronLeft, ChevronRight, LogOut, Bell,
+  ChevronLeft,
+  ChevronRight,
+  LogOut,
+  Bell,
   // Employee icons
-  LayoutDashboard, Clock, CalendarDays, DollarSign, User,
+  LayoutDashboard,
+  Clock,
+  CalendarDays,
+  DollarSign,
+  User,
   // HR icons
-  Users, Building2, CalendarCheck, FileText, BarChart3, Bell as BellIcon,
+  Users,
+  Building2,
+  CalendarCheck,
+  FileText,
+  BarChart3,
+  Bell as BellIcon,
   // Admin icons
-  Settings, Activity,
+  Settings,
+  Activity,
   // Recruitment icons
   BriefcaseBusiness,
   CalendarClock,
@@ -130,8 +143,15 @@ const NAV = {
     {
       name: "Assign Interviewers",
       icon: UserPlus,
-      path: "/recruitment/interviews?view=assign",
+      path: "/recruitment/assign-interviewers",
       requiresAny: ["INTERVIEW_ASSIGN", "ASSIGN_INTERVIEWERS"],
+    },
+
+    {
+      name: "Interview Progress",
+      icon: ClipboardCheck,
+      path: "/recruitment/interview-progress",
+      requiresAny: ["INTERVIEW_EVALUATE", "EVALUATE_INTERVIEWS"],
     },
     {
       name: "Evaluate Interviews",
@@ -403,20 +423,41 @@ export const PageLayout = ({
 
             const nameMatches =
               activePage === item.name ||
-              (activePage === "Roles & Permissions" && item.name === "Manage Roles & Permissions") ||
-              (activePage === "Manage Roles & Permissions" && item.name === "Roles & Permissions") ||
-              (activePage === "Job Vacancies" && (item.name === "Create Vacancies" || item.name === "Job Vacancies")) ||
-              (activePage === "Applications" && (item.name === "View Applications" || item.name === "Applications")) ||
-              (activePage === "Interviews" && (item.name === "Schedule Interviews" || item.name === "Interviews")) ||
-              (activePage === "Evaluations" && (item.name === "Evaluate Interviews" || item.name === "Evaluations")) ||
-              (activePage === "Job Offers" && (item.name === "Manage Job Offers" || item.name === "Job Offers"));
+              (activePage === "Roles & Permissions" &&
+                item.name === "Manage Roles & Permissions") ||
+              (activePage === "Manage Roles & Permissions" &&
+                item.name === "Roles & Permissions") ||
+              (activePage === "Job Vacancies" &&
+                (item.name === "Create Vacancies" ||
+                  item.name === "Job Vacancies")) ||
+              (activePage === "Applications" &&
+                (item.name === "View Applications" ||
+                  item.name === "Applications")) ||
+              (activePage === "Interviews" &&
+                (item.name === "Schedule Interviews" ||
+                  item.name === "Interviews")) ||
+              (activePage === "Interview Progress" &&
+                item.name === "Interview Progress") ||
+              (activePage === "Evaluations" &&
+                (item.name === "Evaluate Interviews" ||
+                  item.name === "Evaluations")) ||
+              (activePage === "Job Offers" &&
+                (item.name === "Manage Job Offers" ||
+                  item.name === "Job Offers"));
 
-            const exactUrlMatches = Boolean(item.path && item.path === currentFullPath);
-            const baseUrlMatches = Boolean(item.path && !location.search && itemBase === currentBase);
+            const exactUrlMatches = Boolean(
+              item.path && item.path === currentFullPath,
+            );
+            const baseUrlMatches = Boolean(
+              item.path && !location.search && itemBase === currentBase,
+            );
 
             const isActive =
               exactUrlMatches ||
-              (nameMatches && (location.search ? exactUrlMatches : baseUrlMatches || !item.path?.includes("?"))) ||
+              (nameMatches &&
+                (location.search
+                  ? exactUrlMatches
+                  : baseUrlMatches || !item.path?.includes("?"))) ||
               (baseUrlMatches && !navItems.some((n) => n.name === activePage));
             return (
               <li key={item.name}>
