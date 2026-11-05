@@ -1,5 +1,5 @@
-import React, { useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import {
   ShieldCheck,
   Users,
@@ -28,6 +28,7 @@ import {
 } from "lucide-react";
 import { PageLayout } from "../../components/PageLayout";
 import { recruitmentApi } from "../../services/api";
+import { fetchRecruitmentAccess, clearRecruitmentAccessCache } from "../../utils/useRecruitmentAccess";
 
 // Strips the "400: " style status prefix from API errors for user-friendly display.
 const cleanError = (error) =>
@@ -380,6 +381,7 @@ const ConfirmationModal = ({ confirmation, loading, onCancel, onConfirm }) => {
 
 const RecruitmentRolesPermissions = () => {
   const navigate = useNavigate();
+    const location = useLocation();
 
   // Navigation and active tab
   const [activeTab, setActiveTab] = useState("roles");
@@ -576,7 +578,20 @@ const RecruitmentRolesPermissions = () => {
     return (emp?.recruitmentRoles || []).map((r) => r.id);
   };
 
-  const allAssignableRoles = [...roles, ...defaultTemplates];
+  // In the role assignment form, only display company-saved roles (both custom and
+  // non-custom company roles). Do not display unassigned system default roles unless
+  // the company has not saved any roles yet, or the employee already has a legacy assignment.
+  const allAssignableRoles = useMemo(() => {
+    if (roles.length > 0) {
+      const extraAssignedRoles = defaultTemplates.filter(
+        (defaultRole) =>
+          selectedAssignmentRoleIds.includes(defaultRole.id) &&
+          !roles.some((r) => r.id === defaultRole.id)
+      );
+      return [...roles, ...extraAssignedRoles];
+    }
+    return defaultTemplates;
+  }, [roles, defaultTemplates, selectedAssignmentRoleIds]);
 
   const selectedDefaultRole = defaultTemplates.find(
     (role) => String(role.id) === String(selectedDefaultRoleId)
@@ -595,7 +610,7 @@ const RecruitmentRolesPermissions = () => {
   }));
 
   const totalAssignedUsers = employees.filter(
-    (emp) => emp.recruitmentRoles && emp.recruitmentRoles.some((r) => !r.isSystemDefault)
+    (emp) => (emp.recruitmentRoles || []).length > 0
   ).length;
 
   const filteredRoles = rolesWithAssignments.filter((role) => {
@@ -951,6 +966,10 @@ const RecruitmentRolesPermissions = () => {
           .map(normalizeRole)
           .filter((r) => r && !r.isSystemDefault)
       );
+
+      // Immediately refresh access so header and switchers reflect changes
+      clearRecruitmentAccessCache();
+      fetchRecruitmentAccess(true);
     } catch (err) {
       console.error("Failed to save assignment:", err);
       setAssignmentError(
@@ -1044,6 +1063,10 @@ const RecruitmentRolesPermissions = () => {
             .map(normalizeRole)
             .filter((r) => r && !r.isSystemDefault)
         );
+
+        // Immediately refresh access so header and switchers reflect changes
+        clearRecruitmentAccessCache();
+        fetchRecruitmentAccess(true);
       } catch (err) {
         console.error("Failed to remove role:", err);
         setConfirmation(null);
@@ -1063,7 +1086,7 @@ const RecruitmentRolesPermissions = () => {
   // ---------------------------------------------------------
 
   const selectedAssignmentRoles = selectedAssignmentRoleIds
-    .map((roleId) => roles.find((role) => role.id === roleId))
+    .map((roleId) => allAssignableRoles.find((role) => role.id === roleId) || roles.find((role) => role.id === roleId) || defaultTemplates.find((role) => role.id === roleId))
     .filter(Boolean);
 
   const effectivePermissionIds = [
@@ -1080,14 +1103,17 @@ const RecruitmentRolesPermissions = () => {
   // ======================================================
   // PAGE UI
   const storedUser = localStorage.getItem("user");
+    // The page is reachable from both sidebars, so show the one the user came from
   let layoutRole = "recruiter";
-  try {
-    const parsed = storedUser ? JSON.parse(storedUser) : null;
-    if (parsed?.role === "HR_MANAGER" || parsed?.role === "ADMIN") {
-      layoutRole = "hr";
+  if (!location.pathname.startsWith("/recruitment")) {
+    try {
+      const parsed = storedUser ? JSON.parse(storedUser) : null;
+      if (parsed?.role === "HR_MANAGER" || parsed?.role === "ADMIN") {
+        layoutRole = "hr";
+      }
+    } catch {
+      // Ignore — keep the default layoutRole
     }
-  } catch {
-    // Ignore — keep the default layoutRole
   }
 
   return (

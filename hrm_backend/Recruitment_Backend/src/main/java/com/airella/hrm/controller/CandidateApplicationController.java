@@ -36,7 +36,7 @@ public class CandidateApplicationController {
      * Supports filtering by vacancyId, status, and search query.
      */
     @GetMapping
-    @PreAuthorize("@perm.has('APPLICATION_VIEW')")
+    @PreAuthorize("@perm.hasAny('APPLICATION_VIEW', 'APPLICATION_SCREEN', 'APPLICATION_SHORTLIST', 'INTERVIEW_SCHEDULE', 'INTERVIEW_ASSIGN', 'INTERVIEW_PROGRESS_VIEW', 'INTERVIEW_EVALUATE', 'INTERVIEW_DECIDE', 'OFFER_MANAGE')")
     public ResponseEntity<ApiResponse<List<CandidateApplicationDTO>>> getApplications(
             @RequestParam(required = false) Long vacancyId,
             @RequestParam(required = false) String status,
@@ -49,10 +49,22 @@ public class CandidateApplicationController {
      * Get a single candidate application profile by ID.
      */
     @GetMapping("/{id}")
-    @PreAuthorize("@perm.has('APPLICATION_VIEW')")
+    @PreAuthorize("@perm.hasAny('APPLICATION_VIEW', 'APPLICATION_SCREEN', 'APPLICATION_SHORTLIST', 'INTERVIEW_SCHEDULE', 'INTERVIEW_ASSIGN', 'INTERVIEW_PROGRESS_VIEW', 'INTERVIEW_EVALUATE', 'INTERVIEW_DECIDE', 'OFFER_MANAGE')")
     public ResponseEntity<ApiResponse<CandidateApplicationDTO>> getApplicationById(@PathVariable Long id) {
         CandidateApplicationDTO result = applicationService.getApplicationById(id);
         return ResponseEntity.ok(ApiResponse.success(result, "Candidate application retrieved successfully"));
+    }
+
+    /**
+     * Screen & review candidate application (eligibility checkpoints, readiness, notes).
+     */
+    @PutMapping("/{id}/screen")
+    @PreAuthorize("@perm.hasAny('APPLICATION_SCREEN', 'APPLICATION_SHORTLIST', 'APPLICATION_VIEW')")
+    public ResponseEntity<ApiResponse<CandidateApplicationDTO>> screenApplication(
+            @PathVariable Long id,
+            @RequestBody com.airella.hrm.dto.ScreenApplicationRequest request) {
+        CandidateApplicationDTO result = applicationService.screenApplication(id, request);
+        return ResponseEntity.ok(ApiResponse.success(result, "Application assessment saved successfully"));
     }
 
     /**
@@ -86,7 +98,7 @@ public class CandidateApplicationController {
      * Follows the Employee_Backend AllowanceRequestController pattern.
      */
     @GetMapping("/{id}/resume")
-    @PreAuthorize("@perm.has('APPLICATION_VIEW')")
+    @PreAuthorize("@perm.hasAny('APPLICATION_VIEW', 'APPLICATION_SCREEN', 'APPLICATION_SHORTLIST', 'INTERVIEW_SCHEDULE', 'INTERVIEW_ASSIGN', 'INTERVIEW_PROGRESS_VIEW', 'INTERVIEW_EVALUATE', 'INTERVIEW_DECIDE', 'OFFER_MANAGE')")
     public ResponseEntity<byte[]> getResume(
             @PathVariable Long id,
             @RequestParam(required = false, defaultValue = "false") boolean download) {

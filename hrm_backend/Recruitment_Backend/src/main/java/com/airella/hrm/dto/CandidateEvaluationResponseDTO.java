@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -19,6 +20,8 @@ public class CandidateEvaluationResponseDTO {
     private int autoShortlistedCount;
     private int stagedOrRecommendedCount;
     private int manualReviewCount;
+    private LocalDateTime screenedAt;
+    private String lastScreenedSummary;
     @Builder.Default
     private List<CandidateScreeningResultDTO> results = new ArrayList<>();
 }

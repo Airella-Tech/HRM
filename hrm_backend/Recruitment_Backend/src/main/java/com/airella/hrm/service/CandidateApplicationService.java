@@ -22,6 +22,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import com.airella.hrm.dto.ScreenApplicationRequest;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -46,6 +48,26 @@ public class CandidateApplicationService {
     private final AuthService authService;
     private final AuditService auditService;
     private final EmailService emailService;
+    private final ObjectMapper objectMapper = new ObjectMapper();
+
+    private final RecruitmentNotificationService notificationService;
+
+    @org.springframework.beans.factory.annotation.Autowired
+    public CandidateApplicationService(CandidateApplicationRepository applicationRepo,
+            CandidateApplicationDocumentRepository documentRepo,
+            JobVacancyRepository vacancyRepo,
+            AuthService authService,
+            AuditService auditService,
+            EmailService emailService,
+            RecruitmentNotificationService notificationService) {
+        this.applicationRepo = applicationRepo;
+        this.documentRepo = documentRepo;
+        this.vacancyRepo = vacancyRepo;
+        this.authService = authService;
+        this.auditService = auditService;
+        this.emailService = emailService;
+        this.notificationService = notificationService;
+    }
 
     public CandidateApplicationService(CandidateApplicationRepository applicationRepo,
             CandidateApplicationDocumentRepository documentRepo,
@@ -53,12 +75,7 @@ public class CandidateApplicationService {
             AuthService authService,
             AuditService auditService,
             EmailService emailService) {
-        this.applicationRepo = applicationRepo;
-        this.documentRepo = documentRepo;
-        this.vacancyRepo = vacancyRepo;
-        this.authService = authService;
-        this.auditService = auditService;
-        this.emailService = emailService;
+        this(applicationRepo, documentRepo, vacancyRepo, authService, auditService, emailService, null);
     }
 
     // Public Application Submission & Database-Backed Document Storage
@@ -178,6 +195,15 @@ public class CandidateApplicationService {
                 "Candidate " + savedApp.getCandidateName() + " applied for '" + vacancy.getTitle() + "' [Tracking: "
                         + savedApp.getTrackingCode() + "]",
                 savedApp.getCompanyRef());
+
+        // Dispatch in-app recruitment notification
+        try {
+            if (notificationService != null) {
+                notificationService.candidateApplied(savedApp, vacancy);
+            }
+        } catch (Exception e) {
+            log.warn("Could not dispatch candidate application notification: {}", e.getMessage());
+        }
 
         // Send confirmation email with tracking code & direct tracking link
         try {
@@ -347,6 +373,59 @@ public class CandidateApplicationService {
     /**
      * Retrieves a single candidate application profile by ID.
      */
+    @Transactional
+    public CandidateApplicationDTO screenApplication(Long id, ScreenApplicationRequest request) {
+        CandidateApplication app = findApplicationForCurrentStaff(id);
+
+        if (request != null) {
+            if (request.getScreeningScore() != null) {
+                app.setScreeningScore(request.getScreeningScore());
+            }
+            if (request.getScreeningNotes() != null) {
+                app.setScreeningNotes(request.getScreeningNotes());
+            }
+            if (request.getReadinessStatus() != null && !request.getReadinessStatus().isBlank()) {
+                app.setReadinessStatus(request.getReadinessStatus().trim());
+            }
+            if (request.getEligibilityStatus() != null && !request.getEligibilityStatus().isBlank()) {
+                try {
+                    app.setEligibilityStatus(EligibilityStatus.valueOf(request.getEligibilityStatus().trim()));
+                } catch (Exception ignored) {}
+            }
+            if (request.getCriteria() != null) {
+                try {
+                    if (request.getCriteria() instanceof String s) {
+                        app.setCriteriaJson(s);
+                    } else {
+                        app.setCriteriaJson(objectMapper.writeValueAsString(request.getCriteria()));
+                    }
+                } catch (Exception e) {
+                    log.warn("Could not serialize criteria: {}", e.getMessage());
+                }
+            }
+        }
+
+        Long userId = null;
+        try {
+            userId = authService.getCurrentUser().getId();
+        } catch (Exception ignored) {}
+
+        app.setReviewedBy(userId);
+        app.setReviewedAt(LocalDateTime.now());
+
+        CandidateApplication saved = applicationRepo.save(app);
+
+        auditService.logAction(
+                "APPLICATION_SCREENED_REVIEWED",
+                "CandidateApplication",
+                saved.getId(),
+                "Updated review assessment & readiness for " + saved.getCandidateName() + " (" + saved.getReadinessStatus() + ")",
+                saved.getCompanyRef()
+        );
+
+        return toDto(saved);
+    }
+
     @Transactional(readOnly = true)
     public CandidateApplicationDTO getApplicationById(Long id) {
         CandidateApplication app = findApplicationForCurrentStaff(id);
@@ -443,6 +522,9 @@ public class CandidateApplicationService {
         dto.setMatchScore(a.getScreeningScore());
         dto.setScreeningNotes(a.getScreeningNotes());
         dto.setRejectionReason(a.getRejectionReason());
+        dto.setCriteriaJson(a.getCriteriaJson());
+        dto.setCriteria(a.getCriteriaJson());
+        dto.setReadinessStatus(a.getReadinessStatus());
 
         dto.setResumeFileName(a.getResumeFileName());
         dto.setResumeFileType(a.getResumeFileType());

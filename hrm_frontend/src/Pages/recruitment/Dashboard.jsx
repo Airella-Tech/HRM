@@ -22,7 +22,7 @@ const summaryCards = [
     status: "PUBLISHED",
     description: "Open on the careers page",
     icon: BriefcaseBusiness,
-    color: "bg-indigo-50 text-indigo-600",
+    color: "bg-primary-50 text-primary-600",
   },
   {
     title: "Pending Approval",
@@ -60,7 +60,7 @@ const recruitmentModules = [
     description: "Create, update, and manage job openings.",
     icon: BriefcaseBusiness,
     path: "/recruitment/vacancies",
-    color: "bg-indigo-50 text-indigo-600",
+    color: "bg-primary-50 text-primary-600",
   },
   {
     title: "Applications",
@@ -129,15 +129,15 @@ const Dashboard = () => {
     >
       <div className="space-y-6">
         {/* Welcome section */}
-        <section className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-indigo-700 via-indigo-600 to-violet-600 p-6 text-white shadow-sm md:p-8">
+        <section className="relative overflow-hidden rounded-2xl bg-primary-800 p-6 text-white shadow-sm md:p-8">
           <div className="relative z-10 max-w-2xl">
-            <p className="mb-2 text-sm font-medium text-indigo-100">
+            <p className="mb-2 text-sm font-medium text-primary-100">
               RECRUITMENT WORKSPACE
             </p>
             <h2 className="text-2xl font-bold md:text-3xl">
               Find the right people for your team.
             </h2>
-            <p className="mt-3 max-w-xl text-sm leading-6 text-indigo-100 md:text-base">
+            <p className="mt-3 max-w-xl text-sm leading-6 text-primary-100 md:text-base">
               Manage vacancies, review candidate applications, coordinate
               interviews, and support your hiring process from one place.
             </p>
@@ -145,7 +145,7 @@ const Dashboard = () => {
             <button
               type="button"
               onClick={() => navigate("/recruitment/vacancies")}
-              className="mt-5 inline-flex items-center gap-2 rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-indigo-700 shadow-sm transition hover:bg-indigo-50"
+              className="mt-5 inline-flex items-center gap-2 rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-primary-700 shadow-sm transition hover:bg-primary-50"
             >
               <Plus size={17} />
               Manage Vacancies
@@ -223,20 +223,20 @@ const Dashboard = () => {
                   key={module.title}
                   type="button"
                   onClick={() => navigate(module.path)}
-                  className="group flex items-start gap-4 rounded-2xl border border-slate-100 bg-white p-5 text-left shadow-sm transition hover:border-indigo-200 hover:shadow-md"
+                  className="group flex items-start gap-4 rounded-2xl border border-slate-100 bg-white p-5 text-left shadow-sm transition hover:border-primary-200 hover:shadow-md"
                 >
                   <div className={`rounded-xl p-3 ${module.color}`}>
                     <Icon size={22} />
                   </div>
 
                   <div className="min-w-0 flex-1">
-                    <h3 className="font-semibold text-slate-800 group-hover:text-indigo-700">
+                    <h3 className="font-semibold text-slate-800 group-hover:text-primary-700">
                       {module.title}
                     </h3>
                     <p className="mt-1 text-sm leading-5 text-slate-500">
                       {module.description}
                     </p>
-                    <span className="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-indigo-600">
+                    <span className="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-primary-600">
                       Open section
                       <ArrowRight
                         size={15}
@@ -253,7 +253,7 @@ const Dashboard = () => {
         {/* Hiring workflow */}
         <section className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm md:p-6">
           <div className="flex items-center gap-3">
-            <div className="rounded-xl bg-violet-50 p-3 text-violet-600">
+            <div className="rounded-xl bg-primary-50 p-3 text-primary-600">
               <TrendingUp size={21} />
             </div>
             <div>
@@ -282,7 +282,7 @@ const Dashboard = () => {
               {
                 label: "Final Decision",
                 icon: Clock3,
-                color: "text-violet-600",
+                color: "text-primary-600",
               },
             ].map((step, index) => {
               const Icon = step.icon;

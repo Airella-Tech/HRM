@@ -7,7 +7,7 @@ import {
 import { PageLayout } from "../../components/PageLayout";
 import { SummaryCard } from "../../components/EmployeeUI";
 import { CARD_TONES } from "../../components/employeeTheme";
-import { employeeApi } from "../../services/api";
+import { employeeApi, recruitmentApi } from "../../services/api";
 
 const EmployeeDashboard = () => {
   const navigate = useNavigate();
@@ -38,16 +38,22 @@ const EmployeeDashboard = () => {
       // Each card loads independently, so one failing endpoint never shows made-up numbers for the others
       const loadDashboardData = async () => {
         const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-        const [notRes, leavesRes, balRes, payRes, attRes] = await Promise.allSettled([
+        const [notRes, recNotRes, leavesRes, balRes, payRes, attRes] = await Promise.allSettled([
           employeeApi.getNotifications(),
+          recruitmentApi.getNotifications(),
           employeeApi.getLeaves(),
           employeeApi.getLeaveBalance(),
           employeeApi.getPayslips(),
           employeeApi.getAttendanceHistory(), // defaults to the current month
         ]);
         const list = (r) => (r.status === "fulfilled" && Array.isArray(r.value?.data) ? r.value.data : []);
+        const empNotifs = list(notRes);
+        const recNotifs = list(recNotRes).map((n) => ({ ...n, source: "recruitment" }));
+        const combined = [...empNotifs, ...recNotifs].sort(
+          (a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0)
+        );
 
-        setNotifications(list(notRes));
+        setNotifications(combined);
 
         const pendingLeaves = list(leavesRes).filter((l) => String(l.status).toUpperCase() === "PENDING").length;
 
@@ -192,12 +198,23 @@ const EmployeeDashboard = () => {
           </h3>
           <div className="space-y-3">
             {notifications.map((n, i) => (
-              <div key={n.id || i} className="flex items-start gap-3 p-3 hover:bg-white/70 rounded-lg transition">
-                <CheckCircle2 className={`${n.isRead ? "text-gray-300" : "text-rose-500"} mt-1`} size={20} />
-                <div className="flex-1">
+              <div
+                key={n.id || i}
+                onClick={() => n.link && navigate(n.link)}
+                className={`flex items-start gap-3 p-3 hover:bg-white/70 rounded-lg transition ${n.link ? "cursor-pointer hover:shadow-xs" : ""}`}
+              >
+                <CheckCircle2 className={`${(n.isRead ?? n.seen ?? n.read) ? "text-gray-300" : "text-rose-500"} mt-1 flex-shrink-0`} size={20} />
+                <div className="flex-1 min-w-0">
                   <p className="font-medium text-slate-800">{n.title}</p>
                   <p className="text-sm text-gray-500">{n.message}</p>
-                  <p className="text-xs text-gray-400 mt-1">{n.createdAt ? n.createdAt.replace("T", " ").substring(0, 16) : ""}</p>
+                  <div className="flex items-center gap-2 mt-1">
+                    <p className="text-xs text-gray-400">{n.createdAt ? n.createdAt.replace("T", " ").substring(0, 16) : ""}</p>
+                    {n.link && (
+                      <span className="text-xs font-semibold text-sky-600 hover:underline">
+                        Open →
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
             ))}

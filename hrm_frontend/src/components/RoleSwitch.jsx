@@ -1,17 +1,19 @@
 /**
- * RoleSwitch — toggle that lets an HR manager jump between the HR dashboard
- * and their own Employee dashboard without logging out.
- * Renders nothing for anyone who isn't an HR manager.
+ * RoleSwitch — toggle that lets a user jump between the HR dashboard,
+ * the Employee dashboard and the Recruitment area without logging out.
+ * HR managers always see HR and Employee.
+ * Recruitment area is ONLY shown when the user (HR Manager or Employee)
+ * has been assigned a recruitment role or operational permissions.
  *
  * Props:
- *   mode     : 'hr' | 'employee' — which side is currently being viewed
+ *   mode     : 'hr' | 'employee' | 'recruitment' — which side is currently being viewed
  *   sidebar  : render for the dark sidebar instead of a light topbar
  *   collapsed: hide labels when the sidebar is collapsed
  */
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { useNavigate } from "react-router-dom";
 import { Briefcase, UserRound, UsersRound } from "lucide-react";
-import { recruitmentApi } from "../services/api";
+import { useRecruitmentAccess } from "../utils/useRecruitmentAccess";
 
 const getStoredUser = () => {
   try {
@@ -31,36 +33,17 @@ export const RoleSwitch = ({
   const user = getStoredUser();
   const isHRManager = user?.role === "HR_MANAGER";
 
-  const [canRecruit, setCanRecruit] = useState(false);
+  // Shared, cached answer — no request of its own on every page
+  const access = useRecruitmentAccess();
 
-  useEffect(() => {
-    let cancelled = false;
+  // A user (HR Manager or Employee) only has recruitment area access if they have assigned recruitment roles
+  // or operational recruitment permissions beyond just RECRUITMENT_ROLE_ADMIN.
+  const hasAssignedRecruitmentRole =
+    (Array.isArray(access?.roles) && access.roles.length > 0) ||
+    (Array.isArray(access?.permissions) &&
+      access.permissions.some((p) => p !== "RECRUITMENT_ROLE_ADMIN"));
 
-    recruitmentApi
-      .getMyAccess()
-      .then((response) => {
-        if (cancelled) return;
-
-        // api.js returns parsed JSON directly.
-        const access = response?.data ?? response;
-
-        setCanRecruit(
-          access?.hasRecruitmentAccess === true ||
-            access?.fullAccess === true
-        );
-      })
-      .catch((error) => {
-        console.error("Failed to check Recruitment access:", error);
-
-        if (!cancelled) {
-          setCanRecruit(false);
-        }
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+  const canRecruit = access?.fullAccess === true || hasAssignedRecruitmentRole;
 
   if (!isHRManager && !canRecruit) return null;
 
@@ -85,27 +68,36 @@ export const RoleSwitch = ({
       active: "bg-gradient-to-br from-sky-500 to-cyan-500 text-white shadow",
     },
 
-   ...(!isHRManager && canRecruit
-  ? [
-      {
-        key: "recruitment",
-        label: "Recruitment",
-        icon: UsersRound,
-        path: "/recruitment/dashboard",
-        active: "bg-violet-600 text-white shadow",
-      },
-    ]
-  : []),
+    // Recruitment area only shown when the user actually has an assigned recruitment role!
+    ...(canRecruit
+      ? [
+          {
+            key: "recruitment",
+            label: "Recruitment",
+            icon: UsersRound,
+            path: "/recruitment/dashboard",
+            active: "bg-violet-600 text-white shadow",
+          },
+        ]
+      : []),
   ];
+
+  // Three or more options (or a collapsed sidebar) are stacked so nothing overflows
+  const stacked = sidebar && (collapsed || options.length > 2);
 
   return (
     <div
       className={`${sidebar
-        ? `flex ${collapsed ? "flex-col" : "flex-row"} items-stretch bg-white/5 rounded-xl p-1 gap-1`
+        ? `flex ${stacked ? "flex-col" : "flex-row"} items-stretch bg-white/5 rounded-xl p-1 gap-1`
         : "flex items-center bg-gray-100 rounded-xl p-1 gap-1"}`}
       role="group"
       aria-label="Switch dashboard"
     >
+      {sidebar && stacked && !collapsed && (
+        <p className="px-2 pt-1 text-[10px] font-semibold uppercase tracking-wider text-gray-500">
+          Switch area
+        </p>
+      )}
       {options.map(({ key, label, icon: Icon, path, active }) => {
         const isActive = mode === key;
         return (
@@ -115,7 +107,9 @@ export const RoleSwitch = ({
             onClick={() => !isActive && navigate(path)}
             aria-pressed={isActive}
             title={`Switch to ${label} dashboard`}
-            className={`flex ${collapsed ? "w-full justify-center" : "flex-1 justify-center"} items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+            className={`flex ${stacked ? "w-full" : "flex-1"} ${
+              collapsed ? "justify-center" : stacked ? "justify-start" : "justify-center"
+            } items-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold transition-all ${
               isActive
                 ? active
                 : sidebar
@@ -123,7 +117,7 @@ export const RoleSwitch = ({
                   : "text-gray-500 hover:text-gray-800 hover:bg-white"
             }`}
           >
-            <Icon size={14} />
+            <Icon size={16} />
             {(!sidebar || !collapsed) && <span>{label}</span>}
           </button>
         );

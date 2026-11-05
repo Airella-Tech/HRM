@@ -58,6 +58,9 @@ import RecruitmentInterviewProgress from "./Pages/recruitment/InterviewProgress.
 import ShortlistedCandidates from "./Pages/recruitment/ShortlistedCandidates.jsx";
 import RecruitmentRouteGuard from "./Pages/recruitment/RecruitmentRouteGuard";
 import AssignInterviewers from "./Pages/recruitment/AssignInterviewers";
+import InterviewEvaluationReview from "./Pages/recruitment/InterviewEvaluationReview";
+import RecruitmentProfile from "./Pages/recruitment/Profile.jsx";
+
 
 function App() {
   return (
@@ -106,30 +109,27 @@ function App() {
       <Route path="/admin/system-users" element={<AdminSystemUsers />} />
       <Route path="/admin/system-config" element={<AdminSystemConfig />} />
 
-      <Route path="/recruitment/dashboard" element={<RecruitmentDashboard />} />
-      <Route path="/recruitment/vacancies" element={<RecruitmentVacancies />} />
-      <Route path="/recruitment/applications" element={<RecruitmentApplications />} />
-      <Route path="/recruitment/applications/review" element={<RecruitmentApplicationReview />} />
-      <Route path="/recruitment/applications/shortlist" element={<RecruitmentCandidateShortlist />} />
+      <Route path="/recruitment/dashboard" element={<RecruitmentRouteGuard><RecruitmentDashboard /></RecruitmentRouteGuard>} />
+      <Route path="/recruitment/vacancies" element={<RecruitmentRouteGuard requiredAny={["VACANCY_CREATE", "VACANCY_APPROVE", "VACANCY_PUBLISH"]}><RecruitmentVacancies /></RecruitmentRouteGuard>} />
+      <Route path="/recruitment/applications" element={<RecruitmentRouteGuard requiredAny={["APPLICATION_VIEW", "APPLICATION_SCREEN", "APPLICATION_SHORTLIST", "INTERVIEW_SCHEDULE"]}><RecruitmentApplications /></RecruitmentRouteGuard>} />
+      <Route path="/recruitment/applications/review" element={<RecruitmentRouteGuard requiredAny={["APPLICATION_SCREEN", "APPLICATION_VIEW"]}><RecruitmentApplicationReview /></RecruitmentRouteGuard>} />
+      <Route path="/recruitment/applications/shortlist" element={<RecruitmentRouteGuard requiredAny={["APPLICATION_SHORTLIST", "APPLICATION_VIEW", "INTERVIEW_SCHEDULE"]}><RecruitmentCandidateShortlist /></RecruitmentRouteGuard>} />
       <Route path="/recruitment/applications/resumes" element={<Navigate to="/recruitment/applications" replace />} />
-      <Route path="/recruitment/review-applications" element={<RecruitmentApplicationReview />} />
-      <Route path="/recruitment/shortlist" element={<RecruitmentCandidateShortlist />} />
+      <Route path="/recruitment/review-applications" element={<RecruitmentRouteGuard requiredAny={["APPLICATION_SCREEN", "APPLICATION_VIEW"]}><RecruitmentApplicationReview /></RecruitmentRouteGuard>} />
+      <Route path="/recruitment/shortlist" element={<RecruitmentRouteGuard requiredAny={["APPLICATION_SHORTLIST", "APPLICATION_VIEW", "INTERVIEW_SCHEDULE"]}><RecruitmentCandidateShortlist /></RecruitmentRouteGuard>} />
       <Route path="/recruitment/resumes" element={<Navigate to="/recruitment/applications" replace />} />
-      <Route path="/recruitment/candidates" element={<RecruitmentCandidates />} />
-      <Route path="/recruitment/interviews" element={<RecruitmentInterviews />} />
-      <Route path="/recruitment/evaluations" element={<RecruitmentEvaluations />} />
-      <Route path="/recruitment/offers" element={<RecruitmentOffers />} />
-      <Route path="/recruitment/reports" element={<RecruitmentReports />} />
-      <Route path="/recruiter/interview-emails" element={<RecruitmentInterviewEmails />}/>
-      <Route path="/recruitment/interview-progress" element={<RecruitmentInterviewProgress />}
-/>
-      <Route path="/recruitment/shortlisted-candidates" element={<ShortlistedCandidates />} />
+      <Route path="/recruitment/candidates" element={<RecruitmentRouteGuard requiredAny={["APPLICATION_VIEW", "APPLICATION_SCREEN", "APPLICATION_SHORTLIST", "INTERVIEW_SCHEDULE"]}><RecruitmentCandidates /></RecruitmentRouteGuard>} />
+      <Route path="/recruitment/interviews" element={<RecruitmentRouteGuard requiredAny={["INTERVIEW_SCHEDULE", "INTERVIEW_ASSIGN", "INTERVIEW_PROGRESS_VIEW", "INTERVIEW_EVALUATE", "INTERVIEW_DECIDE"]}><RecruitmentInterviews /></RecruitmentRouteGuard>} />
+      <Route path="/recruitment/evaluations" element={<RecruitmentRouteGuard requiredAny={["INTERVIEW_EVALUATE", "INTERVIEW_DECIDE"]}><RecruitmentEvaluations /></RecruitmentRouteGuard>} />
+      <Route path="/recruitment/reports" element={<RecruitmentRouteGuard requiredAny={["RECRUITMENT_REPORTS_VIEW", "REPORTS_VIEW"]}><RecruitmentReports /></RecruitmentRouteGuard>} />
+      <Route path="/recruiter/interview-emails" element={<RecruitmentRouteGuard requiredAny={["INTERVIEW_SCHEDULE"]}><RecruitmentInterviewEmails /></RecruitmentRouteGuard>}/>
+      <Route path="/recruitment/interview-progress" element={<RecruitmentRouteGuard requiredAny={["INTERVIEW_PROGRESS_VIEW"]}><RecruitmentInterviewProgress /></RecruitmentRouteGuard>}/>
+      <Route path="/recruitment/shortlisted-candidates" element={<RecruitmentRouteGuard requiredAny={["APPLICATION_SHORTLIST", "APPLICATION_VIEW", "INTERVIEW_SCHEDULE"]}><ShortlistedCandidates /></RecruitmentRouteGuard>} />
       <Route path="/recruitment/offers" element={<RecruitmentRouteGuard requiredAny={["OFFER_MANAGE"]}><RecruitmentOffers /></RecruitmentRouteGuard>}/>
-      <Route path="/recruitment/assign-interviewers" element={<AssignInterviewers />}
-/>
+      <Route path="/recruitment/assign-interviewers" element={<RecruitmentRouteGuard requiredAny={["INTERVIEW_ASSIGN", "INTERVIEW_SCHEDULE"]}><AssignInterviewers /></RecruitmentRouteGuard>}/>
 
       <Route path="/recruitment/roles-permissions" element={<RecruitmentRolesPermissions />}/>
-            <Route
+      <Route
         path="/recruitment/audit-log"
         element={
           <RecruitmentRouteGuard requiredAny={["AUDIT_VIEW"]}>
@@ -138,6 +138,10 @@ function App() {
         }
       />
       <Route path="/hr/roles-permissions" element={<RecruitmentRolesPermissions />}/>
+      <Route path="/recruitment/evaluation-review" element={<RecruitmentRouteGuard requiredAny={["INTERVIEW_DECIDE", "INTERVIEW_SCHEDULE"]}><InterviewEvaluationReview /></RecruitmentRouteGuard>}/>
+      <Route path="/recruitment/profile" element={<RecruitmentRouteGuard><RecruitmentProfile /></RecruitmentRouteGuard>}/>
+
+
     </Routes>
   );
 }

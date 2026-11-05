@@ -9,13 +9,17 @@ import com.airella.hrm.model.Interview;
 import com.airella.hrm.model.InterviewEvaluation;
 import com.airella.hrm.repository.InterviewEvaluationRepository;
 import com.airella.hrm.repository.InterviewRepository;
+
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 
 @Service
@@ -40,27 +44,72 @@ public class InterviewEvaluationService {
             "SUBMITTED"
     );
 
+    // Six evaluation criteria for each interview round.
+    // These keys must match the frontend request payload.
+
+    private static final Map<String, Set<String>> ROUND_CRITERIA = Map.of(
+
+            "TECHNICAL INTERVIEW", Set.of(
+                    "programmingKnowledge",
+                    "technicalSkills",
+                    "problemSolvingAbility",
+                    "codingAndLogicalThinking",
+                    "practicalExperience",
+                    "technicalAssessment"
+            ),
+
+            "HR INTERVIEW", Set.of(
+                    "communicationSkills",
+                    "confidence",
+                    "teamwork",
+                    "adaptability",
+                    "salaryExpectationsAndCulturalFit",
+                    "behaviouralAssessment"
+            ),
+
+            "HIRING MANAGER INTERVIEW", Set.of(
+                    "roleSpecificKnowledge",
+                    "decisionMaking",
+                    "leadershipOwnership",
+                    "relevantWorkExperience",
+                    "jobRoleSuitability",
+                    "strategicThinking"
+            ),
+
+            "FINAL INTERVIEW", Set.of(
+                    "overallSuitability",
+                    "careerGoals",
+                    "longTermCommitment",
+                    "professionalAttitude",
+                    "finalHiringRecommendation",
+                    "finalAssessment"
+            )
+    );
+
     private final InterviewEvaluationRepository evaluationRepository;
     private final InterviewRepository interviewRepository;
     private final AuthService authService;
     private final PermissionService permissionService;
+    private final RecruitmentNotificationService notificationService;
 
     public InterviewEvaluationService(
             InterviewEvaluationRepository evaluationRepository,
             InterviewRepository interviewRepository,
             AuthService authService,
-            PermissionService permissionService) {
+            PermissionService permissionService,
+            RecruitmentNotificationService notificationService) {
 
         this.evaluationRepository = evaluationRepository;
         this.interviewRepository = interviewRepository;
         this.authService = authService;
         this.permissionService = permissionService;
+        this.notificationService = notificationService;
     }
 
-    /**
-     * Save an evaluation draft.
-     * A submitted evaluation cannot be changed back into a draft.
-     */
+    // ------------------------------------------------------------
+    // SAVE EVALUATION DRAFT
+    // ------------------------------------------------------------
+
     public InterviewEvaluationDTO saveDraft(
             Long interviewId,
             InterviewEvaluationRequestDTO request) {
@@ -75,34 +124,46 @@ public class InterviewEvaluationService {
 
         if ("Cancelled".equalsIgnoreCase(interview.getStatus())) {
             throw new BusinessException(
-                    "An evaluation cannot be saved for a cancelled interview.");
+                    "An evaluation cannot be saved for a cancelled interview."
+            );
         }
 
         InterviewEvaluation evaluation = evaluationRepository
                 .findByCompanyIdAndInterviewIdAndEvaluatorId(
-                        companyId, interviewId, evaluatorId)
+                        companyId,
+                        interviewId,
+                        evaluatorId
+                )
                 .orElseGet(() -> newEvaluation(
-                        companyId, interview, evaluatorId));
+                        companyId,
+                        interview,
+                        evaluatorId
+                ));
 
         if ("SUBMITTED".equalsIgnoreCase(evaluation.getStatus())) {
             throw new BusinessException(
-                    "This evaluation has already been submitted and cannot be edited.");
+                    "This evaluation has already been submitted and cannot be edited."
+            );
         }
 
-        validateRequest(request, false);
+        validateRequest(request, interview, false);
         applyRequest(evaluation, request);
 
         evaluation.setStatus("DRAFT");
         evaluation.setSubmittedAt(null);
 
-        return toDto(evaluationRepository.save(evaluation), interview);
+        InterviewEvaluation savedEvaluation =
+                evaluationRepository.save(evaluation);
+
+        // No notification is sent for draft evaluations.
+
+        return toDto(savedEvaluation, interview);
     }
 
-    /**
-     * Submit an evaluation.
-     * The interview must be completed and all required scores,
-     * strengths, and a valid recommendation must be provided.
-     */
+    // ------------------------------------------------------------
+    // SUBMIT EVALUATION
+    // ------------------------------------------------------------
+
     public InterviewEvaluationDTO submit(
             Long interviewId,
             InterviewEvaluationRequestDTO request) {
@@ -117,38 +178,54 @@ public class InterviewEvaluationService {
 
         if ("Cancelled".equalsIgnoreCase(interview.getStatus())) {
             throw new BusinessException(
-                    "An evaluation cannot be submitted for a cancelled interview.");
+                    "An evaluation cannot be submitted for a cancelled interview."
+            );
         }
 
         if (!"Completed".equalsIgnoreCase(interview.getStatus())) {
             throw new BusinessException(
-                    "The interview must be completed before its evaluation can be submitted.");
+                    "The interview must be completed before its evaluation can be submitted."
+            );
         }
 
         InterviewEvaluation evaluation = evaluationRepository
                 .findByCompanyIdAndInterviewIdAndEvaluatorId(
-                        companyId, interviewId, evaluatorId)
+                        companyId,
+                        interviewId,
+                        evaluatorId
+                )
                 .orElseGet(() -> newEvaluation(
-                        companyId, interview, evaluatorId));
+                        companyId,
+                        interview,
+                        evaluatorId
+                ));
 
         if ("SUBMITTED".equalsIgnoreCase(evaluation.getStatus())) {
             throw new BusinessException(
-                    "This evaluation has already been submitted.");
+                    "This evaluation has already been submitted."
+            );
         }
 
-        validateRequest(request, true);
+        validateRequest(request, interview, true);
         applyRequest(evaluation, request);
 
         evaluation.setStatus("SUBMITTED");
         evaluation.setSubmittedAt(LocalDateTime.now());
 
-        return toDto(evaluationRepository.save(evaluation), interview);
+        // Save the submitted evaluation first.
+        InterviewEvaluation savedEvaluation =
+                evaluationRepository.save(evaluation);
+
+        // Notify relevant recruitment users after successful submission.
+        notificationService.evaluationSubmitted(interview);
+
+        return toDto(savedEvaluation, interview);
     }
 
-    /**
-     * Check whether a completed interview has at least one submitted
-     * evaluation recommending HIRE or STRONG_HIRE.
-     */
+    // ------------------------------------------------------------
+    // CHECK PASSING SUBMITTED EVALUATION
+    // ------------------------------------------------------------
+
     @Transactional(readOnly = true)
     public boolean hasPassingSubmittedEvaluation(Long interviewId) {
 
@@ -162,7 +239,9 @@ public class InterviewEvaluationService {
 
         List<InterviewEvaluation> evaluations = evaluationRepository
                 .findByCompanyIdAndInterviewIdOrderByCreatedAtAsc(
-                        companyId, interviewId);
+                        companyId,
+                        interviewId
+                );
 
         return evaluations.stream().anyMatch(evaluation ->
                 "SUBMITTED".equalsIgnoreCase(evaluation.getStatus())
@@ -170,13 +249,16 @@ public class InterviewEvaluationService {
                         && evaluation.getRecommendation() != null
                         && PASSING_RECOMMENDATIONS.contains(
                         normalizeRecommendation(
-                                evaluation.getRecommendation()))
+                                evaluation.getRecommendation()
+                        )
+                )
         );
     }
 
-    /**
-     * Get the current evaluator's evaluation for an interview.
-     */
+    // ------------------------------------------------------------
+    // GET CURRENT EVALUATOR'S EVALUATION
+    // ------------------------------------------------------------
+
     @Transactional(readOnly = true)
     public InterviewEvaluationDTO getMyEvaluation(Long interviewId) {
 
@@ -190,17 +272,23 @@ public class InterviewEvaluationService {
 
         InterviewEvaluation evaluation = evaluationRepository
                 .findByCompanyIdAndInterviewIdAndEvaluatorId(
-                        companyId, interviewId, evaluatorId)
+                        companyId,
+                        interviewId,
+                        evaluatorId
+                )
                 .orElseThrow(() -> new ResourceNotFoundException(
-                        "Interview evaluation", "interviewId", interviewId));
+                        "Interview evaluation",
+                        "interviewId",
+                        interviewId
+                ));
 
         return toDto(evaluation, interview);
     }
 
-    /**
-     * List evaluations belonging to the current evaluator.
-     * Optional status: DRAFT or SUBMITTED.
-     */
+    // ------------------------------------------------------------
+    // LIST CURRENT EVALUATOR'S EVALUATIONS
+    // ------------------------------------------------------------
+
     @Transactional(readOnly = true)
     public List<InterviewEvaluationDTO> listMine(String status) {
 
@@ -211,53 +299,75 @@ public class InterviewEvaluationService {
 
         if (status != null && !status.isBlank()
                 && !STATUSES.contains(status.trim().toUpperCase(Locale.ROOT))) {
+
             throw new BusinessException(
-                    "Status must be DRAFT or SUBMITTED.");
+                    "Status must be DRAFT or SUBMITTED."
+            );
         }
 
         List<InterviewEvaluation> evaluations =
                 evaluationRepository
                         .findByCompanyIdAndEvaluatorIdOrderByUpdatedAtDesc(
-                                companyId, evaluatorId);
+                                companyId,
+                                evaluatorId
+                        );
 
         return evaluations.stream()
                 .filter(e -> status == null || status.isBlank()
                         || e.getStatus().equalsIgnoreCase(status.trim()))
                 .map(e -> {
                     Interview interview = findInterview(
-                            e.getInterviewId(), companyId);
+                            e.getInterviewId(),
+                            companyId
+                    );
+
                     return toDto(e, interview);
                 })
                 .toList();
     }
 
-    /**
-     * List every evaluation for an interview.
-     * Requires evaluation or interview-scheduling permission.
-     */
+    // ------------------------------------------------------------
+    // LIST ALL EVALUATIONS FOR AN INTERVIEW
+    // ------------------------------------------------------------
+
     @Transactional(readOnly = true)
     public List<InterviewEvaluationDTO> listForInterview(Long interviewId) {
 
         Long companyId = authService.getCurrentCompanyId();
 
-        permissionService.requireAny(
-                "INTERVIEW_EVALUATE",
-                "INTERVIEW_SCHEDULE"
-        );
-
         Interview interview = findInterview(interviewId, companyId);
 
-        if (!permissionService.isFullAccess()) {
-            requireAssigned(interviewId, requireCurrentUserId());
+        if (permissionService.hasAny(
+                "INTERVIEW_SCHEDULE",
+                "INTERVIEW_DECIDE") || permissionService.has("INTERVIEW_PROGRESS_VIEW")) {
+
+            return evaluationRepository
+                    .findByCompanyIdAndInterviewIdOrderByCreatedAtAsc(
+                            companyId,
+                            interviewId
+                    )
+                    .stream()
+                    .map(e -> toDto(e, interview))
+                    .toList();
         }
+
+        permissionService.require("INTERVIEW_EVALUATE");
+
+        requireAssigned(interviewId, requireCurrentUserId());
 
         return evaluationRepository
                 .findByCompanyIdAndInterviewIdOrderByCreatedAtAsc(
-                        companyId, interviewId)
+                        companyId,
+                        interviewId
+                )
                 .stream()
                 .map(e -> toDto(e, interview))
                 .toList();
     }
+
+    // ------------------------------------------------------------
+    // CREATE NEW EVALUATION
+    // ------------------------------------------------------------
 
     private InterviewEvaluation newEvaluation(
             Long companyId,
@@ -270,7 +380,6 @@ public class InterviewEvaluationService {
         evaluation.setInterviewId(interview.getId());
 
         // Store the application ID, not a separate candidate account ID.
-        // Interview.getApplicationId() refers to CandidateApplication.id.
         evaluation.setCandidateId(interview.getApplicationId());
 
         evaluation.setEvaluatorId(evaluatorId);
@@ -279,39 +388,110 @@ public class InterviewEvaluationService {
         return evaluation;
     }
 
+    // ------------------------------------------------------------
+    // VALIDATE EVALUATION REQUEST
+    // ------------------------------------------------------------
+
     private void validateRequest(
             InterviewEvaluationRequestDTO request,
+            Interview interview,
             boolean submitting) {
 
         if (request == null) {
             throw new BusinessException(
-                    "Evaluation details are required.");
+                    "Evaluation details are required."
+            );
         }
 
+        String interviewRound = interview.getInterviewRound();
+
+        if (interviewRound == null || interviewRound.isBlank()) {
+            throw new BusinessException(
+                    "Interview round is required for evaluation."
+            );
+        }
+
+        String round = interviewRound
+                .trim()
+                .toUpperCase(Locale.ROOT)
+                .replace('_', ' ')
+                .replace('-', ' ');
+
+        Set<String> requiredCriteria = ROUND_CRITERIA.get(round);
+
+        if (requiredCriteria == null) {
+            throw new BusinessException(
+                    "Unsupported interview round: " + interviewRound
+            );
+        }
+
+        Map<String, Integer> scores = request.criteriaScores() == null
+                ? Collections.emptyMap()
+                : request.criteriaScores();
+
+        // Reject criteria that do not belong to this interview round.
+        for (String key : scores.keySet()) {
+
+            if (!requiredCriteria.contains(key)) {
+                throw new BusinessException(
+                        "Invalid evaluation criterion for "
+                                + interviewRound + ": " + key
+                );
+            }
+        }
+
+        // Validate supplied scores.
+        for (Map.Entry<String, Integer> entry : scores.entrySet()) {
+            validateScore(entry.getValue(), entry.getKey(), false);
+        }
+
+        // All six criteria are required when submitting.
+        if (submitting) {
+
+            for (String criterion : requiredCriteria) {
+
+                if (!scores.containsKey(criterion)
+                        || scores.get(criterion) == null) {
+
+                    throw new BusinessException(
+                            "A score for " + criterion
+                                    + " is required before submission."
+                    );
+                }
+            }
+        }
+
+        // Validate legacy fields if supplied.
+        // They are not mandatory for new round-specific evaluations.
         validateScore(
                 request.technicalKnowledge(),
                 "Technical knowledge",
-                submitting);
+                false
+        );
 
         validateScore(
                 request.problemSolving(),
                 "Problem solving",
-                submitting);
+                false
+        );
 
         validateScore(
                 request.communication(),
                 "Communication",
-                submitting);
+                false
+        );
 
         validateScore(
                 request.roleSpecificSkills(),
                 "Role-specific skills",
-                submitting);
+                false
+        );
 
         validateScore(
                 request.professionalism(),
                 "Professionalism",
-                submitting);
+                false
+        );
 
         if (request.recommendation() != null
                 && !request.recommendation().isBlank()) {
@@ -322,7 +502,8 @@ public class InterviewEvaluationService {
             if (!RECOMMENDATIONS.contains(recommendation)) {
                 throw new BusinessException(
                         "Recommendation must be STRONG_HIRE, HIRE, HOLD, "
-                                + "NO_HIRE, or STRONG_NO_HIRE.");
+                                + "NO_HIRE, or STRONG_NO_HIRE."
+                );
             }
         }
 
@@ -330,17 +511,25 @@ public class InterviewEvaluationService {
 
             if (request.recommendation() == null
                     || request.recommendation().isBlank()) {
+
                 throw new BusinessException(
-                        "A recommendation is required before submission.");
+                        "A recommendation is required before submission."
+                );
             }
 
             if (request.strengths() == null
                     || request.strengths().isBlank()) {
+
                 throw new BusinessException(
-                        "Please describe the candidate's strengths before submission.");
+                        "Please describe the candidate's strengths before submission."
+                );
             }
         }
     }
+
+    // ------------------------------------------------------------
+    // VALIDATE INDIVIDUAL SCORE
+    // ------------------------------------------------------------
 
     private void validateScore(
             Integer score,
@@ -348,23 +537,38 @@ public class InterviewEvaluationService {
             boolean submitting) {
 
         if (score == null) {
+
             if (submitting) {
                 throw new BusinessException(
-                        label + " score is required before submission.");
+                        label + " score is required before submission."
+                );
             }
+
             return;
         }
 
         if (score < 1 || score > 5) {
             throw new BusinessException(
-                    label + " score must be between 1 and 5.");
+                    label + " score must be between 1 and 5."
+            );
         }
     }
+
+    // ------------------------------------------------------------
+    // APPLY REQUEST DATA
+    // ------------------------------------------------------------
 
     private void applyRequest(
             InterviewEvaluation evaluation,
             InterviewEvaluationRequestDTO request) {
 
+        evaluation.setCriteriaScores(
+                request.criteriaScores() == null
+                        ? new HashMap<>()
+                        : new HashMap<>(request.criteriaScores())
+        );
+
+        // Retain legacy fields for backward compatibility.
         evaluation.setTechnicalKnowledge(request.technicalKnowledge());
         evaluation.setProblemSolving(request.problemSolving());
         evaluation.setCommunication(request.communication());
@@ -372,24 +576,39 @@ public class InterviewEvaluationService {
         evaluation.setProfessionalism(request.professionalism());
 
         evaluation.setStrengths(blankToNull(request.strengths()));
+
         evaluation.setAreasForImprovement(
-                blankToNull(request.areasForImprovement()));
+                blankToNull(request.areasForImprovement())
+        );
+
         evaluation.setComments(blankToNull(request.comments()));
 
         evaluation.setRecommendation(
                 request.recommendation() == null
                         || request.recommendation().isBlank()
                         ? null
-                        : normalizeRecommendation(request.recommendation()));
+                        : normalizeRecommendation(request.recommendation())
+        );
     }
+
+    // ------------------------------------------------------------
+    // FIND INTERVIEW WITH COMPANY ISOLATION
+    // ------------------------------------------------------------
 
     private Interview findInterview(Long interviewId, Long companyId) {
 
         return interviewRepository
                 .findByIdAndCompanyId(interviewId, companyId)
                 .orElseThrow(() -> new ResourceNotFoundException(
-                        "Interview", "id", interviewId));
+                        "Interview",
+                        "id",
+                        interviewId
+                ));
     }
+
+    // ------------------------------------------------------------
+    // GET CURRENT USER ID
+    // ------------------------------------------------------------
 
     private Long requireCurrentUserId() {
 
@@ -397,20 +616,31 @@ public class InterviewEvaluationService {
 
         if (userId == null) {
             throw new AccessDeniedException(
-                    "Unable to identify the logged-in user.");
+                    "Unable to identify the logged-in user."
+            );
         }
 
         return userId;
     }
 
+    // ------------------------------------------------------------
+    // CHECK INTERVIEWER ASSIGNMENT
+    // ------------------------------------------------------------
+
     private void requireAssigned(Long interviewId, Long evaluatorId) {
 
         if (!permissionService.isFullAccess()
                 && !permissionService.isAssignedToInterview(interviewId)) {
+
             throw new AccessDeniedException(
-                    "You are not assigned to this interview.");
+                    "You are not assigned to this interview."
+            );
         }
     }
+
+    // ------------------------------------------------------------
+    // NORMALIZE RECOMMENDATION
+    // ------------------------------------------------------------
 
     private String normalizeRecommendation(String recommendation) {
 
@@ -420,6 +650,10 @@ public class InterviewEvaluationService {
                 .toUpperCase(Locale.ROOT);
     }
 
+    // ------------------------------------------------------------
+    // CONVERT BLANK TEXT TO NULL
+    // ------------------------------------------------------------
+
     private String blankToNull(String value) {
 
         return value == null || value.isBlank()
@@ -427,25 +661,48 @@ public class InterviewEvaluationService {
                 : value.trim();
     }
 
+    // ------------------------------------------------------------
+    // CONVERT ENTITY TO DTO
+    // ------------------------------------------------------------
+
     private InterviewEvaluationDTO toDto(
             InterviewEvaluation evaluation,
             Interview interview) {
 
-        Integer[] scores = {
-                evaluation.getTechnicalKnowledge(),
-                evaluation.getProblemSolving(),
-                evaluation.getCommunication(),
-                evaluation.getRoleSpecificSkills(),
-                evaluation.getProfessionalism()
-        };
+        Map<String, Integer> criteriaScores =
+                evaluation.getCriteriaScores() == null
+                        ? Collections.emptyMap()
+                        : evaluation.getCriteriaScores();
 
         int total = 0;
         int count = 0;
 
-        for (Integer score : scores) {
+        // Calculate average using the new round-specific criteria.
+        for (Integer score : criteriaScores.values()) {
+
             if (score != null) {
                 total += score;
                 count++;
+            }
+        }
+
+        // Fallback for older evaluations without criteriaScores.
+        if (count == 0) {
+
+            Integer[] legacyScores = {
+                    evaluation.getTechnicalKnowledge(),
+                    evaluation.getProblemSolving(),
+                    evaluation.getCommunication(),
+                    evaluation.getRoleSpecificSkills(),
+                    evaluation.getProfessionalism()
+            };
+
+            for (Integer score : legacyScores) {
+
+                if (score != null) {
+                    total += score;
+                    count++;
+                }
             }
         }
 
@@ -462,11 +719,15 @@ public class InterviewEvaluationService {
                 interview.getVacancyTitle(),
                 interview.getInterviewRound(),
                 evaluation.getEvaluatorId(),
+
+                criteriaScores,
+
                 evaluation.getTechnicalKnowledge(),
                 evaluation.getProblemSolving(),
                 evaluation.getCommunication(),
                 evaluation.getRoleSpecificSkills(),
                 evaluation.getProfessionalism(),
+
                 average,
                 evaluation.getStrengths(),
                 evaluation.getAreasForImprovement(),

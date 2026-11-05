@@ -19,7 +19,10 @@ import java.util.List;
 public class JobVacancyController {
 
     private static final String CAN_SEE_VACANCIES =
-            "@perm.has('VACANCY_CREATE') or @perm.has('VACANCY_APPROVE') or @perm.has('VACANCY_PUBLISH')";
+            "@perm.hasAny('VACANCY_CREATE', 'VACANCY_APPROVE', 'VACANCY_PUBLISH', " +
+            "'APPLICATION_VIEW', 'APPLICATION_SCREEN', 'APPLICATION_SHORTLIST', " +
+            "'INTERVIEW_SCHEDULE', 'INTERVIEW_ASSIGN', 'INTERVIEW_PROGRESS_VIEW', " +
+            "'INTERVIEW_DECIDE', 'INTERVIEW_EVALUATE', 'OFFER_MANAGE')";
 
     private final JobVacancyService vacancyService;
 

@@ -73,6 +73,9 @@ public class VacancyScreeningConfigDTO {
     private LocalDateTime updatedAt;
     private Long updatedBy;
 
+    private LocalDateTime lastScreenedAt;
+    private String lastScreenedSummary;
+
     /**
      * Checks whether weights total 100% and all are non-negative.
      */
