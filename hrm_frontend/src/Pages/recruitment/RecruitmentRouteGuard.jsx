@@ -5,6 +5,17 @@ import {
   fetchRecruitmentAccess,
 } from "../../utils/useRecruitmentAccess";
 
+const getFallbackDashboard = () => {
+  try {
+    const user = JSON.parse(localStorage.getItem("user") || "{}");
+    if (user?.role === "HR_MANAGER") return "/hr/dashboard";
+    if (user?.role === "ADMIN") return "/admin/dashboard";
+    return "/employee/dashboard";
+  } catch {
+    return "/employee/dashboard";
+  }
+};
+
 const RecruitmentRouteGuard = ({ children, requiredAny = [] }) => {
   // Cached access: when it's already known, the page shows immediately (no flash)
   const shared = useRecruitmentAccess();
@@ -30,8 +41,14 @@ const RecruitmentRouteGuard = ({ children, requiredAny = [] }) => {
     return <div className="h-screen bg-slate-50" />;
   }
 
-  if (!access.hasRecruitmentAccess) {
-    return <Navigate to="/login" replace />;
+  // Check if user has recruitment access (must have assigned roles or operational permissions)
+  const hasAssignedRole =
+    (Array.isArray(access.roles) && access.roles.length > 0) ||
+    (Array.isArray(access.permissions) &&
+      access.permissions.some((p) => p !== "RECRUITMENT_ROLE_ADMIN"));
+
+  if (!access.fullAccess && !hasAssignedRole && !access.hasRecruitmentAccess) {
+    return <Navigate to={getFallbackDashboard()} replace />;
   }
 
   const permissions = Array.isArray(access.permissions) ? access.permissions : [];

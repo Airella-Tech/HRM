@@ -45,8 +45,10 @@ public class JwtUtil {
                     .build()
                     .parseClaimsJws(token)
                     .getBody();
-            Number userId = claims.get("userId", Number.class);
-            return userId != null ? userId.longValue() : null;
+            Object raw = claims.get("userId");
+            if (raw instanceof Number n) return n.longValue();
+            if (raw != null) return Long.parseLong(raw.toString().trim());
+            return null;
         } catch (Exception e) {
             return null;
         }

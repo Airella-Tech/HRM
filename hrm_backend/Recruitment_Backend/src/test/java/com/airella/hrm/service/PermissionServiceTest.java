@@ -36,6 +36,9 @@ class PermissionServiceTest {
     @Mock
     private RecruitmentPermissionRepository permissionRepo;
 
+    @Mock
+    private EmployeeDirectory employeeDirectory;
+
     @InjectMocks
     private PermissionService permissionService;
 
@@ -56,9 +59,9 @@ class PermissionServiceTest {
     }
 
     @Test
-    void isFullAccess_WhenHrManager_ReturnsTrue() {
+    void isFullAccess_WhenHrManager_ReturnsFalse() {
         setAuth("hr@example.com", 2L, List.of(new SimpleGrantedAuthority("ROLE_HR_MANAGER")));
-        assertTrue(permissionService.isFullAccess());
+        assertFalse(permissionService.isFullAccess());
     }
 
     @Test
@@ -69,8 +72,22 @@ class PermissionServiceTest {
 
     @Test
     void has_WhenFullAccess_AlwaysReturnsTrue() {
-        setAuth("hr@example.com", 2L, List.of(new SimpleGrantedAuthority("ROLE_HR_MANAGER")));
+        setAuth("admin@example.com", 1L, List.of(new SimpleGrantedAuthority("ROLE_ADMIN")));
         assertTrue(permissionService.has("ANY_PERMISSION_CODE"));
+    }
+
+    @Test
+    void has_WhenHrManagerWithoutRole_ReturnsFalse() {
+        setAuth("hr@example.com", 2L, List.of(new SimpleGrantedAuthority("ROLE_HR_MANAGER")));
+        when(userRoleRepo.findPermissionCodesByUserId(2L)).thenReturn(List.of());
+        assertFalse(permissionService.has("VACANCY_CREATE"));
+    }
+
+    @Test
+    void has_WhenHrManagerWithRole_ReturnsTrue() {
+        setAuth("hr@example.com", 2L, List.of(new SimpleGrantedAuthority("ROLE_HR_MANAGER")));
+        when(userRoleRepo.findPermissionCodesByUserId(2L)).thenReturn(List.of("VACANCY_CREATE"));
+        assertTrue(permissionService.has("VACANCY_CREATE"));
     }
 
     @Test

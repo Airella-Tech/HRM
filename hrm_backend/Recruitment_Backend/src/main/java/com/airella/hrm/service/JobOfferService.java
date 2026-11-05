@@ -35,6 +35,7 @@ public class JobOfferService {
     private final InterviewRoundDecisionRepository decisionRepository;
     private final AuthService authService;
     private final JavaMailSender mailSender;
+    private final RecruitmentNotificationService notificationService;
 
     private static final List<String> INTERVIEW_ROUNDS = List.of(
             "Technical Interview",
@@ -43,18 +44,30 @@ public class JobOfferService {
             "Final Interview"
     );
 
+    @org.springframework.beans.factory.annotation.Autowired
     public JobOfferService(
             JobOfferRepository jobOfferRepository,
             AuthService authService,
             JavaMailSender mailSender,
             InterviewRepository interviewRepository,
-            InterviewRoundDecisionRepository decisionRepository) {
+            InterviewRoundDecisionRepository decisionRepository,
+            @org.springframework.beans.factory.annotation.Autowired(required = false) RecruitmentNotificationService notificationService) {
 
         this.jobOfferRepository = jobOfferRepository;
         this.authService = authService;
         this.mailSender = mailSender;
         this.interviewRepository = interviewRepository;
         this.decisionRepository = decisionRepository;
+        this.notificationService = notificationService;
+    }
+
+    public JobOfferService(
+            JobOfferRepository jobOfferRepository,
+            AuthService authService,
+            JavaMailSender mailSender,
+            InterviewRepository interviewRepository,
+            InterviewRoundDecisionRepository decisionRepository) {
+        this(jobOfferRepository, authService, mailSender, interviewRepository, decisionRepository, null);
     }
 
     // ------------------------------------------------------------
@@ -85,7 +98,12 @@ public class JobOfferService {
 
         applyRequest(offer, request);
 
-        return toDto(jobOfferRepository.save(offer));
+        JobOffer saved = jobOfferRepository.save(offer);
+        if (notificationService != null) {
+            notificationService.offerCreated(saved);
+        }
+
+        return toDto(saved);
     }
 
     // ------------------------------------------------------------
@@ -283,7 +301,12 @@ public class JobOfferService {
 
         applyRequest(offer, request);
 
-        return toDto(jobOfferRepository.save(offer));
+        JobOffer saved = jobOfferRepository.save(offer);
+        if (notificationService != null) {
+            notificationService.offerCreated(saved);
+        }
+
+        return toDto(saved);
     }
 
     // ------------------------------------------------------------
@@ -325,9 +348,15 @@ public class JobOfferService {
             );
         }
 
+        JobOfferStatus prev = offer.getStatus();
         offer.setStatus(newStatus);
 
-        return toDto(jobOfferRepository.save(offer));
+        JobOffer saved = jobOfferRepository.save(offer);
+        if (notificationService != null) {
+            notificationService.offerStatusUpdated(saved, prev);
+        }
+
+        return toDto(saved);
     }
 
     // ------------------------------------------------------------
@@ -435,9 +464,13 @@ public class JobOfferService {
         }
 
         // Mark the offer as SENT only after email sending succeeds.
+        JobOfferStatus prev = offer.getStatus();
         offer.setStatus(JobOfferStatus.SENT);
 
-        jobOfferRepository.save(offer);
+        JobOffer saved = jobOfferRepository.save(offer);
+        if (notificationService != null) {
+            notificationService.offerStatusUpdated(saved, prev);
+        }
     }
 
     // ------------------------------------------------------------

@@ -54,6 +54,9 @@ public class CandidateScreeningService {
 
 
 
+    private final RecruitmentNotificationService notificationService;
+
+    @org.springframework.beans.factory.annotation.Autowired
     public CandidateScreeningService(VacancyScreeningConfigRepository configRepo,
                                      CandidateScreeningResultRepository resultRepo,
                                      CandidateApplicationRepository applicationRepo,
@@ -61,7 +64,8 @@ public class CandidateScreeningService {
                                      AuthService authService,
                                      PermissionService permissionService,
                                      AuditService auditService,
-                                     ObjectMapper objectMapper) {
+                                     ObjectMapper objectMapper,
+                                     RecruitmentNotificationService notificationService) {
         this.configRepo = configRepo;
         this.resultRepo = resultRepo;
         this.applicationRepo = applicationRepo;
@@ -70,6 +74,18 @@ public class CandidateScreeningService {
         this.permissionService = permissionService;
         this.auditService = auditService;
         this.objectMapper = objectMapper;
+        this.notificationService = notificationService;
+    }
+
+    public CandidateScreeningService(VacancyScreeningConfigRepository configRepo,
+                                     CandidateScreeningResultRepository resultRepo,
+                                     CandidateApplicationRepository applicationRepo,
+                                     JobVacancyRepository vacancyRepo,
+                                     AuthService authService,
+                                     PermissionService permissionService,
+                                     AuditService auditService,
+                                     ObjectMapper objectMapper) {
+        this(configRepo, resultRepo, applicationRepo, vacancyRepo, authService, permissionService, auditService, objectMapper, null);
     }
 
     // =========================================================================
@@ -469,6 +485,16 @@ public class CandidateScreeningService {
 
         applicationRepo.save(app);
 
+        if (autoShortlisted && app.getStatus() == ApplicationStatus.SHORTLISTED) {
+            try {
+                if (notificationService != null) {
+                    notificationService.candidateShortlisted(app, vacancy);
+                }
+            } catch (Exception e) {
+                log.warn("Could not dispatch auto candidate shortlisted notification: {}", e.getMessage());
+            }
+        }
+
         return toResultDto(resultEntity, app.getCandidateName(), vacancy.getTitle(), config);
     }
 
@@ -802,6 +828,14 @@ public class CandidateScreeningService {
                 saved.getCompanyRef()
         );
 
+        try {
+            if (notificationService != null) {
+                notificationService.candidateShortlisted(saved, saved.getVacancy());
+            }
+        } catch (Exception e) {
+            log.warn("Could not dispatch candidate shortlisted notification: {}", e.getMessage());
+        }
+
         return toApplicationDto(saved);
     }
 
@@ -844,6 +878,14 @@ public class CandidateScreeningService {
                 "Candidate " + saved.getCandidateName() + " rejected. Reason: " + reason.trim(),
                 saved.getCompanyRef()
         );
+
+        if (notificationService != null) {
+            try {
+                notificationService.candidateRejected(saved, saved.getVacancy(), reason.trim());
+            } catch (Exception e) {
+                log.warn("Could not dispatch candidate rejected notification: {}", e.getMessage());
+            }
+        }
 
         return toApplicationDto(saved);
     }

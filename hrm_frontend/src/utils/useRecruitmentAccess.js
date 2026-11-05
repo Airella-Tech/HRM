@@ -26,8 +26,6 @@ export const fetchRecruitmentAccess = async (force = false) => {
     sessionStorage.removeItem("recruitment_my_access");
     return null;
   }
-
-  if (cachedAccess && !force) return cachedAccess;
   if (fetchPromise && !force) return fetchPromise;
 
   fetchPromise = recruitmentApi
@@ -79,9 +77,10 @@ export const clearRecruitmentAccessCache = () => {
   } catch {
     // Ignore — in-memory cache is already cleared
   }
+  const empty = { fullAccess: false, hasRecruitmentAccess: false, permissions: [], roles: [] };
   listeners.forEach((fn) => {
     try {
-      fn(null);
+      fn(empty);
     } catch {
       // Ignore — a listener's own error shouldn't break the others
     }

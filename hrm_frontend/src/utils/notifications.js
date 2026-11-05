@@ -1,10 +1,29 @@
 /**
  * Shared helpers for the notification bell popup and the HR notifications page.
- * The backend (Employee_Backend /employee/notifications) returns, per notification:
+ * The backend (Employee_Backend /employee/notifications and Recruitment_Backend /recruitment/notifications)
+ * returns, per notification:
  *   id, title, message, type, isRead, createdAt, category, link, refId,
  *   subjectName / subjectEmployeeCode / subjectDepartment / subjectJobRole (birthdays)
  */
-  import { CalendarDays, Wallet, CheckCircle2, XCircle, Cake, Gift, Receipt, Building2, Bell, Send, Megaphone,CalendarClock,UserCheck,RefreshCw,ClipboardCheck, } from "lucide-react";
+import {
+  CalendarDays,
+  Wallet,
+  CheckCircle2,
+  XCircle,
+  Cake,
+  Gift,
+  Receipt,
+  Building2,
+  Bell,
+  Send,
+  Megaphone,
+  CalendarClock,
+  UserCheck,
+  RefreshCw,
+  ClipboardCheck,
+  UserPlus,
+  Handshake,
+} from "lucide-react";
 
 export const NOTIFICATIONS_CHANGED = "hrm:notifications-changed";
 
@@ -25,11 +44,22 @@ const KIND = {
   BIRTHDAY_WISH:      { icon: Gift,         chip: "bg-pink-100 text-pink-600" },
   PAYSLIP:            { icon: Receipt,      chip: "bg-sky-100 text-sky-700" },
   COMPANY_REQUEST:    { icon: Building2,    chip: "bg-amber-100 text-amber-700" },
+  VACANCY_CREATED:    { icon: Send,         chip: "bg-blue-100 text-blue-700" },
   VACANCY_SUBMITTED:  { icon: Send,         chip: "bg-amber-100 text-amber-700" },
   VACANCY_APPROVED:   { icon: CheckCircle2, chip: "bg-emerald-100 text-emerald-700" },
   VACANCY_REJECTED:   { icon: XCircle,      chip: "bg-red-100 text-red-700" },
   VACANCY_PUBLISHED:  { icon: Megaphone,    chip: "bg-indigo-100 text-indigo-700" },
-    // Interview notifications
+  VACANCY_CLOSED:     { icon: XCircle,      chip: "bg-slate-100 text-slate-700" },
+  // Candidate notifications
+  CANDIDATE_APPLIED: {
+    icon: UserPlus,
+    chip: "bg-blue-100 text-blue-700",
+  },
+  CANDIDATE_SHORTLISTED: {
+    icon: UserCheck,
+    chip: "bg-emerald-100 text-emerald-700",
+  },
+  // Interview notifications
   INTERVIEW_SCHEDULED: {
     icon: CalendarDays,
     chip: "bg-blue-100 text-blue-700",
@@ -58,6 +88,39 @@ const KIND = {
     icon: XCircle,
     chip: "bg-red-100 text-red-700",
   },
+  CANDIDATE_REJECTED: {
+    icon: XCircle,
+    chip: "bg-red-100 text-red-700",
+  },
+  OFFER_CREATED: {
+    icon: Handshake,
+    chip: "bg-emerald-100 text-emerald-700",
+  },
+  OFFER_STATUS_UPDATED: {
+    icon: Handshake,
+    chip: "bg-blue-100 text-blue-700",
+  },
+  // Role & permission notifications
+  ROLE_ASSIGNED: {
+    icon: UserCheck,
+    chip: "bg-purple-100 text-purple-700",
+  },
+  ROLES_UPDATED: {
+    icon: UserCheck,
+    chip: "bg-purple-100 text-purple-700",
+  },
+  ROLE_REMOVED: {
+    icon: XCircle,
+    chip: "bg-red-100 text-red-700",
+  },
+  ROLE_CREATED: {
+    icon: CheckCircle2,
+    chip: "bg-indigo-100 text-indigo-700",
+  },
+  ROLE_PERMISSIONS_UPDATED: {
+    icon: RefreshCw,
+    chip: "bg-blue-100 text-blue-700",
+  },
 };
 const DEFAULT_KIND = { icon: Bell, chip: "bg-slate-100 text-slate-600" };
 
@@ -73,7 +136,6 @@ export const normalizeNotification = (n, role) => ({
   createdAt: n.createdAt || null,
   refId: n.refId || null,
   // Birthdays never navigate; everything else opens the page named by the backend.
-  // (Admin's older company-request notifications have no link, so they open the Companies page.)
   link: isBirthday(n) ? null : n.link || (role === "admin" ? "/admin/companies" : null),
   subject: {
     name: n.subjectName || null,
@@ -109,17 +171,26 @@ export const linkLabel = (n) => {
     case "ALLOWANCE_APPROVED":
     case "ALLOWANCE_REJECTED": return "Open my allowance requests";
     case "PAYSLIP": return "Open payslip";
-          case "VACANCY_SUBMITTED": return "Review vacancy";
-      case "VACANCY_APPROVED": return "Open vacancies";
-      case "VACANCY_REJECTED": return "Fix and resubmit";
-      case "VACANCY_PUBLISHED": return "View vacancies";
+    case "VACANCY_CREATED": return "View vacancy";
+    case "VACANCY_SUBMITTED": return "Review vacancy";
+    case "VACANCY_APPROVED": return "Open vacancies";
+    case "VACANCY_REJECTED": return "Fix and resubmit";
+    case "VACANCY_PUBLISHED": return "View vacancies";
+    case "VACANCY_CLOSED": return "View vacancies";
+    case "CANDIDATE_APPLIED": return "Review applications";
+    case "CANDIDATE_SHORTLISTED": return "Schedule interview";
     case "INTERVIEW_SCHEDULED": return "View scheduled interview";
     case "INTERVIEW_RESCHEDULED": return "View rescheduled interview";
-    case "INTERVIEWER_ASSIGNED":return "View assigned interview";
+    case "INTERVIEWER_ASSIGNED": return "View assigned interview";
     case "INTERVIEW_STATUS_UPDATED": return "View interview status";
     case "INTERVIEW_EVALUATION_SUBMITTED": return "View evaluation";
-    case "INTERVIEW_ROUND_APPROVED":return "View approved interview round";
-    case "INTERVIEW_ROUND_REJECTED":return "View rejected interview round";
+    case "INTERVIEW_ROUND_APPROVED": return "View approved interview round";
+    case "INTERVIEW_ROUND_REJECTED": return "View rejected interview round";
+    case "ROLE_ASSIGNED":
+    case "ROLES_UPDATED": return "Open recruitment";
+    case "ROLE_REMOVED": return "Open dashboard";
+    case "ROLE_CREATED":
+    case "ROLE_PERMISSIONS_UPDATED": return "Open roles & permissions";
     default: return n.link && n.link.startsWith("/admin") ? "Open companies" : "Open";
   }
 };
@@ -162,16 +233,16 @@ export const NOTIF_THEME = {
     action: "text-indigo-600 hover:text-indigo-800",
     ring: "focus:ring-indigo-500",
   },
-      recruiter: {
-      header: "from-indigo-600 to-violet-600",
-      headerSub: "text-indigo-100",
-      headerIcon: "text-indigo-100",
-      unreadRow: "bg-indigo-50/70 border-indigo-100",
-      hoverRow: "hover:bg-indigo-50",
-      link: "text-indigo-700 hover:text-indigo-900",
-      dot: "bg-indigo-500",
-      tabOn: "bg-gradient-to-r from-indigo-500 to-violet-600 text-white shadow",
-      action: "text-indigo-600 hover:text-indigo-800",
-      ring: "focus:ring-indigo-500",
-    },
+  recruiter: {
+    header: "from-indigo-600 to-violet-600",
+    headerSub: "text-indigo-100",
+    headerIcon: "text-indigo-100",
+    unreadRow: "bg-indigo-50/70 border-indigo-100",
+    hoverRow: "hover:bg-indigo-50",
+    link: "text-indigo-700 hover:text-indigo-900",
+    dot: "bg-indigo-500",
+    tabOn: "bg-gradient-to-r from-indigo-500 to-violet-600 text-white shadow",
+    action: "text-indigo-600 hover:text-indigo-800",
+    ring: "focus:ring-indigo-500",
+  },
 };

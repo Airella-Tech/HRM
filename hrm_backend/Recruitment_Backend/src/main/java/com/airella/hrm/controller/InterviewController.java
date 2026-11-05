@@ -27,7 +27,7 @@ import java.util.List;
 public class InterviewController {
 
     private static final String CAN_VIEW_INTERVIEWS =
-            "@perm.has('INTERVIEW_SCHEDULE')";
+            "@perm.hasAny('INTERVIEW_SCHEDULE', 'INTERVIEW_ASSIGN', 'INTERVIEW_PROGRESS_VIEW', 'INTERVIEW_DECIDE')";
 
     private final InterviewService interviewService;
     private final InterviewRoundDecisionService decisionService;
@@ -95,7 +95,7 @@ public class InterviewController {
 
     @GetMapping("/{id}")
     @PreAuthorize(
-            "@perm.has('INTERVIEW_SCHEDULE') or " +
+            "@perm.hasAny('INTERVIEW_SCHEDULE', 'INTERVIEW_ASSIGN', 'INTERVIEW_PROGRESS_VIEW', 'INTERVIEW_DECIDE') or " +
                     "(@perm.has('INTERVIEW_EVALUATE') and " +
                     "@perm.isAssignedToInterview(#id))"
     )
@@ -153,7 +153,7 @@ public class InterviewController {
     // ------------------------------------------------------------
 
     @PutMapping("/{id}/assign-interviewers")
-    @PreAuthorize("@perm.has('INTERVIEW_SCHEDULE')")
+    @PreAuthorize("@perm.hasAny('INTERVIEW_ASSIGN', 'INTERVIEW_SCHEDULE')")
     public ResponseEntity<ApiResponse<InterviewDTO>> assignInterviewers(
             @PathVariable Long id,
             @Valid @RequestBody InterviewerAssignmentRequestDTO request) {
@@ -175,7 +175,7 @@ public class InterviewController {
     // ------------------------------------------------------------
 
     @GetMapping("/{id}/decision")
-    @PreAuthorize("@perm.has('INTERVIEW_DECIDE')")
+    @PreAuthorize("@perm.hasAny('INTERVIEW_DECIDE', 'INTERVIEW_SCHEDULE', 'INTERVIEW_PROGRESS_VIEW', 'APPLICATION_VIEW')")
     public ResponseEntity<ApiResponse<InterviewRoundDecisionDTO>> getDecision(
             @PathVariable Long id) {
 

@@ -78,6 +78,7 @@ public class InterviewEvaluationController {
     @PreAuthorize(
             "@perm.has('INTERVIEW_SCHEDULE') or " +
                     "@perm.has('INTERVIEW_DECIDE') or " +
+                    "@perm.has('INTERVIEW_PROGRESS_VIEW') or " +
                     "(@perm.has('INTERVIEW_EVALUATE') and " +
                     "@perm.isAssignedToInterview(#interviewId))"
     )

@@ -339,7 +339,7 @@ public class InterviewEvaluationService {
 
         if (permissionService.hasAny(
                 "INTERVIEW_SCHEDULE",
-                "INTERVIEW_DECIDE")) {
+                "INTERVIEW_DECIDE") || permissionService.has("INTERVIEW_PROGRESS_VIEW")) {
 
             return evaluationRepository
                     .findByCompanyIdAndInterviewIdOrderByCreatedAtAsc(
