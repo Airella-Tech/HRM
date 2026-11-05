@@ -15,7 +15,7 @@ const deadlineTone = (days) =>
     ? { text: "text-red-600", bar: "bg-red-500" }
     : days <= 7
     ? { text: "text-amber-600", bar: "bg-amber-500" }
-    : { text: "text-indigo-600", bar: "bg-indigo-500" };
+    : { text: "text-primary-600", bar: "bg-primary-500" };
 
 /** Shows how much time is left to apply: a label, the date, and a bar that shrinks as the deadline nears. */
 export const DeadlineMeter = ({ deadline, publishedAt }) => {

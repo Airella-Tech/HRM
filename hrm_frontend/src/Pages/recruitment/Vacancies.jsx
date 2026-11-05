@@ -36,7 +36,7 @@ const statusLabel = (s) => s.replace(/_/g, " ").toLowerCase().replace(/^\w/, (c)
 const errorText = (error, fallback) => (error?.message || fallback).replace(/^\d{3}:\s*/, "");
 
 const inputCls =
-  "w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm text-slate-800 bg-white focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100";
+  "w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm text-slate-800 bg-white focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-100";
 
 // Tomorrow as yyyy-mm-dd in local time (the deadline must be in the future)
 const tomorrow = () => {
@@ -239,7 +239,7 @@ const VacancyModal = ({ vacancy, onClose, onSaved }) => {
             <button
               type="submit"
               disabled={saving}
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 text-white text-sm font-semibold shadow-sm"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary-600 hover:bg-primary-700 disabled:opacity-60 text-white text-sm font-semibold shadow-sm"
             >
               {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
               {editing ? "Save changes" : "Save as draft"}
@@ -315,7 +315,7 @@ const RejectModal = ({ vacancy, busy, onCancel, onConfirm }) => {
           value={reason}
           onChange={(e) => { setReason(e.target.value); setError(""); }}
           placeholder="e.g. Please add a salary range"
-          className="mt-4 w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm text-slate-800 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+          className="mt-4 w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm text-slate-800 focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-100"
         />
         {error && <p className="text-xs text-red-600 mt-1">{error}</p>}
         <div className="flex justify-end gap-3 mt-5">
@@ -518,7 +518,7 @@ export default function RecruitmentVacancies() {
         canCreate ? (
           <button
             onClick={() => setModal({ vacancy: null })}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold shadow-sm"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-primary-600 hover:bg-primary-700 text-white text-sm font-semibold shadow-sm"
           >
             <Plus size={16} /> New vacancy
           </button>
@@ -534,7 +534,7 @@ export default function RecruitmentVacancies() {
               onClick={() => setFilter(f)}
               className={`px-3.5 py-1.5 rounded-full text-sm font-medium border transition-colors ${
                 filter === f
-                  ? "bg-indigo-600 text-white border-indigo-600"
+                  ? "bg-primary-600 text-white border-primary-600"
                   : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"
               }`}
             >
@@ -550,7 +550,7 @@ export default function RecruitmentVacancies() {
         )}
 
         <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-          <div className="hidden md:grid grid-cols-[2.2fr_1.2fr_1fr_0.7fr_1fr_1.1fr_130px] gap-4 px-6 py-3.5 bg-gradient-to-r from-indigo-500 to-violet-600 text-white text-xs font-semibold uppercase tracking-wide">
+          <div className="hidden md:grid grid-cols-[2.2fr_1.2fr_1fr_0.7fr_1fr_1.1fr_130px] gap-4 px-6 py-3.5 bg-gradient-to-r from-primary-500 to-primary-500 text-white text-xs font-semibold uppercase tracking-wide">
             <span>Title</span>
             <span>Department</span>
             <span>Type</span>
@@ -566,7 +566,7 @@ export default function RecruitmentVacancies() {
             </div>
           ) : vacancies.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 text-center">
-              <div className="h-16 w-16 rounded-2xl bg-indigo-50 text-indigo-500 flex items-center justify-center mb-4">
+              <div className="h-16 w-16 rounded-2xl bg-primary-50 text-primary-500 flex items-center justify-center mb-4">
                 <BriefcaseBusiness size={28} />
               </div>
               <p className="text-slate-800 font-semibold">No vacancies here</p>
@@ -611,7 +611,7 @@ export default function RecruitmentVacancies() {
                       <button
                         title="Edit"
                         onClick={() => setModal({ vacancy: v })}
-                        className="p-2 rounded-lg text-slate-500 hover:text-indigo-600 hover:bg-indigo-50"
+                        className="p-2 rounded-lg text-slate-500 hover:text-primary-600 hover:bg-primary-50"
                       >
                         <Pencil size={16} />
                       </button>
