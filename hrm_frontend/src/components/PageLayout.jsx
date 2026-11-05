@@ -51,7 +51,6 @@ import {
 } from "lucide-react";
 import logo from "../assets/logo.jpg";
 import NotificationPopup from "./NotificationPopup";
-import RoleSwitch from "./RoleSwitch";
 import { UserMenu } from "./UserMenu";
 
 // ─── Nav configs per role ────────────────────────────────────────────────────
@@ -234,6 +233,8 @@ const ACCENT = {
     label: "Recruiter",
     surface: "bg-slate-50",
     sidebarBg: "linear-gradient(180deg, #151a35 0%, #1b2142 100%)",
+        menuBg: "bg-primary-800",
+    ringClass: "ring-primary-900",
     topbar: "border-primary-100",
     title: "text-slate-900",
     hover: "hover:bg-primary-50",
@@ -447,26 +448,19 @@ export const PageLayout = ({
             );
           })}
         </ul>
-        {(role === "hr" || role === "employee") && (
-          <div className="px-3 pb-3 flex-shrink-0">
-            <RoleSwitch
-              mode={
-                role === "hr"
-                  ? "hr"
-                  : role === "recruiter"
-                    ? "recruitment"
-                    : "employee"
-              }
-              sidebar
-              collapsed={collapsed}
-            />
-          </div>
-        )}
+       
 
                {/* User + logout */}
         <div className="border-t border-white/10 p-3 space-y-2 flex-shrink-0">
-          {role === "recruiter" ? (
+                    {role === "hr" || role === "employee" || role === "recruiter" ? (
             <UserMenu
+              mode={
+                role === "hr"
+                  ? "hr"
+                  : role === "employee"
+                    ? "employee"
+                    : "recruitment"
+              }
               initials={initials}
               name={user?.fullName || "User"}
               roleLabel={accent.label}

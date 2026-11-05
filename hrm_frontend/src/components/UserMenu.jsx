@@ -1,5 +1,5 @@
 /**
- * UserMenu — the user card at the bottom of the Recruitment sidebar.
+ * UserMenu — the user card at the bottom of the sidebar (HR, Employee and Recruitment).
  * Clicking it opens a small "Switch area" menu (HR / Employee / Recruitment),
  * so the switch no longer takes up sidebar height.
  *
@@ -9,10 +9,11 @@
  *  - the collapsed avatar carries a small switch badge.
  *
  * Props:
+ *   mode      : 'hr' | 'employee' | 'recruitment' — the area being viewed now
  *   initials  : letters shown in the avatar
  *   name      : the user's full name
  *   roleLabel : small text under the name (for example "Recruiter")
- *   accent    : the ACCENT block of the current role (avatar colours)
+ *   accent    : avatar colours (avatarFrom / avatarTo); optional menuBg and ringClass
  *   collapsed : the sidebar is collapsed (avatar only)
  */
 import React, { useEffect, useRef, useState } from "react";
@@ -39,6 +40,7 @@ const writeHintSeen = () => {
 };
 
 export const UserMenu = ({
+  mode = "recruitment",
   initials,
   name,
   roleLabel,
@@ -53,6 +55,11 @@ export const UserMenu = ({
 
   const canSwitch = options.length > 0;
   const showHint = canSwitch && !collapsed && !open && !hintSeen;
+
+  // The colour of the area being viewed (teal for HR, sky for Employee, indigo for Recruitment)
+  const currentOption = options.find((o) => o.key === mode);
+  const currentColour =
+    currentOption?.active || "bg-primary-600 text-white shadow";
 
   const markHintSeen = () => {
     setHintSeen(true);
@@ -86,7 +93,7 @@ export const UserMenu = ({
 
   const goTo = (option) => {
     setOpen(false);
-    if (option.key !== "recruitment") navigate(option.path);
+    if (option.key !== mode) navigate(option.path);
   };
 
   return (
@@ -94,20 +101,22 @@ export const UserMenu = ({
       {showHint && (
         <div
           role="status"
-          className="absolute bottom-full left-0 right-0 z-40 mb-3 rounded-xl bg-primary-500 p-3 text-xs text-white shadow-xl"
+          className={`absolute bottom-full left-0 right-0 z-40 mb-3 rounded-xl p-3 text-xs shadow-xl ${currentColour}`}
         >
           <p className="text-[13px] font-semibold">Switch area is here</p>
-          <p className="mt-0.5 leading-snug text-primary-100">
+          <p className="mt-0.5 leading-snug text-white/85">
             Move between HR, Employee and Recruitment from this menu.
           </p>
           <button
             type="button"
             onClick={markHintSeen}
-            className="mt-2 rounded-md bg-white/15 px-2.5 py-1 font-semibold hover:bg-white/25"
+            className="mt-2 rounded-md bg-white/20 px-2.5 py-1 font-semibold hover:bg-white/30"
           >
             Got it
           </button>
-          <span className="absolute -bottom-1.5 right-8 h-3 w-3 rotate-45 bg-primary-500" />
+          <span
+            className={`absolute -bottom-1.5 right-8 h-3 w-3 rotate-45 ${currentColour}`}
+          />
         </div>
       )}
 
@@ -115,7 +124,9 @@ export const UserMenu = ({
         <div
           role="menu"
           aria-label="Switch area"
-          className={`absolute z-50 rounded-xl border border-white/10 bg-primary-800 p-1.5 shadow-2xl ${
+          className={`absolute z-50 rounded-xl border border-white/10 p-1.5 shadow-2xl ${
+            accent.menuBg || "bg-slate-800"
+          } ${
             collapsed
               ? "left-full bottom-0 ml-3 w-56"
               : "bottom-full left-0 right-0 mb-2"
@@ -126,7 +137,7 @@ export const UserMenu = ({
           </p>
           {options.map((option) => {
             const Icon = option.icon;
-            const isCurrent = option.key === "recruitment";
+            const isCurrent = option.key === mode;
             return (
               <button
                 key={option.key}
@@ -135,7 +146,7 @@ export const UserMenu = ({
                 onClick={() => goTo(option)}
                 className={`flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm font-medium transition-colors ${
                   isCurrent
-                    ? "bg-primary-600 text-white"
+                    ? option.active
                     : "text-gray-300 hover:bg-white/10 hover:text-white"
                 }`}
               >
@@ -165,7 +176,11 @@ export const UserMenu = ({
         >
           {initials}
           {collapsed && canSwitch && (
-            <span className="absolute -bottom-1.5 -right-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-primary-600 text-white ring-2 ring-primary-900">
+            <span
+              className={`absolute -bottom-1.5 -right-1.5 flex h-4 w-4 items-center justify-center rounded-full ring-2 ${
+                accent.ringClass || "ring-slate-900"
+              } ${currentColour}`}
+            >
               <ArrowLeftRight size={9} />
             </span>
           )}
