@@ -1,68 +1,45 @@
 import React, { useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
-import { recruitmentApi } from "../../services/api";
+import {
+  useRecruitmentAccess,
+  fetchRecruitmentAccess,
+} from "../../utils/useRecruitmentAccess";
 
-const RecruitmentRouteGuard = ({
-  children,
-  requiredAny = [],
-}) => {
-  const [access, setAccess] = useState(null);
-  const [loading, setLoading] = useState(true);
+const RecruitmentRouteGuard = ({ children, requiredAny = [] }) => {
+  // Cached access: when it's already known, the page shows immediately (no flash)
+  const shared = useRecruitmentAccess();
 
+  // Fallback for the very first load, or when the cache is empty
+  const [fetched, setFetched] = useState(undefined);
   useEffect(() => {
     let cancelled = false;
-
-    recruitmentApi
-      .getMyAccess()
-      .then((response) => {
-        if (cancelled) return;
-
-        const data =
-          response?.data?.data ??
-          response?.data ??
-          response;
-
-        setAccess({
-          fullAccess: data?.fullAccess === true,
-          hasRecruitmentAccess:
-            data?.hasRecruitmentAccess === true,
-          permissions: Array.isArray(data?.permissions)
-            ? data.permissions
-            : [],
-        });
-      })
-      .catch((error) => {
-        console.error("Failed to verify recruitment access:", error);
-
-        if (!cancelled) {
-          setAccess(null);
-        }
-      })
-      .finally(() => {
-        if (!cancelled) {
-          setLoading(false);
-        }
-      });
-
+    fetchRecruitmentAccess().then((result) => {
+      if (!cancelled) setFetched(result || false);
+    });
     return () => {
       cancelled = true;
     };
   }, []);
 
-  if (loading) {
-    return <div className="p-6">Checking access...</div>;
+  const access = shared || fetched || null;
+
+  if (!access) {
+    // Not logged in, or the access request failed
+    if (fetched === false) return <Navigate to="/login" replace />;
+    // First load only: keep the page background instead of a white flash
+    return <div className="h-screen bg-slate-50" />;
   }
 
-  if (!access?.hasRecruitmentAccess) {
+  if (!access.hasRecruitmentAccess) {
     return <Navigate to="/login" replace />;
   }
+
+  const permissions = Array.isArray(access.permissions) ? access.permissions : [];
 
   if (
     !access.fullAccess &&
     requiredAny.length > 0 &&
-    !requiredAny.some((permission) =>
-      access.permissions.includes(permission)
-    )
+    !requiredAny.some((permission) => permissions.includes(permission))
   ) {
     return <Navigate to="/recruitment/dashboard" replace />;
   }

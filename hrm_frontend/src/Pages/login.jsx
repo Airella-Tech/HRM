@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import logo from "../assets/logo.jpg";
 import { authApi } from "../services/api";
+import { clearRecruitmentAccessCache } from "../utils/useRecruitmentAccess";
 
 /* ─── Tiny floating orb ─── */
 const Orb = ({ size, x, y, delay, dur }) => (
@@ -67,6 +68,7 @@ const Login = () => {
     try {
       const resp = await authApi.login(email, password);
       const data = resp.data ?? resp;
+            clearRecruitmentAccessCache();
       localStorage.setItem("token", data.token);
       localStorage.setItem("user", JSON.stringify(data));
 
