@@ -38,7 +38,7 @@ export default function useNotifications(role, { pollMs = 5000 } = {}) {
       if (role === "recruiter") {
         try {
           const rRes = await recruitmentApi.getNotifications();
-          const vacancyList = (Array.isArray(rRes?.data) ? rRes.data : []).map((n) => ({
+          const vacancyList = getRows(rRes).map((n) => ({
             ...normalizeNotification(n, role),
             id: `rec-${n.id}`,
             rawId: n.id,

@@ -1,4 +1,3 @@
-
 import React, {
   useCallback,
   useEffect,
@@ -81,7 +80,9 @@ const RECOMMENDATIONS = [
 ];
 
 const normalizeRecommendation = (value) => {
-  const raw = String(value ?? "").trim().toUpperCase();
+  const raw = String(value ?? "")
+    .trim()
+    .toUpperCase();
 
   const aliases = {
     STRONGLY_RECOMMEND: "STRONG_HIRE",
@@ -152,7 +153,7 @@ const parseCriteriaScores = (value) => {
     Object.entries(scores).map(([key, value]) => [
       key,
       value == null ? 0 : Number(value),
-    ])
+    ]),
   );
 };
 
@@ -180,10 +181,7 @@ const unwrap = (response) => {
     }
 
     const nestedKey = ["result", "payload"].find(
-      (key) =>
-        data[key] &&
-        typeof data[key] === "object" &&
-        data[key] !== data
+      (key) => data[key] && typeof data[key] === "object" && data[key] !== data,
     );
 
     if (nestedKey) {
@@ -214,11 +212,7 @@ const normalizeInterview = (item) => {
     {};
 
   const job =
-    item?.jobVacancy ??
-    item?.job ??
-    item?.vacancy ??
-    item?.position ??
-    {};
+    item?.jobVacancy ?? item?.job ?? item?.vacancy ?? item?.position ?? {};
 
   const interviewer =
     item?.interviewer ??
@@ -231,9 +225,7 @@ const normalizeInterview = (item) => {
     item?.applicantName ||
     candidate?.fullName ||
     candidate?.name ||
-    [candidate?.firstName, candidate?.lastName]
-      .filter(Boolean)
-      .join(" ");
+    [candidate?.firstName, candidate?.lastName].filter(Boolean).join(" ");
 
   const rawJobTitle =
     item?.jobTitle ||
@@ -261,10 +253,7 @@ const normalizeInterview = (item) => {
     "";
 
   const rawTime =
-    item?.time ??
-    item?.interviewTime ??
-    item?.scheduledTime ??
-    "";
+    item?.time ?? item?.interviewTime ?? item?.scheduledTime ?? "";
 
   return {
     ...item,
@@ -277,10 +266,7 @@ const normalizeInterview = (item) => {
       null,
 
     candidateId:
-      item?.candidateId ??
-      candidate?.id ??
-      candidate?.candidateId ??
-      null,
+      item?.candidateId ?? candidate?.id ?? candidate?.candidateId ?? null,
 
     applicationId:
       item?.applicationId ??
@@ -311,10 +297,7 @@ const normalizeInterview = (item) => {
       "PENDING",
 
     interviewerName:
-      item?.interviewerName ??
-      interviewer?.fullName ??
-      interviewer?.name ??
-      "",
+      item?.interviewerName ?? interviewer?.fullName ?? interviewer?.name ?? "",
   };
 };
 
@@ -339,11 +322,11 @@ const normalizeEvaluation = (item) => {
   };
 
   const scoreValues = Object.values(criteriaScores).filter(
-    (score) => Number.isFinite(score) && score > 0
+    (score) => Number.isFinite(score) && score > 0,
   );
 
   const legacyValues = Object.values(legacyScores).filter(
-    (score) => Number.isFinite(score) && score > 0
+    (score) => Number.isFinite(score) && score > 0,
   );
 
   const averageFromScores = (values) =>
@@ -354,9 +337,7 @@ const normalizeEvaluation = (item) => {
   const averageScore =
     item?.averageScore != null
       ? Number(item.averageScore)
-      : averageFromScores(
-          scoreValues.length ? scoreValues : legacyValues
-        );
+      : averageFromScores(scoreValues.length ? scoreValues : legacyValues);
 
   const recommendation =
     item?.recommendation ??
@@ -386,10 +367,7 @@ const normalizeEvaluation = (item) => {
       "",
 
     feedback:
-      item?.comments ??
-      item?.feedback ??
-      item?.interviewerFeedback ??
-      "",
+      item?.comments ?? item?.feedback ?? item?.interviewerFeedback ?? "",
 
     recommendation: normalizeRecommendation(recommendation),
 
@@ -431,7 +409,7 @@ const getScheduledDateTime = (interview) => {
   const time = timePart ? timePart.slice(0, 8) : "23:59:59";
 
   const dateTime = new Date(
-    `${datePart}T${time.length === 5 ? `${time}:00` : time}`
+    `${datePart}T${time.length === 5 ? `${time}:00` : time}`,
   );
 
   return Number.isNaN(dateTime.getTime()) ? null : dateTime;
@@ -551,25 +529,21 @@ export default function RecruitmentEvaluations() {
     if (!silent) setLoading(true);
 
     try {
-      if (
-        typeof recruitmentApi?.getMyAssignedInterviews !== "function"
-      ) {
+      if (typeof recruitmentApi?.getMyAssignedInterviews !== "function") {
         throw new Error(
-          "getMyAssignedInterviews() is missing from src/services/api.js."
+          "getMyAssignedInterviews() is missing from src/services/api.js.",
         );
       }
 
       // This endpoint must return only interviews assigned to the logged-in interviewer.
-      const interviewResponse =
-        await recruitmentApi.getMyAssignedInterviews();
+      const interviewResponse = await recruitmentApi.getMyAssignedInterviews();
 
       const normalizedInterviews = unwrap(interviewResponse)
         .filter((item) => item && typeof item === "object")
         .map(normalizeInterview)
         .filter(
           (interview) =>
-            interview.id != null &&
-            String(interview.id).trim() !== ""
+            interview.id != null && String(interview.id).trim() !== "",
         );
 
       setInterviews(normalizedInterviews);
@@ -580,12 +554,11 @@ export default function RecruitmentEvaluations() {
       // expose evaluations submitted by other interviewers.
       if (typeof recruitmentApi?.getMyEvaluations !== "function") {
         throw new Error(
-          "getMyEvaluations() is missing from src/services/api.js. Configure a backend endpoint that returns only the logged-in interviewer's evaluations."
+          "getMyEvaluations() is missing from src/services/api.js. Configure a backend endpoint that returns only the logged-in interviewer's evaluations.",
         );
       }
 
-      const evaluationResponse =
-        await recruitmentApi.getMyEvaluations();
+      const evaluationResponse = await recruitmentApi.getMyEvaluations();
 
       const normalizedEvaluations = unwrap(evaluationResponse)
         .filter((item) => item && typeof item === "object")
@@ -596,19 +569,17 @@ export default function RecruitmentEvaluations() {
       // The backend endpoint must enforce this user-level restriction.
       const uniqueEvaluations = Array.from(
         new Map(
-          normalizedEvaluations.map((evaluation, index) => [
+          normalizedEvaluations.map((evaluation) => [
             String(evaluation.interviewId),
             evaluation,
-          ])
-        ).values()
+          ]),
+        ).values(),
       );
 
       setEvaluations(uniqueEvaluations);
 
       if (normalizedInterviews.length === 0 && !silent) {
-        setNotice(
-          "No interviews are currently assigned to your account."
-        );
+        setNotice("No interviews are currently assigned to your account.");
         setNoticeType("warning");
       } else if (!silent) {
         setNotice("");
@@ -621,7 +592,7 @@ export default function RecruitmentEvaluations() {
         setEvaluations([]);
         setNotice(
           error?.message ||
-            "Could not load assigned interviews from the backend."
+            "Could not load assigned interviews from the backend.",
         );
         setNoticeType("error");
       }
@@ -647,16 +618,15 @@ export default function RecruitmentEvaluations() {
   const getEvaluation = useCallback(
     (interviewId) =>
       evaluations.find(
-        (evaluation) =>
-          String(evaluation.interviewId) === String(interviewId)
+        (evaluation) => String(evaluation.interviewId) === String(interviewId),
       ),
-    [evaluations]
+    [evaluations],
   );
 
   const getStatus = useCallback(
     (interview) =>
       getEvaluation(interview.id)?.submitted ? "Submitted" : "Pending",
-    [getEvaluation]
+    [getEvaluation],
   );
 
   const filteredInterviews = useMemo(() => {
@@ -669,17 +639,16 @@ export default function RecruitmentEvaluations() {
         interview.round,
         interview.interviewerName,
       ].some((value) =>
-        String(value ?? "").toLowerCase().includes(query)
+        String(value ?? "")
+          .toLowerCase()
+          .includes(query),
       );
 
       const evaluation = evaluations.find(
-        (item) =>
-          String(item.interviewId) === String(interview.id)
+        (item) => String(item.interviewId) === String(interview.id),
       );
 
-      const evaluationStatus = evaluation?.submitted
-        ? "Submitted"
-        : "Pending";
+      const evaluationStatus = evaluation?.submitted ? "Submitted" : "Pending";
 
       const normalizedInterviewRound = normalizeRound(interview.round);
       const normalizedFilterRound =
@@ -687,8 +656,7 @@ export default function RecruitmentEvaluations() {
 
       return (
         matchesSearch &&
-        (statusFilter === "All" ||
-          evaluationStatus === statusFilter) &&
+        (statusFilter === "All" || evaluationStatus === statusFilter) &&
         (normalizedFilterRound === "All" ||
           normalizedInterviewRound === normalizedFilterRound)
       );
@@ -751,7 +719,7 @@ export default function RecruitmentEvaluations() {
         }
 
         return [criterion.key, score];
-      })
+      }),
     );
 
     setForm({
@@ -760,9 +728,7 @@ export default function RecruitmentEvaluations() {
       strengths: existing?.strengths ?? "",
       areasForImprovement: existing?.areasForImprovement ?? "",
       feedback: existing?.feedback ?? "",
-      recommendation: normalizeRecommendation(
-        existing?.recommendation
-      ),
+      recommendation: normalizeRecommendation(existing?.recommendation),
     });
 
     setSelectedInterview(interview);
@@ -782,12 +748,9 @@ export default function RecruitmentEvaluations() {
   const downloadCandidateCV = async (interview) => {
     const applicationId = interview?.applicationId;
 
-    if (
-      applicationId == null ||
-      String(applicationId).trim() === ""
-    ) {
+    if (applicationId == null || String(applicationId).trim() === "") {
       setNotice(
-        `Cannot download ${interview?.candidateName || "candidate"}'s CV because the interview response does not contain an application ID.`
+        `Cannot download ${interview?.candidateName || "candidate"}'s CV because the interview response does not contain an application ID.`,
       );
       setNoticeType("error");
       return;
@@ -795,7 +758,7 @@ export default function RecruitmentEvaluations() {
 
     if (typeof recruitmentApi?.downloadResume !== "function") {
       setNotice(
-        "recruitmentApi.downloadResume() is missing in src/services/api.js."
+        "recruitmentApi.downloadResume() is missing in src/services/api.js.",
       );
       setNoticeType("error");
       return;
@@ -808,17 +771,16 @@ export default function RecruitmentEvaluations() {
       const blob = await recruitmentApi.downloadResume(applicationId);
 
       if (!(blob instanceof Blob) || blob.size === 0) {
-        throw new Error(
-          "The server returned an empty or invalid CV file."
-        );
+        throw new Error("The server returned an empty or invalid CV file.");
       }
 
       const fileUrl = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
 
-      const candidateName = (
-        interview.candidateName || "Candidate"
-      ).replace(/[^a-z0-9_-]/gi, "_");
+      const candidateName = (interview.candidateName || "Candidate").replace(
+        /[^a-z0-9_-]/gi,
+        "_",
+      );
 
       const extension = blob.type.includes("pdf") ? "pdf" : "file";
 
@@ -829,10 +791,7 @@ export default function RecruitmentEvaluations() {
       link.click();
       link.remove();
 
-      window.setTimeout(
-        () => window.URL.revokeObjectURL(fileUrl),
-        1000
-      );
+      window.setTimeout(() => window.URL.revokeObjectURL(fileUrl), 1000);
 
       setNotice(`CV download started for ${interview.candidateName}.`);
       setNoticeType("success");
@@ -840,7 +799,7 @@ export default function RecruitmentEvaluations() {
       console.error("Candidate CV download failed:", error);
       setNotice(
         error?.message ||
-          "Could not download the candidate's CV. Check your permissions and try again."
+          "Could not download the candidate's CV. Check your permissions and try again.",
       );
       setNoticeType("error");
     } finally {
@@ -853,7 +812,7 @@ export default function RecruitmentEvaluations() {
 
     if (!hasInterviewEnded(interview)) {
       setNotice(
-        "You can mark this interview as completed only after its scheduled date and time."
+        "You can mark this interview as completed only after its scheduled date and time.",
       );
       setNoticeType("warning");
       return;
@@ -873,11 +832,9 @@ export default function RecruitmentEvaluations() {
       return;
     }
 
-    if (
-      typeof recruitmentApi?.updateInterviewStatus !== "function"
-    ) {
+    if (typeof recruitmentApi?.updateInterviewStatus !== "function") {
       setNotice(
-        "recruitmentApi.updateInterviewStatus() is missing in src/services/api.js."
+        "recruitmentApi.updateInterviewStatus() is missing in src/services/api.js.",
       );
       setNoticeType("error");
       return;
@@ -887,23 +844,20 @@ export default function RecruitmentEvaluations() {
     setNotice("");
 
     try {
-      await recruitmentApi.updateInterviewStatus(
-        interview.id,
-        "COMPLETED"
-      );
+      await recruitmentApi.updateInterviewStatus(interview.id, "COMPLETED");
 
       setInterviews((previous) =>
         previous.map((item) =>
           String(item.id) === String(interview.id)
             ? { ...item, status: "COMPLETED" }
-            : item
-        )
+            : item,
+        ),
       );
 
       setSelectedInterview((current) =>
         current && String(current.id) === String(interview.id)
           ? { ...current, status: "COMPLETED" }
-          : current
+          : current,
       );
 
       setNotice("Interview marked as completed successfully.");
@@ -927,28 +881,25 @@ export default function RecruitmentEvaluations() {
     const interviewId = selectedInterview.id;
     const criteria = getCriteriaForRound(selectedInterview.round);
 
-    if (
-      interviewId == null ||
-      !/^\d+$/.test(String(interviewId))
-    ) {
+    if (interviewId == null || !/^\d+$/.test(String(interviewId))) {
       setNotice(
-        "This interview has no valid numeric backend ID. Check the interview API response."
+        "This interview has no valid numeric backend ID. Check the interview API response.",
       );
       setNoticeType("error");
       return;
     }
 
     if (getEvaluation(interviewId)?.submitted) {
-      setNotice("You have already submitted your evaluation for this interview.");
+      setNotice(
+        "You have already submitted your evaluation for this interview.",
+      );
       setNoticeType("warning");
       return;
     }
 
-    if (
-      normalizeInterviewStatus(selectedInterview.status) !== "COMPLETED"
-    ) {
+    if (normalizeInterviewStatus(selectedInterview.status) !== "COMPLETED") {
       setNotice(
-        "You can submit an evaluation only after the interview is marked as completed."
+        "You can submit an evaluation only after the interview is marked as completed.",
       );
       setNoticeType("warning");
       return;
@@ -956,7 +907,7 @@ export default function RecruitmentEvaluations() {
 
     if (criteria.length !== 6) {
       setNotice(
-        "The interview round is not recognised. Please check the interview round name returned by the backend."
+        "The interview round is not recognised. Please check the interview round name returned by the backend.",
       );
       setNoticeType("error");
       return;
@@ -968,9 +919,7 @@ export default function RecruitmentEvaluations() {
       const score = Number(form.criteriaScores?.[criterion.key]);
 
       if (!Number.isInteger(score) || score < 1 || score > 5) {
-        setNotice(
-          `Please provide a score from 1 to 5 for ${criterion.label}.`
-        );
+        setNotice(`Please provide a score from 1 to 5 for ${criterion.label}.`);
         setNoticeType("warning");
         return;
       }
@@ -979,15 +928,11 @@ export default function RecruitmentEvaluations() {
     }
 
     const strengths = String(form.strengths ?? "").trim();
-    const areasForImprovement = String(
-      form.areasForImprovement ?? ""
-    ).trim();
+    const areasForImprovement = String(form.areasForImprovement ?? "").trim();
     const feedback = String(form.feedback ?? "").trim();
 
     if (!strengths) {
-      setNotice(
-        "Please describe the candidate's strengths before submitting."
-      );
+      setNotice("Please describe the candidate's strengths before submitting.");
       setNoticeType("warning");
       return;
     }
@@ -998,31 +943,23 @@ export default function RecruitmentEvaluations() {
       return;
     }
 
-    if (
-      !RECOMMENDATIONS.some(
-        (item) => item.value === form.recommendation
-      )
-    ) {
+    if (!RECOMMENDATIONS.some((item) => item.value === form.recommendation)) {
       setNotice("Please select a valid recommendation.");
       setNoticeType("warning");
       return;
     }
 
-    if (
-      typeof recruitmentApi?.submitInterviewEvaluation !== "function"
-    ) {
+    if (typeof recruitmentApi?.submitInterviewEvaluation !== "function") {
       setNotice(
-        "recruitmentApi.submitInterviewEvaluation() is missing in src/services/api.js."
+        "recruitmentApi.submitInterviewEvaluation() is missing in src/services/api.js.",
       );
       setNoticeType("error");
       return;
     }
 
     const averageScore =
-      Object.values(criteriaScores).reduce(
-        (sum, score) => sum + score,
-        0
-      ) / criteria.length;
+      Object.values(criteriaScores).reduce((sum, score) => sum + score, 0) /
+      criteria.length;
 
     // These property names match InterviewEvaluationRequestDTO.java.
     // The backend identifies the logged-in interviewer from authentication.
@@ -1038,15 +975,12 @@ export default function RecruitmentEvaluations() {
     setNotice("");
 
     try {
-      await recruitmentApi.submitInterviewEvaluation(
-        interviewId,
-        payload
-      );
+      await recruitmentApi.submitInterviewEvaluation(interviewId, payload);
 
       setSelectedInterview(null);
 
       setNotice(
-        `Your evaluation was submitted successfully. Average score: ${averageScore.toFixed(2)}/5.`
+        `Your evaluation was submitted successfully. Average score: ${averageScore.toFixed(2)}/5.`,
       );
       setNoticeType("success");
 
@@ -1054,8 +988,7 @@ export default function RecruitmentEvaluations() {
     } catch (error) {
       console.error("Failed to submit interview evaluation:", error);
       setNotice(
-        error?.message ||
-          "Could not submit your evaluation to the backend."
+        error?.message || "Could not submit your evaluation to the backend.",
       );
       setNoticeType("error");
     } finally {
@@ -1064,7 +997,7 @@ export default function RecruitmentEvaluations() {
   };
 
   const submittedCount = interviews.filter(
-    (interview) => getStatus(interview) === "Submitted"
+    (interview) => getStatus(interview) === "Submitted",
   ).length;
 
   const pendingCount = interviews.length - submittedCount;
@@ -1073,7 +1006,7 @@ export default function RecruitmentEvaluations() {
     ? selectedCriteria.reduce(
         (sum, criterion) =>
           sum + Number(form.criteriaScores?.[criterion.key] || 0),
-        0
+        0,
       ) / selectedCriteria.length
     : 0;
 
@@ -1184,10 +1117,7 @@ export default function RecruitmentEvaluations() {
               disabled={loading}
               className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50"
             >
-              <RefreshCw
-                size={15}
-                className={loading ? "animate-spin" : ""}
-              />
+              <RefreshCw size={15} className={loading ? "animate-spin" : ""} />
               Refresh
             </button>
           </div>
@@ -1195,9 +1125,7 @@ export default function RecruitmentEvaluations() {
 
         <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
           <div className="border-b border-slate-100 px-5 py-4">
-            <h2 className="font-bold text-slate-800">
-              My Assigned Interviews
-            </h2>
+            <h2 className="font-bold text-slate-800">My Assigned Interviews</h2>
             <p className="mt-1 text-sm text-slate-500">
               Only interviews assigned to the logged-in interviewer are shown.
               Your evaluation is private to your account.
@@ -1211,10 +1139,7 @@ export default function RecruitmentEvaluations() {
             </div>
           ) : filteredInterviews.length === 0 ? (
             <div className="px-6 py-14 text-center">
-              <ClipboardCheck
-                className="mx-auto text-slate-400"
-                size={30}
-              />
+              <ClipboardCheck className="mx-auto text-slate-400" size={30} />
               <h3 className="mt-3 font-semibold text-slate-800">
                 No assigned interviews found
               </h3>
@@ -1243,8 +1168,9 @@ export default function RecruitmentEvaluations() {
                     const evaluationStatus = getStatus(interview);
                     const evaluation = getEvaluation(interview.id);
 
-                    const interviewStatus =
-                      normalizeInterviewStatus(interview.status);
+                    const interviewStatus = normalizeInterviewStatus(
+                      interview.status,
+                    );
 
                     const isCancelled = interviewStatus === "CANCELLED";
                     const isCompleted = interviewStatus === "COMPLETED";
@@ -1255,10 +1181,7 @@ export default function RecruitmentEvaluations() {
                       !isCompleted;
 
                     return (
-                      <tr
-                        key={interview.id}
-                        className="hover:bg-slate-50/70"
-                      >
+                      <tr key={interview.id} className="hover:bg-slate-50/70">
                         <td className="px-5 py-4">
                           <p className="font-semibold text-slate-800">
                             {interview.candidateName}
@@ -1363,8 +1286,7 @@ export default function RecruitmentEvaluations() {
                               type="button"
                               onClick={() => openEvaluation(interview)}
                               disabled={
-                                !isCompleted &&
-                                evaluationStatus !== "Submitted"
+                                !isCompleted && evaluationStatus !== "Submitted"
                               }
                               title={
                                 evaluationStatus === "Submitted"
@@ -1415,7 +1337,8 @@ export default function RecruitmentEvaluations() {
                     Interview Evaluation
                   </h2>
                   <p className="mt-1 text-sm text-slate-500">
-                    {selectedInterview.candidateName} · {selectedInterview.round}
+                    {selectedInterview.candidateName} ·{" "}
+                    {selectedInterview.round}
                   </p>
                 </div>
 
@@ -1462,7 +1385,7 @@ export default function RecruitmentEvaluations() {
                       icon={CheckCircle2}
                       label="Interview Status"
                       value={normalizeInterviewStatus(
-                        selectedInterview.status
+                        selectedInterview.status,
                       ).replace(/_/g, " ")}
                     />
                   </div>
@@ -1526,18 +1449,16 @@ export default function RecruitmentEvaluations() {
                   </div>
 
                   <div className="rounded-xl border border-slate-200 p-4">
-                    <p className="text-sm text-slate-500">Your Recommendation</p>
+                    <p className="text-sm text-slate-500">
+                      Your Recommendation
+                    </p>
                     <p className="mt-1 font-semibold">
                       {formatRecommendation(form.recommendation)}
                     </p>
 
-                    <p className="mt-3 text-sm text-slate-500">
-                      Average score
-                    </p>
+                    <p className="mt-3 text-sm text-slate-500">Average score</p>
                     <p className="mt-1 text-xl font-bold text-indigo-600">
-                      {Number(
-                        selectedEvaluation.averageScore ?? 0
-                      ).toFixed(2)}
+                      {Number(selectedEvaluation.averageScore ?? 0).toFixed(2)}
                       /5
                     </p>
                   </div>
@@ -1579,7 +1500,7 @@ export default function RecruitmentEvaluations() {
                       icon={CheckCircle2}
                       label="Interview Status"
                       value={normalizeInterviewStatus(
-                        selectedInterview.status
+                        selectedInterview.status,
                       ).replace(/_/g, " ")}
                     />
                   </div>
@@ -1587,8 +1508,8 @@ export default function RecruitmentEvaluations() {
                   {normalizeInterviewStatus(selectedInterview.status) !==
                     "COMPLETED" && (
                     <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
-                      Mark this interview as completed after its scheduled
-                      date and time before submitting an evaluation.
+                      Mark this interview as completed after its scheduled date
+                      and time before submitting an evaluation.
                     </div>
                   )}
 
@@ -1605,8 +1526,8 @@ export default function RecruitmentEvaluations() {
 
                     {selectedCriteria.length !== 6 ? (
                       <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
-                        This interview round is not recognised. Please check
-                        the interview round value returned by the backend.
+                        This interview round is not recognised. Please check the
+                        interview round value returned by the backend.
                       </div>
                     ) : (
                       <div className="space-y-4">
@@ -1661,8 +1582,8 @@ export default function RecruitmentEvaluations() {
                         </span>
                       </div>
                       <p className="mt-1 text-xs text-indigo-600">
-                        The average is calculated from the six criteria for
-                        this interview round.
+                        The average is calculated from the six criteria for this
+                        interview round.
                       </p>
                     </div>
                   </div>
