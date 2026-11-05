@@ -54,6 +54,7 @@ public class JobVacancyService {
         vacancy = vacancyRepo.save(vacancy);
         auditService.logAction("VACANCY_CREATED", "JobVacancy", vacancy.getId(),
                 "Created vacancy draft: " + vacancy.getTitle(), companyRef);
+        notificationService.vacancyCreated(vacancy);
         log.info("Vacancy {} created for company {}", vacancy.getId(), companyRef);
         return toDto(vacancy);
     }
@@ -210,6 +211,7 @@ public class JobVacancyService {
         vacancy = vacancyRepo.save(vacancy);
         auditService.logAction("VACANCY_CLOSED", "JobVacancy", vacancy.getId(),
                 "Closed vacancy: " + vacancy.getTitle(), companyRef);
+        notificationService.vacancyClosed(vacancy);
         return toDto(vacancy);
     }
 
@@ -228,6 +230,7 @@ public class JobVacancyService {
             auditService.logAction("VACANCY_AUTO_CLOSED", "JobVacancy", vacancy.getId(),
                     "Auto-closed after deadline " + vacancy.getDeadline() + ": " + vacancy.getTitle(),
                     vacancy.getCompanyRef());
+            notificationService.vacancyClosed(vacancy);
         }
 
         if (!expired.isEmpty()) {

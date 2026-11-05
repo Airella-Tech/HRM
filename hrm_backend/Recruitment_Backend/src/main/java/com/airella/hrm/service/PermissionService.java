@@ -2,6 +2,7 @@ package com.airella.hrm.service;
 
 import com.airella.hrm.config.AuthenticatedUser;
 import com.airella.hrm.dto.MyAccessDTO;
+import com.airella.hrm.dto.UserSummaryDTO;
 import com.airella.hrm.model.RecruitmentPermission;
 import com.airella.hrm.repository.InterviewEvaluatorAssignmentRepository;
 import com.airella.hrm.repository.RecruitmentPermissionRepository;
@@ -41,27 +42,47 @@ public class PermissionService {
     private final UserRecruitmentRoleRepository userRoleRepo;
     private final InterviewEvaluatorAssignmentRepository evaluatorRepo;
     private final RecruitmentPermissionRepository permissionRepo;
+    private final EmployeeDirectory employeeDirectory;
+
+    @org.springframework.beans.factory.annotation.Autowired
+    public PermissionService(UserRecruitmentRoleRepository userRoleRepo,
+                             InterviewEvaluatorAssignmentRepository evaluatorRepo,
+                             RecruitmentPermissionRepository permissionRepo,
+                             EmployeeDirectory employeeDirectory) {
+        this.userRoleRepo = userRoleRepo;
+        this.evaluatorRepo = evaluatorRepo;
+        this.permissionRepo = permissionRepo;
+        this.employeeDirectory = employeeDirectory;
+    }
 
     public PermissionService(UserRecruitmentRoleRepository userRoleRepo,
                              InterviewEvaluatorAssignmentRepository evaluatorRepo,
                              RecruitmentPermissionRepository permissionRepo) {
-        this.userRoleRepo = userRoleRepo;
-        this.evaluatorRepo = evaluatorRepo;
-        this.permissionRepo = permissionRepo;
+        this(userRoleRepo, evaluatorRepo, permissionRepo, null);
     }
 
-    /** True for ADMIN and HR_MANAGER: they keep full recruitment access, unchanged. */
+    /** True for ADMIN only: full access across all recruitment capabilities without explicit role assignments. */
     public boolean isFullAccess() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         return auth != null && auth.getAuthorities().stream()
-                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN") || a.getAuthority().equals("ROLE_HR_MANAGER"));
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
     }
 
     /** The logged-in user's id in User_Backend (from the JWT), or null. */
     public Long currentUserId() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth != null && auth.getPrincipal() instanceof AuthenticatedUser user) {
-            return user.userId();
+            if (user.userId() != null) {
+                return user.userId();
+            }
+            if (employeeDirectory != null && user.email() != null && !user.email().isBlank()) {
+                try {
+                    return employeeDirectory.findByEmailIgnoreCase(user.email())
+                            .map(UserSummaryDTO::getId)
+                            .orElse(null);
+                } catch (Exception ignored) {
+                }
+            }
         }
         return null;
     }
@@ -121,10 +142,16 @@ public class PermissionService {
 
     /**
      * True if the current user can configure recruitment roles and assign users.
-     * Full access users (ADMIN, HR_MANAGER) or users holding RECRUITMENT_ROLE_ADMIN pass.
+     * Allowed for: ADMIN, HR_MANAGER, or any user holding RECRUITMENT_ROLE_ADMIN permission.
      */
     public boolean canManageRoles() {
-        return isFullAccess() || has("RECRUITMENT_ROLE_ADMIN");
+        if (isFullAccess()) {
+            return true;
+        }
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        boolean isHr = auth != null && auth.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_HR_MANAGER"));
+        return isHr || has("RECRUITMENT_ROLE_ADMIN");
     }
 
     /** True if the user is assigned to this interview (full-access users always pass). */
@@ -174,7 +201,8 @@ public class PermissionService {
         Set<String> permissions = currentPermissions();
         Long userId = currentUserId();
         List<String> roles = (full || userId == null) ? List.of() : userRoleRepo.findRoleNamesByUserId(userId);
-        return new MyAccessDTO(full, full || !permissions.isEmpty(), permissions, roles);
+        boolean hasRecruitmentAccess = full || !roles.isEmpty() || permissions.stream().anyMatch(p -> !p.equals("RECRUITMENT_ROLE_ADMIN"));
+        return new MyAccessDTO(full, hasRecruitmentAccess, permissions, roles);
     }
 
     /**

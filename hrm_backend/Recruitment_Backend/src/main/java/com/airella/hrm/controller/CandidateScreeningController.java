@@ -81,7 +81,7 @@ public class CandidateScreeningController {
      * Retrieve the latest detailed screening result for a candidate application.
      */
     @GetMapping("/results/{applicationId}")
-    @PreAuthorize("@perm.has('APPLICATION_VIEW')")
+    @PreAuthorize("@perm.hasAny('APPLICATION_VIEW', 'APPLICATION_SCREEN', 'APPLICATION_SHORTLIST', 'INTERVIEW_SCHEDULE', 'INTERVIEW_ASSIGN', 'INTERVIEW_PROGRESS_VIEW', 'INTERVIEW_DECIDE')")
     public ResponseEntity<ApiResponse<CandidateScreeningResultDTO>> getResultForApplication(@PathVariable Long applicationId) {
         CandidateScreeningResultDTO result = screeningService.getLatestResultForApplication(applicationId);
         return ResponseEntity.ok(ApiResponse.success(result, "Screening result retrieved successfully"));
@@ -91,7 +91,7 @@ public class CandidateScreeningController {
      * Retrieve latest screening results for all candidates of a vacancy.
      */
     @GetMapping("/vacancy/{vacancyId}/results")
-    @PreAuthorize("@perm.has('APPLICATION_VIEW')")
+    @PreAuthorize("@perm.hasAny('APPLICATION_VIEW', 'APPLICATION_SCREEN', 'APPLICATION_SHORTLIST', 'INTERVIEW_SCHEDULE', 'INTERVIEW_ASSIGN', 'INTERVIEW_PROGRESS_VIEW', 'INTERVIEW_DECIDE')")
     public ResponseEntity<ApiResponse<List<CandidateScreeningResultDTO>>> getResultsForVacancy(@PathVariable Long vacancyId) {
         List<CandidateScreeningResultDTO> results = screeningService.getResultsForVacancy(vacancyId);
         return ResponseEntity.ok(ApiResponse.success(results, "Screening results retrieved for vacancy"));

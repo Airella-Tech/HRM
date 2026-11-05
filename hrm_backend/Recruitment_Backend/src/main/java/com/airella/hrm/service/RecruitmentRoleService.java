@@ -29,8 +29,29 @@ public class RecruitmentRoleService {
     private final EmployeeDirectory employeeDirectory;
     private final AuthService authService;
     private final AuditService auditService;
+    private final RecruitmentNotificationService notificationService;
     private final org.springframework.transaction.support.TransactionTemplate transactionTemplate;
     private static final Object SEED_LOCK = new Object();
+
+    @org.springframework.beans.factory.annotation.Autowired
+    public RecruitmentRoleService(RecruitmentRoleRepository roleRepo,
+                                  UserRecruitmentRoleRepository userRoleRepo,
+                                  RecruitmentPermissionRepository permissionRepo,
+                                  EmployeeDirectory employeeDirectory,
+                                  AuthService authService,
+                                  AuditService auditService,
+                                  RecruitmentNotificationService notificationService,
+                                  org.springframework.transaction.PlatformTransactionManager transactionManager) {
+        this.roleRepo = roleRepo;
+        this.userRoleRepo = userRoleRepo;
+        this.permissionRepo = permissionRepo;
+        this.employeeDirectory = employeeDirectory;
+        this.authService = authService;
+        this.auditService = auditService;
+        this.notificationService = notificationService;
+        this.transactionTemplate = new org.springframework.transaction.support.TransactionTemplate(transactionManager);
+        this.transactionTemplate.setPropagationBehavior(org.springframework.transaction.TransactionDefinition.PROPAGATION_REQUIRES_NEW);
+    }
 
     public RecruitmentRoleService(RecruitmentRoleRepository roleRepo,
                                   UserRecruitmentRoleRepository userRoleRepo,
@@ -39,14 +60,7 @@ public class RecruitmentRoleService {
                                   AuthService authService,
                                   AuditService auditService,
                                   org.springframework.transaction.PlatformTransactionManager transactionManager) {
-        this.roleRepo = roleRepo;
-        this.userRoleRepo = userRoleRepo;
-        this.permissionRepo = permissionRepo;
-        this.employeeDirectory = employeeDirectory;
-        this.authService = authService;
-        this.auditService = auditService;
-        this.transactionTemplate = new org.springframework.transaction.support.TransactionTemplate(transactionManager);
-        this.transactionTemplate.setPropagationBehavior(org.springframework.transaction.TransactionDefinition.PROPAGATION_REQUIRES_NEW);
+        this(roleRepo, userRoleRepo, permissionRepo, employeeDirectory, authService, auditService, null, transactionManager);
     }
 
     // ── Permissions ──────────────────────────────────────────────
@@ -148,6 +162,9 @@ public class RecruitmentRoleService {
         RecruitmentRole saved = roleRepo.save(role);
         auditService.logAction("CREATE", "RecruitmentRole", saved.getId(),
                 "Created recruitment role: " + saved.getRoleName(), authService.getCurrentCompanyRef());
+        if (notificationService != null) {
+            notificationService.roleCreated(saved);
+        }
 
         return RecruitmentRoleDTO.fromEntity(saved, 0);
     }
@@ -178,6 +195,9 @@ public class RecruitmentRoleService {
         long count = userRoleRepo.countByRoleId(updated.getId());
         auditService.logAction("UPDATE", "RecruitmentRole", updated.getId(),
                 "Updated recruitment role: " + updated.getRoleName(), authService.getCurrentCompanyRef());
+        if (notificationService != null) {
+            notificationService.rolePermissionsUpdated(updated);
+        }
 
         return RecruitmentRoleDTO.fromEntity(updated, count);
     }
@@ -232,7 +252,7 @@ public class RecruitmentRoleService {
                     .map(a -> RecruitmentRoleDTO.fromEntity(a.getRole()))
                     .toList();
 
-            boolean isFullAccess = "ADMIN".equalsIgnoreCase(emp.getRole()) || "HR_MANAGER".equalsIgnoreCase(emp.getRole());
+            boolean isFullAccess = "ADMIN".equalsIgnoreCase(emp.getRole());
             Set<String> permissions = isFullAccess
                     ? new TreeSet<>(allSystemPermissionCodes)
                     : userAssignments.stream()
@@ -267,7 +287,7 @@ public class RecruitmentRoleService {
                 .map(a -> RecruitmentRoleDTO.fromEntity(a.getRole()))
                 .toList();
 
-        boolean isFullAccess = "ADMIN".equalsIgnoreCase(emp.getRole()) || "HR_MANAGER".equalsIgnoreCase(emp.getRole());
+        boolean isFullAccess = "ADMIN".equalsIgnoreCase(emp.getRole());
         Set<String> permissions = isFullAccess
                 ? permissionRepo.findAll().stream().map(RecruitmentPermission::getPermissionCode).collect(Collectors.toCollection(TreeSet::new))
                 : userAssignments.stream()
@@ -309,6 +329,12 @@ public class RecruitmentRoleService {
             }
         }
 
+        if (notificationService != null) {
+            for (RecruitmentRole role : roles) {
+                notificationService.roleAssigned(emp.getId(), role.getRoleName(), companyId, companyRef);
+            }
+        }
+
         return getUserRoleAssignments(emp.getId());
     }
 
@@ -319,9 +345,13 @@ public class RecruitmentRoleService {
         UserRecruitmentRole assignment = userRoleRepo.findByCompanyIdAndUserIdAndRoleId(companyId, userId, roleId)
                 .orElseThrow(() -> new ResourceNotFoundException("UserRecruitmentRole", "roleId", roleId));
 
+        String removedRoleName = assignment.getRole().getRoleName();
         userRoleRepo.delete(assignment);
         auditService.logAction("UNASSIGN", "UserRecruitmentRole", roleId,
-                "Removed recruitment role '" + assignment.getRole().getRoleName() + "' from user ID " + userId, companyRef);
+                "Removed recruitment role '" + removedRoleName + "' from user ID " + userId, companyRef);
+        if (notificationService != null) {
+            notificationService.roleRemoved(userId, removedRoleName, companyId, companyRef);
+        }
     }
 
     public UserRecruitmentAssignmentDTO updateUserRoles(Long userId, List<Long> roleIds) {
@@ -349,6 +379,13 @@ public class RecruitmentRoleService {
 
         auditService.logAction("UPDATE_ASSIGNMENTS", "UserRecruitmentRole", userId,
                 "Updated recruitment roles for " + emp.getFullName() + " (" + emp.getEmail() + ")", companyRef);
+
+        if (notificationService != null) {
+            List<String> roleNames = (roleIds != null && !roleIds.isEmpty())
+                    ? roleRepo.findAllById(roleIds).stream().map(RecruitmentRole::getRoleName).toList()
+                    : List.of();
+            notificationService.rolesUpdated(userId, roleNames, companyId, companyRef);
+        }
 
         return getUserRoleAssignments(userId);
     }

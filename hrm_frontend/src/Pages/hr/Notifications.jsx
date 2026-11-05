@@ -13,8 +13,23 @@ const TOPICS = [
   ["leave", "Leave"],
   ["allowance", "Allowance"],
   ["birthday", "Birthdays"],
+  ["recruitment", "Recruitment"],
 ];
-const topicOf = (n) => (n.category.startsWith("LEAVE") ? "leave" : n.category.startsWith("ALLOWANCE") ? "allowance" : isBirthday(n) ? "birthday" : "other");
+
+const topicOf = (n) =>
+  n.category?.startsWith("LEAVE")
+    ? "leave"
+    : n.category?.startsWith("ALLOWANCE")
+      ? "allowance"
+      : isBirthday(n)
+        ? "birthday"
+        : n.category?.startsWith("VACANCY") ||
+          n.category?.startsWith("INTERVIEW") ||
+          n.category?.startsWith("CANDIDATE") ||
+          n.category?.startsWith("OFFER") ||
+          n.category?.startsWith("ROLE")
+          ? "recruitment"
+          : "other";
 
 /**
  * HR notifications page — everything that reached the header bell, newest first.
@@ -100,4 +115,5 @@ const Notifications = () => {
     </PageLayout>
   );
 };
+
 export default Notifications;

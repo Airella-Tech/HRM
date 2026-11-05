@@ -1,8 +1,9 @@
 /**
  * RoleSwitch — toggle that lets a user jump between the HR dashboard,
  * the Employee dashboard and the Recruitment area without logging out.
- * HR managers always see all three. Other users see Employee, plus Recruitment
- * when they have recruitment access. Renders nothing for anyone else.
+ * HR managers always see HR and Employee.
+ * Recruitment area is ONLY shown when the user (HR Manager or Employee)
+ * has been assigned a recruitment role or operational permissions.
  *
  * Props:
  *   mode     : 'hr' | 'employee' | 'recruitment' — which side is currently being viewed
@@ -34,8 +35,15 @@ export const RoleSwitch = ({
 
   // Shared, cached answer — no request of its own on every page
   const access = useRecruitmentAccess();
-  const canRecruit =
-    access?.hasRecruitmentAccess === true || access?.fullAccess === true;
+
+  // A user (HR Manager or Employee) only has recruitment area access if they have assigned recruitment roles
+  // or operational recruitment permissions beyond just RECRUITMENT_ROLE_ADMIN.
+  const hasAssignedRecruitmentRole =
+    (Array.isArray(access?.roles) && access.roles.length > 0) ||
+    (Array.isArray(access?.permissions) &&
+      access.permissions.some((p) => p !== "RECRUITMENT_ROLE_ADMIN"));
+
+  const canRecruit = access?.fullAccess === true || hasAssignedRecruitmentRole;
 
   if (!isHRManager && !canRecruit) return null;
 
@@ -60,8 +68,8 @@ export const RoleSwitch = ({
       active: "bg-gradient-to-br from-sky-500 to-cyan-500 text-white shadow",
     },
 
-    // HR managers always get Recruitment; others only when they have access
-    ...(isHRManager || canRecruit
+    // Recruitment area only shown when the user actually has an assigned recruitment role!
+    ...(canRecruit
       ? [
           {
             key: "recruitment",
@@ -74,16 +82,14 @@ export const RoleSwitch = ({
       : []),
   ];
 
-  // In the sidebar the options are always stacked (and icon-only when collapsed) so nothing overflows
-  const stacked = sidebar && (collapsed || options.length > 1);
+  // Three or more options (or a collapsed sidebar) are stacked so nothing overflows
+  const stacked = sidebar && (collapsed || options.length > 2);
 
   return (
     <div
-      className={`${
-        sidebar
-          ? `flex ${stacked ? "flex-col" : "flex-row"} items-stretch bg-white/5 rounded-xl p-1 gap-1`
-          : "flex items-center bg-gray-100 rounded-xl p-1 gap-1"
-      }`}
+      className={`${sidebar
+        ? `flex ${stacked ? "flex-col" : "flex-row"} items-stretch bg-white/5 rounded-xl p-1 gap-1`
+        : "flex items-center bg-gray-100 rounded-xl p-1 gap-1"}`}
       role="group"
       aria-label="Switch dashboard"
     >
@@ -102,11 +108,7 @@ export const RoleSwitch = ({
             aria-pressed={isActive}
             title={`Switch to ${label} dashboard`}
             className={`flex ${stacked ? "w-full" : "flex-1"} ${
-              collapsed
-                ? "justify-center"
-                : stacked
-                  ? "justify-start"
-                  : "justify-center"
+              collapsed ? "justify-center" : stacked ? "justify-start" : "justify-center"
             } items-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold transition-all ${
               isActive
                 ? active

@@ -50,18 +50,32 @@ public class CandidateApplicationService {
     private final EmailService emailService;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
+    private final RecruitmentNotificationService notificationService;
+
+    @org.springframework.beans.factory.annotation.Autowired
     public CandidateApplicationService(CandidateApplicationRepository applicationRepo,
             CandidateApplicationDocumentRepository documentRepo,
             JobVacancyRepository vacancyRepo,
             AuthService authService,
             AuditService auditService,
-            EmailService emailService) {
+            EmailService emailService,
+            RecruitmentNotificationService notificationService) {
         this.applicationRepo = applicationRepo;
         this.documentRepo = documentRepo;
         this.vacancyRepo = vacancyRepo;
         this.authService = authService;
         this.auditService = auditService;
         this.emailService = emailService;
+        this.notificationService = notificationService;
+    }
+
+    public CandidateApplicationService(CandidateApplicationRepository applicationRepo,
+            CandidateApplicationDocumentRepository documentRepo,
+            JobVacancyRepository vacancyRepo,
+            AuthService authService,
+            AuditService auditService,
+            EmailService emailService) {
+        this(applicationRepo, documentRepo, vacancyRepo, authService, auditService, emailService, null);
     }
 
     // Public Application Submission & Database-Backed Document Storage
@@ -181,6 +195,15 @@ public class CandidateApplicationService {
                 "Candidate " + savedApp.getCandidateName() + " applied for '" + vacancy.getTitle() + "' [Tracking: "
                         + savedApp.getTrackingCode() + "]",
                 savedApp.getCompanyRef());
+
+        // Dispatch in-app recruitment notification
+        try {
+            if (notificationService != null) {
+                notificationService.candidateApplied(savedApp, vacancy);
+            }
+        } catch (Exception e) {
+            log.warn("Could not dispatch candidate application notification: {}", e.getMessage());
+        }
 
         // Send confirmation email with tracking code & direct tracking link
         try {

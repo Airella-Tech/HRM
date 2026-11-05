@@ -232,10 +232,6 @@ export default function RecruitmentCandidateShortlist() {
   const [savingConfig, setSavingConfig] = useState(false);
   const [configSaveError, setConfigSaveError] = useState(null);
 
-  // Job Vacancy Details Modal
-const [selectedVacancyModal, setSelectedVacancyModal] = useState(null);
-
-
   // Pre-Run Screening & Confirm Shortlist confirmation dialogs
   const [pendingScreeningVacancy, setPendingScreeningVacancy] = useState(null);
   const [pendingConfirmVacancy, setPendingConfirmVacancy] = useState(null);
@@ -248,6 +244,8 @@ const [selectedVacancyModal, setSelectedVacancyModal] = useState(null);
   const [selectedReason, setSelectedReason] = useState(REJECTION_REASONS[0]);
   const [customReason, setCustomReason] = useState("");
 
+  // Selected Vacancy Modal (Job Vacancy Details like Public Career Page)
+  const [selectedVacancyModal, setSelectedVacancyModal] = useState(null);
   // Load applications and vacancies
   const fetchData = useCallback(async (isRefresh = false) => {
     if (isRefresh) setRefreshing(true);
@@ -561,7 +559,7 @@ const [selectedVacancyModal, setSelectedVacancyModal] = useState(null);
           };
         });
 
-        // If auto-shortlist was disabled, stage recommended candidates for manual review
+
 
         if (autoShortlistedCount > 0) {
           setVacancyAlerts((prev) => ({

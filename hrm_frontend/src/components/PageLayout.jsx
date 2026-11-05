@@ -118,7 +118,7 @@ const NAV = {
       name: "View Applications",
       icon: FileText,
       path: "/recruitment/applications",
-      requiresAny: ["APPLICATION_VIEW", "VIEW_APPLICATIONS"],
+      requiresAny: ["APPLICATION_VIEW", "APPLICATION_SCREEN", "APPLICATION_SHORTLIST", "VIEW_APPLICATIONS"],
     },
     {
       name: "Review Applications",
@@ -164,7 +164,7 @@ const NAV = {
      name: "Interview Evaluation Review",
      icon: CheckCircle2,
      path: "/recruitment/evaluation-review",
-     requiresAny: ["INTERVIEW_DECIDE"],
+     requiresAny: ["INTERVIEW_DECIDE", "INTERVIEW_SCHEDULE"],
     },
 
     // Job Offers
@@ -295,7 +295,7 @@ export const PageLayout = ({
     role !== "recruiter"
       ? null
       : sharedAccess ||
-        (storedRole === "HR_MANAGER" || storedRole === "ADMIN"
+        (storedRole === "ADMIN"
           ? { fullAccess: true, hasRecruitmentAccess: true, permissions: [] }
           : null);
 
