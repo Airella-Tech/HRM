@@ -10,7 +10,7 @@ import { CareersLayout, DeadlineMeter, Notice } from "./careersShared";
 import { errorText, formatSalary, isNew } from "../../utils/careersFormat";
 
 const focusRing =
-  "focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2";
+  "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2";
 
 const SkeletonRow = () => (
   <div className="px-5 py-5 sm:px-6 animate-pulse motion-reduce:animate-none">
@@ -85,7 +85,7 @@ export default function Careers() {
       <h1 className="text-3xl sm:text-5xl font-bold tracking-tight leading-[1.1] max-w-2xl">
         Find your next role
       </h1>
-      <p className="mt-3 text-indigo-100/80 max-w-xl">
+      <p className="mt-3 text-primary-100/80 max-w-xl">
         Browse the positions open right now, and apply before the deadline.
       </p>
       <div className="relative mt-6 max-w-2xl">
@@ -210,7 +210,7 @@ export default function Careers() {
 
                   <ChevronRight
                     size={20}
-                    className="hidden sm:block text-slate-300 group-hover:text-indigo-500 group-hover:translate-x-0.5 transition motion-reduce:transition-none"
+                    className="hidden sm:block text-slate-300 group-hover:text-primary-500 group-hover:translate-x-0.5 transition motion-reduce:transition-none"
                   />
                 </Link>
               );
