@@ -32,7 +32,7 @@ const formatTime = (value) => {
 };
 
 const selectCls =
-  "rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-800 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100";
+  "rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-800 focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-100";
 
 const AuditLog = () => {
   const [logs, setLogs] = useState([]);
