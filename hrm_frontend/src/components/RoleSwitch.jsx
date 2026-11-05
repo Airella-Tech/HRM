@@ -11,16 +11,7 @@
  */
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { Briefcase, UserRound, UsersRound } from "lucide-react";
-import { useRecruitmentAccess } from "../utils/useRecruitmentAccess";
-
-const getStoredUser = () => {
-  try {
-    return JSON.parse(localStorage.getItem("user") || "{}");
-  } catch {
-    return {};
-  }
-};
+import { useAreaOptions } from "../utils/useAreaOptions";
 
 export const RoleSwitch = ({
   mode = "hr",
@@ -28,53 +19,11 @@ export const RoleSwitch = ({
   collapsed = false,
 }) => {
   const navigate = useNavigate();
+  const options = useAreaOptions();
 
-  const user = getStoredUser();
-  const isHRManager = user?.role === "HR_MANAGER";
+  if (options.length === 0) return null;
 
-  // Shared, cached answer — no request of its own on every page
-  const access = useRecruitmentAccess();
-  const canRecruit =
-    access?.hasRecruitmentAccess === true || access?.fullAccess === true;
-
-  if (!isHRManager && !canRecruit) return null;
-
-  const options = [
-    ...(isHRManager
-      ? [
-          {
-            key: "hr",
-            label: "HR",
-            icon: Briefcase,
-            path: "/hr/dashboard",
-            active: "bg-teal-500 text-white shadow",
-          },
-        ]
-      : []),
-
-    {
-      key: "employee",
-      label: "Employee",
-      icon: UserRound,
-      path: "/employee/dashboard",
-      active: "bg-gradient-to-br from-sky-500 to-cyan-500 text-white shadow",
-    },
-
-    // HR managers always get Recruitment; others only when they have access
-    ...(isHRManager || canRecruit
-      ? [
-          {
-            key: "recruitment",
-            label: "Recruitment",
-            icon: UsersRound,
-            path: "/recruitment/dashboard",
-            active: "bg-violet-600 text-white shadow",
-          },
-        ]
-      : []),
-  ];
-
-  // In the sidebar the options are always stacked (and icon-only when collapsed) so nothing overflows
+  // In the sidebar the options are always stacked (icon-only when collapsed) so nothing overflows
   const stacked = sidebar && (collapsed || options.length > 1);
 
   return (
