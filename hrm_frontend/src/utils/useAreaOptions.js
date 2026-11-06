@@ -2,8 +2,10 @@
  * useAreaOptions — the areas (HR / Employee / Recruitment) the logged-in user
  * may switch to. Returns an empty array when the user has no switch at all.
  *
- *  - HR managers always get HR, Employee and Recruitment.
- *  - Everyone else gets Employee, plus Recruitment when they have recruitment access.
+ *  - HR managers always get HR and Employee.
+ *  - Recruitment is only offered to users who have recruitment access, as decided
+ *    by the backend (full access, an assigned recruitment role, or an operational
+ *    permission).
  */
 import { Briefcase, UserRound, UsersRound } from "lucide-react";
 import { useRecruitmentAccess } from "./useRecruitmentAccess";
@@ -22,8 +24,13 @@ export const useAreaOptions = () => {
 
   // Shared, cached answer — no request of its own on every page
   const access = useRecruitmentAccess();
-  const canRecruit =
-    access?.hasRecruitmentAccess === true || access?.fullAccess === true;
+
+  // The backend decides who has recruitment access (full access, an assigned role, or an
+  // operational permission). While the answer is still loading, an HR Manager is assumed
+  // to have it, so the menu doesn't jump when it arrives.
+  const canRecruit = access
+    ? access.fullAccess === true || access.hasRecruitmentAccess === true
+    : isHRManager;
 
   if (!isHRManager && !canRecruit) return [];
 
@@ -46,13 +53,18 @@ export const useAreaOptions = () => {
       path: "/employee/dashboard",
       active: "bg-gradient-to-br from-sky-500 to-cyan-500 text-white shadow",
     },
-    {
-      key: "recruitment",
-      label: "Recruitment",
-      icon: UsersRound,
-      path: "/recruitment/dashboard",
-      active: "bg-primary-600 text-white shadow",
-    },
+    // Recruitment area only shown when the user actually has recruitment access
+    ...(canRecruit
+      ? [
+          {
+            key: "recruitment",
+            label: "Recruitment",
+            icon: UsersRound,
+            path: "/recruitment/dashboard",
+            active: "bg-primary-600 text-white shadow",
+          },
+        ]
+      : []),
   ];
 };
 
