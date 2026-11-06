@@ -1355,7 +1355,7 @@ export default function RecruitmentInterviews() {
       "Total Interviews",
       stats.total,
       CalendarDays,
-      "bg-indigo-50 text-indigo-600",
+      "bg-primary-50 text-primary-600",
     ],
     ["Scheduled", stats.scheduled, CalendarCheck, "bg-blue-50 text-blue-600"],
     ["Completed", stats.completed, CheckCircle2, "bg-green-50 text-green-600"],
@@ -1371,14 +1371,14 @@ export default function RecruitmentInterviews() {
         <div className="flex flex-wrap items-center gap-2">
           <button
             onClick={() => navigate("/recruiter/interview-emails")}
-            className="rounded-xl border border-indigo-200 bg-indigo-50 px-3 py-3 text-sm font-semibold text-indigo-700 hover:bg-indigo-100"
+            className="rounded-xl border border-primary-200 bg-primary-50 px-3 py-3 text-sm font-semibold text-primary-700 hover:bg-primary-100"
           >
             <Mail className="mr-2 inline" size={16} />
             Interview Emails
           </button>
           <button
             onClick={() => navigate("/recruitment/shortlisted-candidates")}
-            className="rounded-xl bg-indigo-600 px-3 py-3 text-sm font-semibold text-white hover:bg-indigo-700"
+            className="rounded-xl bg-primary-600 px-3 py-3 text-sm font-semibold text-white hover:bg-primary-700"
           >
             <CalendarCheck className="mr-2 inline" size={16} />
             Schedule Interview
@@ -1454,13 +1454,13 @@ export default function RecruitmentInterviews() {
             <div className="flex gap-2">
               <button
                 onClick={() => setMode("list")}
-                className={`inline-flex items-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-semibold ${mode === "list" ? "border-indigo-600 bg-indigo-50 text-indigo-700" : "border-slate-200 text-slate-600"}`}
+                className={`inline-flex items-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-semibold ${mode === "list" ? "border-primary-600 bg-primary-50 text-primary-700" : "border-slate-200 text-slate-600"}`}
               >
                 <List size={17} /> List
               </button>
               <button
                 onClick={() => setMode("calendar")}
-                className={`inline-flex items-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-semibold ${mode === "calendar" ? "border-indigo-600 bg-indigo-50 text-indigo-700" : "border-slate-200 text-slate-600"}`}
+                className={`inline-flex items-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-semibold ${mode === "calendar" ? "border-primary-600 bg-primary-50 text-primary-700" : "border-slate-200 text-slate-600"}`}
               >
                 <CalendarRange size={17} /> Calendar
               </button>
@@ -1500,7 +1500,7 @@ export default function RecruitmentInterviews() {
                     <button
                       key={view}
                       onClick={() => setCalendarView(view)}
-                      className={`rounded-lg border px-4 py-2 text-sm font-semibold capitalize ${calendarView === view ? "border-indigo-600 bg-indigo-600 text-white" : "border-slate-200 text-slate-600"}`}
+                      className={`rounded-lg border px-4 py-2 text-sm font-semibold capitalize ${calendarView === view ? "border-primary-600 bg-primary-600 text-white" : "border-slate-200 text-slate-600"}`}
                     >
                       {view}
                     </button>
@@ -1530,7 +1530,7 @@ export default function RecruitmentInterviews() {
                             })}
                           </p>
                           <p
-                            className={`mt-1 flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold ${key === today ? "bg-indigo-600 text-white" : "text-slate-800"}`}
+                            className={`mt-1 flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold ${key === today ? "bg-primary-600 text-white" : "text-slate-800"}`}
                           >
                             {date.getDate()}
                           </p>
@@ -1538,7 +1538,7 @@ export default function RecruitmentInterviews() {
                         <button
                           onClick={() => openCreate(key)}
                           aria-label={`Schedule on ${formatDate(key)}`}
-                          className="rounded-lg p-1.5 text-slate-400 hover:bg-indigo-50 hover:text-indigo-600"
+                          className="rounded-lg p-1.5 text-slate-400 hover:bg-primary-50 hover:text-primary-600"
                         >
                           <Plus size={15} />
                         </button>
@@ -1548,7 +1548,7 @@ export default function RecruitmentInterviews() {
                           <button
                             key={item.id}
                             onClick={() => setSelected(item)}
-                            className="block w-full rounded-lg border border-indigo-100 bg-indigo-50 px-2 py-2 text-left text-indigo-800"
+                            className="block w-full rounded-lg border border-primary-100 bg-primary-50 px-2 py-2 text-left text-primary-800"
                           >
                             <span className="block truncate text-xs font-bold">
                               {formatTime(item.time)} {item.candidate}
@@ -1656,7 +1656,7 @@ export default function RecruitmentInterviews() {
                         <tr key={item.id} className="hover:bg-slate-50/80">
                           <td className="px-5 py-4">
                             <div className="flex items-center gap-3">
-                              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-indigo-100 text-sm font-bold text-indigo-700">
+                              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary-100 text-sm font-bold text-primary-700">
                                 {initials(item.candidate)}
                               </div>
                               <div>
@@ -1673,7 +1673,7 @@ export default function RecruitmentInterviews() {
                             <p className="font-medium text-slate-800">
                               {item.vacancy}
                             </p>
-                            <span className="mt-1 inline-flex rounded-md bg-violet-50 px-2 py-1 text-xs text-violet-700">
+                            <span className="mt-1 inline-flex rounded-md bg-primary-50 px-2 py-1 text-xs text-primary-700">
                               {item.round}
                             </span>
                           </td>
@@ -1696,7 +1696,7 @@ export default function RecruitmentInterviews() {
                           </td>
                           <td className="px-5 py-4">
                             <span
-                              className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ${online ? "bg-indigo-50 text-indigo-700" : "bg-emerald-50 text-emerald-700"}`}
+                              className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ${online ? "bg-primary-50 text-primary-700" : "bg-emerald-50 text-emerald-700"}`}
                             >
                               {online ? (
                                 <Video size={14} />
@@ -1710,7 +1710,7 @@ export default function RecruitmentInterviews() {
                                 href={item.meetingLink}
                                 target="_blank"
                                 rel="noreferrer"
-                                className="mt-2 flex items-center gap-1 text-xs text-indigo-600"
+                                className="mt-2 flex items-center gap-1 text-xs text-primary-600"
                               >
                                 <LinkIcon size={13} /> Open meeting link
                               </a>
@@ -1750,7 +1750,7 @@ export default function RecruitmentInterviews() {
                                 }}
                                 title="View details"
                                 aria-label={`View details for ${item.candidate}`}
-                                className="rounded-lg p-2 text-slate-500 hover:bg-indigo-50 hover:text-indigo-600"
+                                className="rounded-lg p-2 text-slate-500 hover:bg-primary-50 hover:text-primary-600"
                               >
                                 <MoreHorizontal size={18} />
                               </button>
@@ -1914,7 +1914,7 @@ export default function RecruitmentInterviews() {
                                 setInterviewerPickerOpen(false);
                                 setModalOpen(true);
                               }}
-                              className="rounded-lg bg-indigo-600 px-3 py-2 text-xs font-semibold text-white"
+                              className="rounded-lg bg-primary-600 px-3 py-2 text-xs font-semibold text-white"
                             >
                               Schedule Interview
                             </button>
@@ -2076,14 +2076,14 @@ export default function RecruitmentInterviews() {
                         setInterviewerPickerOpen((open) => !open);
                         setInterviewerSearch("");
                       }}
-                      className={`flex min-h-[50px] w-full flex-wrap items-center gap-2 rounded-xl border bg-white px-3 py-2.5 text-left transition ${interviewerPickerOpen ? "border-indigo-500 ring-2 ring-indigo-100" : "border-slate-300 hover:border-slate-400"}`}
+                      className={`flex min-h-[50px] w-full flex-wrap items-center gap-2 rounded-xl border bg-white px-3 py-2.5 text-left transition ${interviewerPickerOpen ? "border-primary-500 ring-2 ring-primary-100" : "border-slate-300 hover:border-slate-400"}`}
                     >
                       {form.interviewers.length ? (
                         <div className="flex flex-1 flex-wrap items-center gap-2">
                           {form.interviewers.map((person) => (
                             <span
                               key={person}
-                              className="inline-flex max-w-full items-center gap-1.5 rounded-lg border border-indigo-100 bg-indigo-50 py-1 pl-2.5 pr-1.5 text-sm font-medium text-indigo-700"
+                              className="inline-flex max-w-full items-center gap-1.5 rounded-lg border border-primary-100 bg-primary-50 py-1 pl-2.5 pr-1.5 text-sm font-medium text-primary-700"
                             >
                               <UserRound size={14} className="shrink-0" />
                               <span className="truncate">{person}</span>
@@ -2105,7 +2105,7 @@ export default function RecruitmentInterviews() {
                                     removeInterviewer(person);
                                   }
                                 }}
-                                className="ml-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-md text-indigo-500 hover:bg-indigo-200 hover:text-indigo-800"
+                                className="ml-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-md text-primary-500 hover:bg-primary-200 hover:text-primary-800"
                               >
                                 <X size={13} />
                               </span>
@@ -2143,7 +2143,7 @@ export default function RecruitmentInterviews() {
                               }
                               placeholder="Search employees..."
                               aria-label="Search employees"
-                              className="w-full rounded-lg border border-slate-200 py-2.5 pl-9 pr-3 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+                              className="w-full rounded-lg border border-slate-200 py-2.5 pl-9 pr-3 text-sm outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-100"
                             />
                           </div>
                           <div className="mt-3 flex items-center justify-between gap-3">
@@ -2154,7 +2154,7 @@ export default function RecruitmentInterviews() {
                               <button
                                 type="button"
                                 onClick={clearInterviewers}
-                                className="text-xs font-semibold text-indigo-600 hover:text-indigo-800"
+                                className="text-xs font-semibold text-primary-600 hover:text-primary-800"
                               >
                                 Clear selection
                               </button>
@@ -2197,10 +2197,10 @@ export default function RecruitmentInterviews() {
                                 role="option"
                                 aria-selected={isSelected}
                                 onClick={() => toggleInterviewer(person)}
-                                className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left transition ${isSelected ? "bg-indigo-50 text-indigo-800" : "text-slate-700 hover:bg-slate-50"}`}
+                                className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left transition ${isSelected ? "bg-primary-50 text-primary-800" : "text-slate-700 hover:bg-slate-50"}`}
                               >
                                 <span
-                                  className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-bold ${isSelected ? "bg-indigo-100 text-indigo-700" : "bg-slate-100 text-slate-600"}`}
+                                  className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-bold ${isSelected ? "bg-primary-100 text-primary-700" : "bg-slate-100 text-slate-600"}`}
                                 >
                                   {initials(person.name)}
                                 </span>
@@ -2215,7 +2215,7 @@ export default function RecruitmentInterviews() {
                                   </span>
                                 </span>
                                 <span
-                                  className={`flex h-5 w-5 shrink-0 items-center justify-center rounded border ${isSelected ? "border-indigo-600 bg-indigo-600 text-white" : "border-slate-300 bg-white text-transparent"}`}
+                                  className={`flex h-5 w-5 shrink-0 items-center justify-center rounded border ${isSelected ? "border-primary-600 bg-primary-600 text-white" : "border-slate-300 bg-white text-transparent"}`}
                                 >
                                   <Check size={13} strokeWidth={3} />
                                 </span>
@@ -2249,7 +2249,7 @@ export default function RecruitmentInterviews() {
                           <button
                             type="button"
                             onClick={() => setInterviewerPickerOpen(false)}
-                            className="rounded-lg bg-indigo-600 px-4 py-2 text-xs font-semibold text-white hover:bg-indigo-700"
+                            className="rounded-lg bg-primary-600 px-4 py-2 text-xs font-semibold text-white hover:bg-primary-700"
                           >
                             Done
                           </button>
@@ -2273,7 +2273,7 @@ export default function RecruitmentInterviews() {
                             target: { name: "interviewType", value: "Online" },
                           })
                         }
-                        className={`rounded-xl border p-3 text-sm font-semibold ${form.interviewType === "Online" ? "border-indigo-500 bg-indigo-50 text-indigo-700" : "border-slate-200"}`}
+                        className={`rounded-xl border p-3 text-sm font-semibold ${form.interviewType === "Online" ? "border-primary-500 bg-primary-50 text-primary-700" : "border-slate-200"}`}
                       >
                         <Video className="mr-2 inline" size={17} />
                         Online
@@ -2370,7 +2370,7 @@ export default function RecruitmentInterviews() {
                   <button
                     type="submit"
                     disabled={saving}
-                    className="rounded-xl bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60"
+                    className="rounded-xl bg-primary-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     <CalendarCheck className="mr-2 inline" size={17} />
                     {saving
@@ -2639,7 +2639,7 @@ export default function RecruitmentInterviews() {
                       <button
                         type="submit"
                         disabled={saving}
-                        className="rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
+                        className="rounded-xl bg-primary-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
                       >
                         <Save className="mr-1 inline" size={15} />
                         {saving ? "Saving..." : "Save Changes"}
@@ -2691,7 +2691,7 @@ export default function RecruitmentInterviews() {
                             href={selected.meetingLink}
                             target="_blank"
                             rel="noreferrer"
-                            className="mt-2 flex items-center gap-2 break-all text-sm text-indigo-600"
+                            className="mt-2 flex items-center gap-2 break-all text-sm text-primary-600"
                           >
                             <LinkIcon size={16} />
                             {selected.meetingLink}
@@ -2735,7 +2735,7 @@ export default function RecruitmentInterviews() {
                           <button
                             key={status}
                             onClick={() => updateStatus(selected.id, status)}
-                            className={`rounded-lg border px-3 py-2 text-xs font-semibold ${selected.status === status ? "border-indigo-600 bg-indigo-50 text-indigo-700" : "border-slate-200"}`}
+                            className={`rounded-lg border px-3 py-2 text-xs font-semibold ${selected.status === status ? "border-primary-600 bg-primary-50 text-primary-700" : "border-slate-200"}`}
                           >
                             {status}
                           </button>
@@ -2761,7 +2761,7 @@ export default function RecruitmentInterviews() {
                         .map((entry) => (
                           <div
                             key={entry.id}
-                            className="mb-3 border-l-2 border-indigo-200 pl-3"
+                            className="mb-3 border-l-2 border-primary-200 pl-3"
                           >
                             <p className="text-sm font-semibold">
                               {entry.action}
@@ -2811,7 +2811,7 @@ export default function RecruitmentInterviews() {
               <div className="flex items-center justify-between border-b p-5">
                 <div>
                   <h2 className="flex items-center gap-2 text-xl font-bold">
-                    <History className="text-indigo-600" />
+                    <History className="text-primary-600" />
                     Interview History
                   </h2>
                   <p className="mt-1 text-sm text-slate-500">
@@ -2853,7 +2853,7 @@ export default function RecruitmentInterviews() {
                   )
                   .map((entry) => (
                     <div key={entry.id} className="flex gap-3 border-b pb-4">
-                      <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary-50 text-primary-600">
                         <History size={18} />
                       </div>
                       <div>
