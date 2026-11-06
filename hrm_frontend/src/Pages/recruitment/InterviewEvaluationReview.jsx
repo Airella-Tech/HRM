@@ -886,7 +886,7 @@ export default function InterviewEvaluationReview() {
           {/* Header */}
           <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
             <div>
-              <div className="flex items-center gap-2 text-sm font-medium text-indigo-600">
+              <div className="flex items-center gap-2 text-sm font-medium text-primary-600">
                 <ClipboardCheck size={17} />
                 Recruitment Management
               </div>
@@ -966,7 +966,7 @@ export default function InterviewEvaluationReview() {
                 </span>
 
                 <CalendarDays
-                  className="text-indigo-500"
+                  className="text-primary-500"
                   size={21}
                 />
               </div>
@@ -1035,14 +1035,14 @@ export default function InterviewEvaluationReview() {
                   value={search}
                   onChange={(event) => setSearch(event.target.value)}
                   placeholder="Search candidate or vacancy..."
-                  className="w-full rounded-lg border border-slate-300 py-2.5 pl-10 pr-4 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+                  className="w-full rounded-lg border border-slate-300 py-2.5 pl-10 pr-4 text-sm outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-100"
                 />
               </div>
 
               <select
                 value={roundFilter}
                 onChange={(event) => setRoundFilter(event.target.value)}
-                className="rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm outline-none focus:border-indigo-500"
+                className="rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm outline-none focus:border-primary-500"
               >
                 <option value="ALL">All Interview Rounds</option>
 
@@ -1132,7 +1132,7 @@ export default function InterviewEvaluationReview() {
                           <tr key={id} className="hover:bg-slate-50">
                             <td className="px-5 py-4">
                               <div className="flex items-center gap-3">
-                                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-indigo-50 text-indigo-600">
+                                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary-50 text-primary-600">
                                   <UserRound size={17} />
                                 </div>
 
@@ -1147,7 +1147,7 @@ export default function InterviewEvaluationReview() {
                             </td>
 
                             <td className="px-5 py-4">
-                              <span className="rounded-full bg-indigo-50 px-3 py-1 text-xs font-medium text-indigo-700">
+                              <span className="rounded-full bg-primary-50 px-3 py-1 text-xs font-medium text-primary-700">
                                 {getRoundName(interview)}
                               </span>
                             </td>
@@ -1185,7 +1185,7 @@ export default function InterviewEvaluationReview() {
                               <button
                                 type="button"
                                 onClick={() => openReview(interview)}
-                                className="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-3 py-2 text-xs font-semibold text-white hover:bg-indigo-700"
+                                className="inline-flex items-center gap-2 rounded-lg bg-primary-600 px-3 py-2 text-xs font-semibold text-white hover:bg-primary-700"
                               >
                                 <Eye size={15} />
                                 View Reviews
@@ -1218,7 +1218,7 @@ export default function InterviewEvaluationReview() {
                         </div>
 
                         <div className="flex flex-wrap items-center gap-2 text-xs">
-                          <span className="rounded-full bg-indigo-50 px-3 py-1 text-indigo-700">
+                          <span className="rounded-full bg-primary-50 px-3 py-1 text-primary-700">
                             {getRoundName(interview)}
                           </span>
 
@@ -1232,7 +1232,7 @@ export default function InterviewEvaluationReview() {
                         <button
                           type="button"
                           onClick={() => openReview(interview)}
-                          className="w-full rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white"
+                          className="w-full rounded-lg bg-primary-600 px-4 py-2.5 text-sm font-semibold text-white"
                         >
                           View Evaluations
                         </button>
@@ -1255,7 +1255,7 @@ export default function InterviewEvaluationReview() {
               {/* Modal header */}
               <div className="flex items-start justify-between border-b border-slate-200 p-5 sm:p-6">
                 <div>
-                  <div className="flex items-center gap-2 text-sm font-medium text-indigo-600">
+                  <div className="flex items-center gap-2 text-sm font-medium text-primary-600">
                     <ClipboardCheck size={17} />
                     Manager Evaluation Review
                   </div>
@@ -1373,7 +1373,7 @@ export default function InterviewEvaluationReview() {
                               className="flex w-full items-center justify-between gap-3 bg-slate-50 p-4 text-left hover:bg-slate-100"
                             >
                               <div className="flex items-center gap-3">
-                                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-indigo-100 text-indigo-700">
+                                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary-100 text-primary-700">
                                   <UserRound size={19} />
                                 </div>
 
@@ -1537,7 +1537,7 @@ export default function InterviewEvaluationReview() {
                                     Interviewer Recommendation:
                                   </span>
 
-                                  <span className="rounded-full bg-indigo-50 px-3 py-1 text-sm font-semibold text-indigo-700">
+                                  <span className="rounded-full bg-primary-50 px-3 py-1 text-sm font-semibold text-primary-700">
                                     {getRecommendation(evaluation)}
                                   </span>
                                 </div>
@@ -1551,7 +1551,7 @@ export default function InterviewEvaluationReview() {
                 </div>
 
                 {/* Manager decision */}
-                <div className="rounded-xl border border-indigo-200 bg-indigo-50/50 p-4 sm:p-5">
+                <div className="rounded-xl border border-primary-200 bg-primary-50/50 p-4 sm:p-5">
                   <h3 className="font-bold text-slate-900">
                     Recruitment Manager Decision
                   </h3>
@@ -1651,7 +1651,7 @@ export default function InterviewEvaluationReview() {
                             setDecisionComments(event.target.value)
                           }
                           placeholder="Add your review comments..."
-                          className="w-full rounded-lg border border-slate-300 bg-white p-3 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+                          className="w-full rounded-lg border border-slate-300 bg-white p-3 text-sm outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-100"
                         />
                       </div>
 
@@ -1667,7 +1667,7 @@ export default function InterviewEvaluationReview() {
                             setDecisionReason(event.target.value)
                           }
                           placeholder="Required only if you reject the candidate..."
-                          className="w-full rounded-lg border border-slate-300 bg-white p-3 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+                          className="w-full rounded-lg border border-slate-300 bg-white p-3 text-sm outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-100"
                         />
                       </div>
 
