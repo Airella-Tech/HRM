@@ -91,6 +91,9 @@ public class CandidateApplication {
     @Column(name = "criteria_json", columnDefinition = "TEXT")
     private String criteriaJson;
 
+    @Column(name = "readiness_status", length = 50)
+    private String readinessStatus;
+
     @Column(name = "rejection_reason", length = 500)
     private String rejectionReason;
 

@@ -2,6 +2,7 @@ import React, {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 import {
@@ -24,15 +25,51 @@ import {
 import PageLayout from "../../components/PageLayout";
 import { recruitmentApi } from "../../services/api";
 
-const CRITERIA = [
-  { key: "technicalSkills", label: "Technical Knowledge" },
-  { key: "roleSpecificSkills", label: "Role-specific Skills" },
-  { key: "professionalism", label: "Professionalism" },
-  { key: "communication", label: "Communication" },
-  { key: "problemSolving", label: "Problem Solving" },
-  { key: "experience", label: "Relevant Experience" },
-  { key: "cultureFit", label: "Teamwork & Culture Fit" },
-];
+// Each round has exactly six criteria.
+// These keys must match InterviewEvaluationService.java.
+const CRITERIA_BY_ROUND = {
+  TECHNICAL: [
+    { key: "programmingKnowledge", label: "Programming Knowledge" },
+    { key: "technicalSkills", label: "Technical Skills" },
+    { key: "problemSolvingAbility", label: "Problem-Solving Ability" },
+    { key: "codingAndLogicalThinking", label: "Coding & Logical Thinking" },
+    { key: "practicalExperience", label: "Practical Experience" },
+    { key: "technicalAssessment", label: "Overall Technical Assessment" },
+  ],
+
+  HR: [
+    { key: "communicationSkills", label: "Communication Skills" },
+    { key: "confidence", label: "Confidence" },
+    { key: "teamwork", label: "Teamwork" },
+    { key: "adaptability", label: "Adaptability" },
+    {
+      key: "salaryExpectationsAndCulturalFit",
+      label: "Salary Expectations & Cultural Fit",
+    },
+    { key: "behaviouralAssessment", label: "Behavioural Assessment" },
+  ],
+
+  "HIRING MANAGER": [
+    { key: "roleSpecificKnowledge", label: "Role-specific Knowledge" },
+    { key: "decisionMaking", label: "Decision Making" },
+    { key: "leadershipOwnership", label: "Leadership & Ownership" },
+    { key: "relevantWorkExperience", label: "Relevant Work Experience" },
+    { key: "jobRoleSuitability", label: "Job Role Suitability" },
+    { key: "strategicThinking", label: "Strategic Thinking" },
+  ],
+
+  FINAL: [
+    { key: "overallSuitability", label: "Overall Suitability" },
+    { key: "careerGoals", label: "Career Goals" },
+    { key: "longTermCommitment", label: "Long-term Commitment" },
+    { key: "professionalAttitude", label: "Professional Attitude" },
+    {
+      key: "finalHiringRecommendation",
+      label: "Final Hiring Recommendation",
+    },
+    { key: "finalAssessment", label: "Final Assessment" },
+  ],
+};
 
 const RECOMMENDATIONS = [
   { value: "STRONG_HIRE", label: "Strong Hire" },
@@ -43,7 +80,9 @@ const RECOMMENDATIONS = [
 ];
 
 const normalizeRecommendation = (value) => {
-  const raw = String(value ?? "").trim().toUpperCase();
+  const raw = String(value ?? "")
+    .trim()
+    .toUpperCase();
 
   const aliases = {
     STRONGLY_RECOMMEND: "STRONG_HIRE",
@@ -60,32 +99,69 @@ const normalizeRecommendation = (value) => {
 
   const normalized = aliases[raw] ?? raw;
 
-  return RECOMMENDATIONS.some(
-    (item) => item.value === normalized
-  )
+  return RECOMMENDATIONS.some((item) => item.value === normalized)
     ? normalized
     : "";
 };
 
+const normalizeRound = (round) => {
+  const value = String(round ?? "")
+    .trim()
+    .toUpperCase()
+    .replace(/[_-]+/g, " ")
+    .replace(/\s+/g, " ");
+
+  if (value.includes("TECHNICAL")) return "TECHNICAL";
+  if (value === "HR" || value.includes("HR INTERVIEW")) return "HR";
+  if (value.includes("HIRING MANAGER")) return "HIRING MANAGER";
+  if (value.includes("FINAL")) return "FINAL";
+
+  return null;
+};
+
+const getCriteriaForRound = (round) => {
+  const normalized = normalizeRound(round);
+  return normalized ? CRITERIA_BY_ROUND[normalized] : [];
+};
+
 const emptyEvaluation = () => ({
-  technicalSkills: 0,
-  roleSpecificSkills: 0,
-  professionalism: 0,
-  communication: 0,
-  problemSolving: 0,
-  experience: 0,
-  cultureFit: 0,
+  criteriaScores: {},
   strengths: "",
+  areasForImprovement: "",
   feedback: "",
   recommendation: "",
 });
+
+// Safely parse criteriaScores whether the API returns an object
+// or a JSON string.
+const parseCriteriaScores = (value) => {
+  let scores = value;
+
+  if (typeof scores === "string") {
+    try {
+      scores = JSON.parse(scores);
+    } catch {
+      return {};
+    }
+  }
+
+  if (!scores || typeof scores !== "object" || Array.isArray(scores)) {
+    return {};
+  }
+
+  return Object.fromEntries(
+    Object.entries(scores).map(([key, value]) => [
+      key,
+      value == null ? 0 : Number(value),
+    ]),
+  );
+};
 
 const unwrap = (response) => {
   let data = response;
 
   for (let i = 0; i < 8; i += 1) {
     if (Array.isArray(data)) return data;
-
     if (!data || typeof data !== "object") return [];
 
     const arrayKey = [
@@ -105,10 +181,7 @@ const unwrap = (response) => {
     }
 
     const nestedKey = ["result", "payload"].find(
-      (key) =>
-        data[key] &&
-        typeof data[key] === "object" &&
-        data[key] !== data
+      (key) => data[key] && typeof data[key] === "object" && data[key] !== data,
     );
 
     if (nestedKey) {
@@ -122,128 +195,6 @@ const unwrap = (response) => {
   return [];
 };
 
-const getCurrentUser = () => {
-  try {
-    return JSON.parse(localStorage.getItem("user") || "{}");
-  } catch {
-    return {};
-  }
-};
-
-const normalizeId = (value) => {
-  if (value == null || value === "") return null;
-
-  if (typeof value === "object") {
-    return normalizeId(
-      value.employeeId ??
-        value.employeeCode ??
-        value.employee?.employeeId ??
-        value.employee?.employeeCode ??
-        value.employee?.id ??
-        value.interviewerId ??
-        value.interviewerUserId ??
-        value.userId ??
-        value.id
-    );
-  }
-
-  return String(value).trim().toLowerCase() || null;
-};
-
-const getCurrentUserIds = (user) => {
-  const values = [
-    user?.employeeId,
-    user?.employeeCode,
-    user?.employee?.employeeId,
-    user?.employee?.employeeCode,
-    user?.employee?.id,
-    user?.userId,
-    user?.user?.userId,
-    user?.user?.id,
-    user?.id,
-  ];
-
-  return [
-    ...new Set(values.map(normalizeId).filter(Boolean)),
-  ];
-};
-
-const getEmployeeId = (user) =>
-  user?.employeeId ??
-  user?.employee?.employeeId ??
-  user?.employee?.id ??
-  user?.user?.employeeId ??
-  null;
-
-const getInterviewerIds = (item) => {
-  const assigned =
-    item?.interviewers ??
-    item?.assignedInterviewers ??
-    item?.interviewerAssignments ??
-    item?.assignments ??
-    item?.evaluators ??
-    item?.assignedEvaluators;
-
-  const extractIds = (entry) => {
-    if (entry == null) return [];
-
-    if (typeof entry !== "object") {
-      const id = normalizeId(entry);
-      return id ? [id] : [];
-    }
-
-    return [
-      entry.employeeId,
-      entry.employeeCode,
-      entry.employee?.employeeId,
-      entry.employee?.employeeCode,
-      entry.employee?.id,
-      entry.interviewerId,
-      entry.interviewerUserId,
-      entry.userId,
-      entry.interviewer?.employeeId,
-      entry.interviewer?.employeeCode,
-      entry.interviewer?.id,
-      entry.interviewer?.userId,
-      entry.assignedEmployee?.employeeId,
-      entry.assignedEmployee?.employeeCode,
-      entry.assignedEmployee?.id,
-      entry.assignedInterviewer?.employeeId,
-      entry.assignedInterviewer?.employeeCode,
-      entry.assignedInterviewer?.id,
-      entry.assignedInterviewer?.userId,
-      entry.id,
-    ]
-      .map(normalizeId)
-      .filter(Boolean);
-  };
-
-  const fromArray = Array.isArray(assigned)
-    ? assigned.flatMap(extractIds)
-    : assigned
-      ? extractIds(assigned)
-      : [];
-
-  const singleFields = [
-    item?.interviewerId,
-    item?.interviewerUserId,
-    item?.assignedInterviewerId,
-    item?.assignedEmployeeId,
-    item?.employeeId,
-    item?.interviewerEmployeeId,
-    item?.interviewer,
-    item?.assignedInterviewer,
-    item?.assignedEmployee,
-  ];
-
-  return [
-    ...new Set([
-      ...fromArray,
-      ...singleFields.flatMap(extractIds),
-    ]),
-  ];
-};
-
 const normalizeInterviewStatus = (status) =>
   String(status ?? "PENDING")
     .trim()
@@ -252,6 +203,7 @@ const normalizeInterviewStatus = (status) =>
 
 const normalizeInterview = (item) => {
   const candidate = item?.candidate ?? item?.applicant ?? {};
+
   const application =
     item?.application ??
     item?.jobApplication ??
@@ -260,11 +212,7 @@ const normalizeInterview = (item) => {
     {};
 
   const job =
-    item?.jobVacancy ??
-    item?.job ??
-    item?.vacancy ??
-    item?.position ??
-    {};
+    item?.jobVacancy ?? item?.job ?? item?.vacancy ?? item?.position ?? {};
 
   const interviewer =
     item?.interviewer ??
@@ -277,9 +225,7 @@ const normalizeInterview = (item) => {
     item?.applicantName ||
     candidate?.fullName ||
     candidate?.name ||
-    [candidate?.firstName, candidate?.lastName]
-      .filter(Boolean)
-      .join(" ");
+    [candidate?.firstName, candidate?.lastName].filter(Boolean).join(" ");
 
   const rawJobTitle =
     item?.jobTitle ||
@@ -297,10 +243,7 @@ const normalizeInterview = (item) => {
     item?.interviewType ??
     "Not specified";
 
-  const scheduledAt =
-    item?.scheduledAt ??
-    item?.interviewDateTime ??
-    "";
+  const scheduledAt = item?.scheduledAt ?? item?.interviewDateTime ?? "";
 
   const rawDate =
     item?.date ??
@@ -310,10 +253,7 @@ const normalizeInterview = (item) => {
     "";
 
   const rawTime =
-    item?.time ??
-    item?.interviewTime ??
-    item?.scheduledTime ??
-    "";
+    item?.time ?? item?.interviewTime ?? item?.scheduledTime ?? "";
 
   return {
     ...item,
@@ -326,12 +266,8 @@ const normalizeInterview = (item) => {
       null,
 
     candidateId:
-      item?.candidateId ??
-      candidate?.id ??
-      candidate?.candidateId ??
-      null,
+      item?.candidateId ?? candidate?.id ?? candidate?.candidateId ?? null,
 
-    // Required by downloadResume(): this must be the application ID.
     applicationId:
       item?.applicationId ??
       item?.application?.id ??
@@ -348,15 +284,9 @@ const normalizeInterview = (item) => {
       application?.applicationId ??
       null,
 
-    candidateName:
-      String(rawName ?? "").trim() || "Unnamed candidate",
-
-    jobTitle:
-      String(rawJobTitle ?? "").trim() ||
-      "Position not specified",
-
+    candidateName: String(rawName ?? "").trim() || "Unnamed candidate",
+    jobTitle: String(rawJobTitle ?? "").trim() || "Position not specified",
     round: String(round).replace(/_/g, " "),
-
     date: rawDate,
     time: rawTime,
 
@@ -367,29 +297,12 @@ const normalizeInterview = (item) => {
       "PENDING",
 
     interviewerName:
-      item?.interviewerName ??
-      interviewer?.fullName ??
-      interviewer?.name ??
-      "",
-
-    interviewerIds: getInterviewerIds(item),
+      item?.interviewerName ?? interviewer?.fullName ?? interviewer?.name ?? "",
   };
 };
 
 const normalizeEvaluation = (item) => {
   const status = normalizeInterviewStatus(item?.status);
-
-  const readNumber = (...values) => {
-    const value = values.find(
-      (entry) =>
-        entry !== undefined &&
-        entry !== null &&
-        entry !== ""
-    );
-
-    const number = Number(value ?? 0);
-    return Number.isFinite(number) ? number : 0;
-  };
 
   const interviewId =
     item?.interviewId ??
@@ -397,78 +310,49 @@ const normalizeEvaluation = (item) => {
     item?.interview?.interviewId ??
     null;
 
-  const technicalSkills = readNumber(
-    item?.technicalKnowledgeScore,
-    item?.technicalKnowledge,
-    item?.technicalSkills,
-    item?.technicalScore
+  const criteriaScores = parseCriteriaScores(item?.criteriaScores);
+
+  // Legacy fields are retained only for older evaluations.
+  const legacyScores = {
+    technicalKnowledge: Number(item?.technicalKnowledge ?? 0),
+    problemSolving: Number(item?.problemSolving ?? 0),
+    communication: Number(item?.communication ?? 0),
+    roleSpecificSkills: Number(item?.roleSpecificSkills ?? 0),
+    professionalism: Number(item?.professionalism ?? 0),
+  };
+
+  const scoreValues = Object.values(criteriaScores).filter(
+    (score) => Number.isFinite(score) && score > 0,
   );
 
-  const roleSpecificSkills = readNumber(
-    item?.roleSpecificSkillsScore,
-    item?.roleSpecificSkillScore,
-    item?.roleSpecificSkills,
-    item?.roleSpecificSkill,
-    item?.roleSkillsScore,
-    item?.roleSpecificScore
+  const legacyValues = Object.values(legacyScores).filter(
+    (score) => Number.isFinite(score) && score > 0,
   );
 
-  const professionalism = readNumber(
-    item?.professionalismScore,
-    item?.professionalism,
-    item?.professionalismRating
-  );
+  const averageFromScores = (values) =>
+    values.length
+      ? values.reduce((sum, score) => sum + score, 0) / values.length
+      : 0;
 
-  const communication = readNumber(
-    item?.communication,
-    item?.communicationScore,
-    item?.communicationSkillsScore
-  );
+  const averageScore =
+    item?.averageScore != null
+      ? Number(item.averageScore)
+      : averageFromScores(scoreValues.length ? scoreValues : legacyValues);
 
-  const problemSolving = readNumber(
-    item?.problemSolving,
-    item?.problemSolvingScore
-  );
-
-  const experience = readNumber(
-    item?.relevantExperienceScore,
-    item?.experience,
-    item?.experienceScore
-  );
-
-  const cultureFit = readNumber(
-    item?.cultureFit,
-    item?.teamworkScore,
-    item?.cultureFitScore
-  );
-
-  const scoreValues = [
-    technicalSkills,
-    roleSpecificSkills,
-    professionalism,
-    communication,
-    problemSolving,
-    experience,
-    cultureFit,
-  ].filter((score) => score > 0);
-
-  const averageScore = readNumber(
-    item?.averageScore,
-    item?.overallScore
-  );
+  const recommendation =
+    item?.recommendation ??
+    item?.hiringRecommendation ??
+    item?.recommendationStatus ??
+    item?.decision ??
+    "";
 
   return {
     ...item,
+
     id: item?.id ?? item?.evaluationId ?? null,
     interviewId,
-
-    technicalSkills,
-    roleSpecificSkills,
-    professionalism,
-    communication,
-    problemSolving,
-    experience,
-    cultureFit,
+    criteriaScores,
+    legacyScores,
 
     strengths:
       item?.strengths ??
@@ -476,22 +360,23 @@ const normalizeEvaluation = (item) => {
       item?.strengthsDescription ??
       "",
 
-    feedback: item?.feedback ?? item?.comments ?? "",
+    areasForImprovement:
+      item?.areasForImprovement ??
+      item?.weaknesses ??
+      item?.improvementAreas ??
+      "",
 
-    recommendation: normalizeRecommendation(
-      item?.recommendation
-    ),
+    feedback:
+      item?.comments ?? item?.feedback ?? item?.interviewerFeedback ?? "",
 
-    averageScore:
-      averageScore ||
-      (scoreValues.length
-        ? scoreValues.reduce((sum, score) => sum + score, 0) /
-          scoreValues.length
-        : 0),
+    recommendation: normalizeRecommendation(recommendation),
+
+    averageScore: Number.isFinite(averageScore) ? averageScore : 0,
 
     submitted:
       item?.submitted === true ||
-      status === "SUBMITTED",
+      status === "SUBMITTED" ||
+      status === "COMPLETED",
   };
 };
 
@@ -512,15 +397,11 @@ const formatDate = (value) => {
 
 const getScheduledDateTime = (interview) => {
   const dateValue = interview?.date;
-
   if (!dateValue) return null;
 
   if (String(dateValue).includes("T")) {
     const dateTime = new Date(dateValue);
-
-    return Number.isNaN(dateTime.getTime())
-      ? null
-      : dateTime;
+    return Number.isNaN(dateTime.getTime()) ? null : dateTime;
   }
 
   const datePart = String(dateValue).slice(0, 10);
@@ -528,22 +409,15 @@ const getScheduledDateTime = (interview) => {
   const time = timePart ? timePart.slice(0, 8) : "23:59:59";
 
   const dateTime = new Date(
-    `${datePart}T${
-      time.length === 5 ? `${time}:00` : time
-    }`
+    `${datePart}T${time.length === 5 ? `${time}:00` : time}`,
   );
 
-  return Number.isNaN(dateTime.getTime())
-    ? null
-    : dateTime;
+  return Number.isNaN(dateTime.getTime()) ? null : dateTime;
 };
 
 const hasInterviewEnded = (interview) => {
   const scheduledAt = getScheduledDateTime(interview);
-
-  return Boolean(
-    scheduledAt && Date.now() >= scheduledAt.getTime()
-  );
+  return Boolean(scheduledAt && Date.now() >= scheduledAt.getTime());
 };
 
 const formatRecommendation = (value) =>
@@ -567,9 +441,7 @@ function SummaryCard({ label, value, icon: Icon, color }) {
           <Icon size={20} />
         </div>
       </div>
-      <p className="mt-4 text-3xl font-bold text-slate-900">
-        {value}
-      </p>
+      <p className="mt-4 text-3xl font-bold text-slate-900">{value}</p>
     </div>
   );
 }
@@ -585,11 +457,7 @@ function StatusBadge({ status }) {
           : "bg-amber-50 text-amber-700"
       }`}
     >
-      {submitted ? (
-        <CheckCircle2 size={13} />
-      ) : (
-        <Clock size={13} />
-      )}
+      {submitted ? <CheckCircle2 size={13} /> : <Clock size={13} />}
       {status}
     </span>
   );
@@ -617,10 +485,7 @@ function InterviewStatusBadge({ status }) {
 function InfoItem({ icon: Icon, label, value }) {
   return (
     <div className="flex min-w-0 items-start gap-3 rounded-xl bg-slate-50 p-3">
-      <Icon
-        size={17}
-        className="mt-0.5 shrink-0 text-indigo-500"
-      />
+      <Icon size={17} className="mt-0.5 shrink-0 text-indigo-500" />
       <div className="min-w-0">
         <p className="text-xs text-slate-500">{label}</p>
         <p className="mt-1 break-words text-sm font-semibold text-slate-800">
@@ -632,191 +497,111 @@ function InfoItem({ icon: Icon, label, value }) {
 }
 
 export default function RecruitmentEvaluations() {
-  const [user] = useState(getCurrentUser);
-
-  const employeeId = getEmployeeId(user);
-
-  const currentUserIds = useMemo(
-    () => getCurrentUserIds(user),
-    [user]
-  );
-
   const [interviews, setInterviews] = useState([]);
   const [evaluations, setEvaluations] = useState([]);
+
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
   const [roundFilter, setRoundFilter] = useState("All");
+
   const [selectedInterview, setSelectedInterview] = useState(null);
   const [form, setForm] = useState(emptyEvaluation);
+
   const [notice, setNotice] = useState("");
   const [noticeType, setNoticeType] = useState("warning");
+
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+
   const [downloadingApplicationId, setDownloadingApplicationId] =
     useState(null);
+
   const [updatingStatusId, setUpdatingStatusId] = useState(null);
 
-  const loadData = useCallback(
-    async ({ silent = false } = {}) => {
-      if (!silent) setLoading(true);
+  // Prevent overlapping automatic refresh requests.
+  const loadingRequestRef = useRef(false);
 
-      try {
-        let rawInterviews = [];
-        let usingAssignedEndpoint = false;
+  const loadData = useCallback(async ({ silent = false } = {}) => {
+    if (loadingRequestRef.current) return;
 
-        if (
-          typeof recruitmentApi?.getMyAssignedInterviews ===
-          "function"
-        ) {
-          const response =
-            await recruitmentApi.getMyAssignedInterviews();
+    loadingRequestRef.current = true;
 
-          rawInterviews = unwrap(response);
-          usingAssignedEndpoint = true;
-        } else if (
-          typeof recruitmentApi?.getInterviews === "function"
-        ) {
-          const response = await recruitmentApi.getInterviews();
-          rawInterviews = unwrap(response);
-        } else {
-          throw new Error(
-            "Interview API methods are missing. Add getMyAssignedInterviews() to src/services/api.js."
-          );
-        }
+    if (!silent) setLoading(true);
 
-        const normalizedInterviews = rawInterviews
-          .filter(
-            (item) => item && typeof item === "object"
-          )
-          .map(normalizeInterview)
-          .filter(
-            (interview) =>
-              interview.id != null &&
-              String(interview.id).trim() !== ""
-          );
-
-        let visibleInterviews = [];
-
-        if (usingAssignedEndpoint) {
-          visibleInterviews = normalizedInterviews;
-        } else if (currentUserIds.length > 0) {
-          visibleInterviews = normalizedInterviews.filter(
-            (interview) =>
-              interview.interviewerIds.some((assignedId) =>
-                currentUserIds.includes(assignedId)
-              )
-          );
-        }
-
-        setInterviews(visibleInterviews);
-
-        let allEvaluations = [];
-
-        if (
-          typeof recruitmentApi?.getMyEvaluations === "function"
-        ) {
-          try {
-            allEvaluations = unwrap(
-              await recruitmentApi.getMyEvaluations()
-            );
-          } catch (error) {
-            console.warn(
-              "Could not load current employee evaluations:",
-              error
-            );
-          }
-        }
-
-        if (
-          allEvaluations.length === 0 &&
-          typeof recruitmentApi?.getInterviewEvaluations ===
-            "function"
-        ) {
-          const responses = await Promise.all(
-            visibleInterviews.map(async (interview) => {
-              if (!/^\d+$/.test(String(interview.id))) {
-                return [];
-              }
-
-              try {
-                return unwrap(
-                  await recruitmentApi.getInterviewEvaluations(
-                    interview.id
-                  )
-                );
-              } catch (error) {
-                console.warn(
-                  `Could not load evaluations for interview ${interview.id}:`,
-                  error
-                );
-                return [];
-              }
-            })
-          );
-
-          allEvaluations = responses.flat();
-        }
-
-        const normalizedEvaluations = allEvaluations
-          .filter(
-            (item) => item && typeof item === "object"
-          )
-          .map(normalizeEvaluation);
-
-        const uniqueEvaluations = Array.from(
-          new Map(
-            normalizedEvaluations.map(
-              (evaluation, index) => [
-                evaluation.id != null
-                  ? `id-${evaluation.id}`
-                  : `interview-${evaluation.interviewId}-record-${index}`,
-                evaluation,
-              ]
-            )
-          ).values()
+    try {
+      if (typeof recruitmentApi?.getMyAssignedInterviews !== "function") {
+        throw new Error(
+          "getMyAssignedInterviews() is missing from src/services/api.js.",
         );
-
-        setEvaluations(uniqueEvaluations);
-
-        if (visibleInterviews.length === 0 && !silent) {
-          if (
-            !usingAssignedEndpoint &&
-            currentUserIds.length === 0
-          ) {
-            setNotice(
-              "Your employee/user ID could not be found. Check the logged-in user object or add the assigned-interviews backend endpoint."
-            );
-          } else {
-            setNotice(
-              "No interviews are currently assigned to your account."
-            );
-          }
-
-          setNoticeType("warning");
-        } else if (!silent) {
-          setNotice("");
-        }
-      } catch (error) {
-        console.error(
-          "Failed to load interview evaluations:",
-          error
-        );
-
-        if (!silent) {
-          setInterviews([]);
-          setEvaluations([]);
-          setNotice(
-            error?.message ||
-              "Could not load interview data from the backend."
-          );
-          setNoticeType("error");
-        }
-      } finally {
-        if (!silent) setLoading(false);
       }
-    },
-    [currentUserIds]
-  );
+
+      // This endpoint must return only interviews assigned to the logged-in interviewer.
+      const interviewResponse = await recruitmentApi.getMyAssignedInterviews();
+
+      const normalizedInterviews = unwrap(interviewResponse)
+        .filter((item) => item && typeof item === "object")
+        .map(normalizeInterview)
+        .filter(
+          (interview) =>
+            interview.id != null && String(interview.id).trim() !== "",
+        );
+
+      setInterviews(normalizedInterviews);
+
+      // IMPORTANT:
+      // Use only the current interviewer's evaluation endpoint.
+      // Do not fall back to getInterviewEvaluations(), because it may
+      // expose evaluations submitted by other interviewers.
+      if (typeof recruitmentApi?.getMyEvaluations !== "function") {
+        throw new Error(
+          "getMyEvaluations() is missing from src/services/api.js. Configure a backend endpoint that returns only the logged-in interviewer's evaluations.",
+        );
+      }
+
+      const evaluationResponse = await recruitmentApi.getMyEvaluations();
+
+      const normalizedEvaluations = unwrap(evaluationResponse)
+        .filter((item) => item && typeof item === "object")
+        .map(normalizeEvaluation)
+        .filter((evaluation) => evaluation.interviewId != null);
+
+      // Keep one evaluation per interview for the logged-in interviewer.
+      // The backend endpoint must enforce this user-level restriction.
+      const uniqueEvaluations = Array.from(
+        new Map(
+          normalizedEvaluations.map((evaluation) => [
+            String(evaluation.interviewId),
+            evaluation,
+          ]),
+        ).values(),
+      );
+
+      setEvaluations(uniqueEvaluations);
+
+      if (normalizedInterviews.length === 0 && !silent) {
+        setNotice("No interviews are currently assigned to your account.");
+        setNoticeType("warning");
+      } else if (!silent) {
+        setNotice("");
+      }
+    } catch (error) {
+      console.error("Failed to load interview evaluations:", error);
+
+      if (!silent) {
+        setInterviews([]);
+        setEvaluations([]);
+        setNotice(
+          error?.message ||
+            "Could not load assigned interviews from the backend.",
+        );
+        setNoticeType("error");
+      }
+    } finally {
+      loadingRequestRef.current = false;
+
+      if (!silent) setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
     loadData();
@@ -828,22 +613,20 @@ export default function RecruitmentEvaluations() {
     return () => window.clearInterval(intervalId);
   }, [loadData]);
 
+  // This lookup is safe only because evaluations are loaded from
+  // getMyEvaluations(), which must be scoped to the logged-in interviewer.
   const getEvaluation = useCallback(
     (interviewId) =>
       evaluations.find(
-        (evaluation) =>
-          String(evaluation.interviewId) ===
-          String(interviewId)
+        (evaluation) => String(evaluation.interviewId) === String(interviewId),
       ),
-    [evaluations]
+    [evaluations],
   );
 
   const getStatus = useCallback(
     (interview) =>
-      getEvaluation(interview.id)?.submitted
-        ? "Submitted"
-        : "Pending",
-    [getEvaluation]
+      getEvaluation(interview.id)?.submitted ? "Submitted" : "Pending",
+    [getEvaluation],
   );
 
   const filteredInterviews = useMemo(() => {
@@ -856,59 +639,97 @@ export default function RecruitmentEvaluations() {
         interview.round,
         interview.interviewerName,
       ].some((value) =>
-        String(value ?? "").toLowerCase().includes(query)
+        String(value ?? "")
+          .toLowerCase()
+          .includes(query),
       );
 
       const evaluation = evaluations.find(
-        (item) =>
-          String(item.interviewId) === String(interview.id)
+        (item) => String(item.interviewId) === String(interview.id),
       );
 
-      const evaluationStatus = evaluation?.submitted
-        ? "Submitted"
-        : "Pending";
+      const evaluationStatus = evaluation?.submitted ? "Submitted" : "Pending";
+
+      const normalizedInterviewRound = normalizeRound(interview.round);
+      const normalizedFilterRound =
+        roundFilter === "All" ? "All" : normalizeRound(roundFilter);
 
       return (
         matchesSearch &&
-        (statusFilter === "All" ||
-          evaluationStatus === statusFilter) &&
-        (roundFilter === "All" ||
-          interview.round
-            .toLowerCase()
-            .includes(roundFilter.toLowerCase()))
+        (statusFilter === "All" || evaluationStatus === statusFilter) &&
+        (normalizedFilterRound === "All" ||
+          normalizedInterviewRound === normalizedFilterRound)
       );
     });
-  }, [
-    interviews,
-    evaluations,
-    search,
-    statusFilter,
-    roundFilter,
-  ]);
+  }, [interviews, evaluations, search, statusFilter, roundFilter]);
+
+  const selectedCriteria = selectedInterview
+    ? getCriteriaForRound(selectedInterview.round)
+    : [];
+
+  const selectedEvaluation = selectedInterview
+    ? getEvaluation(selectedInterview.id)
+    : null;
 
   const openEvaluation = (interview) => {
     const existing = getEvaluation(interview.id);
+    const criteria = getCriteriaForRound(interview.round);
 
-    setForm(
-      existing
-        ? {
-            ...emptyEvaluation(),
-            technicalSkills: existing.technicalSkills,
-            communication: existing.communication,
-            problemSolving: existing.problemSolving,
-            experience: existing.experience,
-            cultureFit: existing.cultureFit,
-            strengths: existing.strengths ?? "",
-            feedback: existing.feedback ?? "",
-            roleSpecificSkills:
-              existing.roleSpecificSkills ?? 0,
-            professionalism: existing.professionalism ?? 0,
-            recommendation: normalizeRecommendation(
-              existing.recommendation
-            ),
-          }
-        : emptyEvaluation()
+    const savedScores = existing?.criteriaScores ?? {};
+
+    const criteriaScores = Object.fromEntries(
+      criteria.map((criterion) => {
+        let score = Number(savedScores[criterion.key] ?? 0);
+
+        // Older evaluations used five general fields instead of
+        // the new round-specific criteria.
+        if (!score && existing?.legacyScores) {
+          const legacyFallback = {
+            programmingKnowledge: "technicalKnowledge",
+            technicalSkills: "technicalKnowledge",
+            problemSolvingAbility: "problemSolving",
+            codingAndLogicalThinking: "problemSolving",
+            practicalExperience: "roleSpecificSkills",
+            technicalAssessment: "technicalKnowledge",
+
+            communicationSkills: "communication",
+            confidence: "professionalism",
+            teamwork: "communication",
+            adaptability: "professionalism",
+            salaryExpectationsAndCulturalFit: "roleSpecificSkills",
+            behaviouralAssessment: "professionalism",
+
+            roleSpecificKnowledge: "roleSpecificSkills",
+            decisionMaking: "problemSolving",
+            leadershipOwnership: "professionalism",
+            relevantWorkExperience: "technicalKnowledge",
+            jobRoleSuitability: "roleSpecificSkills",
+            strategicThinking: "problemSolving",
+
+            overallSuitability: "roleSpecificSkills",
+            careerGoals: "professionalism",
+            longTermCommitment: "professionalism",
+            professionalAttitude: "professionalism",
+            finalHiringRecommendation: "technicalKnowledge",
+            finalAssessment: "technicalKnowledge",
+          };
+
+          const fallbackKey = legacyFallback[criterion.key];
+          score = Number(existing.legacyScores[fallbackKey] ?? 0);
+        }
+
+        return [criterion.key, score];
+      }),
     );
+
+    setForm({
+      ...emptyEvaluation(),
+      criteriaScores,
+      strengths: existing?.strengths ?? "",
+      areasForImprovement: existing?.areasForImprovement ?? "",
+      feedback: existing?.feedback ?? "",
+      recommendation: normalizeRecommendation(existing?.recommendation),
+    });
 
     setSelectedInterview(interview);
     setNotice("");
@@ -917,30 +738,27 @@ export default function RecruitmentEvaluations() {
   const updateScore = (key, value) => {
     setForm((previous) => ({
       ...previous,
-      [key]: Number(value),
+      criteriaScores: {
+        ...previous.criteriaScores,
+        [key]: Number(value),
+      },
     }));
   };
 
-  // Download the candidate's CV using the application ID.
   const downloadCandidateCV = async (interview) => {
     const applicationId = interview?.applicationId;
 
-    if (
-      applicationId == null ||
-      String(applicationId).trim() === ""
-    ) {
+    if (applicationId == null || String(applicationId).trim() === "") {
       setNotice(
-        `Cannot download ${interview?.candidateName || "candidate"}'s CV because the interview response does not contain an application ID.`
+        `Cannot download ${interview?.candidateName || "candidate"}'s CV because the interview response does not contain an application ID.`,
       );
       setNoticeType("error");
       return;
     }
 
-    if (
-      typeof recruitmentApi?.downloadResume !== "function"
-    ) {
+    if (typeof recruitmentApi?.downloadResume !== "function") {
       setNotice(
-        "recruitmentApi.downloadResume() is missing in src/services/api.js."
+        "recruitmentApi.downloadResume() is missing in src/services/api.js.",
       );
       setNoticeType("error");
       return;
@@ -950,50 +768,38 @@ export default function RecruitmentEvaluations() {
     setNotice("");
 
     try {
-      const blob =
-        await recruitmentApi.downloadResume(applicationId);
+      const blob = await recruitmentApi.downloadResume(applicationId);
 
       if (!(blob instanceof Blob) || blob.size === 0) {
-        throw new Error(
-          "The server returned an empty or invalid CV file."
-        );
+        throw new Error("The server returned an empty or invalid CV file.");
       }
 
       const fileUrl = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
 
-      const candidateName = (
-        interview.candidateName || "Candidate"
-      ).replace(/[^a-z0-9_-]/gi, "_");
+      const candidateName = (interview.candidateName || "Candidate").replace(
+        /[^a-z0-9_-]/gi,
+        "_",
+      );
 
-      const extension =
-        blob.type === "application/pdf" ||
-        blob.type.includes("pdf")
-          ? "pdf"
-          : "file";
+      const extension = blob.type.includes("pdf") ? "pdf" : "file";
 
       link.href = fileUrl;
       link.download = `CV_${candidateName}.${extension}`;
+
       document.body.appendChild(link);
       link.click();
       link.remove();
 
-      // Revoke after the browser has had time to start the download.
-      window.setTimeout(
-        () => window.URL.revokeObjectURL(fileUrl),
-        1000
-      );
+      window.setTimeout(() => window.URL.revokeObjectURL(fileUrl), 1000);
 
-      setNotice(
-        `CV download started for ${interview.candidateName}.`
-      );
+      setNotice(`CV download started for ${interview.candidateName}.`);
       setNoticeType("success");
     } catch (error) {
       console.error("Candidate CV download failed:", error);
-
       setNotice(
         error?.message ||
-          "Could not download the candidate's CV. Check your permissions and try again."
+          "Could not download the candidate's CV. Check your permissions and try again.",
       );
       setNoticeType("error");
     } finally {
@@ -1006,15 +812,13 @@ export default function RecruitmentEvaluations() {
 
     if (!hasInterviewEnded(interview)) {
       setNotice(
-        "You can mark this interview as completed only after its scheduled date and time."
+        "You can mark this interview as completed only after its scheduled date and time.",
       );
       setNoticeType("warning");
       return;
     }
 
-    const currentStatus = normalizeInterviewStatus(
-      interview.status
-    );
+    const currentStatus = normalizeInterviewStatus(interview.status);
 
     if (currentStatus === "COMPLETED") {
       setNotice("This interview is already completed.");
@@ -1023,19 +827,14 @@ export default function RecruitmentEvaluations() {
     }
 
     if (currentStatus === "CANCELLED") {
-      setNotice(
-        "A cancelled interview cannot be marked as completed."
-      );
+      setNotice("A cancelled interview cannot be marked as completed.");
       setNoticeType("warning");
       return;
     }
 
-    if (
-      typeof recruitmentApi?.updateInterviewStatus !==
-      "function"
-    ) {
+    if (typeof recruitmentApi?.updateInterviewStatus !== "function") {
       setNotice(
-        "recruitmentApi.updateInterviewStatus() is missing in src/services/api.js."
+        "recruitmentApi.updateInterviewStatus() is missing in src/services/api.js.",
       );
       setNoticeType("error");
       return;
@@ -1045,24 +844,20 @@ export default function RecruitmentEvaluations() {
     setNotice("");
 
     try {
-      await recruitmentApi.updateInterviewStatus(
-        interview.id,
-        "COMPLETED"
-      );
+      await recruitmentApi.updateInterviewStatus(interview.id, "COMPLETED");
 
       setInterviews((previous) =>
         previous.map((item) =>
           String(item.id) === String(interview.id)
             ? { ...item, status: "COMPLETED" }
-            : item
-        )
+            : item,
+        ),
       );
 
       setSelectedInterview((current) =>
-        current &&
-        String(current.id) === String(interview.id)
+        current && String(current.id) === String(interview.id)
           ? { ...current, status: "COMPLETED" }
-          : current
+          : current,
       );
 
       setNotice("Interview marked as completed successfully.");
@@ -1070,15 +865,8 @@ export default function RecruitmentEvaluations() {
 
       await loadData({ silent: true });
     } catch (error) {
-      console.error(
-        "Failed to update interview status:",
-        error
-      );
-
-      setNotice(
-        error?.message ||
-          "Could not update interview status."
-      );
+      console.error("Failed to update interview status:", error);
+      setNotice(error?.message || "Could not update interview status.");
       setNoticeType("error");
     } finally {
       setUpdatingStatusId(null);
@@ -1091,175 +879,116 @@ export default function RecruitmentEvaluations() {
     if (!selectedInterview) return;
 
     const interviewId = selectedInterview.id;
+    const criteria = getCriteriaForRound(selectedInterview.round);
 
-    if (
-      interviewId == null ||
-      !/^\d+$/.test(String(interviewId))
-    ) {
+    if (interviewId == null || !/^\d+$/.test(String(interviewId))) {
       setNotice(
-        "This interview has no valid numeric backend ID. Check the interview API response."
+        "This interview has no valid numeric backend ID. Check the interview API response.",
       );
       setNoticeType("error");
       return;
     }
 
     if (getEvaluation(interviewId)?.submitted) {
-      setNotice("This evaluation has already been submitted.");
-      setNoticeType("warning");
-      return;
-    }
-
-    if (
-      normalizeInterviewStatus(selectedInterview.status) !==
-      "COMPLETED"
-    ) {
       setNotice(
-        "You can submit an evaluation only after the interview is marked as completed."
+        "You have already submitted your evaluation for this interview.",
       );
       setNoticeType("warning");
       return;
     }
 
-    const scores = CRITERIA.map((criterion) =>
-      Number(form[criterion.key])
-    );
-
-    if (
-      scores.some(
-        (score) =>
-          !Number.isFinite(score) || score < 1 || score > 5
-      )
-    ) {
+    if (normalizeInterviewStatus(selectedInterview.status) !== "COMPLETED") {
       setNotice(
-        "Please provide a score from 1 to 5 for every criterion."
+        "You can submit an evaluation only after the interview is marked as completed.",
       );
       setNoticeType("warning");
       return;
     }
 
-    if (!String(form.strengths ?? "").trim()) {
+    if (criteria.length !== 6) {
       setNotice(
-        "Please describe the candidate's strengths before submitting."
+        "The interview round is not recognised. Please check the interview round name returned by the backend.",
       );
+      setNoticeType("error");
+      return;
+    }
+
+    const criteriaScores = {};
+
+    for (const criterion of criteria) {
+      const score = Number(form.criteriaScores?.[criterion.key]);
+
+      if (!Number.isInteger(score) || score < 1 || score > 5) {
+        setNotice(`Please provide a score from 1 to 5 for ${criterion.label}.`);
+        setNoticeType("warning");
+        return;
+      }
+
+      criteriaScores[criterion.key] = score;
+    }
+
+    const strengths = String(form.strengths ?? "").trim();
+    const areasForImprovement = String(form.areasForImprovement ?? "").trim();
+    const feedback = String(form.feedback ?? "").trim();
+
+    if (!strengths) {
+      setNotice("Please describe the candidate's strengths before submitting.");
       setNoticeType("warning");
       return;
     }
 
-    if (!String(form.feedback ?? "").trim()) {
+    if (!feedback) {
       setNotice("Please enter interview feedback.");
       setNoticeType("warning");
       return;
     }
 
-    if (
-      !RECOMMENDATIONS.some(
-        (item) => item.value === form.recommendation
-      )
-    ) {
+    if (!RECOMMENDATIONS.some((item) => item.value === form.recommendation)) {
       setNotice("Please select a valid recommendation.");
       setNoticeType("warning");
       return;
     }
 
-    if (
-      typeof recruitmentApi?.submitInterviewEvaluation !==
-      "function"
-    ) {
+    if (typeof recruitmentApi?.submitInterviewEvaluation !== "function") {
       setNotice(
-        "recruitmentApi.submitInterviewEvaluation() is missing in src/services/api.js."
+        "recruitmentApi.submitInterviewEvaluation() is missing in src/services/api.js.",
       );
       setNoticeType("error");
       return;
     }
 
     const averageScore =
-      scores.reduce((sum, score) => sum + score, 0) /
-      scores.length;
+      Object.values(criteriaScores).reduce((sum, score) => sum + score, 0) /
+      criteria.length;
 
-    const strengths = String(form.strengths).trim();
-    const feedback = String(form.feedback).trim();
-
+    // These property names match InterviewEvaluationRequestDTO.java.
+    // The backend identifies the logged-in interviewer from authentication.
     const payload = {
-      interviewId,
-
-      ...(selectedInterview.candidateId != null && {
-        candidateId: selectedInterview.candidateId,
-      }),
-
-      ...(employeeId != null &&
-        String(employeeId).trim() !== "" && {
-          interviewerId: employeeId,
-        }),
-
-      technicalKnowledgeScore: Number(form.technicalSkills),
-      technicalKnowledge: Number(form.technicalSkills),
-      technicalSkills: Number(form.technicalSkills),
-
-      roleSpecificSkillsScore: Number(
-        form.roleSpecificSkills
-      ),
-      roleSpecificSkillScore: Number(
-        form.roleSpecificSkills
-      ),
-      roleSpecificSkills: Number(form.roleSpecificSkills),
-      roleSpecificSkill: Number(form.roleSpecificSkills),
-      roleSkillsScore: Number(form.roleSpecificSkills),
-      roleSpecificScore: Number(form.roleSpecificSkills),
-
-      professionalismScore: Number(form.professionalism),
-      professionalism: Number(form.professionalism),
-      professionalismRating: Number(form.professionalism),
-
-      communicationSkillsScore: Number(form.communication),
-      communicationScore: Number(form.communication),
-      communication: Number(form.communication),
-
-      problemSolvingScore: Number(form.problemSolving),
-      problemSolving: Number(form.problemSolving),
-
-      relevantExperienceScore: Number(form.experience),
-      experienceScore: Number(form.experience),
-      experience: Number(form.experience),
-
-      cultureFitScore: Number(form.cultureFit),
-      teamworkScore: Number(form.cultureFit),
-      cultureFit: Number(form.cultureFit),
-
+      criteriaScores,
       strengths,
-      candidateStrengths: strengths,
-      strengthsDescription: strengths,
-
-      feedback,
+      areasForImprovement,
+      comments: feedback,
       recommendation: form.recommendation,
-      averageScore,
-      submitted: true,
-      status: "SUBMITTED",
     };
 
     setSaving(true);
     setNotice("");
 
     try {
-      await recruitmentApi.submitInterviewEvaluation(
-        interviewId,
-        payload
-      );
+      await recruitmentApi.submitInterviewEvaluation(interviewId, payload);
 
       setSelectedInterview(null);
 
-      setNotice("Evaluation submitted successfully.");
+      setNotice(
+        `Your evaluation was submitted successfully. Average score: ${averageScore.toFixed(2)}/5.`,
+      );
       setNoticeType("success");
 
       await loadData({ silent: true });
     } catch (error) {
-      console.error(
-        "Failed to submit evaluation:",
-        error
-      );
-
+      console.error("Failed to submit interview evaluation:", error);
       setNotice(
-        error?.message ||
-          "Could not submit evaluation to the backend."
+        error?.message || "Could not submit your evaluation to the backend.",
       );
       setNoticeType("error");
     } finally {
@@ -1268,14 +997,18 @@ export default function RecruitmentEvaluations() {
   };
 
   const submittedCount = interviews.filter(
-    (interview) => getStatus(interview) === "Submitted"
+    (interview) => getStatus(interview) === "Submitted",
   ).length;
 
   const pendingCount = interviews.length - submittedCount;
 
-  const selectedEvaluation = selectedInterview
-    ? getEvaluation(selectedInterview.id)
-    : null;
+  const currentAverage = selectedCriteria.length
+    ? selectedCriteria.reduce(
+        (sum, criterion) =>
+          sum + Number(form.criteriaScores?.[criterion.key] || 0),
+        0,
+      ) / selectedCriteria.length
+    : 0;
 
   return (
     <PageLayout
@@ -1297,15 +1030,9 @@ export default function RecruitmentEvaluations() {
             }`}
           >
             {noticeType === "success" ? (
-              <CheckCircle2
-                size={18}
-                className="shrink-0"
-              />
+              <CheckCircle2 size={18} className="shrink-0" />
             ) : (
-              <AlertCircle
-                size={18}
-                className="shrink-0"
-              />
+              <AlertCircle size={18} className="shrink-0" />
             )}
 
             <span>{notice}</span>
@@ -1354,9 +1081,7 @@ export default function RecruitmentEvaluations() {
 
               <input
                 value={search}
-                onChange={(event) =>
-                  setSearch(event.target.value)
-                }
+                onChange={(event) => setSearch(event.target.value)}
                 placeholder="Search candidates or job titles..."
                 className="w-full rounded-xl border border-slate-200 py-2.5 pl-10 pr-4 text-sm outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
               />
@@ -1364,9 +1089,7 @@ export default function RecruitmentEvaluations() {
 
             <select
               value={statusFilter}
-              onChange={(event) =>
-                setStatusFilter(event.target.value)
-              }
+              onChange={(event) => setStatusFilter(event.target.value)}
               className="rounded-xl border border-slate-200 px-3 py-2.5 text-sm"
               aria-label="Filter by evaluation status"
             >
@@ -1377,9 +1100,7 @@ export default function RecruitmentEvaluations() {
 
             <select
               value={roundFilter}
-              onChange={(event) =>
-                setRoundFilter(event.target.value)
-              }
+              onChange={(event) => setRoundFilter(event.target.value)}
               className="rounded-xl border border-slate-200 px-3 py-2.5 text-sm"
               aria-label="Filter by interview round"
             >
@@ -1396,10 +1117,7 @@ export default function RecruitmentEvaluations() {
               disabled={loading}
               className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50"
             >
-              <RefreshCw
-                size={15}
-                className={loading ? "animate-spin" : ""}
-              />
+              <RefreshCw size={15} className={loading ? "animate-spin" : ""} />
               Refresh
             </button>
           </div>
@@ -1407,13 +1125,10 @@ export default function RecruitmentEvaluations() {
 
         <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
           <div className="border-b border-slate-100 px-5 py-4">
-            <h2 className="font-bold text-slate-800">
-              My Assigned Interviews
-            </h2>
-
+            <h2 className="font-bold text-slate-800">My Assigned Interviews</h2>
             <p className="mt-1 text-sm text-slate-500">
-              Only interviews assigned to the logged-in interviewer
-              are shown.
+              Only interviews assigned to the logged-in interviewer are shown.
+              Your evaluation is private to your account.
             </p>
           </div>
 
@@ -1424,19 +1139,13 @@ export default function RecruitmentEvaluations() {
             </div>
           ) : filteredInterviews.length === 0 ? (
             <div className="px-6 py-14 text-center">
-              <ClipboardCheck
-                className="mx-auto text-slate-400"
-                size={30}
-              />
-
+              <ClipboardCheck className="mx-auto text-slate-400" size={30} />
               <h3 className="mt-3 font-semibold text-slate-800">
                 No assigned interviews found
               </h3>
-
               <p className="mx-auto mt-2 max-w-lg text-sm text-slate-500">
-                There are no interviews matching your account and
-                current filters. Check the backend assignment records
-                and logged-in interviewer identity if you expect
+                There are no interviews matching your account and current
+                filters. Check the backend assignment records if you expect
                 interviews here.
               </p>
             </div>
@@ -1449,7 +1158,7 @@ export default function RecruitmentEvaluations() {
                     <th className="px-5 py-3">Interview Round</th>
                     <th className="px-5 py-3">Schedule</th>
                     <th className="px-5 py-3">Interview Status</th>
-                    <th className="px-5 py-3">Evaluation Status</th>
+                    <th className="px-5 py-3">My Evaluation Status</th>
                     <th className="px-5 py-3 text-right">Action</th>
                   </tr>
                 </thead>
@@ -1458,14 +1167,13 @@ export default function RecruitmentEvaluations() {
                   {filteredInterviews.map((interview) => {
                     const evaluationStatus = getStatus(interview);
                     const evaluation = getEvaluation(interview.id);
-                    const interviewStatus =
-                      normalizeInterviewStatus(interview.status);
 
-                    const isCancelled =
-                      interviewStatus === "CANCELLED";
+                    const interviewStatus = normalizeInterviewStatus(
+                      interview.status,
+                    );
 
-                    const isCompleted =
-                      interviewStatus === "COMPLETED";
+                    const isCancelled = interviewStatus === "CANCELLED";
+                    const isCompleted = interviewStatus === "COMPLETED";
 
                     const canComplete =
                       hasInterviewEnded(interview) &&
@@ -1473,15 +1181,11 @@ export default function RecruitmentEvaluations() {
                       !isCompleted;
 
                     return (
-                      <tr
-                        key={interview.id}
-                        className="hover:bg-slate-50/70"
-                      >
+                      <tr key={interview.id} className="hover:bg-slate-50/70">
                         <td className="px-5 py-4">
                           <p className="font-semibold text-slate-800">
                             {interview.candidateName}
                           </p>
-
                           <p className="mt-1 flex items-center gap-1 text-xs text-slate-500">
                             <BriefcaseBusiness size={12} />
                             {interview.jobTitle}
@@ -1502,16 +1206,13 @@ export default function RecruitmentEvaluations() {
                             />
                             {formatDate(interview.date)}
                           </div>
-
                           <p className="mt-1 pl-6 text-xs text-slate-400">
                             {interview.time || "Time not set"}
                           </p>
                         </td>
 
                         <td className="px-5 py-4">
-                          <InterviewStatusBadge
-                            status={interview.status}
-                          />
+                          <InterviewStatusBadge status={interview.status} />
 
                           {!isCompleted && !isCancelled && (
                             <div className="mt-2">
@@ -1551,9 +1252,7 @@ export default function RecruitmentEvaluations() {
                           {evaluation && (
                             <p className="mt-1 text-xs text-slate-500">
                               Average:{" "}
-                              {Number(
-                                evaluation.averageScore || 0
-                              ).toFixed(1)}
+                              {Number(evaluation.averageScore || 0).toFixed(2)}
                               /5
                             </p>
                           )}
@@ -1563,9 +1262,7 @@ export default function RecruitmentEvaluations() {
                           <div className="flex flex-wrap justify-end gap-2">
                             <button
                               type="button"
-                              onClick={() =>
-                                downloadCandidateCV(interview)
-                              }
+                              onClick={() => downloadCandidateCV(interview)}
                               disabled={
                                 !interview.applicationId ||
                                 downloadingApplicationId ===
@@ -1587,39 +1284,24 @@ export default function RecruitmentEvaluations() {
 
                             <button
                               type="button"
-                              onClick={() =>
-                                openEvaluation(interview)
-                              }
+                              onClick={() => openEvaluation(interview)}
                               disabled={
-                                !isCompleted ||
-                                evaluationStatus === "Submitted"
+                                !isCompleted && evaluationStatus !== "Submitted"
                               }
                               title={
-                                !isCompleted
-                                  ? "Mark the interview completed before evaluating"
-                                  : evaluationStatus === "Submitted"
-                                    ? "Evaluation already submitted"
+                                evaluationStatus === "Submitted"
+                                  ? "View your submitted evaluation"
+                                  : !isCompleted
+                                    ? "Mark the interview completed before evaluating"
                                     : "Evaluate interview"
                               }
                               className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-3 py-2 text-xs font-medium text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-40"
                             >
                               <Eye size={15} />
                               {evaluationStatus === "Submitted"
-                                ? "View Evaluation"
+                                ? "View My Evaluation"
                                 : "Evaluate"}
                             </button>
-
-                            {evaluationStatus === "Submitted" && (
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  openEvaluation(interview)
-                                }
-                                className="inline-flex items-center gap-1 rounded-xl border border-slate-200 px-3 py-2 text-xs font-medium text-slate-600 hover:bg-slate-50"
-                              >
-                                View
-                              </button>
-                            )}
                           </div>
                         </td>
                       </tr>
@@ -1635,10 +1317,7 @@ export default function RecruitmentEvaluations() {
           <div
             className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4"
             onMouseDown={(event) => {
-              if (
-                event.target === event.currentTarget &&
-                !saving
-              ) {
+              if (event.target === event.currentTarget && !saving) {
                 setSelectedInterview(null);
               }
             }}
@@ -1657,7 +1336,6 @@ export default function RecruitmentEvaluations() {
                   >
                     Interview Evaluation
                   </h2>
-
                   <p className="mt-1 text-sm text-slate-500">
                     {selectedInterview.candidateName} ·{" "}
                     {selectedInterview.round}
@@ -1678,12 +1356,8 @@ export default function RecruitmentEvaluations() {
               {selectedEvaluation?.submitted ? (
                 <div className="space-y-5 p-6">
                   <div className="rounded-xl bg-emerald-50 p-4 text-sm text-emerald-800">
-                    <CheckCircle2
-                      className="mr-2 inline"
-                      size={17}
-                    />
-                    This evaluation has been submitted and is
-                    read-only.
+                    <CheckCircle2 className="mr-2 inline" size={17} />
+                    Your evaluation has been submitted and is read-only.
                   </div>
 
                   <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -1711,52 +1385,64 @@ export default function RecruitmentEvaluations() {
                       icon={CheckCircle2}
                       label="Interview Status"
                       value={normalizeInterviewStatus(
-                        selectedInterview.status
+                        selectedInterview.status,
                       ).replace(/_/g, " ")}
                     />
                   </div>
 
-                  <h3 className="font-semibold text-slate-800">
-                    Evaluation Scores
-                  </h3>
+                  <div>
+                    <h3 className="mb-3 font-semibold text-slate-800">
+                      Your Evaluation Scores
+                    </h3>
 
-                  {CRITERIA.map((criterion) => (
-                    <div
-                      key={criterion.key}
-                      className="flex items-center justify-between gap-4 py-1"
-                    >
-                      <span className="text-sm text-slate-600">
-                        {criterion.label}
-                      </span>
-
-                      <span className="flex items-center gap-1 font-semibold">
-                        <Star
-                          size={15}
-                          className="text-amber-500"
-                        />
-                        {form[criterion.key]}/5
-                      </span>
-                    </div>
-                  ))}
+                    {selectedCriteria.length === 0 ? (
+                      <p className="rounded-xl bg-amber-50 p-3 text-sm text-amber-700">
+                        No criteria are configured for this interview round.
+                      </p>
+                    ) : (
+                      selectedCriteria.map((criterion) => (
+                        <div
+                          key={criterion.key}
+                          className="flex items-center justify-between gap-4 border-b border-slate-100 py-3"
+                        >
+                          <span className="text-sm text-slate-600">
+                            {criterion.label}
+                          </span>
+                          <span className="flex items-center gap-1 font-semibold">
+                            <Star size={15} className="text-amber-500" />
+                            {form.criteriaScores?.[criterion.key] || 0}/5
+                          </span>
+                        </div>
+                      ))
+                    )}
+                  </div>
 
                   <div>
                     <h3 className="mb-2 flex items-center gap-2 font-semibold">
                       <MessageSquare size={16} />
                       Candidate Strengths
                     </h3>
-
                     <p className="whitespace-pre-wrap break-words rounded-xl bg-slate-50 p-4 text-sm leading-6 text-slate-600">
-                      {form.strengths ||
-                        "No strengths provided."}
+                      {form.strengths || "No strengths provided."}
                     </p>
                   </div>
 
                   <div>
                     <h3 className="mb-2 flex items-center gap-2 font-semibold">
                       <MessageSquare size={16} />
-                      Feedback
+                      Areas for Improvement
                     </h3>
+                    <p className="whitespace-pre-wrap break-words rounded-xl bg-slate-50 p-4 text-sm leading-6 text-slate-600">
+                      {form.areasForImprovement ||
+                        "No areas for improvement provided."}
+                    </p>
+                  </div>
 
+                  <div>
+                    <h3 className="mb-2 flex items-center gap-2 font-semibold">
+                      <MessageSquare size={16} />
+                      Interview Feedback
+                    </h3>
                     <p className="whitespace-pre-wrap break-words rounded-xl bg-slate-50 p-4 text-sm leading-6 text-slate-600">
                       {form.feedback || "No feedback provided."}
                     </p>
@@ -1764,21 +1450,15 @@ export default function RecruitmentEvaluations() {
 
                   <div className="rounded-xl border border-slate-200 p-4">
                     <p className="text-sm text-slate-500">
-                      Recommendation
+                      Your Recommendation
                     </p>
-
                     <p className="mt-1 font-semibold">
                       {formatRecommendation(form.recommendation)}
                     </p>
 
-                    <p className="mt-3 text-sm text-slate-500">
-                      Average score
-                    </p>
-
+                    <p className="mt-3 text-sm text-slate-500">Average score</p>
                     <p className="mt-1 text-xl font-bold text-indigo-600">
-                      {Number(
-                        selectedEvaluation.averageScore ?? 0
-                      ).toFixed(1)}
+                      {Number(selectedEvaluation.averageScore ?? 0).toFixed(2)}
                       /5
                     </p>
                   </div>
@@ -1794,10 +1474,7 @@ export default function RecruitmentEvaluations() {
                   </div>
                 </div>
               ) : (
-                <form
-                  onSubmit={saveEvaluation}
-                  className="space-y-6 p-6"
-                >
+                <form onSubmit={saveEvaluation} className="space-y-6 p-6">
                   <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                     <InfoItem
                       icon={UserRound}
@@ -1823,72 +1500,91 @@ export default function RecruitmentEvaluations() {
                       icon={CheckCircle2}
                       label="Interview Status"
                       value={normalizeInterviewStatus(
-                        selectedInterview.status
+                        selectedInterview.status,
                       ).replace(/_/g, " ")}
                     />
                   </div>
 
-                  {normalizeInterviewStatus(
-                    selectedInterview.status
-                  ) !== "COMPLETED" && (
+                  {normalizeInterviewStatus(selectedInterview.status) !==
+                    "COMPLETED" && (
                     <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
-                      Mark this interview as completed after its
-                      scheduled date and time before submitting an
-                      evaluation.
+                      Mark this interview as completed after its scheduled date
+                      and time before submitting an evaluation.
                     </div>
                   )}
 
                   <div>
-                    <h3 className="mb-3 font-bold text-slate-800">
-                      Evaluation Criteria
-                    </h3>
+                    <div className="mb-3">
+                      <h3 className="font-bold text-slate-800">
+                        {selectedInterview.round} Criteria
+                      </h3>
+                      <p className="mt-1 text-sm text-slate-500">
+                        Give each criterion a score from 1 (lowest) to 5
+                        (highest).
+                      </p>
+                    </div>
 
-                    <p className="mb-4 text-sm text-slate-500">
-                      Give each criterion a score from 1 (lowest)
-                      to 5 (highest).
-                    </p>
+                    {selectedCriteria.length !== 6 ? (
+                      <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+                        This interview round is not recognised. Please check the
+                        interview round value returned by the backend.
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        {selectedCriteria.map((criterion) => (
+                          <fieldset key={criterion.key}>
+                            <div className="mb-2 flex items-center justify-between gap-3">
+                              <legend className="text-sm font-medium text-slate-700">
+                                {criterion.label}
+                              </legend>
+                              <span className="text-xs text-slate-500">
+                                {form.criteriaScores?.[criterion.key] || 0}/5
+                              </span>
+                            </div>
 
-                    <div className="space-y-4">
-                      {CRITERIA.map((criterion) => (
-                        <fieldset key={criterion.key}>
-                          <div className="mb-2 flex items-center justify-between gap-3">
-                            <legend className="text-sm font-medium text-slate-700">
-                              {criterion.label}
-                            </legend>
-
-                            <span className="text-xs text-slate-500">
-                              {form[criterion.key]}/5
-                            </span>
-                          </div>
-
-                          <div className="flex gap-2">
-                            {[1, 2, 3, 4, 5].map((score) => (
-                              <button
-                                key={score}
-                                type="button"
-                                aria-label={`${criterion.label}: ${score} out of 5`}
-                                aria-pressed={
-                                  form[criterion.key] === score
-                                }
-                                onClick={() =>
-                                  updateScore(
-                                    criterion.key,
+                            <div className="flex gap-2">
+                              {[1, 2, 3, 4, 5].map((score) => (
+                                <button
+                                  key={score}
+                                  type="button"
+                                  aria-label={`${criterion.label}: ${score} out of 5`}
+                                  aria-pressed={
+                                    form.criteriaScores?.[criterion.key] ===
                                     score
-                                  )
-                                }
-                                className={`flex h-10 flex-1 items-center justify-center gap-1 rounded-lg border text-sm font-semibold ${
-                                  form[criterion.key] === score
-                                    ? "border-indigo-600 bg-indigo-600 text-white"
-                                    : "border-slate-200 text-slate-600 hover:border-indigo-300 hover:bg-indigo-50"
-                                }`}
-                              >
-                                <Star size={13} />
-                                {score}
-                              </button>
-                            ))}
-                          </div>
-                        </fieldset>
-                      ))}
+                                  }
+                                  onClick={() =>
+                                    updateScore(criterion.key, score)
+                                  }
+                                  className={`flex h-10 flex-1 items-center justify-center gap-1 rounded-lg border text-sm font-semibold ${
+                                    form.criteriaScores?.[criterion.key] ===
+                                    score
+                                      ? "border-indigo-600 bg-indigo-600 text-white"
+                                      : "border-slate-200 text-slate-600 hover:border-indigo-300 hover:bg-indigo-50"
+                                  }`}
+                                >
+                                  <Star size={13} />
+                                  {score}
+                                </button>
+                              ))}
+                            </div>
+                          </fieldset>
+                        ))}
+                      </div>
+                    )}
+
+                    <div className="mt-4 rounded-xl bg-indigo-50 p-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium text-indigo-800">
+                          Current Average
+                        </span>
+                        <span className="text-lg font-bold text-indigo-700">
+                          {currentAverage.toFixed(2)}/5
+                        </span>
+                      </div>
+                      <p className="mt-1 text-xs text-indigo-600">
+                        The average is calculated from the six criteria for this
+                        interview round.
+                      </p>
                     </div>
                   </div>
 
@@ -1899,7 +1595,6 @@ export default function RecruitmentEvaluations() {
                     >
                       Candidate Strengths
                     </label>
-
                     <textarea
                       id="evaluation-strengths"
                       rows={3}
@@ -1915,9 +1610,34 @@ export default function RecruitmentEvaluations() {
                       placeholder="Describe the candidate's strengths demonstrated during the interview..."
                       className="w-full rounded-xl border border-slate-200 p-3 text-sm outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
                     />
-
                     <p className="mt-1 text-right text-xs text-slate-400">
                       {form.strengths.length}/3000 characters
+                    </p>
+                  </div>
+
+                  <div>
+                    <label
+                      htmlFor="evaluation-improvements"
+                      className="mb-2 block text-sm font-semibold text-slate-700"
+                    >
+                      Areas for Improvement
+                    </label>
+                    <textarea
+                      id="evaluation-improvements"
+                      rows={3}
+                      maxLength={3000}
+                      value={form.areasForImprovement}
+                      onChange={(event) =>
+                        setForm((previous) => ({
+                          ...previous,
+                          areasForImprovement: event.target.value,
+                        }))
+                      }
+                      placeholder="Describe areas where the candidate could improve..."
+                      className="w-full rounded-xl border border-slate-200 p-3 text-sm outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+                    />
+                    <p className="mt-1 text-right text-xs text-slate-400">
+                      {form.areasForImprovement.length}/3000 characters
                     </p>
                   </div>
 
@@ -1928,7 +1648,6 @@ export default function RecruitmentEvaluations() {
                     >
                       Interview Feedback
                     </label>
-
                     <textarea
                       id="evaluation-feedback"
                       rows={4}
@@ -1941,10 +1660,9 @@ export default function RecruitmentEvaluations() {
                           feedback: event.target.value,
                         }))
                       }
-                      placeholder="Enter strengths, weaknesses, and interview observations..."
+                      placeholder="Enter interview observations and feedback..."
                       className="w-full rounded-xl border border-slate-200 p-3 text-sm outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
                     />
-
                     <p className="mt-1 text-right text-xs text-slate-400">
                       {form.feedback.length}/5000 characters
                     </p>
@@ -1957,7 +1675,6 @@ export default function RecruitmentEvaluations() {
                     >
                       Recommendation
                     </label>
-
                     <select
                       id="evaluation-recommendation"
                       required
@@ -1973,12 +1690,8 @@ export default function RecruitmentEvaluations() {
                       <option value="" disabled>
                         Select recommendation
                       </option>
-
                       {RECOMMENDATIONS.map((item) => (
-                        <option
-                          key={item.value}
-                          value={item.value}
-                        >
+                        <option key={item.value} value={item.value}>
                           {item.label}
                         </option>
                       ))}
@@ -1999,16 +1712,14 @@ export default function RecruitmentEvaluations() {
                       type="submit"
                       disabled={
                         saving ||
-                        normalizeInterviewStatus(
-                          selectedInterview.status
-                        ) !== "COMPLETED"
+                        normalizeInterviewStatus(selectedInterview.status) !==
+                          "COMPLETED" ||
+                        selectedCriteria.length !== 6
                       }
                       className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-50"
                     >
                       <Send size={15} />
-                      {saving
-                        ? "Submitting..."
-                        : "Submit Evaluation"}
+                      {saving ? "Submitting..." : "Submit Evaluation"}
                     </button>
                   </div>
                 </form>

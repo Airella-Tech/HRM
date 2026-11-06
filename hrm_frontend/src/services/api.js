@@ -794,6 +794,21 @@ getShortlistedApplications: () =>
       "GET",
       `${RECRUITMENT_URL}/recruitment/interviews/${interviewId}/evaluations`,
     ),
+
+    // Get the Recruitment Manager's decision for an interview round.
+getInterviewDecision: (interviewId) =>
+  request(
+    "GET",
+    `${RECRUITMENT_URL}/recruitment/interviews/${interviewId}/decision`,
+  ),
+
+  // Submit the Recruitment Manager's decision for an interview round.
+decideInterviewRound: (interviewId, data) =>
+  request(
+    "POST",
+    `${RECRUITMENT_URL}/recruitment/interviews/${interviewId}/decision`,
+    data,
+  ),
   // ============================================================
   // JOB OFFERS
   // ============================================================

@@ -1,11 +1,14 @@
-
 package com.airella.hrm.dto;
 
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Size;
 
+import java.util.Map;
+
 public record InterviewEvaluationRequestDTO(
+
+        Map<String, @Min(1) @Max(5) Integer> criteriaScores,
 
         @Min(1) @Max(5)
         Integer technicalKnowledge,

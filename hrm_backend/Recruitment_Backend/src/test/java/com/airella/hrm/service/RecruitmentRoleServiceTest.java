@@ -43,6 +43,9 @@ class RecruitmentRoleServiceTest {
     @Mock
     private AuditService auditService;
 
+    @Mock
+    private RecruitmentNotificationService notificationService;
+
     @InjectMocks
     private RecruitmentRoleService roleService;
 

@@ -38,6 +38,8 @@ public class CandidateApplicationDTO {
     private String screeningNotes;
     private String rejectionReason;
     private Object criteria;
+    private String criteriaJson;
+    private String readinessStatus;
 
     private String resumeFileName;
     private String resumeFileType;

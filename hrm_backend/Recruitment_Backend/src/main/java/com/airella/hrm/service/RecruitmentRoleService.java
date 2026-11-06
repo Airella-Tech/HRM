@@ -29,8 +29,29 @@ public class RecruitmentRoleService {
     private final EmployeeDirectory employeeDirectory;
     private final AuthService authService;
     private final AuditService auditService;
+    private final RecruitmentNotificationService notificationService;
     private final org.springframework.transaction.support.TransactionTemplate transactionTemplate;
     private static final Object SEED_LOCK = new Object();
+
+    @org.springframework.beans.factory.annotation.Autowired
+    public RecruitmentRoleService(RecruitmentRoleRepository roleRepo,
+                                  UserRecruitmentRoleRepository userRoleRepo,
+                                  RecruitmentPermissionRepository permissionRepo,
+                                  EmployeeDirectory employeeDirectory,
+                                  AuthService authService,
+                                  AuditService auditService,
+                                  RecruitmentNotificationService notificationService,
+                                  org.springframework.transaction.PlatformTransactionManager transactionManager) {
+        this.roleRepo = roleRepo;
+        this.userRoleRepo = userRoleRepo;
+        this.permissionRepo = permissionRepo;
+        this.employeeDirectory = employeeDirectory;
+        this.authService = authService;
+        this.auditService = auditService;
+        this.notificationService = notificationService;
+        this.transactionTemplate = new org.springframework.transaction.support.TransactionTemplate(transactionManager);
+        this.transactionTemplate.setPropagationBehavior(org.springframework.transaction.TransactionDefinition.PROPAGATION_REQUIRES_NEW);
+    }
 
     public RecruitmentRoleService(RecruitmentRoleRepository roleRepo,
                                   UserRecruitmentRoleRepository userRoleRepo,
@@ -39,14 +60,7 @@ public class RecruitmentRoleService {
                                   AuthService authService,
                                   AuditService auditService,
                                   org.springframework.transaction.PlatformTransactionManager transactionManager) {
-        this.roleRepo = roleRepo;
-        this.userRoleRepo = userRoleRepo;
-        this.permissionRepo = permissionRepo;
-        this.employeeDirectory = employeeDirectory;
-        this.authService = authService;
-        this.auditService = auditService;
-        this.transactionTemplate = new org.springframework.transaction.support.TransactionTemplate(transactionManager);
-        this.transactionTemplate.setPropagationBehavior(org.springframework.transaction.TransactionDefinition.PROPAGATION_REQUIRES_NEW);
+        this(roleRepo, userRoleRepo, permissionRepo, employeeDirectory, authService, auditService, null, transactionManager);
     }
 
     // ── Permissions ──────────────────────────────────────────────
@@ -148,6 +162,9 @@ public class RecruitmentRoleService {
         RecruitmentRole saved = roleRepo.save(role);
         auditService.logAction("CREATE", "RecruitmentRole", saved.getId(),
                 "Created recruitment role: " + saved.getRoleName(), authService.getCurrentCompanyRef());
+        if (notificationService != null) {
+            notificationService.roleCreated(saved);
+        }
 
         return RecruitmentRoleDTO.fromEntity(saved, 0);
     }
@@ -178,6 +195,9 @@ public class RecruitmentRoleService {
         long count = userRoleRepo.countByRoleId(updated.getId());
         auditService.logAction("UPDATE", "RecruitmentRole", updated.getId(),
                 "Updated recruitment role: " + updated.getRoleName(), authService.getCurrentCompanyRef());
+        if (notificationService != null) {
+            notificationService.rolePermissionsUpdated(updated);
+        }
 
         return RecruitmentRoleDTO.fromEntity(updated, count);
     }
@@ -232,7 +252,7 @@ public class RecruitmentRoleService {
                     .map(a -> RecruitmentRoleDTO.fromEntity(a.getRole()))
                     .toList();
 
-            boolean isFullAccess = "ADMIN".equalsIgnoreCase(emp.getRole()) || "HR_MANAGER".equalsIgnoreCase(emp.getRole());
+            boolean isFullAccess = "ADMIN".equalsIgnoreCase(emp.getRole());
             Set<String> permissions = isFullAccess
                     ? new TreeSet<>(allSystemPermissionCodes)
                     : userAssignments.stream()
@@ -267,7 +287,7 @@ public class RecruitmentRoleService {
                 .map(a -> RecruitmentRoleDTO.fromEntity(a.getRole()))
                 .toList();
 
-        boolean isFullAccess = "ADMIN".equalsIgnoreCase(emp.getRole()) || "HR_MANAGER".equalsIgnoreCase(emp.getRole());
+        boolean isFullAccess = "ADMIN".equalsIgnoreCase(emp.getRole());
         Set<String> permissions = isFullAccess
                 ? permissionRepo.findAll().stream().map(RecruitmentPermission::getPermissionCode).collect(Collectors.toCollection(TreeSet::new))
                 : userAssignments.stream()
@@ -309,6 +329,12 @@ public class RecruitmentRoleService {
             }
         }
 
+        if (notificationService != null) {
+            for (RecruitmentRole role : roles) {
+                notificationService.roleAssigned(emp.getId(), role.getRoleName(), companyId, companyRef);
+            }
+        }
+
         return getUserRoleAssignments(emp.getId());
     }
 
@@ -319,9 +345,13 @@ public class RecruitmentRoleService {
         UserRecruitmentRole assignment = userRoleRepo.findByCompanyIdAndUserIdAndRoleId(companyId, userId, roleId)
                 .orElseThrow(() -> new ResourceNotFoundException("UserRecruitmentRole", "roleId", roleId));
 
+        String removedRoleName = assignment.getRole().getRoleName();
         userRoleRepo.delete(assignment);
         auditService.logAction("UNASSIGN", "UserRecruitmentRole", roleId,
-                "Removed recruitment role '" + assignment.getRole().getRoleName() + "' from user ID " + userId, companyRef);
+                "Removed recruitment role '" + removedRoleName + "' from user ID " + userId, companyRef);
+        if (notificationService != null) {
+            notificationService.roleRemoved(userId, removedRoleName, companyId, companyRef);
+        }
     }
 
     public UserRecruitmentAssignmentDTO updateUserRoles(Long userId, List<Long> roleIds) {
@@ -349,6 +379,13 @@ public class RecruitmentRoleService {
 
         auditService.logAction("UPDATE_ASSIGNMENTS", "UserRecruitmentRole", userId,
                 "Updated recruitment roles for " + emp.getFullName() + " (" + emp.getEmail() + ")", companyRef);
+
+        if (notificationService != null) {
+            List<String> roleNames = (roleIds != null && !roleIds.isEmpty())
+                    ? roleRepo.findAllById(roleIds).stream().map(RecruitmentRole::getRoleName).toList()
+                    : List.of();
+            notificationService.rolesUpdated(userId, roleNames, companyId, companyRef);
+        }
 
         return getUserRoleAssignments(userId);
     }
@@ -387,7 +424,7 @@ public class RecruitmentRoleService {
                             new DefaultRoleSeed(
                                     "Recruitment Officer",
                                     "Manages recruitment activities, reviews applications, and supports candidate screening and shortlisting.",
-                                    List.of("APPLICATION_VIEW", "APPLICATION_SCREEN", "APPLICATION_SHORTLIST", "INTERVIEW_SCHEDULE")
+                                    List.of("APPLICATION_VIEW", "APPLICATION_SCREEN", "APPLICATION_SHORTLIST", "INTERVIEW_SCHEDULE","INTERVIEW_PROGRESS_VIEW")
                             ),
                             new DefaultRoleSeed(
                                     "Interviewer / Evaluator",
@@ -399,22 +436,88 @@ public class RecruitmentRoleService {
                                     "Oversees recruitment activities and manages recruitment responsibilities according to assigned permissions.",
                                     List.of("VACANCY_CREATE", "VACANCY_APPROVE", "VACANCY_PUBLISH", "APPLICATION_VIEW", "APPLICATION_SCREEN",
                                             "APPLICATION_SHORTLIST", "INTERVIEW_SCHEDULE", "INTERVIEW_ASSIGN",
-                                            "INTERVIEW_EVALUATE", "OFFER_MANAGE", "RECRUITMENT_ROLE_ADMIN")
+                                            "INTERVIEW_EVALUATE", "INTERVIEW_PROGRESS_VIEW", "INTERVIEW_DECIDE", "OFFER_MANAGE", "RECRUITMENT_ROLE_ADMIN")
                             )
                     );
 
                     for (DefaultRoleSeed seed : defaultRoles) {
-                        if (!roleRepo.existsByCompanyIdAndRoleNameIgnoreCase(companyId, seed.roleName())) {
-                            List<RecruitmentPermission> perms = permissionRepo.findByPermissionCodeIn(seed.permissions());
-                            RecruitmentRole r = new RecruitmentRole(companyId, seed.roleName(), seed.description());
-                            r.setIsSystemDefault(true);
-                            r.setPermissions(new HashSet<>(perms));
-                            try {
-                                roleRepo.save(r);
-                                log.info("[COMPANY_SEED] Created default role '{}' for company ID {}", seed.roleName(), companyId);
-                            } catch (org.springframework.dao.DataIntegrityViolationException dive) {
-                                log.debug("[COMPANY_SEED] Role '{}' already exists for company ID {}", seed.roleName(), companyId);
+
+                        Optional<RecruitmentRole> existingRole =
+                                roleRepo.findByCompanyIdAndRoleNameIgnoreCase(
+                                        companyId,
+                                        seed.roleName()
+                                );
+
+                        if (existingRole.isPresent()) {
+
+                            RecruitmentRole role = existingRole.get();
+                            boolean updated = false;
+
+                            // Recruitment Officer and Recruitment Manager can view interview progress.
+                            if (seed.roleName().equals("Recruitment Officer")
+                                    || seed.roleName().equals("Recruitment Manager")) {
+
+                                Optional<RecruitmentPermission> progressPermission =
+                                        permissionRepo.findByPermissionCode("INTERVIEW_PROGRESS_VIEW");
+
+                                if (progressPermission.isPresent()
+                                        && role.getPermissions().add(progressPermission.get())) {
+
+                                    updated = true;
+
+                                    log.info(
+                                            "[COMPANY_SEED] Added INTERVIEW_PROGRESS_VIEW to '{}' for company ID {}",
+                                            seed.roleName(),
+                                            companyId
+                                    );
+                                }
                             }
+
+                            // Only Recruitment Manager can approve or reject interview progression.
+                            if (seed.roleName().equals("Recruitment Manager")) {
+
+                                Optional<RecruitmentPermission> decisionPermission =
+                                        permissionRepo.findByPermissionCode("INTERVIEW_DECIDE");
+
+                                if (decisionPermission.isPresent()
+                                        && role.getPermissions().add(decisionPermission.get())) {
+
+                                    updated = true;
+
+                                    log.info(
+                                            "[COMPANY_SEED] Added INTERVIEW_DECIDE to Recruitment Manager for company ID {}",
+                                            companyId
+                                    );
+                                }
+                            }
+
+                            // Save only when new permissions have been added.
+                            if (updated) {
+                                roleRepo.save(role);
+                            }
+
+                        } else {
+
+                            // Create the default role if it does not exist.
+                            List<RecruitmentPermission> perms =
+                                    permissionRepo.findByPermissionCodeIn(seed.permissions());
+
+                            RecruitmentRole role = new RecruitmentRole(
+                                    companyId,
+                                    seed.roleName(),
+                                    seed.description()
+                            );
+
+                            role.setIsSystemDefault(true);
+                            role.setPermissions(new HashSet<>(perms));
+
+                            roleRepo.save(role);
+
+                            log.info(
+                                    "[COMPANY_SEED] Created default role '{}' for company ID {}",
+                                    seed.roleName(),
+                                    companyId
+                            );
                         }
                     }
                     return null;

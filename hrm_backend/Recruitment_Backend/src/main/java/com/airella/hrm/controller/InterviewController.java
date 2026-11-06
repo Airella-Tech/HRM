@@ -6,7 +6,11 @@ import com.airella.hrm.dto.InterviewDTO;
 import com.airella.hrm.dto.InterviewRequestDTO;
 import com.airella.hrm.dto.InterviewerAssignmentRequestDTO;
 import com.airella.hrm.dto.InterviewStatusUpdateDTO;
+import com.airella.hrm.dto.InterviewRoundDecisionDTO;
+import com.airella.hrm.dto.InterviewRoundDecisionRequestDTO;
+
 import com.airella.hrm.service.InterviewService;
+import com.airella.hrm.service.InterviewRoundDecisionService;
 
 import jakarta.validation.Valid;
 
@@ -23,15 +27,23 @@ import java.util.List;
 public class InterviewController {
 
     private static final String CAN_VIEW_INTERVIEWS =
-            "@perm.has('INTERVIEW_SCHEDULE')";
+            "@perm.hasAny('INTERVIEW_SCHEDULE', 'INTERVIEW_ASSIGN', 'INTERVIEW_PROGRESS_VIEW', 'INTERVIEW_DECIDE')";
 
     private final InterviewService interviewService;
+    private final InterviewRoundDecisionService decisionService;
 
-    public InterviewController(InterviewService interviewService) {
+    public InterviewController(
+            InterviewService interviewService,
+            InterviewRoundDecisionService decisionService) {
+
         this.interviewService = interviewService;
+        this.decisionService = decisionService;
     }
 
-    // Create a new interview.
+    // ------------------------------------------------------------
+    // CREATE INTERVIEW
+    // ------------------------------------------------------------
+
     @PostMapping
     @PreAuthorize("@perm.has('INTERVIEW_SCHEDULE')")
     public ResponseEntity<ApiResponse<InterviewDTO>> create(
@@ -44,7 +56,10 @@ public class InterviewController {
                 ));
     }
 
-    // Get all interviews, optionally filtered by status or date.
+    // ------------------------------------------------------------
+    // GET ALL INTERVIEWS
+    // ------------------------------------------------------------
+
     @GetMapping
     @PreAuthorize(CAN_VIEW_INTERVIEWS)
     public ResponseEntity<ApiResponse<List<InterviewDTO>>> list(
@@ -58,7 +73,10 @@ public class InterviewController {
         );
     }
 
-    // Get interviews assigned to the logged-in interviewer.
+    // ------------------------------------------------------------
+    // GET INTERVIEWS ASSIGNED TO LOGGED-IN INTERVIEWER
+    // ------------------------------------------------------------
+
     @GetMapping("/assigned-to-me")
     @PreAuthorize("@perm.has('INTERVIEW_EVALUATE')")
     public ResponseEntity<ApiResponse<List<InterviewDTO>>> getMyAssignedInterviews() {
@@ -71,10 +89,13 @@ public class InterviewController {
         );
     }
 
-    // Get one interview.
+    // ------------------------------------------------------------
+    // GET SINGLE INTERVIEW
+    // ------------------------------------------------------------
+
     @GetMapping("/{id}")
     @PreAuthorize(
-            "@perm.has('INTERVIEW_SCHEDULE') or " +
+            "@perm.hasAny('INTERVIEW_SCHEDULE', 'INTERVIEW_ASSIGN', 'INTERVIEW_PROGRESS_VIEW', 'INTERVIEW_DECIDE') or " +
                     "(@perm.has('INTERVIEW_EVALUATE') and " +
                     "@perm.isAssignedToInterview(#id))"
     )
@@ -88,7 +109,10 @@ public class InterviewController {
         );
     }
 
-    // Update or reschedule an interview.
+    // ------------------------------------------------------------
+    // UPDATE / RESCHEDULE INTERVIEW
+    // ------------------------------------------------------------
+
     @PutMapping("/{id}")
     @PreAuthorize("@perm.has('INTERVIEW_SCHEDULE')")
     public ResponseEntity<ApiResponse<InterviewDTO>> update(
@@ -103,10 +127,12 @@ public class InterviewController {
         );
     }
 
-    // Change only the interview status.
-    // Does not require candidate name or other interview fields.
+    // ------------------------------------------------------------
+    // UPDATE INTERVIEW STATUS
+    // ------------------------------------------------------------
+
     @PatchMapping("/{id}/status")
-    @PreAuthorize("@perm.has('INTERVIEW_SCHEDULE')")
+    @PreAuthorize("@perm.canUpdateInterviewStatus(#id, #request.status())")
     public ResponseEntity<ApiResponse<InterviewDTO>> updateStatus(
             @PathVariable Long id,
             @Valid @RequestBody InterviewStatusUpdateDTO request) {
@@ -122,9 +148,12 @@ public class InterviewController {
         );
     }
 
-    // Assign or replace interviewers.
+    // ------------------------------------------------------------
+    // ASSIGN / REPLACE INTERVIEWERS
+    // ------------------------------------------------------------
+
     @PutMapping("/{id}/assign-interviewers")
-    @PreAuthorize("@perm.has('INTERVIEW_SCHEDULE')")
+    @PreAuthorize("@perm.hasAny('INTERVIEW_ASSIGN', 'INTERVIEW_SCHEDULE')")
     public ResponseEntity<ApiResponse<InterviewDTO>> assignInterviewers(
             @PathVariable Long id,
             @Valid @RequestBody InterviewerAssignmentRequestDTO request) {
@@ -140,7 +169,47 @@ public class InterviewController {
         );
     }
 
-    // Delete an interview.
+    // ------------------------------------------------------------
+    // GET MANAGER DECISION
+    // GET /api/recruitment/interviews/{id}/decision
+    // ------------------------------------------------------------
+
+    @GetMapping("/{id}/decision")
+    @PreAuthorize("@perm.hasAny('INTERVIEW_DECIDE', 'INTERVIEW_SCHEDULE', 'INTERVIEW_PROGRESS_VIEW', 'APPLICATION_VIEW')")
+    public ResponseEntity<ApiResponse<InterviewRoundDecisionDTO>> getDecision(
+            @PathVariable Long id) {
+
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        decisionService.getDecision(id),
+                        "Interview decision retrieved successfully"
+                )
+        );
+    }
+
+    // ------------------------------------------------------------
+    // SUBMIT MANAGER DECISION
+    // POST /api/recruitment/interviews/{id}/decision
+    // ------------------------------------------------------------
+
+    @PostMapping("/{id}/decision")
+    @PreAuthorize("@perm.has('INTERVIEW_DECIDE')")
+    public ResponseEntity<ApiResponse<InterviewRoundDecisionDTO>> makeDecision(
+            @PathVariable Long id,
+            @Valid @RequestBody InterviewRoundDecisionRequestDTO request) {
+
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        decisionService.makeDecision(id, request),
+                        "Interview decision submitted successfully"
+                )
+        );
+    }
+
+    // ------------------------------------------------------------
+    // DELETE INTERVIEW
+    // ------------------------------------------------------------
+
     @DeleteMapping("/{id}")
     @PreAuthorize("@perm.has('INTERVIEW_SCHEDULE')")
     public ResponseEntity<ApiResponse<Void>> delete(

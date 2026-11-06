@@ -13,13 +13,14 @@ import {
   ArrowLeft,
   CheckCircle2,
   Filter,
-  ClipboardList,
-  ChevronRight,
   Clock3,
   CircleAlert,
   RefreshCw,
   LoaderCircle,
   X,
+  ShieldCheck,
+  Hourglass,
+  XCircle,
 } from "lucide-react";
 
 import { PageLayout } from "../../components/PageLayout";
@@ -33,6 +34,10 @@ const ROUNDS = [
 ];
 
 const REFRESH_INTERVAL_MS = 15000;
+
+// --------------------------------------------------
+// GENERAL HELPERS
+// --------------------------------------------------
 
 const first = (...values) =>
   values.find(
@@ -60,30 +65,6 @@ const normalizeStatus = (value) =>
     .replace(/[_-]+/g, " ")
     .replace(/\s+/g, " ");
 
-const normalizeRecommendation = (value) => {
-  const normalized = String(value ?? "")
-    .trim()
-    .toUpperCase()
-    .replace(/[\s-]+/g, "_");
-
-  const aliases = {
-    PASS: "HIRE",
-    RECOMMEND: "HIRE",
-    RECOMMENDED: "HIRE",
-    MOVE_TO_NEXT_ROUND: "HIRE",
-    STRONGLY_RECOMMEND: "STRONG_HIRE",
-    STRONG_RECOMMEND: "STRONG_HIRE",
-    FAIL: "NO_HIRE",
-    REJECT: "NO_HIRE",
-    REJECTED: "NO_HIRE",
-    DO_NOT_RECOMMEND: "NO_HIRE",
-    NOT_RECOMMENDED: "NO_HIRE",
-    HOLD_FOR_DISCUSSION: "HOLD",
-  };
-
-  return aliases[normalized] ?? normalized;
-};
-
 const sameText = (a, b) =>
   String(a ?? "")
     .trim()
@@ -92,11 +73,83 @@ const sameText = (a, b) =>
     .trim()
     .toLowerCase();
 
+const isTruthyFlag = (value) =>
+  value === true ||
+  value === 1 ||
+  (typeof value === "string" &&
+    ["true", "1", "yes"].includes(value.trim().toLowerCase()));
+
+// --------------------------------------------------
+// HTTP ERROR HELPERS
+// --------------------------------------------------
+
+/*
+ * The request() helper in api.js may return a normal Error
+ * containing "404: ..." without setting response.status.
+ *
+ * This helper checks all common places where the HTTP status
+ * might be stored, including the error message.
+ */
+const getHttpStatus = (error) => {
+  const directStatus =
+    error?.status ??
+    error?.response?.status ??
+    error?.statusCode ??
+    error?.cause?.status;
+
+  if (directStatus !== undefined && directStatus !== null) {
+    const parsedStatus = Number(directStatus);
+
+    if (Number.isFinite(parsedStatus)) {
+      return parsedStatus;
+    }
+  }
+
+  const message = String(error?.message ?? "");
+
+  const match = message.match(
+    /(?:^|\D)(400|401|403|404|409|422|500|502|503)(?=\s*:|\s|$)/,
+  );
+
+  return match ? Number(match[1]) : null;
+};
+
+// --------------------------------------------------
+// API RESPONSE HELPERS
+// --------------------------------------------------
+
+const unwrapResponse = (response) => {
+  let result = response?.data ?? response;
+
+  for (let i = 0; i < 8; i += 1) {
+    if (!result || typeof result !== "object" || Array.isArray(result)) {
+      return result;
+    }
+
+    const nestedKey = ["data", "result", "payload"].find(
+      (key) =>
+        result[key] !== undefined &&
+        result[key] !== null &&
+        typeof result[key] === "object",
+    );
+
+    if (!nestedKey) {
+      return result;
+    }
+
+    result = result[nestedKey];
+  }
+
+  return result;
+};
+
 const getResponseData = (response) => {
   let result = response?.data ?? response;
 
   for (let i = 0; i < 10; i += 1) {
-    if (Array.isArray(result)) return result;
+    if (Array.isArray(result)) {
+      return result;
+    }
 
     if (!result || typeof result !== "object") {
       return [];
@@ -123,7 +176,9 @@ const getResponseData = (response) => {
       (key) => result[key] && typeof result[key] === "object",
     );
 
-    if (!nestedKey) return [];
+    if (!nestedKey) {
+      return [];
+    }
 
     result = result[nestedKey];
   }
@@ -131,51 +186,43 @@ const getResponseData = (response) => {
   return Array.isArray(result) ? result : [];
 };
 
-// Extract evaluation records from common API response shapes. Some endpoints
-// return an array, while others wrap it in data/result/payload or return one
-// evaluation object directly.
 const getEvaluationRecords = (response) => {
-  let result = response?.data ?? response;
+  let result = unwrapResponse(response);
 
-  for (let i = 0; i < 10; i += 1) {
-    if (Array.isArray(result)) return result.filter(Boolean);
-    if (!result || typeof result !== "object") return [];
+  for (let i = 0; i < 8; i += 1) {
+    if (Array.isArray(result)) {
+      return result.filter(Boolean);
+    }
+
+    if (!result || typeof result !== "object") {
+      return [];
+    }
 
     const listKey = [
       "content",
       "items",
       "evaluations",
       "interviewEvaluations",
+      "interview_evaluations",
       "results",
       "records",
     ].find((key) => Array.isArray(result[key]));
-    if (listKey) return result[listKey].filter(Boolean);
+
+    if (listKey) {
+      return result[listKey].filter(Boolean);
+    }
 
     const nestedKey = ["data", "result", "payload"].find(
       (key) => result[key] && typeof result[key] === "object",
     );
-    if (nestedKey) {
-      result = result[nestedKey];
-      continue;
+
+    if (!nestedKey) {
+      return [];
     }
 
-    // A single evaluation DTO usually has an id, status, recommendation,
-    // submittedAt, or evaluation criteria fields.
-    if (
-      [
-        "id",
-        "status",
-        "recommendation",
-        "submittedAt",
-        "submitted_at",
-        "feedback",
-        "overallRating",
-      ].some((key) => key in result)
-    ) {
-      return [result];
-    }
-    return [];
+    result = result[nestedKey];
   }
+
   return [];
 };
 
@@ -224,8 +271,7 @@ const normalizeRound = (round) => {
 };
 
 // --------------------------------------------------
-// APPLICATION NORMALIZATION
-// CandidateApplicationDTO.id represents application ID.
+// CANDIDATE NORMALIZATION
 // --------------------------------------------------
 
 const normalizeCandidate = (item = {}) => {
@@ -341,157 +387,325 @@ const normalizeCandidate = (item = {}) => {
 };
 
 // --------------------------------------------------
-// EVALUATION HELPERS
+// EVALUATION NORMALIZATION
 // --------------------------------------------------
 
-const isTruthyFlag = (value) =>
-  value === true ||
-  value === 1 ||
-  (typeof value === "string" && value.trim().toLowerCase() === "true");
-
-const getEvaluation = (item = {}) => {
-  // Prefer submitted evaluations from collections. A direct `evaluation`
-  // property can be stale when the backend also returns evaluation history.
-  const evaluationLists = [
-    item.evaluations,
-    item.interviewEvaluations,
-    item.interview_evaluations,
-  ].filter(Array.isArray);
-
-  const allEvaluations = evaluationLists
-    .flat()
-    .filter((evaluation) => evaluation && typeof evaluation === "object");
-
-  const submittedEvaluations = allEvaluations
-    .filter((evaluation) => {
-      const status = normalizeStatus(
-        first(
-          evaluation.status,
-          evaluation.evaluationStatus,
-          evaluation.evaluation_status,
-          "",
-        ),
-      );
-
-      return (
-        isTruthyFlag(evaluation.submitted) ||
-        isTruthyFlag(evaluation.isSubmitted) ||
-        isTruthyFlag(evaluation.is_submitted) ||
-        Boolean(
-          first(
-            evaluation.submittedAt,
-            evaluation.submitted_at,
-            evaluation.submittedOn,
-          ),
-        ) ||
-        ["submitted", "completed", "complete", "evaluated"].includes(status)
-      );
-    })
-    .sort((a, b) => {
-      const getTime = (evaluation) => {
-        const raw = first(
-          evaluation.submittedAt,
-          evaluation.submitted_at,
-          evaluation.updatedAt,
-          evaluation.updated_at,
-          evaluation.createdAt,
-          evaluation.created_at,
-        );
-        const parsed = raw ? new Date(raw).getTime() : 0;
-        return Number.isFinite(parsed) ? parsed : Number(evaluation.id) || 0;
-      };
-
-      return getTime(b) - getTime(a);
-    });
-
-  if (submittedEvaluations.length) return submittedEvaluations[0];
-
-  const directEvaluations = [
-    item.latestEvaluation,
-    item.latest_evaluation,
-    item.interviewEvaluation,
-    item.interview_evaluation,
-    item.evaluation,
-  ];
-
-  const direct = directEvaluations.find(
-    (value) => value && typeof value === "object" && !Array.isArray(value),
-  );
-
-  if (direct) return direct;
-
-  // If the backend returns a collection but no submission flag, use the
-  // newest entry rather than blindly using the first entry.
-  if (allEvaluations.length) {
-    return [...allEvaluations].sort((a, b) => {
-      const getTime = (evaluation) => {
-        const raw = first(
-          evaluation.updatedAt,
-          evaluation.updated_at,
-          evaluation.createdAt,
-          evaluation.created_at,
-        );
-        const parsed = raw ? new Date(raw).getTime() : 0;
-        return Number.isFinite(parsed) ? parsed : Number(evaluation.id) || 0;
-      };
-      return getTime(b) - getTime(a);
-    })[0];
-  }
-
-  return {};
-};
-
-const hasSubmittedEvaluation = (interview) => {
-  const evaluation = getEvaluation(interview);
-
-  const status = normalizeStatus(
+const getEvaluationStatus = (evaluation = {}) =>
+  normalizeStatus(
     first(
       evaluation.status,
       evaluation.evaluationStatus,
       evaluation.evaluation_status,
-      interview.evaluationStatus,
-      interview.evaluation_status,
-      interview.submissionStatus,
-      interview.submission_status,
       "",
     ),
   );
+
+const isEvaluationSubmitted = (evaluation = {}) => {
+  const status = getEvaluationStatus(evaluation);
 
   return (
     isTruthyFlag(evaluation.submitted) ||
     isTruthyFlag(evaluation.isSubmitted) ||
     isTruthyFlag(evaluation.is_submitted) ||
-    isTruthyFlag(interview.evaluationSubmitted) ||
-    isTruthyFlag(interview.evaluation_submitted) ||
     Boolean(
       first(
         evaluation.submittedAt,
         evaluation.submitted_at,
         evaluation.submittedOn,
-        interview.evaluationSubmittedAt,
-        interview.evaluation_submitted_at,
+        evaluation.submitted_on,
       ),
     ) ||
-    ["submitted", "completed", "complete", "evaluated"].includes(status)
+    status === "submitted"
   );
 };
 
-const getRecommendation = (interview) => {
-  const evaluation = getEvaluation(interview);
-
-  return normalizeRecommendation(
+const getEvaluatorId = (evaluation = {}) =>
+  normalizeId(
     first(
-      evaluation.recommendation,
-      evaluation.hiringRecommendation,
-      evaluation.hiring_recommendation,
-      evaluation.result,
-      interview.recommendation,
-      interview.hiringRecommendation,
-      interview.hiring_recommendation,
-      interview.result,
+      evaluation.employeeId,
+      evaluation.employee_id,
+      evaluation.evaluatorId,
+      evaluation.evaluator_id,
+      evaluation.interviewerId,
+      evaluation.interviewer_id,
+      evaluation.userId,
+      evaluation.user_id,
+      evaluation.evaluator?.id,
+      evaluation.evaluator?.employeeId,
+      evaluation.evaluator?.employee_id,
+      evaluation.employee?.id,
+      evaluation.interviewer?.id,
+    ),
+  );
+
+// --------------------------------------------------
+// ASSIGNED INTERVIEWER HELPERS
+// --------------------------------------------------
+
+const getAssignedEvaluatorIds = (interview = {}) => {
+  const possibleLists = [
+    interview.assignments,
+    interview.evaluatorAssignments,
+    interview.evaluator_assignments,
+    interview.interviewerAssignments,
+    interview.interviewer_assignments,
+    interview.interviewEvaluatorAssignments,
+    interview.interview_evaluator_assignments,
+    interview.interviewEvaluators,
+    interview.interview_evaluators,
+    interview.interviewers,
+    interview.assignedInterviewers,
+    interview.assigned_interviewers,
+    interview.evaluators,
+    interview.interviewersList,
+  ];
+
+  const ids = [];
+
+  possibleLists.forEach((list) => {
+    if (!Array.isArray(list)) {
+      return;
+    }
+
+    list.forEach((item) => {
+      const id =
+        typeof item === "object" && item !== null
+          ? first(
+              item.employeeId,
+              item.employee_id,
+              item.evaluatorId,
+              item.evaluator_id,
+              item.interviewerId,
+              item.interviewer_id,
+              item.userId,
+              item.user_id,
+              item.employee?.id,
+              item.evaluator?.id,
+              item.interviewer?.id,
+              item.id,
+            )
+          : item;
+
+      const normalized = normalizeId(id);
+
+      if (normalized) {
+        ids.push(normalized);
+      }
+    });
+  });
+
+  [
+    interview.interviewerIds,
+    interview.interviewer_ids,
+    interview.evaluatorIds,
+    interview.evaluator_ids,
+    interview.assignedInterviewerIds,
+    interview.assigned_interviewer_ids,
+  ].forEach((list) => {
+    if (!Array.isArray(list)) {
+      return;
+    }
+
+    list.forEach((id) => {
+      const normalized = normalizeId(id);
+
+      if (normalized) {
+        ids.push(normalized);
+      }
+    });
+  });
+
+  return [...new Set(ids)];
+};
+
+const getAssignedEvaluatorCount = (interview = {}) => {
+  const explicitCount = first(
+    interview.assignedInterviewerCount,
+    interview.assigned_interviewer_count,
+    interview.evaluatorCount,
+    interview.evaluator_count,
+    interview.interviewerCount,
+    interview.interviewer_count,
+  );
+
+  if (explicitCount !== undefined) {
+    const count = Number(explicitCount);
+
+    if (Number.isFinite(count) && count >= 0) {
+      return count;
+    }
+  }
+
+  return getAssignedEvaluatorIds(interview).length;
+};
+
+// --------------------------------------------------
+// EVALUATION COMPLETION
+// --------------------------------------------------
+
+const getEvaluationProgress = (interview = {}) => {
+  const evaluations = Array.isArray(interview.evaluations)
+    ? interview.evaluations
+    : [];
+
+  const submitted = evaluations.filter(isEvaluationSubmitted);
+
+  const assignedIds = getAssignedEvaluatorIds(interview);
+  const assignedCount = getAssignedEvaluatorCount(interview);
+
+  let submittedCount = 0;
+  let allAssignedSubmitted = false;
+
+  if (assignedIds.length > 0) {
+    const submittedIds = new Set(submitted.map(getEvaluatorId).filter(Boolean));
+
+    submittedCount = assignedIds.filter((id) => submittedIds.has(id)).length;
+
+    allAssignedSubmitted = assignedIds.every((id) => submittedIds.has(id));
+  } else if (assignedCount > 0) {
+    submittedCount = submitted.length;
+    allAssignedSubmitted = submitted.length >= assignedCount;
+  }
+
+  return {
+    assignedCount,
+    submittedCount,
+    allAssignedSubmitted,
+    hasAssignmentInformation: assignedCount > 0,
+    submittedEvaluations: submitted,
+  };
+};
+
+// --------------------------------------------------
+// INTERVIEW STATUS AND MANAGER DECISION HELPERS
+// --------------------------------------------------
+
+const getInterviewStatus = (interview = {}) =>
+  normalizeStatus(
+    first(
+      interview.interviewStatus,
+      interview.interview_status,
+      interview.status,
+      interview.statusName,
+      interview.status_name,
       "",
     ),
   );
+
+const isCancelledInterview = (interview) =>
+  ["cancelled", "canceled", "deleted"].includes(getInterviewStatus(interview));
+
+const isInterviewStatusCompleted = (interview) =>
+  ["completed", "complete", "done"].includes(getInterviewStatus(interview));
+
+const getManagerDecision = (interview = {}) => {
+  const decisionObject =
+    interview.managerDecision ??
+    interview.manager_decision ??
+    interview.roundDecision ??
+    interview.round_decision ??
+    interview.decisionRecord ??
+    interview.decision_record ??
+    interview.decision ??
+    {};
+
+  const rawDecision =
+    typeof decisionObject === "string"
+      ? decisionObject
+      : first(
+          decisionObject.decision,
+          decisionObject.status,
+          decisionObject.managerDecision,
+          decisionObject.manager_decision,
+          "",
+        );
+
+  return String(rawDecision ?? "")
+    .trim()
+    .toUpperCase();
+};
+
+const getDecisionComments = (interview = {}) => {
+  const decisionObject =
+    interview.managerDecision ??
+    interview.manager_decision ??
+    interview.roundDecision ??
+    interview.round_decision ??
+    interview.decisionRecord ??
+    interview.decision_record ??
+    interview.decision ??
+    {};
+
+  return typeof decisionObject === "object"
+    ? first(
+        decisionObject.comments,
+        decisionObject.comment,
+        decisionObject.managerComments,
+        decisionObject.manager_comments,
+        "",
+      )
+    : "";
+};
+
+const getDecisionDate = (interview = {}) => {
+  const decisionObject =
+    interview.managerDecision ??
+    interview.manager_decision ??
+    interview.roundDecision ??
+    interview.round_decision ??
+    interview.decisionRecord ??
+    interview.decision_record ??
+    interview.decision ??
+    {};
+
+  return typeof decisionObject === "object"
+    ? first(
+        decisionObject.decidedAt,
+        decisionObject.decided_at,
+        decisionObject.createdAt,
+        decisionObject.created_at,
+        "",
+      )
+    : "";
+};
+
+const getInterviewId = (interview = {}) =>
+  first(interview.id, interview.interviewId, interview.interview_id, null);
+
+const isRejectedInterview = (interview) =>
+  !isCancelledInterview(interview) &&
+  getManagerDecision(interview) === "REJECTED";
+
+// A round passes only when the interview is completed
+// and the Recruitment Manager has approved it.
+//
+// The backend must validate all assigned interviewer evaluations
+// before saving APPROVED. The saved approval is authoritative.
+const isApprovedRound = (interview) =>
+  !isCancelledInterview(interview) &&
+  isInterviewStatusCompleted(interview) &&
+  getManagerDecision(interview) === "APPROVED";
+
+const isEvaluationPending = (interview) => {
+  if (isCancelledInterview(interview)) return false;
+  if (!isInterviewStatusCompleted(interview)) return false;
+  if (isRejectedInterview(interview)) return false;
+  if (isApprovedRound(interview)) return false;
+
+  const progress = getEvaluationProgress(interview);
+
+  return !progress.hasAssignmentInformation || !progress.allAssignedSubmitted;
+};
+
+const isManagerDecisionPending = (interview) => {
+  if (isCancelledInterview(interview)) return false;
+  if (!isInterviewStatusCompleted(interview)) return false;
+  if (isRejectedInterview(interview)) return false;
+  if (isApprovedRound(interview)) return false;
+
+  const progress = getEvaluationProgress(interview);
+
+  return progress.hasAssignmentInformation && progress.allAssignedSubmitted;
 };
 
 // --------------------------------------------------
@@ -526,7 +740,7 @@ const normalizeInterview = (item = {}) => {
   return {
     ...item,
 
-    id: first(item.id, item.interviewId, item.interview_id, null),
+    id: getInterviewId(item),
 
     applicationId: first(
       item.applicationId,
@@ -611,76 +825,8 @@ const normalizeInterview = (item = {}) => {
     ),
 
     round: normalizeRound(rawRound),
-
-    status: first(
-      item.interviewStatus,
-      item.interview_status,
-      item.status,
-      item.statusName,
-      item.status_name,
-      "",
-    ),
-
-    evaluation: getEvaluation(item),
+    status: getInterviewStatus(item),
   };
-};
-
-// --------------------------------------------------
-// COMPLETION AND REJECTION LOGIC
-// --------------------------------------------------
-
-const isCancelledInterview = (interview) => {
-  const status = normalizeStatus(
-    first(
-      interview.status,
-      interview.interviewStatus,
-      interview.interview_status,
-      "",
-    ),
-  );
-
-  return ["cancelled", "canceled", "deleted"].includes(status);
-};
-
-const isRejectedInterview = (interview) => {
-  if (isCancelledInterview(interview)) return false;
-
-  const recommendation = getRecommendation(interview);
-  const evaluation = getEvaluation(interview);
-
-  const status = normalizeStatus(
-    first(
-      evaluation.status,
-      evaluation.evaluationStatus,
-      evaluation.evaluation_status,
-      interview.interviewStatus,
-      interview.interview_status,
-      interview.status,
-      "",
-    ),
-  );
-
-  return (
-    [
-      "NO_HIRE",
-      "STRONG_NO_HIRE",
-      "REJECT",
-      "REJECTED",
-      "NOT_RECOMMENDED",
-    ].includes(recommendation) ||
-    status.includes("reject") ||
-    status.includes("not recommend") ||
-    status === "no hire" ||
-    status === "strong no hire"
-  );
-};
-
-const isCompletedInterview = (interview) => {
-  if (isCancelledInterview(interview)) return false;
-  if (isRejectedInterview(interview)) return false;
-  if (!hasSubmittedEvaluation(interview)) return false;
-
-  return ["HIRE", "STRONG_HIRE"].includes(getRecommendation(interview));
 };
 
 // --------------------------------------------------
@@ -769,7 +915,27 @@ const candidateFromInterview = (interview) =>
   });
 
 // --------------------------------------------------
-// SHORTLISTED CANDIDATES / INTERVIEW PROGRESS PAGE
+// DATE HELPERS
+// --------------------------------------------------
+
+const formatDate = (value) => {
+  if (!value) return "Not available";
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return "Not available";
+  }
+
+  return date.toLocaleDateString(undefined, {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
+};
+
+// --------------------------------------------------
+// PAGE
 // --------------------------------------------------
 
 export default function ShortlistedCandidates() {
@@ -801,6 +967,10 @@ export default function ShortlistedCandidates() {
     });
   }, []);
 
+  // --------------------------------------------------
+  // LOAD APPLICATIONS, INTERVIEWS, EVALUATIONS AND DECISIONS
+  // --------------------------------------------------
+
   const loadData = useCallback(
     async (isRefresh = false) => {
       if (requestInFlight.current) return;
@@ -822,11 +992,7 @@ export default function ShortlistedCandidates() {
             fetchShortlistedApplications(),
             typeof recruitmentApi?.getInterviews === "function"
               ? recruitmentApi.getInterviews()
-              : Promise.reject(
-                  new Error(
-                    "getInterviews() is not configured in services/api.js.",
-                  ),
-                ),
+              : Promise.reject(new Error("getInterviews() is not configured.")),
           ],
         );
 
@@ -859,55 +1025,137 @@ export default function ShortlistedCandidates() {
 
         const normalizedApplications = applicationItems.map(normalizeCandidate);
 
-        // The interviews list endpoint may not embed evaluation history.
-        // Fetch each interview's evaluation collection explicitly, then attach
-        // it before normalization so progress reflects submitted evaluations.
-        const interviewsWithEvaluations = await Promise.all(
+        // Load evaluations and manager decisions separately.
+        // A missing manager decision (404) is normal.
+        const interviewsWithDetails = await Promise.all(
           interviewItems.map(async (item) => {
-            const interviewId = first(
-              item.id,
-              item.interviewId,
-              item.interview_id,
-            );
-            const embedded =
+            const interviewId = getInterviewId(item);
+
+            const embeddedEvaluations =
               [
                 item.evaluations,
                 item.interviewEvaluations,
                 item.interview_evaluations,
               ].find(Array.isArray) || [];
 
+            let evaluations = embeddedEvaluations;
+
+            let managerDecision =
+              item.managerDecision ??
+              item.manager_decision ??
+              item.roundDecision ??
+              item.round_decision ??
+              item.decisionRecord ??
+              item.decision_record ??
+              item.decision ??
+              null;
+
+            let decisionLoadFailed = false;
+
+            const detailRequests = [];
+
             if (
-              !interviewId ||
-              typeof recruitmentApi?.getInterviewEvaluations !== "function"
+              interviewId &&
+              typeof recruitmentApi?.getInterviewEvaluations === "function"
             ) {
-              return { ...item, evaluations: embedded };
+              detailRequests.push({
+                type: "evaluations",
+                promise: Promise.resolve().then(() =>
+                  recruitmentApi.getInterviewEvaluations(interviewId),
+                ),
+              });
             }
 
-            try {
-              const evaluationResponse =
-                await recruitmentApi.getInterviewEvaluations(interviewId);
-              const fetchedEvaluations =
-                getEvaluationRecords(evaluationResponse);
-              return {
-                ...item,
-                evaluations: fetchedEvaluations.length
-                  ? fetchedEvaluations
-                  : embedded,
-              };
-            } catch (evaluationError) {
-              // Keep embedded evaluations if the separate endpoint is forbidden,
-              // unavailable, or not implemented; do not fail the whole page.
-              console.warn(
-                `Could not load evaluations for interview ${interviewId}:`,
-                evaluationError,
-              );
-              return { ...item, evaluations: embedded };
+            if (
+              interviewId &&
+              typeof recruitmentApi?.getInterviewDecision === "function"
+            ) {
+              detailRequests.push({
+                type: "decision",
+                promise: Promise.resolve().then(() =>
+                  recruitmentApi.getInterviewDecision(interviewId),
+                ),
+              });
+            } else if (interviewId) {
+              decisionLoadFailed = true;
             }
+
+            const detailResults = await Promise.allSettled(
+              detailRequests.map((request) => request.promise),
+            );
+
+            detailResults.forEach((result, index) => {
+              const request = detailRequests[index];
+
+              if (result.status === "rejected") {
+                if (request.type === "decision") {
+                  const status = getHttpStatus(result.reason);
+
+                  // 404 means that the manager has not decided yet.
+                  // Keep managerDecision as null and do not flag an error.
+                  if (status === 404) {
+                    // No manager decision has been saved yet.
+                    // Preserve any decision already included in the interview response.
+                    return;
+                  }
+
+                  decisionLoadFailed = true;
+
+                  console.warn(
+                    `Could not load manager decision for interview ${interviewId}:`,
+                    result.reason,
+                  );
+                } else {
+                  console.warn(
+                    `Could not load evaluations for interview ${interviewId}:`,
+                    result.reason,
+                  );
+                }
+
+                return;
+              }
+
+              if (request.type === "evaluations") {
+                const fetchedEvaluations = getEvaluationRecords(result.value);
+
+                if (fetchedEvaluations.length > 0) {
+                  evaluations = fetchedEvaluations;
+                }
+              }
+
+              if (request.type === "decision") {
+                const decisionData = unwrapResponse(result.value);
+
+                if (decisionData && typeof decisionData === "object") {
+                  const decisionValue =
+                    decisionData.decision ??
+                    decisionData.status ??
+                    decisionData.managerDecision ??
+                    decisionData.manager_decision ??
+                    null;
+
+                  // Keep the complete decision object so comments
+                  // and decision date can also be displayed.
+                  managerDecision = {
+                    ...decisionData,
+                    decision: decisionValue,
+                  };
+                } else if (typeof decisionData === "string") {
+                  managerDecision = decisionData;
+                }
+              }
+            });
+
+            return {
+              ...item,
+              evaluations,
+              managerDecision,
+              decisionLoadFailed,
+            };
           }),
         );
 
-        const interviewRecords =
-          interviewsWithEvaluations.map(normalizeInterview);
+        const interviewRecords = interviewsWithDetails.map(normalizeInterview);
 
         if (!mountedRef.current) return;
 
@@ -976,6 +1224,12 @@ export default function ShortlistedCandidates() {
           setNotice(
             "Applications could not be loaded. Only candidates with existing interview records can be displayed.",
           );
+        } else if (
+          interviewRecords.some((interview) => interview.decisionLoadFailed)
+        ) {
+          setNotice(
+            "Some manager decisions could not be retrieved. Candidates will not progress without confirmed manager approval.",
+          );
         } else if (interviewRecords.length === 0) {
           setNotice(
             "Shortlisted candidates loaded, but no interview records were returned yet.",
@@ -1005,7 +1259,6 @@ export default function ShortlistedCandidates() {
 
   useEffect(() => {
     mountedRef.current = true;
-
     loadData();
 
     return () => {
@@ -1050,52 +1303,93 @@ export default function ShortlistedCandidates() {
     [interviews],
   );
 
-  // Check whether this candidate already has an active schedule
-  // for the specified round.
-  const hasExistingRoundSchedule = useCallback(
-    (candidate, round) => {
-      if (!candidate || !round) return false;
+  const getRoundInterviews = useCallback(
+    (candidate, round) =>
+      getCandidateInterviews(candidate)
+        .filter(
+          (interview) =>
+            sameText(normalizeRound(interview.round), round) &&
+            !isCancelledInterview(interview),
+        )
+        .sort((a, b) => {
+          const dateA = new Date(
+            first(a.updatedAt, a.updated_at, a.createdAt, a.created_at, 0),
+          ).getTime();
 
-      return getCandidateInterviews(candidate).some((interview) => {
-        const sameRound = sameText(normalizeRound(interview.round), round);
+          const dateB = new Date(
+            first(b.updatedAt, b.updated_at, b.createdAt, b.created_at, 0),
+          ).getTime();
 
-        return (
-          sameRound &&
-          !isCancelledInterview(interview) &&
-          !isCompletedInterview(interview) &&
-          !isRejectedInterview(interview)
-        );
-      });
-    },
+          return dateA - dateB;
+        }),
     [getCandidateInterviews],
+  );
+
+  const getLatestRoundInterview = useCallback(
+    (candidate, round) => {
+      const roundInterviews = getRoundInterviews(candidate, round);
+
+      return roundInterviews.length > 0
+        ? roundInterviews[roundInterviews.length - 1]
+        : null;
+    },
+    [getRoundInterviews],
+  );
+
+  const getRoundState = useCallback(
+    (candidate, round) => {
+      const roundInterviews = getRoundInterviews(candidate, round);
+
+      if (roundInterviews.some(isRejectedInterview)) {
+        return "rejected";
+      }
+
+      if (roundInterviews.some(isApprovedRound)) {
+        return "passed";
+      }
+
+      if (roundInterviews.some(isManagerDecisionPending)) {
+        return "manager-pending";
+      }
+
+      if (roundInterviews.some(isEvaluationPending)) {
+        return "evaluation-pending";
+      }
+
+      if (roundInterviews.length > 0) {
+        return "scheduled";
+      }
+
+      return "not-started";
+    },
+    [getRoundInterviews],
+  );
+
+  const hasExistingRoundSchedule = useCallback(
+    (candidate, round) =>
+      getRoundInterviews(candidate, round).some(
+        (interview) =>
+          !isApprovedRound(interview) && !isRejectedInterview(interview),
+      ),
+    [getRoundInterviews],
   );
 
   const getCompletedRounds = useCallback(
     (candidate) => {
-      const relatedInterviews = getCandidateInterviews(candidate);
       const completedRounds = [];
 
       for (const round of ROUNDS) {
-        const interviewsForRound = relatedInterviews.filter(
-          (interview) =>
-            sameText(normalizeRound(interview.round), round) &&
-            !isCancelledInterview(interview),
-        );
+        const state = getRoundState(candidate, round);
 
-        if (interviewsForRound.some(isRejectedInterview)) {
-          break;
-        }
-
-        const roundPassed = interviewsForRound.some(isCompletedInterview);
-
-        if (!roundPassed) break;
+        if (state === "rejected") break;
+        if (state !== "passed") break;
 
         completedRounds.push(round);
       }
 
       return completedRounds;
     },
-    [getCandidateInterviews],
+    [getRoundState],
   );
 
   const getNextRound = useCallback(
@@ -1111,6 +1405,53 @@ export default function ShortlistedCandidates() {
       return ROUNDS[completedRounds.length] ?? null;
     },
     [getCandidateInterviews, getCompletedRounds],
+  );
+
+  const getRoundMessage = useCallback(
+    (candidate, round) => {
+      const state = getRoundState(candidate, round);
+      const latestInterview = getLatestRoundInterview(candidate, round);
+
+      if (state === "passed") {
+        return "Interview completed and approved by Recruitment Manager";
+      }
+
+      if (state === "rejected") {
+        return "Recruitment Manager rejected this round";
+      }
+
+      if (state === "manager-pending") {
+        return "All assigned interviewer evaluations submitted - manager decision pending";
+      }
+
+      if (state === "evaluation-pending" && latestInterview) {
+        const progress = getEvaluationProgress(latestInterview);
+
+        if (!progress.hasAssignmentInformation) {
+          return "Interviewer assignment information is unavailable";
+        }
+
+        return `${progress.submittedCount}/${progress.assignedCount} interviewer evaluations submitted`;
+      }
+
+      if (state === "scheduled") {
+        return "Interview scheduled or in progress";
+      }
+
+      return "Awaiting previous stages";
+    },
+    [getLatestRoundInterview, getRoundState],
+  );
+
+  const getPendingEvaluation = useCallback(
+    (candidate, round) =>
+      getRoundState(candidate, round) === "evaluation-pending",
+    [getRoundState],
+  );
+
+  const getPendingManagerDecision = useCallback(
+    (candidate, round) => getRoundState(candidate, round) === "manager-pending",
+    [getRoundState],
   );
 
   // --------------------------------------------------
@@ -1159,18 +1500,26 @@ export default function ShortlistedCandidates() {
       return;
     }
 
-    // Prevent duplicate active schedules for the same round.
     if (hasExistingRoundSchedule(candidate, nextRound)) {
+      const evaluationPending = getPendingEvaluation(candidate, nextRound);
+
+      const managerPending = getPendingManagerDecision(candidate, nextRound);
+
       setNotice(
-        `${candidate.name} already has a ${nextRound} scheduled. You cannot schedule the same round again.`,
+        evaluationPending
+          ? `${nextRound} is completed, but interviewer evaluations are still pending.`
+          : managerPending
+            ? `${nextRound} evaluations are complete. Wait for the Recruitment Manager's approval before scheduling the next stage.`
+            : `${candidate.name} already has a ${nextRound} interview.`,
       );
+
       setSelectedCandidate(null);
       return;
     }
 
     if (!isValidApplicationId(candidate.applicationId)) {
       setNotice(
-        `A valid application ID is missing for ${candidate.name}. Refresh the applications list before scheduling this interview.`,
+        `A valid application ID is missing for ${candidate.name}. Refresh the applications list before scheduling.`,
       );
       setSelectedCandidate(null);
       return;
@@ -1209,6 +1558,12 @@ export default function ShortlistedCandidates() {
   const completedAllStages = candidates.filter(
     (candidate) => getCompletedRounds(candidate).length === ROUNDS.length,
   ).length;
+
+  const managerPendingCount = candidates.filter((candidate) => {
+    const nextRound = getNextRound(candidate);
+
+    return nextRound && getPendingManagerDecision(candidate, nextRound);
+  }).length;
 
   // --------------------------------------------------
   // RENDER
@@ -1254,6 +1609,7 @@ export default function ShortlistedCandidates() {
               <p className="font-semibold">
                 Could not load shortlisted candidates
               </p>
+
               <p className="mt-1">{error}</p>
 
               <button
@@ -1295,10 +1651,12 @@ export default function ShortlistedCandidates() {
                 <p className="text-sm font-medium text-slate-500">
                   Shortlisted Candidates
                 </p>
+
                 <p className="mt-2 text-3xl font-bold text-slate-800">
                   {loading ? "—" : candidates.length}
                 </p>
               </div>
+
               <div className="rounded-xl bg-indigo-50 p-3 text-indigo-600">
                 <Users size={23} />
               </div>
@@ -1309,14 +1667,20 @@ export default function ShortlistedCandidates() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-slate-500">
-                  Interview Stages
+                  Manager Decisions Pending
                 </p>
+
                 <p className="mt-2 text-3xl font-bold text-slate-800">
-                  {ROUNDS.length}
+                  {loading ? "—" : managerPendingCount}
+                </p>
+
+                <p className="mt-1 text-xs text-slate-500">
+                  All interviewer evaluations submitted
                 </p>
               </div>
-              <div className="rounded-xl bg-blue-50 p-3 text-blue-600">
-                <ClipboardList size={23} />
+
+              <div className="rounded-xl bg-amber-50 p-3 text-amber-600">
+                <Hourglass size={23} />
               </div>
             </div>
           </div>
@@ -1325,15 +1689,18 @@ export default function ShortlistedCandidates() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-slate-500">
-                  All Stages Completed
+                  All Stages Approved
                 </p>
+
                 <p className="mt-2 text-3xl font-bold text-slate-800">
                   {loading ? "—" : completedAllStages}
                 </p>
+
                 <p className="mt-1 text-xs text-slate-500">
-                  Based on submitted passing evaluations
+                  Four rounds approved by Recruitment Manager
                 </p>
               </div>
+
               <div className="rounded-xl bg-green-50 p-3 text-green-600">
                 <CheckCircle2 size={23} />
               </div>
@@ -1349,9 +1716,10 @@ export default function ShortlistedCandidates() {
                 <h2 className="text-lg font-bold text-slate-800">
                   Candidates Ready for Interview
                 </h2>
+
                 <p className="mt-1 text-sm text-slate-500">
-                  Choose a candidate to schedule their next stage or review
-                  their current interview progress.
+                  Candidates can proceed only after all interviewer evaluations
+                  are submitted and the Recruitment Manager approves the round.
                 </p>
               </div>
 
@@ -1361,6 +1729,7 @@ export default function ShortlistedCandidates() {
                     size={18}
                     className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
                   />
+
                   <input
                     type="search"
                     value={searchTerm}
@@ -1376,6 +1745,7 @@ export default function ShortlistedCandidates() {
                     size={16}
                     className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
                   />
+
                   <select
                     value={roundFilter}
                     onChange={(event) => setRoundFilter(event.target.value)}
@@ -1383,6 +1753,7 @@ export default function ShortlistedCandidates() {
                     className="w-full appearance-none rounded-xl border border-slate-200 bg-white py-2.5 pl-9 pr-8 text-sm outline-none focus:border-indigo-500"
                   >
                     <option value="All">All next rounds</option>
+
                     {ROUNDS.map((round) => (
                       <option key={round} value={round}>
                         {round}
@@ -1400,17 +1771,19 @@ export default function ShortlistedCandidates() {
                 size={34}
                 className="mb-3 animate-spin text-indigo-600"
               />
+
               <p className="font-semibold text-slate-700">
                 Loading shortlisted candidates...
               </p>
+
               <p className="mt-1 text-sm text-slate-500">
-                Retrieving applications and interview records.
+                Retrieving applications, evaluations and manager decisions.
               </p>
             </div>
           ) : (
             <>
               <div className="overflow-x-auto">
-                <table className="w-full min-w-[950px] text-left">
+                <table className="w-full min-w-[1050px] text-left">
                   <thead className="bg-slate-50">
                     <tr>
                       {[
@@ -1434,6 +1807,7 @@ export default function ShortlistedCandidates() {
                   <tbody className="divide-y divide-slate-100">
                     {filteredCandidates.map((candidate) => {
                       const completedRounds = getCompletedRounds(candidate);
+
                       const completed = completedRounds.length;
                       const nextRound = getNextRound(candidate);
 
@@ -1445,6 +1819,14 @@ export default function ShortlistedCandidates() {
                       const alreadyScheduled =
                         Boolean(nextRound) &&
                         hasExistingRoundSchedule(candidate, nextRound);
+
+                      const evaluationPending =
+                        Boolean(nextRound) &&
+                        getPendingEvaluation(candidate, nextRound);
+
+                      const managerPending =
+                        Boolean(nextRound) &&
+                        getPendingManagerDecision(candidate, nextRound);
 
                       return (
                         <tr
@@ -1460,10 +1842,12 @@ export default function ShortlistedCandidates() {
                               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-sm font-bold text-indigo-700">
                                 {initials(candidate.name)}
                               </div>
+
                               <div>
                                 <p className="font-semibold text-slate-800">
                                   {candidate.name}
                                 </p>
+
                                 <p className="mt-1 text-xs text-slate-500">
                                   {candidate.email || "No email provided"}
                                 </p>
@@ -1475,23 +1859,37 @@ export default function ShortlistedCandidates() {
                             {candidate.vacancy}
                           </td>
 
+                          {/* INTERVIEW PROGRESS */}
                           <td className="px-5 py-4">
                             <div className="flex items-center gap-1.5">
-                              {ROUNDS.map((round) => (
-                                <span
-                                  key={round}
-                                  title={
-                                    completedRounds.includes(round)
-                                      ? `${round}: Passed`
-                                      : `${round}: Not passed`
-                                  }
-                                  className={`h-2.5 w-7 rounded-full ${
-                                    completedRounds.includes(round)
-                                      ? "bg-green-500"
-                                      : "bg-slate-200"
-                                  }`}
-                                />
-                              ))}
+                              {ROUNDS.map((round) => {
+                                const state = getRoundState(candidate, round);
+
+                                const progressColor =
+                                  state === "passed"
+                                    ? "bg-green-500"
+                                    : state === "rejected"
+                                      ? "bg-red-500"
+                                      : state === "manager-pending"
+                                        ? "bg-amber-500"
+                                        : state === "evaluation-pending"
+                                          ? "bg-orange-400"
+                                          : state === "scheduled"
+                                            ? "bg-blue-500"
+                                            : "bg-slate-200";
+
+                                return (
+                                  <span
+                                    key={round}
+                                    title={`${round}: ${getRoundMessage(
+                                      candidate,
+                                      round,
+                                    )}`}
+                                    className={`h-2.5 w-7 rounded-full ${progressColor}`}
+                                  />
+                                );
+                              })}
+
                               <span className="ml-1 text-xs text-slate-500">
                                 {completed}/{ROUNDS.length}
                               </span>
@@ -1499,22 +1897,38 @@ export default function ShortlistedCandidates() {
 
                             <p className="mt-2 text-xs text-slate-500">
                               {rejected
-                                ? "Recruitment stopped"
-                                : alreadyScheduled
-                                  ? `${nextRound} already scheduled`
-                                  : completed === 0
-                                    ? "No passing evaluations recorded"
-                                    : `${completed} stage(s) passed`}
+                                ? "Recruitment stopped by manager"
+                                : evaluationPending
+                                  ? "Interviewer evaluations pending"
+                                  : managerPending
+                                    ? "Waiting for manager approval"
+                                    : alreadyScheduled
+                                      ? `${nextRound} scheduled or in progress`
+                                      : completed === 0
+                                        ? "No manager-approved rounds"
+                                        : `${completed} round(s) approved`}
                             </p>
                           </td>
 
+                          {/* NEXT STAGE */}
                           <td className="px-5 py-4">
                             {rejected ? (
                               <span className="inline-flex items-center gap-1.5 rounded-lg bg-red-50 px-3 py-2 text-xs font-semibold text-red-700">
+                                <XCircle size={14} />
                                 Recruitment stopped
                               </span>
-                            ) : alreadyScheduled ? (
+                            ) : evaluationPending ? (
+                              <span className="inline-flex items-center gap-1.5 rounded-lg bg-orange-50 px-3 py-2 text-xs font-semibold text-orange-700">
+                                <Clock3 size={14} />
+                                Evaluations pending
+                              </span>
+                            ) : managerPending ? (
                               <span className="inline-flex items-center gap-1.5 rounded-lg bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-700">
+                                <Hourglass size={14} />
+                                Manager approval pending
+                              </span>
+                            ) : alreadyScheduled ? (
+                              <span className="inline-flex items-center gap-1.5 rounded-lg bg-blue-50 px-3 py-2 text-xs font-semibold text-blue-700">
                                 <Clock3 size={14} />
                                 Already scheduled
                               </span>
@@ -1526,7 +1940,7 @@ export default function ShortlistedCandidates() {
                             ) : (
                               <span className="inline-flex items-center gap-1.5 rounded-lg bg-green-50 px-3 py-2 text-xs font-semibold text-green-700">
                                 <CheckCircle2 size={14} />
-                                All stages completed
+                                All stages approved
                               </span>
                             )}
                           </td>
@@ -1534,14 +1948,24 @@ export default function ShortlistedCandidates() {
                           <td className="px-5 py-4">
                             <span
                               className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold ${
-                                normalizeStatus(candidate.applicationStatus) ===
-                                "interview scheduled"
-                                  ? "bg-blue-50 text-blue-700"
-                                  : "bg-green-50 text-green-700"
+                                rejected
+                                  ? "bg-red-50 text-red-700"
+                                  : normalizeStatus(
+                                        candidate.applicationStatus,
+                                      ) === "interview scheduled"
+                                    ? "bg-blue-50 text-blue-700"
+                                    : "bg-green-50 text-green-700"
                               }`}
                             >
-                              <CheckCircle2 size={14} />
-                              {candidate.applicationStatus || "Unknown"}
+                              {rejected ? (
+                                <XCircle size={14} />
+                              ) : (
+                                <CheckCircle2 size={14} />
+                              )}
+
+                              {rejected
+                                ? "Rejected by manager"
+                                : candidate.applicationStatus || "Unknown"}
                             </span>
                           </td>
 
@@ -1562,16 +1986,20 @@ export default function ShortlistedCandidates() {
                                   !isValidApplicationId(
                                     candidate.applicationId,
                                   ) ||
-                                  hasExistingRoundSchedule(candidate, nextRound)
+                                  alreadyScheduled
                                 }
                                 onClick={() => scheduleNextStage(candidate)}
                                 className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-lg bg-indigo-600 px-3 py-2.5 text-xs font-semibold text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-slate-300"
                               >
                                 <CalendarCheck size={15} />
-                                {nextRound &&
-                                hasExistingRoundSchedule(candidate, nextRound)
-                                  ? "Already scheduled"
-                                  : "Schedule next stage"}
+
+                                {evaluationPending
+                                  ? "Evaluation pending"
+                                  : managerPending
+                                    ? "Approval pending"
+                                    : alreadyScheduled
+                                      ? "Already scheduled"
+                                      : "Schedule next stage"}
                               </button>
                             </div>
                           </td>
@@ -1586,6 +2014,7 @@ export default function ShortlistedCandidates() {
                             size={34}
                             className="mx-auto mb-3 text-slate-300"
                           />
+
                           <p className="font-semibold text-slate-700">
                             {error
                               ? "Unable to display candidates"
@@ -1593,6 +2022,7 @@ export default function ShortlistedCandidates() {
                                 ? "No shortlisted candidates available"
                                 : "No matching candidates found"}
                           </p>
+
                           <p className="mt-1 text-sm text-slate-500">
                             {error
                               ? "Check the API error and refresh the page."
@@ -1633,6 +2063,7 @@ export default function ShortlistedCandidates() {
                   Showing {filteredCandidates.length} of {candidates.length}{" "}
                   candidates
                 </span>
+
                 <span>
                   Progress refreshes automatically while this page is open
                 </span>
@@ -1641,22 +2072,64 @@ export default function ShortlistedCandidates() {
           )}
         </section>
 
+        {/* PROGRESS LEGEND */}
+        <div className="mt-5 rounded-xl border border-slate-200 bg-white p-4">
+          <p className="mb-3 text-sm font-semibold text-slate-800">
+            Interview progress legend
+          </p>
+
+          <div className="flex flex-wrap gap-x-6 gap-y-3 text-xs text-slate-600">
+            <div className="flex items-center gap-2">
+              <span className="h-2.5 w-7 rounded-full bg-green-500" />
+              Manager approved
+            </div>
+
+            <div className="flex items-center gap-2">
+              <span className="h-2.5 w-7 rounded-full bg-amber-500" />
+              Manager decision pending
+            </div>
+
+            <div className="flex items-center gap-2">
+              <span className="h-2.5 w-7 rounded-full bg-orange-400" />
+              Interviewer evaluations pending
+            </div>
+
+            <div className="flex items-center gap-2">
+              <span className="h-2.5 w-7 rounded-full bg-blue-500" />
+              Scheduled / in progress
+            </div>
+
+            <div className="flex items-center gap-2">
+              <span className="h-2.5 w-7 rounded-full bg-red-500" />
+              Manager rejected
+            </div>
+
+            <div className="flex items-center gap-2">
+              <span className="h-2.5 w-7 rounded-full bg-slate-200" />
+              Not started
+            </div>
+          </div>
+        </div>
+
         {/* WORKFLOW INFORMATION */}
         <div className="mt-5 rounded-xl border border-blue-100 bg-blue-50/70 p-4">
           <div className="flex items-start gap-3">
             <CircleAlert size={18} className="mt-0.5 shrink-0 text-blue-600" />
+
             <div>
               <p className="text-sm font-semibold text-blue-800">
                 Interview workflow
               </p>
+
               <p className="mt-1 text-sm leading-6 text-blue-700">
                 Candidates progress through Technical Interview, HR Interview,
-                Hiring Manager Interview, and Final Interview in that order. A
-                stage counts as passed when its evaluation is submitted with a
-                HIRE or STRONG_HIRE recommendation. An active schedule prevents
-                another schedule for the same round. Cancelled interviews may be
-                scheduled again. Rejected candidates cannot progress to further
-                stages. The backend must enforce the same workflow rules.
+                Hiring Manager Interview, and Final Interview in that order.
+                Every assigned interviewer must submit an evaluation before the
+                Recruitment Manager can decide. The next stage can only be
+                scheduled after the manager approves the completed round. An
+                evaluator recommendation alone does not reject a candidate. A
+                manager rejection stops further progression. Cancelled
+                interviews can be scheduled again.
               </p>
             </div>
           </div>
@@ -1686,9 +2159,11 @@ export default function ShortlistedCandidates() {
                   >
                     Candidate Interview Workflow
                   </h2>
+
                   <p className="mt-1 text-sm text-slate-500">
                     {selectedCandidate.name}
                   </p>
+
                   <p className="mt-1 text-xs text-slate-500">
                     {selectedCandidate.vacancy}
                   </p>
@@ -1706,67 +2181,161 @@ export default function ShortlistedCandidates() {
 
               <div className="space-y-3 p-5">
                 {ROUNDS.map((round, index) => {
-                  const completed =
-                    getCompletedRounds(selectedCandidate).includes(round);
+                  const state = getRoundState(selectedCandidate, round);
+
+                  const completed = state === "passed";
+                  const evaluationPending = state === "evaluation-pending";
+                  const managerPending = state === "manager-pending";
+                  const scheduled = state === "scheduled";
+                  const rejected = state === "rejected";
 
                   const next = getNextRound(selectedCandidate) === round;
 
-                  const rejected =
-                    getCandidateInterviews(selectedCandidate).some(
-                      isRejectedInterview,
-                    );
-
-                  const scheduled = hasExistingRoundSchedule(
+                  const latestInterview = getLatestRoundInterview(
                     selectedCandidate,
                     round,
                   );
 
+                  const evaluationProgress = latestInterview
+                    ? getEvaluationProgress(latestInterview)
+                    : null;
+
+                  const decisionComments = latestInterview
+                    ? getDecisionComments(latestInterview)
+                    : "";
+
+                  const decisionDate = latestInterview
+                    ? getDecisionDate(latestInterview)
+                    : "";
+
+                  const managerDecision = latestInterview
+                    ? getManagerDecision(latestInterview)
+                    : "";
+
+                  const stateStyle = completed
+                    ? "border-green-200 bg-green-50"
+                    : evaluationPending
+                      ? "border-orange-200 bg-orange-50"
+                      : managerPending
+                        ? "border-amber-200 bg-amber-50"
+                        : scheduled
+                          ? "border-blue-200 bg-blue-50"
+                          : rejected
+                            ? "border-red-200 bg-red-50"
+                            : next
+                              ? "border-indigo-200 bg-indigo-50"
+                              : "border-slate-200";
+
+                  const iconStyle = completed
+                    ? "bg-green-100 text-green-700"
+                    : evaluationPending
+                      ? "bg-orange-100 text-orange-700"
+                      : managerPending
+                        ? "bg-amber-100 text-amber-700"
+                        : scheduled
+                          ? "bg-blue-100 text-blue-700"
+                          : rejected
+                            ? "bg-red-100 text-red-700"
+                            : next
+                              ? "bg-indigo-100 text-indigo-700"
+                              : "bg-slate-100 text-slate-500";
+
                   return (
                     <div
                       key={round}
-                      className={`flex items-center gap-3 rounded-xl border p-3 ${
-                        completed
-                          ? "border-green-200 bg-green-50"
-                          : scheduled
-                            ? "border-amber-200 bg-amber-50"
-                            : next
-                              ? "border-indigo-200 bg-indigo-50"
-                              : "border-slate-200"
-                      }`}
+                      className={`rounded-xl border p-3 ${stateStyle}`}
                     >
-                      <div
-                        className={`flex h-9 w-9 items-center justify-center rounded-full ${
-                          completed
-                            ? "bg-green-100 text-green-700"
-                            : scheduled
-                              ? "bg-amber-100 text-amber-700"
-                              : next
-                                ? "bg-indigo-100 text-indigo-700"
-                                : "bg-slate-100 text-slate-500"
-                        }`}
-                      >
-                        {completed ? <CheckCircle2 size={18} /> : index + 1}
+                      <div className="flex items-center gap-3">
+                        <div
+                          className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${iconStyle}`}
+                        >
+                          {completed ? (
+                            <CheckCircle2 size={18} />
+                          ) : rejected ? (
+                            <XCircle size={18} />
+                          ) : managerPending ? (
+                            <Hourglass size={18} />
+                          ) : (
+                            index + 1
+                          )}
+                        </div>
+
+                        <div className="flex-1">
+                          <p className="text-sm font-semibold text-slate-800">
+                            {round}
+                          </p>
+
+                          <p className="mt-1 text-xs text-slate-500">
+                            {getRoundMessage(selectedCandidate, round)}
+                          </p>
+                        </div>
+
+                        {next &&
+                          !scheduled &&
+                          !evaluationPending &&
+                          !managerPending && (
+                            <span className="text-indigo-600">
+                              <CalendarCheck size={17} />
+                            </span>
+                          )}
                       </div>
 
-                      <div className="flex-1">
-                        <p className="text-sm font-semibold text-slate-800">
-                          {round}
-                        </p>
-                        <p className="mt-1 text-xs text-slate-500">
-                          {completed
-                            ? "Passing evaluation submitted"
-                            : rejected
-                              ? "Recruitment process stopped"
-                              : scheduled
-                                ? "An interview is already scheduled or in progress"
-                                : next
-                                  ? "Next stage to schedule"
-                                  : "Awaiting previous stages"}
-                        </p>
-                      </div>
+                      {evaluationProgress &&
+                        evaluationProgress.hasAssignmentInformation && (
+                          <div className="ml-12 mt-2 text-xs text-slate-600">
+                            Evaluations submitted:{" "}
+                            <strong>
+                              {evaluationProgress.submittedCount}/
+                              {evaluationProgress.assignedCount}
+                            </strong>
+                          </div>
+                        )}
 
-                      {next && !scheduled && (
-                        <ChevronRight size={18} className="text-indigo-600" />
+                      {latestInterview && (
+                        <div className="ml-12 mt-2 text-xs text-slate-600">
+                          <p>
+                            <strong>Manager decision:</strong>{" "}
+                            {managerDecision || "Pending Review"}
+                          </p>
+
+                          {decisionDate && (
+                            <p className="mt-1">
+                              <strong>Decision date:</strong>{" "}
+                              {formatDate(decisionDate)}
+                            </p>
+                          )}
+                        </div>
+                      )}
+
+                      {decisionComments && (
+                        <div className="ml-12 mt-2 rounded-lg bg-white/70 p-2 text-xs text-slate-600">
+                          <strong>Manager comments:</strong> {decisionComments}
+                        </div>
+                      )}
+
+                      {completed && (
+                        <div className="ml-12 mt-2 flex items-center gap-1.5 text-xs font-semibold text-green-700">
+                          <ShieldCheck size={14} />
+                          Approved by Recruitment Manager
+                        </div>
+                      )}
+
+                      {rejected && (
+                        <div className="ml-12 mt-2 text-xs font-semibold text-red-700">
+                          Rejected by Recruitment Manager
+                        </div>
+                      )}
+
+                      {evaluationPending && (
+                        <div className="ml-12 mt-2 text-xs font-semibold text-orange-700">
+                          Waiting for all assigned interviewer evaluations
+                        </div>
+                      )}
+
+                      {managerPending && (
+                        <div className="ml-12 mt-2 text-xs font-semibold text-amber-700">
+                          Waiting for Recruitment Manager approval
+                        </div>
                       )}
                     </div>
                   );
@@ -1795,12 +2364,24 @@ export default function ShortlistedCandidates() {
                     className="rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-slate-300"
                   >
                     {getNextRound(selectedCandidate) &&
-                    hasExistingRoundSchedule(
+                    getPendingEvaluation(
                       selectedCandidate,
                       getNextRound(selectedCandidate),
                     )
-                      ? "Already scheduled"
-                      : "Schedule next stage"}
+                      ? "Evaluations pending"
+                      : getNextRound(selectedCandidate) &&
+                          getPendingManagerDecision(
+                            selectedCandidate,
+                            getNextRound(selectedCandidate),
+                          )
+                        ? "Manager approval pending"
+                        : getNextRound(selectedCandidate) &&
+                            hasExistingRoundSchedule(
+                              selectedCandidate,
+                              getNextRound(selectedCandidate),
+                            )
+                          ? "Already scheduled"
+                          : "Schedule next stage"}
                   </button>
                 </div>
               </div>

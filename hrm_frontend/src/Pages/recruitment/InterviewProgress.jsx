@@ -1,5 +1,10 @@
-
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import {
   Search,
   Filter,
@@ -52,8 +57,14 @@ function unwrap(response) {
     if (Array.isArray(data)) return data;
     if (!data || typeof data !== "object") return [];
 
-    const key = ["content", "items", "interviews", "results", "data", "result"]
-      .find((name) => data[name] && typeof data[name] === "object");
+    const key = [
+      "content",
+      "items",
+      "interviews",
+      "results",
+      "data",
+      "result",
+    ].find((name) => data[name] && typeof data[name] === "object");
 
     if (!key) return [];
     data = data[key];
@@ -101,17 +112,23 @@ function getRoundIndex(item) {
       item.type,
       item.roundName,
       item.interviewStage,
-      ""
-    )
+      "",
+    ),
   );
 
   if (raw.includes("technical") || raw.includes("tech interview")) return 0;
-  if (raw === "hr" || raw.includes("hr interview") || raw.includes("human resource")) return 1;
-  if (raw.includes("hiring manager") || raw.includes("manager interview")) return 2;
+  if (
+    raw === "hr" ||
+    raw.includes("hr interview") ||
+    raw.includes("human resource")
+  )
+    return 1;
+  if (raw.includes("hiring manager") || raw.includes("manager interview"))
+    return 2;
   if (raw.includes("final")) return 3;
 
   const numericRound = Number(
-    first(item.roundNumber, item.stageNumber, item.interviewRoundNumber)
+    first(item.roundNumber, item.stageNumber, item.interviewRoundNumber),
   );
 
   return numericRound >= 1 && numericRound <= ROUNDS.length
@@ -123,7 +140,7 @@ function getEvaluation(item) {
   const evaluation = first(
     item?.evaluation,
     item?.interviewEvaluation,
-    item?.latestEvaluation
+    item?.latestEvaluation,
   );
 
   if (evaluation && typeof evaluation === "object") return evaluation;
@@ -137,8 +154,8 @@ function evaluationWasSubmitted(evaluation, item) {
       evaluation.evaluationStatus,
       item.evaluationStatus,
       item.evaluationSubmissionStatus,
-      ""
-    )
+      "",
+    ),
   );
 
   return (
@@ -154,11 +171,22 @@ function normalizeStatus(interviewStatus, evaluation, item, recommendation) {
   const rec = normalizeRecommendation(recommendation);
   const interview = normalizeText(interviewStatus);
   const evaluationStatus = normalizeText(
-    first(evaluation.status, evaluation.evaluationStatus, item.evaluationStatus, "")
+    first(
+      evaluation.status,
+      evaluation.evaluationStatus,
+      item.evaluationStatus,
+      "",
+    ),
   );
 
   if (
-    ["NO_HIRE", "STRONG_NO_HIRE", "REJECT", "REJECTED", "NOT_RECOMMENDED"].includes(rec) ||
+    [
+      "NO_HIRE",
+      "STRONG_NO_HIRE",
+      "REJECT",
+      "REJECTED",
+      "NOT_RECOMMENDED",
+    ].includes(rec) ||
     interview.includes("reject") ||
     interview === "no hire" ||
     interview === "strong no hire" ||
@@ -177,7 +205,9 @@ function normalizeStatus(interviewStatus, evaluation, item, recommendation) {
 
   if (
     evaluationWasSubmitted(evaluation, item) ||
-    ["completed", "complete", "evaluated", "passed", "done"].includes(interview) ||
+    ["completed", "complete", "evaluated", "passed", "done"].includes(
+      interview,
+    ) ||
     ["completed", "complete", "evaluated"].includes(evaluationStatus)
   ) {
     return "Completed";
@@ -241,7 +271,7 @@ function getRecordTimestamp(item) {
     item.createdAt,
     item.scheduledDate,
     item.interviewDate,
-    item.scheduledAt
+    item.scheduledAt,
   );
 
   if (!raw) return 0;
@@ -264,7 +294,7 @@ function normalizeInterviews(rows) {
       item.applicationId,
       item.jobApplicationId,
       application.id,
-      application.applicationId
+      application.applicationId,
     );
 
     const candidateEmail = first(
@@ -273,7 +303,7 @@ function normalizeInterviews(rows) {
       item.applicantEmail,
       application.email,
       application.candidateEmail,
-      ""
+      "",
     );
 
     const candidateId = first(
@@ -281,7 +311,7 @@ function normalizeInterviews(rows) {
       candidateInfo.id,
       item.applicantId,
       application.candidateId,
-      null
+      null,
     );
 
     const jobId = first(
@@ -290,7 +320,7 @@ function normalizeInterviews(rows) {
       vacancy.id,
       application.jobVacancyId,
       application.vacancyId,
-      null
+      null,
     );
 
     const jobTitle = first(
@@ -299,7 +329,7 @@ function normalizeInterviews(rows) {
       vacancy.title,
       application.jobTitle,
       application.vacancyTitle,
-      "Not specified"
+      "Not specified",
     );
 
     const candidateName = first(
@@ -309,7 +339,7 @@ function normalizeInterviews(rows) {
       item.applicantName,
       application.candidateName,
       application.applicantName,
-      "Candidate"
+      "Candidate",
     );
 
     // Never use the interview record ID as a candidate ID.
@@ -335,7 +365,7 @@ function normalizeInterviews(rows) {
           item.phone,
           candidateInfo.phone,
           application.phone,
-          ""
+          "",
         ),
         jobTitle,
         appliedDate: dateOnly(
@@ -343,8 +373,8 @@ function normalizeInterviews(rows) {
             item.appliedDate,
             application.appliedAt,
             application.createdAt,
-            item.applicationCreatedAt
-          )
+            item.applicationCreatedAt,
+          ),
         ),
         stages: ROUNDS.map((name) => ({
           name,
@@ -370,21 +400,21 @@ function normalizeInterviews(rows) {
       evaluation.recommendation,
       item.recommendation,
       item.result,
-      ""
+      "",
     );
 
     const interviewStatus = first(
       item.interviewStatus,
       item.status,
       item.statusName,
-      ""
+      "",
     );
 
     const status = normalizeStatus(
       interviewStatus,
       evaluation,
       item,
-      recommendation
+      recommendation,
     );
 
     const timestamp = getRecordTimestamp(item);
@@ -394,7 +424,10 @@ function normalizeInterviews(rows) {
     if (timestamp >= stage._timestamp) {
       const interviewers = Array.isArray(item.interviewers)
         ? item.interviewers
-            .map((person) => person?.fullName || person?.name || person?.employeeName)
+            .map(
+              (person) =>
+                person?.fullName || person?.name || person?.employeeName,
+            )
             .filter(Boolean)
             .join(", ")
         : "";
@@ -407,22 +440,22 @@ function normalizeInterviews(rows) {
             item.interviewDate,
             item.date,
             item.scheduledAt,
-            item.startTime
-          )
+            item.startTime,
+          ),
         ),
         interviewer: first(
           item.interviewerName,
           item.interviewer?.fullName,
           item.interviewer?.name,
           interviewers,
-          stage.interviewer
+          stage.interviewer,
         ),
         score: first(
           evaluation.overallScore,
           evaluation.score,
           item.score,
           item.overallScore,
-          null
+          null,
         ),
         recommendation,
         feedback: first(
@@ -430,7 +463,7 @@ function normalizeInterviews(rows) {
           evaluation.comments,
           item.feedback,
           item.comments,
-          ""
+          "",
         ),
         _timestamp: timestamp,
       });
@@ -439,16 +472,15 @@ function normalizeInterviews(rows) {
 
   return [...groups.values()].map((candidate) => {
     const rejected = candidate.stages.some(
-      (stage) => stage.status === "Rejected"
+      (stage) => stage.status === "Rejected",
     );
 
     const allCompleted = candidate.stages.every(
-      (stage) => stage.status === "Completed"
+      (stage) => stage.status === "Completed",
     );
 
     const hasProgress = candidate.stages.some(
-      (stage) =>
-        stage.status === "Completed" || stage.status === "In Progress"
+      (stage) => stage.status === "Completed" || stage.status === "In Progress",
     );
 
     candidate.overallStatus = rejected
@@ -586,7 +618,9 @@ function CandidateProgressModal({ candidate, onClose }) {
                 <UserRound size={22} />
               </div>
               <div>
-                <p className="font-semibold text-slate-900">{candidate.candidateName}</p>
+                <p className="font-semibold text-slate-900">
+                  {candidate.candidateName}
+                </p>
                 <p className="mt-1 break-all text-sm text-slate-500">
                   {candidate.candidateEmail || "Email not available"}
                 </p>
@@ -606,7 +640,8 @@ function CandidateProgressModal({ candidate, onClose }) {
                 <BriefcaseBusiness size={16} /> {candidate.jobTitle}
               </p>
               <p className="flex items-center gap-2">
-                <CalendarDays size={16} /> Applied: {formatDate(candidate.appliedDate)}
+                <CalendarDays size={16} /> Applied:{" "}
+                {formatDate(candidate.appliedDate)}
               </p>
               <p className="flex items-center gap-2">
                 <ClipboardCheck size={16} /> {candidate.overallStatus}
@@ -617,7 +652,9 @@ function CandidateProgressModal({ candidate, onClose }) {
           <div className="rounded-xl border border-slate-200 p-4">
             <div className="mb-3 flex items-center justify-between gap-3">
               <h3 className="font-semibold text-slate-900">Overall Progress</h3>
-              <span className="text-sm font-bold text-indigo-700">{progress}%</span>
+              <span className="text-sm font-bold text-indigo-700">
+                {progress}%
+              </span>
             </div>
             <div className="h-3 overflow-hidden rounded-full bg-slate-100">
               <div
@@ -630,7 +667,9 @@ function CandidateProgressModal({ candidate, onClose }) {
               />
             </div>
             <div className="mt-3 flex flex-wrap justify-between gap-2 text-xs text-slate-500">
-              <span>{completed} of {ROUNDS.length} stages completed</span>
+              <span>
+                {completed} of {ROUNDS.length} stages completed
+              </span>
               <span>{getCurrentStage(candidate)}</span>
             </div>
           </div>
@@ -641,7 +680,9 @@ function CandidateProgressModal({ candidate, onClose }) {
             </h3>
             <div className="space-y-4">
               {ROUNDS.map((round, index) => {
-                const stage = candidate.stages.find((item) => item.name === round);
+                const stage = candidate.stages.find(
+                  (item) => item.name === round,
+                );
                 const Icon = getStageIcon(stage.status);
 
                 return (
@@ -752,58 +793,61 @@ export default function InterviewProgress() {
   const requestInFlight = useRef(false);
   const mounted = useRef(false);
 
-  const loadProgress = useCallback(async ({ silent = false } = {}) => {
-    if (requestInFlight.current) return;
+  const loadProgress = useCallback(
+    async ({ silent = false } = {}) => {
+      if (requestInFlight.current) return;
 
-    requestInFlight.current = true;
-    if (!silent) {
-      if (candidates.length === 0) setLoading(true);
-      else setRefreshing(true);
-    }
-    setError("");
-
-    try {
-      if (typeof recruitmentApi?.getInterviews !== "function") {
-        throw new Error(
-          "recruitmentApi.getInterviews() is unavailable. Add it in src/services/api.js."
-        );
+      requestInFlight.current = true;
+      if (!silent) {
+        if (candidates.length === 0) setLoading(true);
+        else setRefreshing(true);
       }
+      setError("");
 
-      const response = await recruitmentApi.getInterviews();
-      const rows = unwrap(response);
-      const normalized = normalizeInterviews(rows);
+      try {
+        if (typeof recruitmentApi?.getInterviews !== "function") {
+          throw new Error(
+            "recruitmentApi.getInterviews() is unavailable. Add it in src/services/api.js.",
+          );
+        }
 
-      if (!mounted.current) return;
+        const response = await recruitmentApi.getInterviews();
+        const rows = unwrap(response);
+        const normalized = normalizeInterviews(rows);
 
-      setCandidates(normalized);
-      setSelectedCandidate((current) => {
-        if (!current) return null;
+        if (!mounted.current) return;
 
-        return (
-          normalized.find(
-            (candidate) => String(candidate.id) === String(current.id)
-          ) ?? null
-        );
-      });
-    } catch (e) {
-      console.error("Could not load interview progress:", e);
+        setCandidates(normalized);
+        setSelectedCandidate((current) => {
+          if (!current) return null;
 
-      if (!silent && mounted.current) {
-        setError(
-          e?.response?.data?.message ||
-            e?.message ||
-            "Could not load interview progress from the backend."
-        );
+          return (
+            normalized.find(
+              (candidate) => String(candidate.id) === String(current.id),
+            ) ?? null
+          );
+        });
+      } catch (e) {
+        console.error("Could not load interview progress:", e);
+
+        if (!silent && mounted.current) {
+          setError(
+            e?.response?.data?.message ||
+              e?.message ||
+              "Could not load interview progress from the backend.",
+          );
+        }
+      } finally {
+        requestInFlight.current = false;
+
+        if (mounted.current) {
+          setLoading(false);
+          setRefreshing(false);
+        }
       }
-    } finally {
-      requestInFlight.current = false;
-
-      if (mounted.current) {
-        setLoading(false);
-        setRefreshing(false);
-      }
-    }
-  }, [candidates.length]);
+    },
+    [candidates.length],
+  );
 
   useEffect(() => {
     mounted.current = true;
@@ -834,23 +878,35 @@ export default function InterviewProgress() {
   }, [loadProgress]);
 
   const jobTitles = useMemo(
-    () => [...new Set(candidates.map((candidate) => candidate.jobTitle).filter(Boolean))],
-    [candidates]
+    () => [
+      ...new Set(
+        candidates.map((candidate) => candidate.jobTitle).filter(Boolean),
+      ),
+    ],
+    [candidates],
   );
 
   const stats = useMemo(
     () => ({
       total: candidates.length,
-      completed: candidates.filter((candidate) => candidate.overallStatus === "Completed").length,
-      inProgress: candidates.filter((candidate) => candidate.overallStatus === "In Progress").length,
-      pending: candidates.filter((candidate) => candidate.overallStatus === "Pending").length,
-      rejected: candidates.filter((candidate) => candidate.overallStatus === "Rejected").length,
+      completed: candidates.filter(
+        (candidate) => candidate.overallStatus === "Completed",
+      ).length,
+      inProgress: candidates.filter(
+        (candidate) => candidate.overallStatus === "In Progress",
+      ).length,
+      pending: candidates.filter(
+        (candidate) => candidate.overallStatus === "Pending",
+      ).length,
+      rejected: candidates.filter(
+        (candidate) => candidate.overallStatus === "Rejected",
+      ).length,
       stageCompletions: candidates.reduce(
         (total, candidate) => total + getCompletedStages(candidate),
-        0
+        0,
       ),
     }),
-    [candidates]
+    [candidates],
   );
 
   const filteredCandidates = useMemo(() => {
@@ -874,13 +930,14 @@ export default function InterviewProgress() {
 
         return (
           searchable.includes(query) &&
-          (statusFilter === "All" || candidate.overallStatus === statusFilter) &&
+          (statusFilter === "All" ||
+            candidate.overallStatus === statusFilter) &&
           (jobFilter === "All" || candidate.jobTitle === jobFilter) &&
           (roundFilter === "All" || currentStage === roundFilter)
         );
       })
       .sort(
-        (a, b) => (order[a.overallStatus] ?? 4) - (order[b.overallStatus] ?? 4)
+        (a, b) => (order[a.overallStatus] ?? 4) - (order[b.overallStatus] ?? 4),
       );
   }, [candidates, searchTerm, statusFilter, jobFilter, roundFilter]);
 
@@ -912,7 +969,8 @@ export default function InterviewProgress() {
                 Interview Progress
               </h1>
               <p className="mt-2 max-w-2xl text-sm text-slate-500 sm:text-base">
-                Monitor candidate journeys from technical interviews to final interviews and review stage outcomes.
+                Monitor candidate journeys from technical interviews to final
+                interviews and review stage outcomes.
               </p>
             </div>
 
@@ -922,8 +980,15 @@ export default function InterviewProgress() {
               disabled={loading || refreshing}
               className="inline-flex items-center justify-center gap-2 self-start rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50 disabled:opacity-60"
             >
-              <RotateCcw size={16} className={refreshing ? "animate-spin" : ""} />
-              {loading ? "Loading..." : refreshing ? "Refreshing..." : "Refresh"}
+              <RotateCcw
+                size={16}
+                className={refreshing ? "animate-spin" : ""}
+              />
+              {loading
+                ? "Loading..."
+                : refreshing
+                  ? "Refreshing..."
+                  : "Refresh"}
             </button>
           </div>
 
@@ -934,10 +999,13 @@ export default function InterviewProgress() {
             >
               <AlertCircle size={18} className="mt-0.5 shrink-0" />
               <div>
-                <p className="font-semibold">Unable to load interview progress</p>
+                <p className="font-semibold">
+                  Unable to load interview progress
+                </p>
                 <p className="mt-1">{error}</p>
                 <p className="mt-2 text-xs">
-                  Check that the recruitment backend is running and that GET interviews returns interview rounds and evaluation details.
+                  Check that the recruitment backend is running and that GET
+                  interviews returns interview rounds and evaluation details.
                 </p>
               </div>
             </div>
@@ -976,7 +1044,9 @@ export default function InterviewProgress() {
 
           <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
             <div className="mb-4">
-              <h2 className="font-semibold text-slate-900">Interview Pipeline</h2>
+              <h2 className="font-semibold text-slate-900">
+                Interview Pipeline
+              </h2>
               <p className="mt-1 text-sm text-slate-500">
                 Select a stage to filter candidates by their current stage.
               </p>
@@ -991,8 +1061,9 @@ export default function InterviewProgress() {
 
                 const completed = candidates.filter((candidate) =>
                   candidate.stages.some(
-                    (stage) => stage.name === round && stage.status === "Completed"
-                  )
+                    (stage) =>
+                      stage.name === round && stage.status === "Completed",
+                  ),
                 ).length;
 
                 const selected = roundFilter === round;
@@ -1002,7 +1073,9 @@ export default function InterviewProgress() {
                     type="button"
                     key={round}
                     onClick={() =>
-                      setRoundFilter((current) => (current === round ? "All" : round))
+                      setRoundFilter((current) =>
+                        current === round ? "All" : round,
+                      )
                     }
                     className={`rounded-xl border p-4 text-left transition ${
                       selected
@@ -1014,9 +1087,13 @@ export default function InterviewProgress() {
                       <span className="flex h-8 w-8 items-center justify-center rounded-full bg-indigo-100 text-sm font-bold text-indigo-700">
                         {index + 1}
                       </span>
-                      <span className="text-xs text-slate-500">{completed} completed</span>
+                      <span className="text-xs text-slate-500">
+                        {completed} completed
+                      </span>
                     </div>
-                    <p className="mt-3 text-sm font-semibold text-slate-800">{round}</p>
+                    <p className="mt-3 text-sm font-semibold text-slate-800">
+                      {round}
+                    </p>
                     <p className="mt-1 text-xs text-slate-500">
                       {stageCandidates} current candidates
                     </p>
@@ -1029,7 +1106,9 @@ export default function InterviewProgress() {
           <section className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
             <div className="flex flex-col gap-4 border-b border-slate-200 p-5 lg:flex-row lg:items-center lg:justify-between">
               <div>
-                <h2 className="font-semibold text-slate-900">Candidate Progress</h2>
+                <h2 className="font-semibold text-slate-900">
+                  Candidate Progress
+                </h2>
                 <p className="mt-1 text-sm text-slate-500">
                   {loading
                     ? "Loading candidates..."
@@ -1085,7 +1164,9 @@ export default function InterviewProgress() {
                   >
                     <option value="All">All</option>
                     {STATUS_OPTIONS.map((status) => (
-                      <option key={status} value={status}>{status}</option>
+                      <option key={status} value={status}>
+                        {status}
+                      </option>
                     ))}
                   </select>
                 </div>
@@ -1105,7 +1186,9 @@ export default function InterviewProgress() {
                   >
                     <option value="All">All</option>
                     {ROUNDS.map((round) => (
-                      <option key={round} value={round}>{round}</option>
+                      <option key={round} value={round}>
+                        {round}
+                      </option>
                     ))}
                   </select>
                 </div>
@@ -1125,7 +1208,9 @@ export default function InterviewProgress() {
                   >
                     <option value="All">All</option>
                     {jobTitles.map((job) => (
-                      <option key={job} value={job}>{job}</option>
+                      <option key={job} value={job}>
+                        {job}
+                      </option>
                     ))}
                   </select>
                 </div>
@@ -1146,82 +1231,103 @@ export default function InterviewProgress() {
               <table className="w-full min-w-[1000px] text-left">
                 <thead className="bg-slate-50">
                   <tr className="border-b border-slate-200 text-xs uppercase tracking-wide text-slate-500">
-                    {["Candidate", "Job Position", "Current Stage", "Progress", "Overall Status"].map(
-                      (heading) => (
-                        <th key={heading} className="px-5 py-4 font-semibold">{heading}</th>
-                      )
-                    )}
-                    <th className="px-5 py-4 text-right font-semibold">Actions</th>
+                    {[
+                      "Candidate",
+                      "Job Position",
+                      "Current Stage",
+                      "Progress",
+                      "Overall Status",
+                    ].map((heading) => (
+                      <th key={heading} className="px-5 py-4 font-semibold">
+                        {heading}
+                      </th>
+                    ))}
+                    <th className="px-5 py-4 text-right font-semibold">
+                      Actions
+                    </th>
                   </tr>
                 </thead>
 
                 <tbody className="divide-y divide-slate-100">
-                  {!loading && filteredCandidates.map((candidate) => (
-                    <tr key={candidate.id} className="transition hover:bg-slate-50/80">
-                      <td className="px-5 py-4">
-                        <div className="flex items-center gap-3">
-                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-indigo-50 text-sm font-bold text-indigo-700">
-                            {(candidate.candidateName || "Candidate")
-                              .split(" ")
-                              .map((part) => part[0])
-                              .slice(0, 2)
-                              .join("")
-                              .toUpperCase()}
-                          </div>
-                          <div>
-                            <p className="font-semibold text-slate-800">{candidate.candidateName}</p>
-                            <p className="mt-1 text-xs text-slate-500">
-                              {candidate.candidateEmail || "Email unavailable"}
-                            </p>
-                            {candidate.applicationId != null && (
-                              <p className="mt-1 text-xs text-slate-400">
-                                Application #{candidate.applicationId}
+                  {!loading &&
+                    filteredCandidates.map((candidate) => (
+                      <tr
+                        key={candidate.id}
+                        className="transition hover:bg-slate-50/80"
+                      >
+                        <td className="px-5 py-4">
+                          <div className="flex items-center gap-3">
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-indigo-50 text-sm font-bold text-indigo-700">
+                              {(candidate.candidateName || "Candidate")
+                                .split(" ")
+                                .map((part) => part[0])
+                                .slice(0, 2)
+                                .join("")
+                                .toUpperCase()}
+                            </div>
+                            <div>
+                              <p className="font-semibold text-slate-800">
+                                {candidate.candidateName}
                               </p>
-                            )}
+                              <p className="mt-1 text-xs text-slate-500">
+                                {candidate.candidateEmail ||
+                                  "Email unavailable"}
+                              </p>
+                              {candidate.applicationId != null && (
+                                <p className="mt-1 text-xs text-slate-400">
+                                  Application #{candidate.applicationId}
+                                </p>
+                              )}
+                            </div>
                           </div>
-                        </div>
-                      </td>
+                        </td>
 
-                      <td className="px-5 py-4">
-                        <span className="text-sm text-slate-700">{candidate.jobTitle}</span>
-                        <p className="mt-1 text-xs text-slate-400">
-                          Applied {formatDate(candidate.appliedDate)}
-                        </p>
-                      </td>
+                        <td className="px-5 py-4">
+                          <span className="text-sm text-slate-700">
+                            {candidate.jobTitle}
+                          </span>
+                          <p className="mt-1 text-xs text-slate-400">
+                            Applied {formatDate(candidate.appliedDate)}
+                          </p>
+                        </td>
 
-                      <td className="px-5 py-4 text-sm font-medium text-slate-700">
-                        {getCurrentStage(candidate)}
-                      </td>
+                        <td className="px-5 py-4 text-sm font-medium text-slate-700">
+                          {getCurrentStage(candidate)}
+                        </td>
 
-                      <td className="px-5 py-4">
-                        <ProgressBar candidate={candidate} />
-                      </td>
+                        <td className="px-5 py-4">
+                          <ProgressBar candidate={candidate} />
+                        </td>
 
-                      <td className="px-5 py-4">
-                        <span
-                          className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${getStatusStyle(candidate.overallStatus)}`}
-                        >
-                          {candidate.overallStatus}
-                        </span>
-                      </td>
-
-                      <td className="px-5 py-4">
-                        <div className="flex justify-end">
-                          <button
-                            type="button"
-                            onClick={() => setSelectedCandidate(candidate)}
-                            className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700 hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700"
+                        <td className="px-5 py-4">
+                          <span
+                            className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${getStatusStyle(candidate.overallStatus)}`}
                           >
-                            <Eye size={15} /> View Progress <ArrowRight size={14} />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
+                            {candidate.overallStatus}
+                          </span>
+                        </td>
+
+                        <td className="px-5 py-4">
+                          <div className="flex justify-end">
+                            <button
+                              type="button"
+                              onClick={() => setSelectedCandidate(candidate)}
+                              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700 hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700"
+                            >
+                              <Eye size={15} /> View Progress{" "}
+                              <ArrowRight size={14} />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
 
                   {loading && (
                     <tr>
-                      <td colSpan={6} className="px-5 py-14 text-center text-sm text-slate-500">
+                      <td
+                        colSpan={6}
+                        className="px-5 py-14 text-center text-sm text-slate-500"
+                      >
                         Loading interview progress from backend...
                       </td>
                     </tr>
@@ -1254,7 +1360,9 @@ export default function InterviewProgress() {
             </div>
 
             <div className="border-t border-slate-200 px-5 py-3 text-xs text-slate-500">
-              Showing {loading ? "…" : filteredCandidates.length} of {candidates.length} applications returned by the backend. Auto-refreshes every 15 seconds.
+              Showing {loading ? "…" : filteredCandidates.length} of{" "}
+              {candidates.length} applications returned by the backend.
+              Auto-refreshes every 15 seconds.
             </div>
           </section>
 
@@ -1287,7 +1395,9 @@ export default function InterviewProgress() {
 
             {stats.rejected > 0 && (
               <p className="mt-4 text-xs text-slate-500">
-                {stats.rejected} candidate{stats.rejected !== 1 ? "s have" : " has"} stopped progressing through the interview pipeline.
+                {stats.rejected} candidate
+                {stats.rejected !== 1 ? "s have" : " has"} stopped progressing
+                through the interview pipeline.
               </p>
             )}
           </section>
