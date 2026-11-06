@@ -877,7 +877,7 @@ export default function InterviewEvaluationReview() {
   return (
     <PageLayout
       role="recruiter"
-      activePage="Interview Evaluation Review"
+      activePage="Evaluation Review"
       title="Interview Evaluation Review"
       subtitle="Review interviewer feedback and approve candidates for the next round"
     >

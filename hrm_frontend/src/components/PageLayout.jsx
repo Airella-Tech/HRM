@@ -10,7 +10,7 @@
  *   actions     : ReactNode — optional topbar right-side actions
  *   children    : ReactNode — page content
  */
-import React, { useEffect, useState } from "react";
+import { useState, useEffect, useRef, useLayoutEffect } from "react";
 import { useRecruitmentAccess, fetchRecruitmentAccess } from "../utils/useRecruitmentAccess";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
@@ -161,7 +161,7 @@ const NAV = {
     },
 
     {
-     name: "Interview Evaluation Review",
+     name: "Evaluation Review",
      icon: CheckCircle2,
      path: "/recruitment/evaluation-review",
      requiresAny: ["INTERVIEW_DECIDE", "INTERVIEW_SCHEDULE"],
@@ -249,6 +249,8 @@ const ACCENT = {
     hover: "hover:bg-primary-50",
   },
 };
+// Remembers sidebar scroll between page changes (each page remounts PageLayout)
+let savedNavScroll = 0;
 
 export const PageLayout = ({
   role = "employee",
@@ -258,6 +260,7 @@ export const PageLayout = ({
   actions,
   children,
 }) => {
+
     // Remember the collapsed/expanded sidebar between pages
   const [collapsed, setCollapsed] = useState(() => {
     try {
@@ -303,7 +306,11 @@ export const PageLayout = ({
         (storedRole === "ADMIN"
           ? { fullAccess: true, hasRecruitmentAccess: true, permissions: [] }
           : null);
+  const navListRef = useRef(null);
 
+  useLayoutEffect(() => {
+    if (navListRef.current) navListRef.current.scrollTop = savedNavScroll;
+  }, [recruitmentAccess]);
   const navItems =
     role !== "recruiter"
       ? NAV[role] || []
@@ -384,7 +391,8 @@ export const PageLayout = ({
         </div>
 
         {/* Nav items */}
-        <ul className="flex-1 py-4 space-y-1 px-3 overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <ul ref={navListRef}
+  onScroll={(e) => { savedNavScroll = e.currentTarget.scrollTop; }} className="flex-1 min-h-0 py-4 pb-8 space-y-1 px-3 overflow-y-auto overflow-x-hidden [scrollbar-width:thin] [scrollbar-color:rgba(255,255,255,0.18)_transparent] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-white/20 [&::-webkit-scrollbar-track]:bg-transparent">
                   {role === "recruiter" &&
             !recruitmentAccess &&
             [0, 1, 2, 3, 4].map((i) => (
@@ -415,8 +423,8 @@ export const PageLayout = ({
               (activePage === "Evaluations" &&
                 (item.name === "Evaluate Interviews" ||
                   item.name === "Evaluations")) ||
-              (activePage === "Interview Evaluation Review" &&
-                  item.name === "Interview Evaluation Review") ||
+              (activePage === "Evaluation Review" &&
+                  item.name === "Evaluation Review") ||
               (activePage === "Job Offers" &&
                 (item.name === "Manage Job Offers" ||
                   item.name === "Job Offers"));
@@ -466,6 +474,7 @@ export const PageLayout = ({
             );
           })}
         </ul>
+        <div className="pointer-events-none h-6 -mt-6 shrink-0" style={{ background: "linear-gradient(to top, #1b2142, transparent)" }} />
        
 
                {/* User + logout */}
