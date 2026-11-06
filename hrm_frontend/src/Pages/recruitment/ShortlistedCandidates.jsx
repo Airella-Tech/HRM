@@ -1657,7 +1657,7 @@ export default function ShortlistedCandidates() {
                 </p>
               </div>
 
-              <div className="rounded-xl bg-indigo-50 p-3 text-indigo-600">
+              <div className="rounded-xl bg-primary-50 p-3 text-primary-600">
                 <Users size={23} />
               </div>
             </div>
@@ -1736,7 +1736,7 @@ export default function ShortlistedCandidates() {
                     onChange={(event) => setSearchTerm(event.target.value)}
                     placeholder="Search name, email, vacancy..."
                     aria-label="Search shortlisted candidates"
-                    className="w-full rounded-xl border border-slate-200 py-2.5 pl-10 pr-4 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 sm:w-72"
+                    className="w-full rounded-xl border border-slate-200 py-2.5 pl-10 pr-4 text-sm outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-100 sm:w-72"
                   />
                 </div>
 
@@ -1750,7 +1750,7 @@ export default function ShortlistedCandidates() {
                     value={roundFilter}
                     onChange={(event) => setRoundFilter(event.target.value)}
                     aria-label="Filter by next interview round"
-                    className="w-full appearance-none rounded-xl border border-slate-200 bg-white py-2.5 pl-9 pr-8 text-sm outline-none focus:border-indigo-500"
+                    className="w-full appearance-none rounded-xl border border-slate-200 bg-white py-2.5 pl-9 pr-8 text-sm outline-none focus:border-primary-500"
                   >
                     <option value="All">All next rounds</option>
 
@@ -1769,7 +1769,7 @@ export default function ShortlistedCandidates() {
             <div className="flex flex-col items-center justify-center px-5 py-16 text-center">
               <LoaderCircle
                 size={34}
-                className="mb-3 animate-spin text-indigo-600"
+                className="mb-3 animate-spin text-primary-600"
               />
 
               <p className="font-semibold text-slate-700">
@@ -1839,7 +1839,7 @@ export default function ShortlistedCandidates() {
                         >
                           <td className="px-5 py-4">
                             <div className="flex items-center gap-3">
-                              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-sm font-bold text-indigo-700">
+                              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary-100 text-sm font-bold text-primary-700">
                                 {initials(candidate.name)}
                               </div>
 
@@ -1933,7 +1933,7 @@ export default function ShortlistedCandidates() {
                                 Already scheduled
                               </span>
                             ) : nextRound ? (
-                              <span className="inline-flex items-center gap-1.5 rounded-lg bg-indigo-50 px-3 py-2 text-xs font-semibold text-indigo-700">
+                              <span className="inline-flex items-center gap-1.5 rounded-lg bg-primary-50 px-3 py-2 text-xs font-semibold text-primary-700">
                                 <Clock3 size={14} />
                                 {nextRound}
                               </span>
@@ -1989,7 +1989,7 @@ export default function ShortlistedCandidates() {
                                   alreadyScheduled
                                 }
                                 onClick={() => scheduleNextStage(candidate)}
-                                className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-lg bg-indigo-600 px-3 py-2.5 text-xs font-semibold text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-slate-300"
+                                className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-lg bg-primary-600 px-3 py-2.5 text-xs font-semibold text-white hover:bg-primary-700 disabled:cursor-not-allowed disabled:bg-slate-300"
                               >
                                 <CalendarCheck size={15} />
 
@@ -2035,7 +2035,7 @@ export default function ShortlistedCandidates() {
                             <button
                               type="button"
                               onClick={resetFilters}
-                              className="mt-3 text-sm font-semibold text-indigo-600"
+                              className="mt-3 text-sm font-semibold text-primary-600"
                             >
                               Clear filters
                             </button>
@@ -2045,7 +2045,7 @@ export default function ShortlistedCandidates() {
                             <button
                               type="button"
                               onClick={() => loadData(true)}
-                              className="mt-4 inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700"
+                              className="mt-4 inline-flex items-center gap-2 rounded-xl bg-primary-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-primary-700"
                             >
                               <RefreshCw size={16} />
                               Retry loading
@@ -2223,7 +2223,7 @@ export default function ShortlistedCandidates() {
                           : rejected
                             ? "border-red-200 bg-red-50"
                             : next
-                              ? "border-indigo-200 bg-indigo-50"
+                              ? "border-primary-200 bg-primary-50"
                               : "border-slate-200";
 
                   const iconStyle = completed
@@ -2237,7 +2237,7 @@ export default function ShortlistedCandidates() {
                           : rejected
                             ? "bg-red-100 text-red-700"
                             : next
-                              ? "bg-indigo-100 text-indigo-700"
+                              ? "bg-primary-100 text-primary-700"
                               : "bg-slate-100 text-slate-500";
 
                   return (
@@ -2274,7 +2274,7 @@ export default function ShortlistedCandidates() {
                           !scheduled &&
                           !evaluationPending &&
                           !managerPending && (
-                            <span className="text-indigo-600">
+                            <span className="text-primary-600">
                               <CalendarCheck size={17} />
                             </span>
                           )}
@@ -2361,7 +2361,7 @@ export default function ShortlistedCandidates() {
                         getNextRound(selectedCandidate),
                       )
                     }
-                    className="rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-slate-300"
+                    className="rounded-xl bg-primary-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-primary-700 disabled:cursor-not-allowed disabled:bg-slate-300"
                   >
                     {getNextRound(selectedCandidate) &&
                     getPendingEvaluation(

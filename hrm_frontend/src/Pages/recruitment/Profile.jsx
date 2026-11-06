@@ -179,9 +179,9 @@ const EmployeeProfile = () => {
                                 <SectionTitle icon={User} tone="bg-sky-50 text-sky-600">Personal Details</SectionTitle>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                                     <Field label="Full Name" value={profile.fullName} icon={User} tone="text-sky-500" />
-                                    <Field label="Email Address" value={profile.email} icon={Mail} tone="text-indigo-500" />
+                                    <Field label="Email Address" value={profile.email} icon={Mail} tone="text-primary-500" />
                                     <Field label="Date of Birth" value={fmtDate(profile.dob)} icon={Calendar} tone="text-amber-500" />
-                                    <Field label="Gender" value={GENDER_LABEL[profile.gender] || titleCase(profile.gender)} icon={Users} tone="text-violet-500" />
+                                    <Field label="Gender" value={GENDER_LABEL[profile.gender] || titleCase(profile.gender)} icon={Users} tone="text-primary-500" />
                                     <Field label="Phone Number" value={profile.phone} icon={Phone} tone="text-emerald-500" />
                                 </div>
 
@@ -198,7 +198,7 @@ const EmployeeProfile = () => {
                                     <Field label="Employment Type" value={profile.employmentType} icon={Briefcase} tone="text-blue-500" />
                                     <Field label="Status" value={titleCase(profile.status)} icon={ShieldCheck} tone="text-emerald-500" />
                                     <Field label="Joining Date" value={fmtDate(profile.joiningDate)} icon={Calendar} tone="text-amber-500" />
-                                    <Field label="Work Experience" value={experience} icon={Clock} tone="text-violet-500" />
+                                    <Field label="Work Experience" value={experience} icon={Clock} tone="text-primary-500" />
                                 </div>
 
                             </div>
