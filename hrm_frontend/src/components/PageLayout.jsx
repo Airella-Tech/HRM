@@ -233,6 +233,8 @@ const ACCENT = {
     label: "Recruiter",
     surface: "bg-slate-50",
     sidebarBg: "linear-gradient(180deg, #151a35 0%, #1b2142 100%)",
+    activeBg: "rgba(63,77,153,0.45)",
+        activeBorder: "border-primary-300",
         menuBg: "bg-primary-800",
     ringClass: "ring-primary-900",
     topbar: "border-primary-100",
@@ -375,7 +377,7 @@ export const PageLayout = ({
         </div>
 
         {/* Nav items */}
-        <ul className="flex-1 py-4 space-y-1 px-3 overflow-y-auto">
+        <ul className="flex-1 py-4 space-y-1 px-3 overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                   {role === "recruiter" &&
             !recruitmentAccess &&
             [0, 1, 2, 3, 4].map((i) => (
@@ -426,17 +428,24 @@ export const PageLayout = ({
               (baseUrlMatches && !navItems.some((n) => n.name === activePage));
             return (
               <li key={item.name}>
-                <button
+                                                <button
                   onClick={() => (item.path ? navigate(item.path) : null)}
-                  className={`flex items-center gap-3 w-full px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200
+                  className={`relative flex items-center gap-3 w-full px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200
+                    ${
+                      accent.activeBorder
+                        ? `border-l-[3px] ${isActive ? accent.activeBorder : "border-transparent"}`
+                        : ""
+                    }
                     ${isActive ? "text-white" : "text-gray-400 hover:text-white hover:bg-white/10"}
                     ${collapsed ? "justify-center px-0" : ""}`}
                   style={
                     isActive
-                      ? {
-                          background: `linear-gradient(135deg, ${accent.from}, ${accent.to})`,
-                          boxShadow: `0 2px 12px ${accent.shadow}`,
-                        }
+                      ? accent.activeBg
+                        ? { backgroundColor: accent.activeBg }
+                        : {
+                            background: `linear-gradient(135deg, ${accent.from}, ${accent.to})`,
+                            boxShadow: `0 2px 12px ${accent.shadow}`,
+                          }
                       : {}
                   }
                   title={collapsed ? item.name : undefined}
