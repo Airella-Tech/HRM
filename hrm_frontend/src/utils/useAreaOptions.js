@@ -30,7 +30,7 @@ export const useAreaOptions = () => {
   // to have it, so the menu doesn't jump when it arrives.
   const canRecruit = access
     ? access.fullAccess === true || access.hasRecruitmentAccess === true
-    : isHRManager;
+    : user?.role === "ADMIN";
 
   if (!isHRManager && !canRecruit) return [];
 
