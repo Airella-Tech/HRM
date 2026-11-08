@@ -585,7 +585,7 @@ export default function InterviewEmails() {
           <button
             type="button"
             onClick={() => navigate(-1)}
-            className="inline-flex items-center gap-2 rounded-lg py-2 text-sm font-medium text-slate-500 transition hover:text-indigo-600"
+            className="inline-flex items-center gap-2 rounded-lg py-2 text-sm font-medium text-slate-500 transition hover:text-primary-600"
           >
             <ArrowLeft size={16} />
             Back
@@ -603,7 +603,7 @@ export default function InterviewEmails() {
               type="button"
               onClick={() => refreshLogs(true)}
               disabled={loading}
-              className="inline-flex min-h-11 items-center justify-center gap-2 whitespace-nowrap rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-indigo-200 hover:bg-indigo-50 disabled:cursor-not-allowed disabled:opacity-60"
+              className="inline-flex min-h-11 items-center justify-center gap-2 whitespace-nowrap rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-primary-200 hover:bg-primary-50 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {loading ? (
                 <LoaderCircle size={17} className="animate-spin" />
@@ -616,7 +616,7 @@ export default function InterviewEmails() {
             <button
               type="button"
               onClick={() => navigate("/recruitment/interviews")}
-              className="inline-flex min-h-11 items-center justify-center gap-2 whitespace-nowrap rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-indigo-200 hover:bg-indigo-50"
+              className="inline-flex min-h-11 items-center justify-center gap-2 whitespace-nowrap rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-primary-200 hover:bg-primary-50"
             >
               <CalendarDays size={17} />
               Interview Scheduling
@@ -678,7 +678,7 @@ export default function InterviewEmails() {
                       {card.value}
                     </p>
                   </div>
-                  <div className="rounded-xl bg-indigo-50 p-3 text-indigo-600">
+                  <div className="rounded-xl bg-primary-50 p-3 text-primary-600">
                     <Icon size={22} />
                   </div>
                 </div>
@@ -707,7 +707,7 @@ export default function InterviewEmails() {
                   onClick={() => setActiveTab(tab.value)}
                   className={`-mb-px inline-flex items-center gap-2 border-b-2 px-3 py-3 text-sm font-semibold transition ${
                     activeTab === tab.value
-                      ? "border-indigo-600 text-indigo-700"
+                      ? "border-primary-600 text-primary-700"
                       : "border-transparent text-slate-500 hover:text-slate-800"
                   }`}
                 >
@@ -715,7 +715,7 @@ export default function InterviewEmails() {
                   <span
                     className={`rounded-full px-2 py-0.5 text-xs ${
                       activeTab === tab.value
-                        ? "bg-indigo-50 text-indigo-700"
+                        ? "bg-primary-50 text-primary-700"
                         : "bg-slate-100 text-slate-600"
                     }`}
                   >
@@ -737,7 +737,7 @@ export default function InterviewEmails() {
                   onChange={(event) => setSearch(event.target.value)}
                   placeholder="Search candidate, recipient, subject..."
                   aria-label="Search email notifications"
-                  className="w-full rounded-xl border border-slate-200 py-2.5 pl-10 pr-4 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+                  className="w-full rounded-xl border border-slate-200 py-2.5 pl-10 pr-4 text-sm outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-100"
                 />
               </div>
 
@@ -750,7 +750,7 @@ export default function InterviewEmails() {
                   value={statusFilter}
                   onChange={(event) => setStatusFilter(event.target.value)}
                   aria-label="Filter by email status"
-                  className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-9 pr-3 text-sm outline-none focus:border-indigo-500"
+                  className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-9 pr-3 text-sm outline-none focus:border-primary-500"
                 >
                   <option value="All">All statuses</option>
                   <option value="Pending">Pending</option>
@@ -789,7 +789,7 @@ export default function InterviewEmails() {
                     <td colSpan={6} className="px-5 py-14 text-center">
                       <LoaderCircle
                         size={28}
-                        className="mx-auto mb-3 animate-spin text-indigo-500"
+                        className="mx-auto mb-3 animate-spin text-primary-500"
                       />
                       <p className="font-semibold text-slate-700">
                         Loading email records...
@@ -882,7 +882,7 @@ export default function InterviewEmails() {
                             aria-label={`View notification for ${
                               email.recipientEmail || "recipient"
                             }`}
-                            className="rounded-lg p-2 text-slate-500 hover:bg-indigo-50 hover:text-indigo-600"
+                            className="rounded-lg p-2 text-slate-500 hover:bg-primary-50 hover:text-primary-600"
                           >
                             <Eye size={17} />
                           </button>
@@ -1022,7 +1022,7 @@ export default function InterviewEmails() {
                     href={selectedEmail.meetingLink}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 text-sm font-semibold text-indigo-600 hover:text-indigo-800"
+                    className="inline-flex items-center gap-2 text-sm font-semibold text-primary-600 hover:text-primary-800"
                   >
                     <Video size={16} /> Open meeting link
                   </a>

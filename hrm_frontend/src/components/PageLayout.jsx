@@ -10,7 +10,7 @@
  *   actions     : ReactNode — optional topbar right-side actions
  *   children    : ReactNode — page content
  */
-import React, { useEffect, useState } from "react";
+import { useState, useEffect, useRef, useLayoutEffect } from "react";
 import { useRecruitmentAccess, fetchRecruitmentAccess } from "../utils/useRecruitmentAccess";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
@@ -51,7 +51,7 @@ import {
 } from "lucide-react";
 import logo from "../assets/logo.jpg";
 import NotificationPopup from "./NotificationPopup";
-import RoleSwitch from "./RoleSwitch";
+import { UserMenu } from "./UserMenu";
 
 // ─── Nav configs per role ────────────────────────────────────────────────────
 const NAV = {
@@ -161,7 +161,7 @@ const NAV = {
     },
 
     {
-     name: "Interview Evaluation Review",
+     name: "Evaluation Review",
      icon: CheckCircle2,
      path: "/recruitment/evaluation-review",
      requiresAny: ["INTERVIEW_DECIDE", "INTERVIEW_SCHEDULE"],
@@ -231,19 +231,26 @@ const ACCENT = {
     title: "text-gray-900",
     hover: "hover:bg-gray-100",
   },
-  recruiter: {
-    from: "rgba(99,102,241,0.8)",
-    to: "rgba(139,92,246,0.6)",
-    shadow: "rgba(99,102,241,0.3)",
-    avatarFrom: "from-indigo-500",
-    avatarTo: "to-violet-600",
+    recruiter: {
+    from: "rgba(85,99,176,0.9)",
+    to: "rgba(63,77,153,0.8)",
+    shadow: "rgba(63,77,153,0.35)",
+    avatarFrom: "from-primary-600",
+    avatarTo: "to-primary-700",
     label: "Recruiter",
     surface: "bg-slate-50",
-    topbar: "border-indigo-100",
+    sidebarBg: "linear-gradient(180deg, #151a35 0%, #1b2142 100%)",
+    activeBg: "rgba(63,77,153,0.45)",
+        activeBorder: "border-primary-300",
+        menuBg: "bg-primary-800",
+    ringClass: "ring-primary-900",
+    topbar: "border-primary-100",
     title: "text-slate-900",
-    hover: "hover:bg-indigo-50",
+    hover: "hover:bg-primary-50",
   },
 };
+// Remembers sidebar scroll between page changes (each page remounts PageLayout)
+let savedNavScroll = 0;
 
 export const PageLayout = ({
   role = "employee",
@@ -253,6 +260,7 @@ export const PageLayout = ({
   actions,
   children,
 }) => {
+
     // Remember the collapsed/expanded sidebar between pages
   const [collapsed, setCollapsed] = useState(() => {
     try {
@@ -298,7 +306,11 @@ export const PageLayout = ({
         (storedRole === "ADMIN"
           ? { fullAccess: true, hasRecruitmentAccess: true, permissions: [] }
           : null);
+  const navListRef = useRef(null);
 
+  useLayoutEffect(() => {
+    if (navListRef.current) navListRef.current.scrollTop = savedNavScroll;
+  }, [recruitmentAccess]);
   const navItems =
     role !== "recruiter"
       ? NAV[role] || []
@@ -355,7 +367,7 @@ export const PageLayout = ({
       <nav
         className={`flex flex-col flex-shrink-0 shadow-2xl transition-all duration-300 ${collapsed ? "w-20" : "w-64"}`}
         style={{
-          background: "linear-gradient(180deg, #0a1120 0%, #0f172a 100%)",
+          background: accent.sidebarBg || "linear-gradient(180deg, #0a1120 0%, #0f172a 100%)",
         }}
       >
         {/* Logo row */}
@@ -379,7 +391,8 @@ export const PageLayout = ({
         </div>
 
         {/* Nav items */}
-        <ul className="flex-1 py-4 space-y-1 px-3 overflow-y-auto">
+        <ul ref={navListRef}
+  onScroll={(e) => { savedNavScroll = e.currentTarget.scrollTop; }} className="flex-1 min-h-0 py-4 pb-8 space-y-1 px-3 overflow-y-auto overflow-x-hidden [scrollbar-width:thin] [scrollbar-color:rgba(255,255,255,0.18)_transparent] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-white/20 [&::-webkit-scrollbar-track]:bg-transparent">
                   {role === "recruiter" &&
             !recruitmentAccess &&
             [0, 1, 2, 3, 4].map((i) => (
@@ -410,8 +423,8 @@ export const PageLayout = ({
               (activePage === "Evaluations" &&
                 (item.name === "Evaluate Interviews" ||
                   item.name === "Evaluations")) ||
-              (activePage === "Interview Evaluation Review" &&
-                  item.name === "Interview Evaluation Review") ||
+              (activePage === "Evaluation Review" &&
+                  item.name === "Evaluation Review") ||
               (activePage === "Job Offers" &&
                 (item.name === "Manage Job Offers" ||
                   item.name === "Job Offers"));
@@ -432,17 +445,24 @@ export const PageLayout = ({
               (baseUrlMatches && !navItems.some((n) => n.name === activePage));
             return (
               <li key={item.name}>
-                <button
+                                                <button
                   onClick={() => (item.path ? navigate(item.path) : null)}
-                  className={`flex items-center gap-3 w-full px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200
+                  className={`relative flex items-center gap-3 w-full px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200
+                    ${
+                      accent.activeBorder
+                        ? `border-l-[3px] ${isActive ? accent.activeBorder : "border-transparent"}`
+                        : ""
+                    }
                     ${isActive ? "text-white" : "text-gray-400 hover:text-white hover:bg-white/10"}
                     ${collapsed ? "justify-center px-0" : ""}`}
                   style={
                     isActive
-                      ? {
-                          background: `linear-gradient(135deg, ${accent.from}, ${accent.to})`,
-                          boxShadow: `0 2px 12px ${accent.shadow}`,
-                        }
+                      ? accent.activeBg
+                        ? { backgroundColor: accent.activeBg }
+                        : {
+                            background: `linear-gradient(135deg, ${accent.from}, ${accent.to})`,
+                            boxShadow: `0 2px 12px ${accent.shadow}`,
+                          }
                       : {}
                   }
                   title={collapsed ? item.name : undefined}
@@ -454,38 +474,42 @@ export const PageLayout = ({
             );
           })}
         </ul>
-        {(role === "hr" || role === "employee" || role === "recruiter") && (
-          <div className="px-3 pb-3 flex-shrink-0">
-            <RoleSwitch
+        <div className="pointer-events-none h-6 -mt-6 shrink-0" style={{ background: "linear-gradient(to top, #1b2142, transparent)" }} />
+       
+
+               {/* User + logout */}
+        <div className="border-t border-white/10 p-3 space-y-2 flex-shrink-0">
+                    {role === "hr" || role === "employee" || role === "recruiter" ? (
+            <UserMenu
               mode={
                 role === "hr"
                   ? "hr"
-                  : role === "recruiter"
-                    ? "recruitment"
-                    : "employee"
+                  : role === "employee"
+                    ? "employee"
+                    : "recruitment"
               }
-              sidebar
+              initials={initials}
+              name={user?.fullName || "User"}
+              roleLabel={accent.label}
+              accent={accent}
               collapsed={collapsed}
             />
-          </div>
-        )}
-
-        {/* User + logout */}
-        <div className="border-t border-white/10 p-3 space-y-2 flex-shrink-0">
-          {!collapsed && (
-            <div className="flex items-center gap-3 px-2 py-2">
-              <div
-                className={`w-9 h-9 rounded-xl bg-gradient-to-br ${accent.avatarFrom} ${accent.avatarTo} flex items-center justify-center text-white text-sm font-bold flex-shrink-0 shadow-md`}
-              >
-                {initials}
+          ) : (
+            !collapsed && (
+              <div className="flex items-center gap-3 px-2 py-2">
+                <div
+                  className={`w-9 h-9 rounded-xl bg-gradient-to-br ${accent.avatarFrom} ${accent.avatarTo} flex items-center justify-center text-white text-sm font-bold flex-shrink-0 shadow-md`}
+                >
+                  {initials}
+                </div>
+                <div className="min-w-0">
+                  <p className="text-white text-sm font-semibold truncate">
+                    {user?.fullName || "User"}
+                  </p>
+                  <p className="text-gray-500 text-xs">{accent.label}</p>
+                </div>
               </div>
-              <div className="min-w-0">
-                <p className="text-white text-sm font-semibold truncate">
-                  {user?.fullName || "User"}
-                </p>
-                <p className="text-gray-500 text-xs">{accent.label}</p>
-              </div>
-            </div>
+            )
           )}
           <button
             onClick={handleLogout}
@@ -513,7 +537,7 @@ export const PageLayout = ({
               </p>
             )}
           </div>
-          <div className="flex items-center gap-3">
+                           <div className="flex items-center gap-3">
             {actions}
             <button
               onClick={() => setIsNotificationsOpen((v) => !v)}

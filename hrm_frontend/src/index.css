@@ -136,3 +136,16 @@
   border: 2px solid #d1fae5;
 }
 .green-scrollbar::-webkit-scrollbar-thumb:hover { background: #059669; } /* emerald-600 */
+/* Recruitment sidebar: the active item fades in and its marker grows in */
+@keyframes navActiveIn {
+  from { background-color: transparent; }
+}
+@keyframes navMarkerIn {
+  from { opacity: 0; transform: scaleY(0.3); }
+}
+.nav-active-anim { animation: navActiveIn 260ms ease-out; }
+.nav-marker-anim { animation: navMarkerIn 300ms ease-out; }
+@media (prefers-reduced-motion: reduce) {
+  .nav-active-anim,
+  .nav-marker-anim { animation: none; }
+}

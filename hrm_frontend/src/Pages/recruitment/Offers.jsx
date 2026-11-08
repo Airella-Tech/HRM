@@ -678,7 +678,7 @@ export default function JobOffers() {
             <button
               type="button"
               onClick={openCreate}
-              className="inline-flex items-center justify-center gap-2 rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700"
+              className="inline-flex items-center justify-center gap-2 rounded-lg bg-primary-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-primary-700"
             >
               <Plus size={18} />
               Create Job Offer
@@ -730,10 +730,10 @@ export default function JobOffers() {
         )}
 
         {/* ELIGIBLE CANDIDATES SUMMARY */}
-        <div className="mb-7 rounded-xl border border-indigo-100 bg-indigo-50/60 p-5">
+        <div className="mb-7 rounded-xl border border-primary-100 bg-primary-50/60 p-5">
           <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
             <div className="flex items-center gap-3">
-              <div className="rounded-xl bg-indigo-100 p-3 text-indigo-700">
+              <div className="rounded-xl bg-primary-100 p-3 text-primary-700">
                 <Users size={22} />
               </div>
 
@@ -750,7 +750,7 @@ export default function JobOffers() {
             </div>
 
             <div className="text-left sm:text-right">
-              <p className="text-2xl font-bold text-indigo-700">
+              <p className="text-2xl font-bold text-primary-700">
                 {eligibleLoading ? "..." : eligibleCandidates.length}
               </p>
               <p className="text-xs text-gray-500">Ready for job offers</p>
@@ -778,7 +778,7 @@ export default function JobOffers() {
               {eligibleCandidates.slice(0, 5).map((candidate) => (
                 <div
                   key={candidate.applicationId}
-                  className="rounded-lg border border-indigo-100 bg-white px-3 py-2"
+                  className="rounded-lg border border-primary-100 bg-white px-3 py-2"
                 >
                   <p className="text-sm font-semibold text-gray-800">
                     {candidate.candidateName}
@@ -790,7 +790,7 @@ export default function JobOffers() {
               ))}
 
               {eligibleCandidates.length > 5 && (
-                <div className="flex items-center rounded-lg bg-white px-3 py-2 text-xs font-medium text-indigo-700">
+                <div className="flex items-center rounded-lg bg-white px-3 py-2 text-xs font-medium text-primary-700">
                   +{eligibleCandidates.length - 5} more candidates
                 </div>
               )}
@@ -804,7 +804,7 @@ export default function JobOffers() {
             title="Total Offers"
             value={stats.total}
             icon={FileText}
-            color="bg-indigo-50 text-indigo-600"
+            color="bg-primary-50 text-primary-600"
             description="All offer records"
           />
 
@@ -867,7 +867,7 @@ export default function JobOffers() {
                     value={search}
                     onChange={(event) => setSearch(event.target.value)}
                     placeholder="Search candidates..."
-                    className="w-full rounded-lg border border-gray-300 py-2.5 pl-9 pr-3 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 sm:w-60"
+                    className="w-full rounded-lg border border-gray-300 py-2.5 pl-9 pr-3 text-sm outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-100 sm:w-60"
                   />
                 </div>
 
@@ -880,7 +880,7 @@ export default function JobOffers() {
                   <select
                     value={statusFilter}
                     onChange={(event) => setStatusFilter(event.target.value)}
-                    className="w-full appearance-none rounded-lg border border-gray-300 bg-white py-2.5 pl-9 pr-8 text-sm outline-none focus:border-indigo-500 sm:w-40"
+                    className="w-full appearance-none rounded-lg border border-gray-300 bg-white py-2.5 pl-9 pr-8 text-sm outline-none focus:border-primary-500 sm:w-40"
                   >
                     <option value="All">All statuses</option>
                     <option value="Draft">Draft</option>
@@ -895,7 +895,7 @@ export default function JobOffers() {
                 <select
                   value={typeFilter}
                   onChange={(event) => setTypeFilter(event.target.value)}
-                  className="rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm outline-none focus:border-indigo-500"
+                  className="rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm outline-none focus:border-primary-500"
                 >
                   <option value="All">All employment types</option>
                   <option value="Full-time">Full-time</option>
@@ -929,7 +929,7 @@ export default function JobOffers() {
                     <td colSpan={7} className="px-5 py-16 text-center">
                       <RefreshCw
                         size={28}
-                        className="mx-auto mb-3 animate-spin text-indigo-500"
+                        className="mx-auto mb-3 animate-spin text-primary-500"
                       />
 
                       <p className="font-medium text-gray-700">
@@ -945,7 +945,7 @@ export default function JobOffers() {
                     >
                       <td className="px-5 py-4">
                         <div className="flex items-center gap-3">
-                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-indigo-100 font-semibold text-indigo-700">
+                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary-100 font-semibold text-primary-700">
                             {getInitials(offer.candidateName)}
                           </div>
 
@@ -993,7 +993,7 @@ export default function JobOffers() {
                             type="button"
                             title="View offer details"
                             onClick={() => openDetails(offer)}
-                            className="rounded-md p-2 text-gray-500 hover:bg-indigo-50 hover:text-indigo-600"
+                            className="rounded-md p-2 text-gray-500 hover:bg-primary-50 hover:text-primary-600"
                           >
                             <Eye size={17} />
                           </button>
@@ -1006,7 +1006,7 @@ export default function JobOffers() {
                               offer.status !== "Draft" ||
                               actionId === offer.id
                             }
-                            className="rounded-md p-2 text-gray-500 hover:bg-indigo-50 hover:text-indigo-600 disabled:cursor-not-allowed disabled:opacity-30"
+                            className="rounded-md p-2 text-gray-500 hover:bg-primary-50 hover:text-primary-600 disabled:cursor-not-allowed disabled:opacity-30"
                           >
                             <Pencil size={17} />
                           </button>
@@ -1144,7 +1144,7 @@ export default function JobOffers() {
                         handleCandidateSelection(event.target.value)
                       }
                       disabled={eligibleLoading}
-                      className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm outline-none focus:border-indigo-500 disabled:bg-gray-100"
+                      className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm outline-none focus:border-primary-500 disabled:bg-gray-100"
                     >
                       <option value="">
                         {eligibleLoading
@@ -1198,7 +1198,7 @@ export default function JobOffers() {
                         updateForm("candidateName", event.target.value)
                       }
                       placeholder="Candidate full name"
-                      className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm outline-none focus:border-indigo-500 read-only:bg-gray-50"
+                      className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm outline-none focus:border-primary-500 read-only:bg-gray-50"
                     />
                   </div>
 
@@ -1217,7 +1217,7 @@ export default function JobOffers() {
                         updateForm("email", event.target.value)
                       }
                       placeholder="candidate@example.com"
-                      className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm outline-none focus:border-indigo-500 read-only:bg-gray-50"
+                      className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm outline-none focus:border-primary-500 read-only:bg-gray-50"
                     />
                   </div>
 
@@ -1235,7 +1235,7 @@ export default function JobOffers() {
                         updateForm("jobTitle", event.target.value)
                       }
                       placeholder="e.g. Software Engineer"
-                      className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm outline-none focus:border-indigo-500 read-only:bg-gray-50"
+                      className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm outline-none focus:border-primary-500 read-only:bg-gray-50"
                     />
                   </div>
 
@@ -1249,7 +1249,7 @@ export default function JobOffers() {
                       onChange={(event) =>
                         updateForm("department", event.target.value)
                       }
-                      className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm outline-none focus:border-indigo-500"
+                      className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm outline-none focus:border-primary-500"
                     >
                       <option>Engineering</option>
                       <option>Human Resources</option>
@@ -1270,7 +1270,7 @@ export default function JobOffers() {
                       onChange={(event) =>
                         updateForm("employmentType", event.target.value)
                       }
-                      className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm outline-none focus:border-indigo-500"
+                      className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm outline-none focus:border-primary-500"
                     >
                       <option>Full-time</option>
                       <option>Part-time</option>
@@ -1294,7 +1294,7 @@ export default function JobOffers() {
                         updateForm("salary", event.target.value)
                       }
                       placeholder="150000"
-                      className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm outline-none focus:border-indigo-500"
+                      className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm outline-none focus:border-primary-500"
                     />
                   </div>
 
@@ -1310,7 +1310,7 @@ export default function JobOffers() {
                       onChange={(event) =>
                         updateForm("startDate", event.target.value)
                       }
-                      className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm outline-none focus:border-indigo-500"
+                      className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm outline-none focus:border-primary-500"
                     />
                   </div>
 
@@ -1326,7 +1326,7 @@ export default function JobOffers() {
                       onChange={(event) =>
                         updateForm("expiryDate", event.target.value)
                       }
-                      className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm outline-none focus:border-indigo-500"
+                      className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm outline-none focus:border-primary-500"
                     />
                   </div>
 
@@ -1343,7 +1343,7 @@ export default function JobOffers() {
                         updateForm("notes", event.target.value)
                       }
                       placeholder="Additional offer details..."
-                      className="w-full resize-y rounded-lg border border-gray-300 px-3 py-2.5 text-sm outline-none focus:border-indigo-500"
+                      className="w-full resize-y rounded-lg border border-gray-300 px-3 py-2.5 text-sm outline-none focus:border-primary-500"
                     />
                   </div>
                 </div>
@@ -1374,7 +1374,7 @@ export default function JobOffers() {
                       (modal === "create" &&
                         (!form.applicationId || eligibleLoading))
                     }
-                    className="rounded-lg bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700 disabled:cursor-wait disabled:opacity-60"
+                    className="rounded-lg bg-primary-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-primary-700 disabled:cursor-wait disabled:opacity-60"
                   >
                     {saving
                       ? "Saving..."
@@ -1428,7 +1428,7 @@ export default function JobOffers() {
 
               <div className="space-y-5 p-6">
                 <div className="flex items-center gap-4">
-                  <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-lg font-bold text-indigo-700">
+                  <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-primary-100 text-lg font-bold text-primary-700">
                     {getInitials(selectedOffer.candidateName)}
                   </div>
 
@@ -1504,9 +1504,9 @@ export default function JobOffers() {
                   </p>
                 </div>
 
-                <div className="rounded-xl border border-indigo-200 bg-indigo-50/50 p-5">
+                <div className="rounded-xl border border-primary-200 bg-primary-50/50 p-5">
                   <div className="mb-4 flex items-start gap-3">
-                    <div className="rounded-lg bg-indigo-100 p-2 text-indigo-700">
+                    <div className="rounded-lg bg-primary-100 p-2 text-primary-700">
                       <Mail size={20} />
                     </div>
 
@@ -1566,7 +1566,7 @@ export default function JobOffers() {
                         type="button"
                         onClick={sendOfferEmail}
                         disabled={emailSending || !selectedOffer.email}
-                        className="inline-flex items-center justify-center gap-2 rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50"
+                        className="inline-flex items-center justify-center gap-2 rounded-lg bg-primary-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-50"
                       >
                         {emailSending ? (
                           <RefreshCw size={16} className="animate-spin" />
