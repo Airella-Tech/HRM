@@ -184,12 +184,11 @@ const NAV = {
     },
         // Audit trail (HR Manager / Admin only)
     {
-      name: "Audit Log",
-      icon: Activity,
-      path: "/recruitment/audit-log",
-      requiresAny: [],
-      requiresFullAccess: true,
-    },
+  name: "Audit Log",
+  icon: Activity,
+  path: "/recruitment/audit-log",
+  requiresAny: ["AUDIT_VIEW"],
+},
   ],
 };
 
