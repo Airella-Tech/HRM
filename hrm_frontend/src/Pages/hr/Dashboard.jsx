@@ -13,7 +13,7 @@ import logo from "../../assets/logo.jpg";
 import { BASE_URL, AUTH_URL, hrApi } from "../../services/api";
 import AddEmployeeModal from "./AddEmployeeModal";
 import NotificationPopup from "../../components/NotificationPopup";
-import RoleSwitch from "../../components/RoleSwitch";
+import UserMenu from "../../components/UserMenu";
 import { groupSessionsByEmployee, toLocalDateString } from "../../utils/attendance";
 
 // ─── API helper layer ─────────────────────────────────────────────────────────
@@ -1409,21 +1409,20 @@ const HRDashboard = () => {
             );
           })}
         </ul>
-        <div className="px-3 pb-3 flex-shrink-0">
-          <RoleSwitch mode="hr" sidebar collapsed={!isSidebarOpen} />
-        </div>
-        <div className="border-t border-white/10 p-3 space-y-2 flex-shrink-0">
-          {isSidebarOpen && (
-            <div className="flex items-center gap-3 px-2 py-2">
-              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-teal-400 to-emerald-500 flex items-center justify-center text-white text-sm font-bold flex-shrink-0 shadow-md">
-                {user.fullName?.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase()}
-              </div>
-              <div className="min-w-0">
-                <p className="text-white text-sm font-semibold truncate">{user.fullName}</p>
-                <p className="text-gray-500 text-xs">HR Manager</p>
-              </div>
-            </div>
-          )}
+               <div className="border-t border-white/10 p-3 space-y-2 flex-shrink-0">
+          <UserMenu
+            mode="hr"
+            initials={user.fullName
+              ?.split(" ")
+              .map((n) => n[0])
+              .slice(0, 2)
+              .join("")
+              .toUpperCase()}
+            name={user.fullName}
+            roleLabel="HR Manager"
+            accent={{ avatarFrom: "from-teal-400", avatarTo: "to-emerald-500" }}
+            collapsed={!isSidebarOpen}
+          />
           <button
             onClick={handleLogout}
             className={`flex items-center gap-3 w-full p-2.5 rounded-xl text-gray-400 hover:text-white hover:bg-red-500/20 transition-all ${!isSidebarOpen ? 'justify-center' : ''}`}

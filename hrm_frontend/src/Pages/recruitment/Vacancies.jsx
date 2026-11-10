@@ -9,7 +9,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { PageLayout } from "../../components/PageLayout";
 import { recruitmentApi, hrApi } from "../../services/api";
 import { useRecruitmentAccess, fetchRecruitmentAccess } from "../../utils/useRecruitmentAccess";
-import { Plus, Pencil, Trash2, BriefcaseBusiness, Loader2, X, Save, AlertTriangle, Send, CheckCircle2, XCircle, Megaphone, Ban } from "lucide-react";
+import { Plus, Pencil, Trash2, BriefcaseBusiness, Loader2, X, Save, AlertTriangle, Send, CheckCircle2, XCircle, Megaphone, Ban, Search } from "lucide-react";
 
 
 const FILTERS = ["ALL", "DRAFT", "PENDING_APPROVAL", "APPROVED", "PUBLISHED", "CLOSED"];
@@ -31,6 +31,31 @@ const STATUS_STYLE = {
 };
 
 const statusLabel = (s) => s.replace(/_/g, " ").toLowerCase().replace(/^\w/, (c) => c.toUpperCase());
+// Coloured stripe on the left of each row, by status
+const STRIPE = {
+  DRAFT: "border-l-slate-400",
+  PENDING_APPROVAL: "border-l-amber-400",
+  APPROVED: "border-l-blue-400",
+  PUBLISHED: "border-l-emerald-500",
+  CLOSED: "border-l-red-400",
+};
+
+// "Nov 19" + a hint like "tomorrow" / "overdue"
+const deadlineInfo = (deadline, status) => {
+  if (!deadline) return { date: "—", hint: "", tone: "text-slate-400" };
+  const [y, m, d] = deadline.split("-").map(Number);
+  const target = new Date(y, m - 1, d);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const diff = Math.round((target - today) / 86400000);
+  const date = target.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  if (status === "CLOSED") return { date, hint: "ended", tone: "text-slate-400" };
+  if (diff < 0) return { date, hint: "overdue", tone: "text-red-600" };
+  if (diff === 0) return { date, hint: "today", tone: "text-amber-600" };
+  if (diff === 1) return { date, hint: "tomorrow", tone: "text-amber-600" };
+  if (diff <= 7) return { date, hint: `in ${diff} days`, tone: "text-amber-600" };
+  return { date, hint: `in ${diff} days`, tone: "text-slate-400" };
+};
 
 // Server errors come back as "400: <reason>"; show just the reason
 const errorText = (error, fallback) => (error?.message || fallback).replace(/^\d{3}:\s*/, "");
@@ -416,11 +441,14 @@ export default function RecruitmentVacancies() {
     }
   }, [view, canCreate, setSearchParams]);
 
-  const load = async (status = filter) => {
+   const [search, setSearch] = useState("");
+
+  // Load all vacancies once; the filter pills and search work on this list
+  const load = async () => {
     setLoading(true);
     setError("");
     try {
-      const res = await recruitmentApi.getVacancies(status === "ALL" ? undefined : status);
+      const res = await recruitmentApi.getVacancies();
       setVacancies(res.data || []);
     } catch (e) {
       setError(errorText(e, "Failed to load vacancies"));
@@ -434,9 +462,9 @@ export default function RecruitmentVacancies() {
       navigate("/login");
       return;
     }
-    load(filter);
+    load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filter]);
+  }, []);
 
   const confirmDelete = async () => {
     const v = deleting;
@@ -507,6 +535,16 @@ export default function RecruitmentVacancies() {
     (v.status === "DRAFT" && canCreate) ||
     (v.status === "PENDING_APPROVAL" && canApprove) ||
     ((v.status === "APPROVED" || v.status === "PUBLISHED") && canPublish);
+      const counts = vacancies.reduce((acc, v) => {
+    acc[v.status] = (acc[v.status] || 0) + 1;
+    return acc;
+  }, {});
+
+  const visible = vacancies.filter((v) => {
+    if (filter !== "ALL" && v.status !== filter) return false;
+    const q = search.trim().toLowerCase();
+    return !q || `${v.title} ${v.department}`.toLowerCase().includes(q);
+  });
 
   return (
     <PageLayout
@@ -525,9 +563,9 @@ export default function RecruitmentVacancies() {
         ) : null
       }
     >
-      <div className="p-6 space-y-5">
-        {/* Status filter */}
-        <div className="flex flex-wrap gap-2">
+            <div className="p-6 space-y-5">
+        {/* Filters + search */}
+        <div className="flex flex-wrap items-center gap-2">
           {FILTERS.map((f) => (
             <button
               key={f}
@@ -539,8 +577,20 @@ export default function RecruitmentVacancies() {
               }`}
             >
               {f === "ALL" ? "All" : statusLabel(f)}
+              <span className={`ml-1.5 text-xs ${filter === f ? "text-white/70" : "text-slate-400"}`}>
+                {f === "ALL" ? vacancies.length : counts[f] || 0}
+              </span>
             </button>
           ))}
+          <div className="relative ml-auto w-full sm:w-64">
+            <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search title or department"
+              className="w-full rounded-xl border border-slate-200 bg-white pl-9 pr-3 py-2 text-sm text-slate-800 focus:outline-none focus:border-primary-400 focus:ring-2 focus:ring-primary-100"
+            />
+          </div>
         </div>
 
         {error && (
@@ -549,128 +599,137 @@ export default function RecruitmentVacancies() {
           </div>
         )}
 
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-          <div className="hidden md:grid grid-cols-[2.2fr_1.2fr_1fr_0.7fr_1fr_1.1fr_130px] gap-4 px-6 py-3.5 bg-gradient-to-r from-primary-500 to-primary-500 text-white text-xs font-semibold uppercase tracking-wide">
-            <span>Title</span>
-            <span>Department</span>
-            <span>Type</span>
-            <span>Openings</span>
-            <span>Deadline</span>
-            <span>Status</span>
-            <span className="text-right">Actions</span>
+        {loading ? (
+          <div className="flex items-center justify-center gap-2 py-16 text-slate-500 text-sm">
+            <Loader2 size={18} className="animate-spin" /> Loading vacancies...
           </div>
-
-          {loading ? (
-            <div className="flex items-center justify-center gap-2 py-16 text-slate-500 text-sm">
-              <Loader2 size={18} className="animate-spin" /> Loading vacancies...
+        ) : visible.length === 0 ? (
+          <div className="bg-white rounded-2xl border border-slate-200 flex flex-col items-center justify-center py-16 text-center">
+            <div className="h-16 w-16 rounded-2xl bg-primary-50 text-primary-500 flex items-center justify-center mb-4">
+              <BriefcaseBusiness size={28} />
             </div>
-          ) : vacancies.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-16 text-center">
-              <div className="h-16 w-16 rounded-2xl bg-primary-50 text-primary-500 flex items-center justify-center mb-4">
-                <BriefcaseBusiness size={28} />
-              </div>
-              <p className="text-slate-800 font-semibold">No vacancies here</p>
-              <p className="text-slate-500 text-sm mt-1">
-                {canCreate
+            <p className="text-slate-800 font-semibold">No vacancies here</p>
+            <p className="text-slate-500 text-sm mt-1">
+              {search
+                ? "Nothing matches your search."
+                : canCreate
                   ? 'Click "New vacancy" to create a draft.'
                   : "Nothing to show for this filter right now."}
-              </p>
-            </div>
-          ) : (
-            vacancies.map((v) => (
-              <div
-                key={v.id}
-                className="grid grid-cols-1 md:grid-cols-[2.2fr_1.2fr_1fr_0.7fr_1fr_1.1fr_130px] gap-2 md:gap-4 px-6 py-4 border-t border-slate-100 items-center text-sm"
-              >
-                <div>
-                  <span className="font-semibold text-slate-900">{v.title}</span>
-                  {v.status === "DRAFT" && v.rejectionReason && (
-                    <p className="mt-1 text-xs text-red-600">Sent back: {v.rejectionReason}</p>
-                  )}
-                </div>
-                <span className="text-slate-600">{v.department}</span>
-                <span className="text-slate-600">{v.jobType}</span>
-                <span className="text-slate-600">{v.vacancyCount}</span>
-                <span className="text-slate-600">{v.deadline}</span>
-                <span>
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-2.5">
+            {visible.map((v) => {
+              const due = deadlineInfo(v.deadline, v.status);
+              const busy = busyId === v.id;
+              return (
+                <div
+                  key={v.id}
+                  className={`flex flex-wrap items-center gap-x-5 gap-y-3 bg-white rounded-xl border border-slate-200 border-l-4 ${STRIPE[v.status] || STRIPE.DRAFT} px-5 py-4 shadow-sm hover:shadow-md transition-shadow`}
+                >
+                  {/* Title + details */}
+                  <div className="flex-1 min-w-[200px]">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="font-bold text-slate-900">{v.title}</span>
+                      {v.status === "DRAFT" && v.rejectionReason && (
+                        <span className="inline-flex items-center gap-1 rounded-md bg-red-50 px-2 py-0.5 text-xs font-medium text-red-600">
+                          <AlertTriangle size={12} /> Sent back: {v.rejectionReason}
+                        </span>
+                      )}
+                    </div>
+                    <div className="mt-1.5 flex flex-wrap gap-2 text-xs text-slate-500">
+                      <span className="rounded-md bg-slate-100 px-2 py-0.5">{v.department}</span>
+                      <span className="rounded-md bg-slate-100 px-2 py-0.5">{v.jobType}</span>
+                      <span className="rounded-md bg-slate-100 px-2 py-0.5">
+                        {v.vacancyCount} {v.vacancyCount === 1 ? "opening" : "openings"}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Deadline */}
+                  <div className="w-28 text-xs text-slate-500">
+                    Deadline
+                    <p className="text-sm font-semibold text-slate-900">{due.date}</p>
+                    <p className={due.tone}>{due.hint}</p>
+                  </div>
+
+                  {/* Status */}
                   <span className={`inline-block px-2.5 py-1 rounded-full text-xs font-semibold ${STATUS_STYLE[v.status] || STATUS_STYLE.DRAFT}`}>
                     {statusLabel(v.status)}
                   </span>
-                </span>
-                <span className="flex md:justify-end gap-1">
-                  {v.status === "DRAFT" && canCreate && (
-                    <>
+
+                  {/* Actions */}
+                  <div className="flex items-center justify-end gap-1.5 min-w-[130px]">
+                    {v.status === "DRAFT" && canCreate && (
+                      <>
+                        <button
+                          disabled={busy}
+                          onClick={() => runAction(v, recruitmentApi.submitVacancy, "Failed to submit vacancy")}
+                          className="inline-flex items-center gap-1.5 rounded-lg bg-primary-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-primary-700 disabled:opacity-50"
+                        >
+                          {busy ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />} Submit
+                        </button>
+                        <button
+                          title="Edit"
+                          onClick={() => setModal({ vacancy: v })}
+                          className="p-2 rounded-lg text-slate-500 hover:text-primary-600 hover:bg-primary-50"
+                        >
+                          <Pencil size={16} />
+                        </button>
+                        <button
+                          title="Delete"
+                          disabled={busy}
+                          onClick={() => setDeleting(v)}
+                          className="p-2 rounded-lg text-slate-500 hover:text-red-600 hover:bg-red-50 disabled:opacity-50"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </>
+                    )}
+                    {v.status === "PENDING_APPROVAL" && canApprove && (
+                      <>
+                        <button
+                          disabled={busy}
+                          onClick={() => runAction(v, recruitmentApi.approveVacancy, "Failed to approve vacancy")}
+                          className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
+                        >
+                          {busy ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle2 size={14} />} Approve
+                        </button>
+                        <button
+                          title="Reject"
+                          disabled={busy}
+                          onClick={() => setRejecting(v)}
+                          className="p-2 rounded-lg text-slate-500 hover:text-red-600 hover:bg-red-50 disabled:opacity-50"
+                        >
+                          <XCircle size={16} />
+                        </button>
+                      </>
+                    )}
+                    {v.status === "APPROVED" && canPublish && (
                       <button
-                        title="Submit for approval"
-                        disabled={busyId === v.id}
-                        onClick={() => runAction(v, recruitmentApi.submitVacancy, "Failed to submit vacancy")}
-                        className="p-2 rounded-lg text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 disabled:opacity-50"
+                        disabled={busy}
+                        onClick={() => runAction(v, recruitmentApi.publishVacancy, "Failed to publish vacancy")}
+                        className="inline-flex items-center gap-1.5 rounded-lg bg-primary-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-primary-700 disabled:opacity-50"
                       >
-                        {busyId === v.id ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
+                        {busy ? <Loader2 size={14} className="animate-spin" /> : <Megaphone size={14} />} Publish
                       </button>
+                    )}
+                    {v.status === "PUBLISHED" && canPublish && (
                       <button
-                        title="Edit"
-                        onClick={() => setModal({ vacancy: v })}
-                        className="p-2 rounded-lg text-slate-500 hover:text-primary-600 hover:bg-primary-50"
+                        disabled={busy}
+                        onClick={() => setClosing(v)}
+                        className="inline-flex items-center gap-1.5 rounded-lg border border-primary-200 bg-white px-3 py-1.5 text-xs font-semibold text-primary-700 hover:bg-primary-50 disabled:opacity-50"
                       >
-                        <Pencil size={16} />
+                        <Ban size={14} /> Close
                       </button>
-                      <button
-                        title="Delete"
-                        disabled={busyId === v.id}
-                        onClick={() => setDeleting(v)}
-                        className="p-2 rounded-lg text-slate-500 hover:text-red-600 hover:bg-red-50 disabled:opacity-50"
-                      >
-                        <Trash2 size={16} />
-                      </button>
-                    </>
-                  )}
-                  {v.status === "PENDING_APPROVAL" && canApprove && (
-                    <>
-                      <button
-                        title="Approve"
-                        disabled={busyId === v.id}
-                        onClick={() => runAction(v, recruitmentApi.approveVacancy, "Failed to approve vacancy")}
-                        className="p-2 rounded-lg text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 disabled:opacity-50"
-                      >
-                        {busyId === v.id ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle2 size={16} />}
-                      </button>
-                      <button
-                        title="Reject"
-                        disabled={busyId === v.id}
-                        onClick={() => setRejecting(v)}
-                        className="p-2 rounded-lg text-slate-500 hover:text-red-600 hover:bg-red-50 disabled:opacity-50"
-                      >
-                        <XCircle size={16} />
-                      </button>
-                    </>
-                  )}
-                  {v.status === "APPROVED" && canPublish && (
-                    <button
-                      title="Publish"
-                      disabled={busyId === v.id}
-                      onClick={() => runAction(v, recruitmentApi.publishVacancy, "Failed to publish vacancy")}
-                      className="p-2 rounded-lg text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 disabled:opacity-50"
-                    >
-                      {busyId === v.id ? <Loader2 size={16} className="animate-spin" /> : <Megaphone size={16} />}
-                    </button>
-                  )}
-                  {v.status === "PUBLISHED" && canPublish && (
-                    <button
-                      title="Close vacancy"
-                      disabled={busyId === v.id}
-                      onClick={() => setClosing(v)}
-                      className="p-2 rounded-lg text-slate-500 hover:text-amber-600 hover:bg-amber-50 disabled:opacity-50"
-                    >
-                      <Ban size={16} />
-                    </button>
-                  )}
-                  {!hasActions(v) && <span className="text-slate-300">—</span>}
-                </span>
-              </div>
-            ))
-          )}
-        </div>
+                    )}
+                    {!hasActions(v) && <span className="text-slate-300">—</span>}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       {modal && (
