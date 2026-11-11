@@ -579,7 +579,7 @@ export default function InterviewEmails() {
       activePage="Interviews"
       title="Interview Email History"
     >
-      <div className="min-h-screen bg-slate-50 p-4 sm:p-6 lg:p-8">
+      <div className="p-4 sm:p-6 lg:p-8">
         {/* Back button stays above the title and action buttons. */}
         <div className="mb-4">
           <button

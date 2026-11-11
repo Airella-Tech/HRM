@@ -783,7 +783,7 @@ export default function AssignInterviewers() {
   };
 
   const stageColor = (stage) => {
-    if (stage === "Technical Interview") return "bg-blue-50 text-blue-700";
+    if (stage === "Technical Interview") return "bg-primary-50 text-primary-700";
     if (stage === "HR Interview") return "bg-purple-50 text-purple-700";
     if (stage === "Hiring Manager Interview")
       return "bg-amber-50 text-amber-700";
@@ -802,7 +802,7 @@ export default function AssignInterviewers() {
           ? "bg-red-50 text-red-700"
           : locked
             ? "bg-slate-100 text-slate-600"
-            : "bg-blue-50 text-blue-700";
+            : "bg-primary-50 text-primary-700";
 
     return (
       <span
@@ -871,7 +871,7 @@ export default function AssignInterviewers() {
 
   return (
     <PageLayout role="recruiter" activePage="Assign Interviewers">
-      <div className="min-h-screen bg-slate-50 p-4 sm:p-6 lg:p-8">
+      <div className="p-4 sm:p-6 lg:p-8">
         <div className="mx-auto max-w-7xl space-y-6">
           <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
             <div>

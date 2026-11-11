@@ -229,7 +229,7 @@ function normalizeStatus(interviewStatus, evaluation, item, recommendation) {
 const getStatusStyle = (status) =>
   ({
     Completed: "bg-green-100 text-green-700",
-    "In Progress": "bg-blue-100 text-blue-700",
+    "In Progress": "bg-primary-100 text-primary-700",
     Pending: "bg-amber-100 text-amber-700",
     Rejected: "bg-red-100 text-red-700",
     Skipped: "bg-slate-100 text-slate-500",
@@ -692,7 +692,7 @@ function CandidateProgressModal({ candidate, onClose }) {
                         stage.status === "Completed"
                           ? "bg-green-100 text-green-700"
                           : stage.status === "In Progress"
-                            ? "bg-blue-100 text-blue-700"
+                            ? "bg-primary-100 text-primary-700"
                             : stage.status === "Rejected"
                               ? "bg-red-100 text-red-700"
                               : "bg-slate-100 text-slate-400"
@@ -1024,7 +1024,7 @@ export default function InterviewProgress() {
               value={stats.inProgress}
               description="Candidates in active interview stages"
               icon={Clock}
-              iconStyle="bg-blue-50 text-blue-600"
+              iconStyle="bg-primary-50 text-primary-600"
             />
             <StatCard
               title="Completed"
@@ -1382,7 +1382,7 @@ export default function InterviewProgress() {
                       label === "Completed"
                         ? "text-green-600"
                         : label === "In Progress"
-                          ? "text-blue-600"
+                          ? "text-primary-600"
                           : label === "Rejected"
                             ? "text-red-600"
                             : "text-slate-400"

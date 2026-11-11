@@ -1597,7 +1597,7 @@ export default function ShortlistedCandidates() {
         </div>
       }
     >
-      <div className="min-h-screen bg-slate-50 p-4 sm:p-6 lg:p-8">
+      <div className="p-4 sm:p-6 lg:p-8">
         {error && (
           <div
             role="alert"
@@ -1636,7 +1636,7 @@ export default function ShortlistedCandidates() {
         {notice && (
           <div
             role="status"
-            className="mb-5 flex items-start gap-2 rounded-xl border border-blue-200 bg-blue-50 p-4 text-sm text-blue-800"
+            className="mb-5 flex items-start gap-2 rounded-xl border border-primary-200 bg-primary-50 p-4 text-sm text-primary-800"
           >
             <CircleAlert size={18} className="mt-0.5 shrink-0" />
             <span>{notice}</span>
@@ -1875,7 +1875,7 @@ export default function ShortlistedCandidates() {
                                         : state === "evaluation-pending"
                                           ? "bg-orange-400"
                                           : state === "scheduled"
-                                            ? "bg-blue-500"
+                                            ? "bg-primary-500"
                                             : "bg-slate-200";
 
                                 return (
@@ -1928,7 +1928,7 @@ export default function ShortlistedCandidates() {
                                 Manager approval pending
                               </span>
                             ) : alreadyScheduled ? (
-                              <span className="inline-flex items-center gap-1.5 rounded-lg bg-blue-50 px-3 py-2 text-xs font-semibold text-blue-700">
+                              <span className="inline-flex items-center gap-1.5 rounded-lg bg-primary-50 px-3 py-2 text-xs font-semibold text-primary-700">
                                 <Clock3 size={14} />
                                 Already scheduled
                               </span>
@@ -1953,7 +1953,7 @@ export default function ShortlistedCandidates() {
                                   : normalizeStatus(
                                         candidate.applicationStatus,
                                       ) === "interview scheduled"
-                                    ? "bg-blue-50 text-blue-700"
+                                    ? "bg-primary-50 text-primary-700"
                                     : "bg-green-50 text-green-700"
                               }`}
                             >
@@ -1989,7 +1989,7 @@ export default function ShortlistedCandidates() {
                                   alreadyScheduled
                                 }
                                 onClick={() => scheduleNextStage(candidate)}
-                                className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-lg bg-primary-600 px-3 py-2.5 text-xs font-semibold text-white hover:bg-primary-700 disabled:cursor-not-allowed disabled:bg-slate-300"
+                                className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-xl bg-primary-600 px-3 py-2.5 text-xs font-semibold text-white hover:bg-primary-700 disabled:cursor-not-allowed disabled:bg-slate-300"
                               >
                                 <CalendarCheck size={15} />
 
@@ -2095,7 +2095,7 @@ export default function ShortlistedCandidates() {
             </div>
 
             <div className="flex items-center gap-2">
-              <span className="h-2.5 w-7 rounded-full bg-blue-500" />
+              <span className="h-2.5 w-7 rounded-full bg-primary-500" />
               Scheduled / in progress
             </div>
 
@@ -2112,16 +2112,16 @@ export default function ShortlistedCandidates() {
         </div>
 
         {/* WORKFLOW INFORMATION */}
-        <div className="mt-5 rounded-xl border border-blue-100 bg-blue-50/70 p-4">
+        <div className="mt-5 rounded-xl border border-primary-100 bg-primary-50/70 p-4">
           <div className="flex items-start gap-3">
-            <CircleAlert size={18} className="mt-0.5 shrink-0 text-blue-600" />
+            <CircleAlert size={18} className="mt-0.5 shrink-0 text-primary-600" />
 
             <div>
-              <p className="text-sm font-semibold text-blue-800">
+              <p className="text-sm font-semibold text-primary-800">
                 Interview workflow
               </p>
 
-              <p className="mt-1 text-sm leading-6 text-blue-700">
+              <p className="mt-1 text-sm leading-6 text-primary-700">
                 Candidates progress through Technical Interview, HR Interview,
                 Hiring Manager Interview, and Final Interview in that order.
                 Every assigned interviewer must submit an evaluation before the
@@ -2219,7 +2219,7 @@ export default function ShortlistedCandidates() {
                       : managerPending
                         ? "border-amber-200 bg-amber-50"
                         : scheduled
-                          ? "border-blue-200 bg-blue-50"
+                          ? "border-primary-200 bg-primary-50"
                           : rejected
                             ? "border-red-200 bg-red-50"
                             : next
@@ -2233,7 +2233,7 @@ export default function ShortlistedCandidates() {
                       : managerPending
                         ? "bg-amber-100 text-amber-700"
                         : scheduled
-                          ? "bg-blue-100 text-blue-700"
+                          ? "bg-primary-100 text-primary-700"
                           : rejected
                             ? "bg-red-100 text-red-700"
                             : next

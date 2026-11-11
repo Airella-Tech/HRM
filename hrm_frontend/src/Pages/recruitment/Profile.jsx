@@ -69,7 +69,7 @@ const toForm = (p = {}) => ({
 // Read-only field
 const Field = ({ label, value, icon: Icon, tone = "text-slate-400" }) => (
     <div>
-        <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">{label}</label>
+        <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">{label}</label>
         <div className="relative">
             {Icon && <Icon size={16} className={`absolute left-3.5 top-1/2 -translate-y-1/2 ${tone}`} />}
             <input
@@ -78,14 +78,14 @@ const Field = ({ label, value, icon: Icon, tone = "text-slate-400" }) => (
                 readOnly
                 tabIndex={-1}
                 placeholder="—"
-                className={`w-full ${Icon ? "pl-10" : "pl-4"} pr-4 py-3 border border-gray-200 rounded-xl text-sm text-slate-800 bg-gray-50 cursor-default focus:outline-none`}
+                className={`w-full ${Icon ? "pl-10" : "pl-4"} pr-4 py-3 border border-slate-200 rounded-xl text-sm text-slate-800 bg-slate-50 cursor-default focus:outline-none`}
             />
         </div>
     </div>
 );
 
 const SectionTitle = ({ icon: Icon, tone, children }) => (
-    <h3 className="text-sm font-semibold text-gray-700 mb-4 flex items-center gap-2">
+    <h3 className="text-sm font-semibold text-slate-700 mb-4 flex items-center gap-2">
         <span className={`${tone} p-1.5 rounded-md`}><Icon size={16} /></span> {children}
     </h3>
 );
@@ -141,7 +141,7 @@ const EmployeeProfile = () => {
                 {message && <div className="p-4 rounded-xl text-white text-sm bg-red-500">{message}</div>}
 
                 {/* Hero */}
-                <div className="bg-gradient-to-r from-sky-500 to-blue-600 rounded-2xl p-8 text-white shadow-xl">
+                <div className="bg-gradient-to-r from-primary-500 to-primary-600 rounded-2xl p-8 text-white shadow-xl">
                     <div className="flex items-center gap-6">
                         <div className="h-24 w-24 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center text-4xl font-bold shadow-xl border-2 border-white/40">
                             {initials}
@@ -159,13 +159,13 @@ const EmployeeProfile = () => {
                 </div>
 
                 {/* Tabs */}
-                <div className="bg-white rounded-2xl shadow-sm border border-gray-100">
-                    <div className="flex gap-1 p-3 border-b border-gray-100 overflow-x-auto">
+                <div className="bg-white rounded-2xl shadow-sm border border-slate-100">
+                    <div className="flex gap-1 p-3 border-b border-slate-100 overflow-x-auto">
                         {tabs.map(([key, label, TabIcon]) => (
                             <button
                                 key={key}
                                 onClick={() => setActiveTab(key)}
-                                className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold whitespace-nowrap transition-all ${activeTab === key ? "bg-gradient-to-r from-sky-500 to-blue-600 text-white shadow-md" : "text-gray-600 hover:bg-gray-100"
+                                className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold whitespace-nowrap transition-all ${activeTab === key ? "bg-gradient-to-r from-primary-500 to-primary-600 text-white shadow-md" : "text-slate-600 hover:bg-slate-100"
                                     }`}
                             >
                                 <TabIcon size={15} /> {label}
@@ -176,9 +176,9 @@ const EmployeeProfile = () => {
                     <div className="p-6">
                         {activeTab === "personal" && (
                             <div className="space-y-5">
-                                <SectionTitle icon={User} tone="bg-sky-50 text-sky-600">Personal Details</SectionTitle>
+                                <SectionTitle icon={User} tone="bg-primary-50 text-primary-600">Personal Details</SectionTitle>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                                    <Field label="Full Name" value={profile.fullName} icon={User} tone="text-sky-500" />
+                                    <Field label="Full Name" value={profile.fullName} icon={User} tone="text-primary-500" />
                                     <Field label="Email Address" value={profile.email} icon={Mail} tone="text-primary-500" />
                                     <Field label="Date of Birth" value={fmtDate(profile.dob)} icon={Calendar} tone="text-amber-500" />
                                     <Field label="Gender" value={GENDER_LABEL[profile.gender] || titleCase(profile.gender)} icon={Users} tone="text-primary-500" />
@@ -194,8 +194,8 @@ const EmployeeProfile = () => {
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                                     <Field label="Employee ID" value={profile.employeeId} icon={IdCard} tone="text-slate-500" />
                                     <Field label="Department" value={profile.department} icon={Building2} tone="text-emerald-500" />
-                                    <Field label="Designation" value={profile.designation} icon={Briefcase} tone="text-sky-500" />
-                                    <Field label="Employment Type" value={profile.employmentType} icon={Briefcase} tone="text-blue-500" />
+                                    <Field label="Designation" value={profile.designation} icon={Briefcase} tone="text-primary-500" />
+                                    <Field label="Employment Type" value={profile.employmentType} icon={Briefcase} tone="text-primary-500" />
                                     <Field label="Status" value={titleCase(profile.status)} icon={ShieldCheck} tone="text-emerald-500" />
                                     <Field label="Joining Date" value={fmtDate(profile.joiningDate)} icon={Calendar} tone="text-amber-500" />
                                     <Field label="Work Experience" value={experience} icon={Clock} tone="text-primary-500" />

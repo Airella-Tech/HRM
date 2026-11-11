@@ -43,7 +43,7 @@ const summaryCards = [
     status: "DRAFT",
     description: "Not submitted yet",
     icon: FileText,
-    color: "bg-sky-50 text-sky-600",
+    color: "bg-primary-50 text-primary-600",
   },
   {
     title: "Closed",
@@ -67,7 +67,7 @@ const recruitmentModules = [
     description: "Review applications submitted by candidates.",
     icon: FileText,
     path: "/recruitment/applications",
-    color: "bg-sky-50 text-sky-600",
+    color: "bg-primary-50 text-primary-600",
   },
   {
     title: "Candidate Records",
@@ -268,7 +268,7 @@ const Dashboard = () => {
 
           <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
             {[
-              { label: "Applications", icon: FileText, color: "text-sky-600" },
+              { label: "Applications", icon: FileText, color: "text-primary-600" },
               {
                 label: "Shortlisting",
                 icon: CheckCircle2,

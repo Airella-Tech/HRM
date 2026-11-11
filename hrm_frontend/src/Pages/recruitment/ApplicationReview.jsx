@@ -62,7 +62,7 @@ const REJECTION_REASONS = [
 function getScoreBadge(score) {
   const num = Number(score || 0);
   if (num >= 80) return { label: "Strong Match", badgeClass: "bg-emerald-50 text-emerald-700 border-emerald-200", dotClass: "bg-emerald-500" };
-  if (num >= 70) return { label: "Good Fit", badgeClass: "bg-blue-50 text-blue-700 border-blue-200", dotClass: "bg-blue-500" };
+  if (num >= 70) return { label: "Good Fit", badgeClass: "bg-primary-50 text-primary-700 border-primary-200", dotClass: "bg-primary-500" };
   if (num >= 50) return { label: "Moderate", badgeClass: "bg-amber-50 text-amber-700 border-amber-200", dotClass: "bg-amber-500" };
   return { label: "Low Fit", badgeClass: "bg-slate-100 text-slate-600 border-slate-200", dotClass: "bg-slate-400" };
 }
@@ -611,10 +611,10 @@ export default function RecruitmentApplicationReview() {
               <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
                 Reviewed with Notes
               </p>
-              <h3 className="text-2xl font-bold text-blue-600 mt-1">{reviewedCount}</h3>
+              <h3 className="text-2xl font-bold text-primary-600 mt-1">{reviewedCount}</h3>
               <p className="text-xs text-slate-500 mt-0.5">Assessment documented</p>
             </div>
-            <div className="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold">
+            <div className="w-12 h-12 rounded-2xl bg-primary-50 text-primary-600 flex items-center justify-center font-bold">
               <ClipboardCheck size={22} />
             </div>
           </div>
@@ -1431,7 +1431,7 @@ export default function RecruitmentApplicationReview() {
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto animate-fadeIn">
           <div className="bg-white rounded-3xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col border border-slate-100 animate-scaleUp">
             {/* Header: Dark Navy banner styled like Public Careers layout */}
-            <div className="p-6 bg-gradient-to-r from-[#0F1B3D] via-[#162752] to-[#0F1B3D] text-white flex items-start justify-between border-b border-primary-900/40 relative">
+            <div className="p-6 bg-gradient-to-r from-primary-900 via-primary-800 to-primary-900 text-white flex items-start justify-between border-b border-primary-900/40 relative">
               <div className="space-y-3 max-w-xl">
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="px-2.5 py-0.5 rounded-full bg-primary-500/30 border border-primary-400/40 text-primary-200 text-[10px] font-extrabold uppercase tracking-widest flex items-center gap-1 shadow-xs">

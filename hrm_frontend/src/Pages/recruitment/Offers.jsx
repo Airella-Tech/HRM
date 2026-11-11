@@ -45,11 +45,11 @@ const emptyForm = {
 
 const statusStyles = {
   Draft: "bg-slate-100 text-slate-700",
-  Sent: "bg-blue-100 text-blue-700",
+  Sent: "bg-primary-100 text-primary-700",
   Pending: "bg-amber-100 text-amber-700",
   Accepted: "bg-emerald-100 text-emerald-700",
   Rejected: "bg-rose-100 text-rose-700",
-  Withdrawn: "bg-gray-200 text-gray-600",
+  Withdrawn: "bg-slate-200 text-slate-600",
 };
 
 // ============================================================
@@ -173,12 +173,12 @@ function StatusBadge({ status }) {
 
 function StatCard({ title, value, icon: Icon, color, description }) {
   return (
-    <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+    <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <p className="text-sm text-gray-500">{title}</p>
-          <h3 className="mt-2 text-2xl font-bold text-gray-900">{value}</h3>
-          <p className="mt-1 text-xs text-gray-500">{description}</p>
+          <p className="text-sm text-slate-500">{title}</p>
+          <h3 className="mt-2 text-2xl font-bold text-slate-900">{value}</h3>
+          <p className="mt-1 text-xs text-slate-500">{description}</p>
         </div>
 
         <div className={`rounded-xl p-3 ${color}`}>
@@ -646,14 +646,14 @@ export default function JobOffers() {
 
   return (
     <PageLayout role="recruiter" activePage="Job Offers">
-      <div className="min-h-screen bg-gray-50 p-4 sm:p-6 lg:p-8">
+      <div className="p-4 sm:p-6 lg:p-8">
         {/* PAGE HEADER */}
         <div className="mb-7 flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">
+            <h1 className="text-2xl font-bold text-slate-900">
               Manage Job Offers
             </h1>
-            <p className="mt-1 text-sm text-gray-500">
+            <p className="mt-1 text-sm text-slate-500">
               Create offers, email candidates, and manage hiring decisions.
             </p>
           </div>
@@ -666,7 +666,7 @@ export default function JobOffers() {
                 loadEligibleCandidates();
               }}
               disabled={loading || eligibleLoading}
-              className="inline-flex items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+              className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
             >
               <RefreshCw
                 size={17}
@@ -678,7 +678,7 @@ export default function JobOffers() {
             <button
               type="button"
               onClick={openCreate}
-              className="inline-flex items-center justify-center gap-2 rounded-lg bg-primary-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-primary-700"
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-primary-700"
             >
               <Plus size={18} />
               Create Job Offer
@@ -738,11 +738,11 @@ export default function JobOffers() {
               </div>
 
               <div>
-                <h2 className="font-semibold text-gray-900">
+                <h2 className="font-semibold text-slate-900">
                   Eligible Candidates
                 </h2>
 
-                <p className="mt-1 text-sm text-gray-600">
+                <p className="mt-1 text-sm text-slate-600">
                   Candidates who successfully completed all four interview
                   rounds and are ready for an offer.
                 </p>
@@ -753,7 +753,7 @@ export default function JobOffers() {
               <p className="text-2xl font-bold text-primary-700">
                 {eligibleLoading ? "..." : eligibleCandidates.length}
               </p>
-              <p className="text-xs text-gray-500">Ready for job offers</p>
+              <p className="text-xs text-slate-500">Ready for job offers</p>
             </div>
           </div>
 
@@ -767,7 +767,7 @@ export default function JobOffers() {
           {!eligibleLoading &&
             !eligibleError &&
             eligibleCandidates.length === 0 && (
-              <p className="mt-4 rounded-lg bg-white p-3 text-sm text-gray-500">
+              <p className="mt-4 rounded-lg bg-white p-3 text-sm text-slate-500">
                 No eligible candidates are currently available. Candidates
                 will appear here after passing all four interview rounds.
               </p>
@@ -780,10 +780,10 @@ export default function JobOffers() {
                   key={candidate.applicationId}
                   className="rounded-lg border border-primary-100 bg-white px-3 py-2"
                 >
-                  <p className="text-sm font-semibold text-gray-800">
+                  <p className="text-sm font-semibold text-slate-800">
                     {candidate.candidateName}
                   </p>
-                  <p className="mt-0.5 text-xs text-gray-500">
+                  <p className="mt-0.5 text-xs text-slate-500">
                     {candidate.jobTitle}
                   </p>
                 </div>
@@ -842,15 +842,15 @@ export default function JobOffers() {
         </div>
 
         {/* OFFERS TABLE */}
-        <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
-          <div className="border-b border-gray-200 p-5">
+        <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+          <div className="border-b border-slate-200 p-5">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
               <div>
-                <h2 className="font-semibold text-gray-900">
+                <h2 className="font-semibold text-slate-900">
                   Job Offer Records
                 </h2>
 
-                <p className="mt-1 text-sm text-gray-500">
+                <p className="mt-1 text-sm text-slate-500">
                   {filteredOffers.length} offer
                   {filteredOffers.length !== 1 ? "s" : ""} found
                 </p>
@@ -860,27 +860,27 @@ export default function JobOffers() {
                 <div className="relative">
                   <Search
                     size={17}
-                    className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                    className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
                   />
 
                   <input
                     value={search}
                     onChange={(event) => setSearch(event.target.value)}
                     placeholder="Search candidates..."
-                    className="w-full rounded-lg border border-gray-300 py-2.5 pl-9 pr-3 text-sm outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-100 sm:w-60"
+                    className="w-full rounded-xl border border-slate-200 py-2.5 pl-9 pr-3 text-sm outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-100 sm:w-60"
                   />
                 </div>
 
                 <div className="relative">
                   <Filter
                     size={15}
-                    className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                    className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
                   />
 
                   <select
                     value={statusFilter}
                     onChange={(event) => setStatusFilter(event.target.value)}
-                    className="w-full appearance-none rounded-lg border border-gray-300 bg-white py-2.5 pl-9 pr-8 text-sm outline-none focus:border-primary-500 sm:w-40"
+                    className="w-full appearance-none rounded-xl border border-slate-200 bg-white py-2.5 pl-9 pr-8 text-sm outline-none focus:border-primary-500 sm:w-40"
                   >
                     <option value="All">All statuses</option>
                     <option value="Draft">Draft</option>
@@ -895,7 +895,7 @@ export default function JobOffers() {
                 <select
                   value={typeFilter}
                   onChange={(event) => setTypeFilter(event.target.value)}
-                  className="rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm outline-none focus:border-primary-500"
+                  className="rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-primary-500"
                 >
                   <option value="All">All employment types</option>
                   <option value="Full-time">Full-time</option>
@@ -909,7 +909,7 @@ export default function JobOffers() {
 
           <div className="overflow-x-auto">
             <table className="w-full min-w-[1000px] text-left text-sm">
-              <thead className="bg-gray-50 text-xs uppercase tracking-wide text-gray-500">
+              <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
                 <tr>
                   <th className="px-5 py-4 font-semibold">Candidate</th>
                   <th className="px-5 py-4 font-semibold">Job Position</th>
@@ -923,7 +923,7 @@ export default function JobOffers() {
                 </tr>
               </thead>
 
-              <tbody className="divide-y divide-gray-100">
+              <tbody className="divide-y divide-slate-100">
                 {loading ? (
                   <tr>
                     <td colSpan={7} className="px-5 py-16 text-center">
@@ -932,7 +932,7 @@ export default function JobOffers() {
                         className="mx-auto mb-3 animate-spin text-primary-500"
                       />
 
-                      <p className="font-medium text-gray-700">
+                      <p className="font-medium text-slate-700">
                         Loading job offers...
                       </p>
                     </td>
@@ -941,7 +941,7 @@ export default function JobOffers() {
                   filteredOffers.map((offer) => (
                     <tr
                       key={offer.id}
-                      className="transition hover:bg-gray-50"
+                      className="transition hover:bg-slate-50"
                     >
                       <td className="px-5 py-4">
                         <div className="flex items-center gap-3">
@@ -950,11 +950,11 @@ export default function JobOffers() {
                           </div>
 
                           <div>
-                            <p className="font-semibold text-gray-900">
+                            <p className="font-semibold text-slate-900">
                               {offer.candidateName}
                             </p>
 
-                            <p className="mt-1 text-xs text-gray-500">
+                            <p className="mt-1 text-xs text-slate-500">
                               {offer.email}
                             </p>
                           </div>
@@ -962,24 +962,24 @@ export default function JobOffers() {
                       </td>
 
                       <td className="px-5 py-4">
-                        <p className="font-medium text-gray-800">
+                        <p className="font-medium text-slate-800">
                           {offer.jobTitle}
                         </p>
 
-                        <p className="mt-1 text-xs text-gray-500">
+                        <p className="mt-1 text-xs text-slate-500">
                           {offer.department} · {offer.employmentType}
                         </p>
                       </td>
 
-                      <td className="whitespace-nowrap px-5 py-4 font-medium text-gray-800">
+                      <td className="whitespace-nowrap px-5 py-4 font-medium text-slate-800">
                         {formatSalary(offer.salary)}
                       </td>
 
-                      <td className="whitespace-nowrap px-5 py-4 text-gray-600">
+                      <td className="whitespace-nowrap px-5 py-4 text-slate-600">
                         {formatDate(offer.startDate)}
                       </td>
 
-                      <td className="whitespace-nowrap px-5 py-4 text-gray-600">
+                      <td className="whitespace-nowrap px-5 py-4 text-slate-600">
                         {formatDate(offer.expiryDate)}
                       </td>
 
@@ -993,7 +993,7 @@ export default function JobOffers() {
                             type="button"
                             title="View offer details"
                             onClick={() => openDetails(offer)}
-                            className="rounded-md p-2 text-gray-500 hover:bg-primary-50 hover:text-primary-600"
+                            className="rounded-md p-2 text-slate-500 hover:bg-primary-50 hover:text-primary-600"
                           >
                             <Eye size={17} />
                           </button>
@@ -1006,7 +1006,7 @@ export default function JobOffers() {
                               offer.status !== "Draft" ||
                               actionId === offer.id
                             }
-                            className="rounded-md p-2 text-gray-500 hover:bg-primary-50 hover:text-primary-600 disabled:cursor-not-allowed disabled:opacity-30"
+                            className="rounded-md p-2 text-slate-500 hover:bg-primary-50 hover:text-primary-600 disabled:cursor-not-allowed disabled:opacity-30"
                           >
                             <Pencil size={17} />
                           </button>
@@ -1018,7 +1018,7 @@ export default function JobOffers() {
                                 title="Send offer email"
                                 onClick={() => openDetails(offer)}
                                 disabled={actionId === offer.id}
-                                className="rounded-md p-2 text-gray-500 hover:bg-emerald-50 hover:text-emerald-600 disabled:opacity-50"
+                                className="rounded-md p-2 text-slate-500 hover:bg-emerald-50 hover:text-emerald-600 disabled:opacity-50"
                               >
                                 <Mail size={17} />
                               </button>
@@ -1028,7 +1028,7 @@ export default function JobOffers() {
                                 title="Delete draft offer"
                                 onClick={() => deleteOffer(offer)}
                                 disabled={actionId === offer.id}
-                                className="rounded-md p-2 text-gray-500 hover:bg-rose-50 hover:text-rose-600 disabled:opacity-50"
+                                className="rounded-md p-2 text-slate-500 hover:bg-rose-50 hover:text-rose-600 disabled:opacity-50"
                               >
                                 <Trash2 size={17} />
                               </button>
@@ -1049,7 +1049,7 @@ export default function JobOffers() {
                                   changeStatus(offer, "Withdrawn");
                                 }
                               }}
-                              className="rounded-md p-2 text-gray-500 hover:bg-rose-50 hover:text-rose-600 disabled:opacity-50"
+                              className="rounded-md p-2 text-slate-500 hover:bg-rose-50 hover:text-rose-600 disabled:opacity-50"
                             >
                               <Ban size={17} />
                             </button>
@@ -1065,14 +1065,14 @@ export default function JobOffers() {
                     <td colSpan={7} className="px-5 py-16 text-center">
                       <FileText
                         size={36}
-                        className="mx-auto mb-3 text-gray-300"
+                        className="mx-auto mb-3 text-slate-300"
                       />
 
-                      <p className="font-medium text-gray-700">
+                      <p className="font-medium text-slate-700">
                         No job offers found
                       </p>
 
-                      <p className="mt-1 text-sm text-gray-500">
+                      <p className="mt-1 text-sm text-slate-500">
                         {apiError
                           ? "Check the error message above and try refreshing."
                           : "Create an offer or change your search and filters."}
@@ -1084,7 +1084,7 @@ export default function JobOffers() {
             </table>
           </div>
 
-          <div className="border-t border-gray-200 px-5 py-4 text-xs text-gray-500">
+          <div className="border-t border-slate-200 px-5 py-4 text-xs text-slate-500">
             Showing {filteredOffers.length} of {offers.length} offers
           </div>
         </div>
@@ -1092,7 +1092,7 @@ export default function JobOffers() {
         {/* CREATE / EDIT MODAL */}
         {(modal === "create" || modal === "edit") && (
           <div
-            className="fixed inset-0 z-50 flex items-center justify-center bg-gray-950/50 p-4"
+            className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4"
             onClick={closeModal}
           >
             <div
@@ -1106,14 +1106,14 @@ export default function JobOffers() {
                 <div>
                   <h2
                     id="offer-form-title"
-                    className="text-lg font-bold text-gray-900"
+                    className="text-lg font-bold text-slate-900"
                   >
                     {modal === "create"
                       ? "Create Job Offer"
                       : "Edit Job Offer"}
                   </h2>
 
-                  <p className="mt-1 text-sm text-gray-500">
+                  <p className="mt-1 text-sm text-slate-500">
                     {modal === "create"
                       ? "Select an eligible candidate and create an offer."
                       : "Only draft offers can be edited."}
@@ -1124,7 +1124,7 @@ export default function JobOffers() {
                   type="button"
                   onClick={closeModal}
                   disabled={saving}
-                  className="rounded-lg p-2 text-gray-500 hover:bg-gray-100 disabled:opacity-50"
+                  className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 disabled:opacity-50"
                 >
                   <X size={20} />
                 </button>
@@ -1133,7 +1133,7 @@ export default function JobOffers() {
               <form onSubmit={saveOffer} className="space-y-5 p-6">
                 {modal === "create" && (
                   <div>
-                    <label className="mb-1.5 block text-sm font-medium text-gray-700">
+                    <label className="mb-1.5 block text-sm font-medium text-slate-700">
                       Select Eligible Candidate *
                     </label>
 
@@ -1144,7 +1144,7 @@ export default function JobOffers() {
                         handleCandidateSelection(event.target.value)
                       }
                       disabled={eligibleLoading}
-                      className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm outline-none focus:border-primary-500 disabled:bg-gray-100"
+                      className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-primary-500 disabled:bg-slate-100"
                     >
                       <option value="">
                         {eligibleLoading
@@ -1176,7 +1176,7 @@ export default function JobOffers() {
                         </p>
                       )}
 
-                    <p className="mt-1.5 text-xs text-gray-500">
+                    <p className="mt-1.5 text-xs text-slate-500">
                       Only candidates who passed all four interview rounds
                       are listed here.
                     </p>
@@ -1185,7 +1185,7 @@ export default function JobOffers() {
 
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div>
-                    <label className="mb-1.5 block text-sm font-medium text-gray-700">
+                    <label className="mb-1.5 block text-sm font-medium text-slate-700">
                       Candidate Name *
                     </label>
 
@@ -1198,12 +1198,12 @@ export default function JobOffers() {
                         updateForm("candidateName", event.target.value)
                       }
                       placeholder="Candidate full name"
-                      className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm outline-none focus:border-primary-500 read-only:bg-gray-50"
+                      className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-primary-500 read-only:bg-slate-50"
                     />
                   </div>
 
                   <div>
-                    <label className="mb-1.5 block text-sm font-medium text-gray-700">
+                    <label className="mb-1.5 block text-sm font-medium text-slate-700">
                       Email Address *
                     </label>
 
@@ -1217,12 +1217,12 @@ export default function JobOffers() {
                         updateForm("email", event.target.value)
                       }
                       placeholder="candidate@example.com"
-                      className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm outline-none focus:border-primary-500 read-only:bg-gray-50"
+                      className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-primary-500 read-only:bg-slate-50"
                     />
                   </div>
 
                   <div>
-                    <label className="mb-1.5 block text-sm font-medium text-gray-700">
+                    <label className="mb-1.5 block text-sm font-medium text-slate-700">
                       Job Position *
                     </label>
 
@@ -1235,12 +1235,12 @@ export default function JobOffers() {
                         updateForm("jobTitle", event.target.value)
                       }
                       placeholder="e.g. Software Engineer"
-                      className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm outline-none focus:border-primary-500 read-only:bg-gray-50"
+                      className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-primary-500 read-only:bg-slate-50"
                     />
                   </div>
 
                   <div>
-                    <label className="mb-1.5 block text-sm font-medium text-gray-700">
+                    <label className="mb-1.5 block text-sm font-medium text-slate-700">
                       Department *
                     </label>
 
@@ -1249,7 +1249,7 @@ export default function JobOffers() {
                       onChange={(event) =>
                         updateForm("department", event.target.value)
                       }
-                      className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm outline-none focus:border-primary-500"
+                      className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-primary-500"
                     >
                       <option>Engineering</option>
                       <option>Human Resources</option>
@@ -1261,7 +1261,7 @@ export default function JobOffers() {
                   </div>
 
                   <div>
-                    <label className="mb-1.5 block text-sm font-medium text-gray-700">
+                    <label className="mb-1.5 block text-sm font-medium text-slate-700">
                       Employment Type *
                     </label>
 
@@ -1270,7 +1270,7 @@ export default function JobOffers() {
                       onChange={(event) =>
                         updateForm("employmentType", event.target.value)
                       }
-                      className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm outline-none focus:border-primary-500"
+                      className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-primary-500"
                     >
                       <option>Full-time</option>
                       <option>Part-time</option>
@@ -1280,7 +1280,7 @@ export default function JobOffers() {
                   </div>
 
                   <div>
-                    <label className="mb-1.5 block text-sm font-medium text-gray-700">
+                    <label className="mb-1.5 block text-sm font-medium text-slate-700">
                       Monthly Salary (LKR) *
                     </label>
 
@@ -1294,12 +1294,12 @@ export default function JobOffers() {
                         updateForm("salary", event.target.value)
                       }
                       placeholder="150000"
-                      className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm outline-none focus:border-primary-500"
+                      className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-primary-500"
                     />
                   </div>
 
                   <div>
-                    <label className="mb-1.5 block text-sm font-medium text-gray-700">
+                    <label className="mb-1.5 block text-sm font-medium text-slate-700">
                       Proposed Start Date *
                     </label>
 
@@ -1310,12 +1310,12 @@ export default function JobOffers() {
                       onChange={(event) =>
                         updateForm("startDate", event.target.value)
                       }
-                      className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm outline-none focus:border-primary-500"
+                      className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-primary-500"
                     />
                   </div>
 
                   <div>
-                    <label className="mb-1.5 block text-sm font-medium text-gray-700">
+                    <label className="mb-1.5 block text-sm font-medium text-slate-700">
                       Offer Expiry Date *
                     </label>
 
@@ -1326,12 +1326,12 @@ export default function JobOffers() {
                       onChange={(event) =>
                         updateForm("expiryDate", event.target.value)
                       }
-                      className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm outline-none focus:border-primary-500"
+                      className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-primary-500"
                     />
                   </div>
 
                   <div className="sm:col-span-2">
-                    <label className="mb-1.5 block text-sm font-medium text-gray-700">
+                    <label className="mb-1.5 block text-sm font-medium text-slate-700">
                       Notes
                     </label>
 
@@ -1343,7 +1343,7 @@ export default function JobOffers() {
                         updateForm("notes", event.target.value)
                       }
                       placeholder="Additional offer details..."
-                      className="w-full resize-y rounded-lg border border-gray-300 px-3 py-2.5 text-sm outline-none focus:border-primary-500"
+                      className="w-full resize-y rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-primary-500"
                     />
                   </div>
                 </div>
@@ -1362,7 +1362,7 @@ export default function JobOffers() {
                     type="button"
                     onClick={closeModal}
                     disabled={saving}
-                    className="rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                    className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50"
                   >
                     Cancel
                   </button>
@@ -1374,7 +1374,7 @@ export default function JobOffers() {
                       (modal === "create" &&
                         (!form.applicationId || eligibleLoading))
                     }
-                    className="rounded-lg bg-primary-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-primary-700 disabled:cursor-wait disabled:opacity-60"
+                    className="rounded-xl bg-primary-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-primary-700 disabled:cursor-wait disabled:opacity-60"
                   >
                     {saving
                       ? "Saving..."
@@ -1391,7 +1391,7 @@ export default function JobOffers() {
         {/* VIEW OFFER / SEND EMAIL MODAL */}
         {modal === "view" && selectedOffer && (
           <div
-            className="fixed inset-0 z-50 flex items-center justify-center bg-gray-950/50 p-4"
+            className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4"
             onClick={closeModal}
           >
             <div
@@ -1405,12 +1405,12 @@ export default function JobOffers() {
                 <div>
                   <h2
                     id="offer-detail-title"
-                    className="text-lg font-bold text-gray-900"
+                    className="text-lg font-bold text-slate-900"
                   >
                     Job Offer Details
                   </h2>
 
-                  <p className="mt-1 text-sm text-gray-500">
+                  <p className="mt-1 text-sm text-slate-500">
                     Offer ID: OFF-{String(selectedOffer.id).padStart(3, "0")}
                   </p>
                 </div>
@@ -1419,7 +1419,7 @@ export default function JobOffers() {
                   type="button"
                   onClick={closeModal}
                   disabled={emailSending}
-                  className="rounded-lg p-2 text-gray-500 hover:bg-gray-100 disabled:opacity-50"
+                  className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 disabled:opacity-50"
                   aria-label="Close offer details"
                 >
                   <X size={20} />
@@ -1433,11 +1433,11 @@ export default function JobOffers() {
                   </div>
 
                   <div className="min-w-0 flex-1">
-                    <h3 className="text-lg font-semibold text-gray-900">
+                    <h3 className="text-lg font-semibold text-slate-900">
                       {selectedOffer.candidateName}
                     </h3>
 
-                    <p className="break-all text-sm text-gray-500">
+                    <p className="break-all text-sm text-slate-500">
                       {selectedOffer.email}
                     </p>
                   </div>
@@ -1480,26 +1480,26 @@ export default function JobOffers() {
                   ].map(({ icon: Icon, label, value }) => (
                     <div
                       key={label}
-                      className="rounded-lg border border-gray-200 p-4"
+                      className="rounded-lg border border-slate-200 p-4"
                     >
-                      <div className="mb-2 flex items-center gap-2 text-gray-500">
+                      <div className="mb-2 flex items-center gap-2 text-slate-500">
                         <Icon size={16} />
                         <span className="text-xs">{label}</span>
                       </div>
 
-                      <p className="break-words text-sm font-semibold text-gray-900">
+                      <p className="break-words text-sm font-semibold text-slate-900">
                         {value || "—"}
                       </p>
                     </div>
                   ))}
                 </div>
 
-                <div className="rounded-lg bg-gray-50 p-4">
-                  <p className="mb-1 text-sm font-semibold text-gray-800">
+                <div className="rounded-lg bg-slate-50 p-4">
+                  <p className="mb-1 text-sm font-semibold text-slate-800">
                     Notes
                   </p>
 
-                  <p className="whitespace-pre-wrap text-sm text-gray-600">
+                  <p className="whitespace-pre-wrap text-sm text-slate-600">
                     {selectedOffer.notes || "No additional notes."}
                   </p>
                 </div>
@@ -1511,30 +1511,30 @@ export default function JobOffers() {
                     </div>
 
                     <div>
-                      <h3 className="font-semibold text-gray-900">
+                      <h3 className="font-semibold text-slate-900">
                         Send Offer Email
                       </h3>
 
-                      <p className="mt-1 text-sm text-gray-600">
+                      <p className="mt-1 text-sm text-slate-600">
                         Send the job offer to the candidate's registered email
                         address.
                       </p>
                     </div>
                   </div>
 
-                  <div className="mb-4 rounded-lg border border-gray-200 bg-white p-3">
-                    <p className="text-xs font-medium uppercase tracking-wide text-gray-500">
+                  <div className="mb-4 rounded-lg border border-slate-200 bg-white p-3">
+                    <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
                       Recipient
                     </p>
 
-                    <p className="mt-1 break-all text-sm font-medium text-gray-900">
+                    <p className="mt-1 break-all text-sm font-medium text-slate-900">
                       {selectedOffer.email || "No email address available"}
                     </p>
                   </div>
 
                   {selectedOffer.status === "Draft" ? (
                     <div className="space-y-3">
-                      <p className="text-sm text-gray-600">
+                      <p className="text-sm text-slate-600">
                         The backend will generate the offer email using the
                         saved job offer details. The offer status will be
                         updated after the email endpoint succeeds.
@@ -1566,7 +1566,7 @@ export default function JobOffers() {
                         type="button"
                         onClick={sendOfferEmail}
                         disabled={emailSending || !selectedOffer.email}
-                        className="inline-flex items-center justify-center gap-2 rounded-lg bg-primary-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-50"
+                        className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-50"
                       >
                         {emailSending ? (
                           <RefreshCw size={16} className="animate-spin" />
@@ -1580,7 +1580,7 @@ export default function JobOffers() {
                       </button>
                     </div>
                   ) : (
-                    <div className="rounded-lg border border-gray-200 bg-white p-4">
+                    <div className="rounded-lg border border-slate-200 bg-white p-4">
                       <div className="flex items-start gap-2">
                         <CheckCircle2
                           size={18}
@@ -1588,11 +1588,11 @@ export default function JobOffers() {
                         />
 
                         <div>
-                          <p className="text-sm font-semibold text-gray-800">
+                          <p className="text-sm font-semibold text-slate-800">
                             Offer status: {selectedOffer.status}
                           </p>
 
-                          <p className="mt-1 text-sm text-gray-600">
+                          <p className="mt-1 text-sm text-slate-600">
                             The email action is available only while an offer
                             is in Draft status.
                           </p>
@@ -1634,7 +1634,7 @@ export default function JobOffers() {
                       onClick={() =>
                         changeStatus(selectedOffer, "Withdrawn")
                       }
-                      className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                      className="inline-flex items-center gap-2 rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
                     >
                       <Ban size={16} />
                       Withdraw
@@ -1656,7 +1656,7 @@ export default function JobOffers() {
                   </div>
                 )}
 
-                <p className="text-xs text-gray-400">
+                <p className="text-xs text-slate-400">
                   Created on {formatDate(selectedOffer.createdDate)}
                 </p>
               </div>

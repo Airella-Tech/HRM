@@ -73,7 +73,7 @@ const invitationStyle = {
 };
 
 const statusStyle = {
-  Scheduled: "bg-blue-50 text-blue-700 ring-blue-200",
+  Scheduled: "bg-primary-50 text-primary-700 ring-primary-200",
   Completed: "bg-green-50 text-green-700 ring-green-200",
   Pending: "bg-amber-50 text-amber-700 ring-amber-200",
   Cancelled: "bg-red-50 text-red-700 ring-red-200",
@@ -1357,7 +1357,7 @@ export default function RecruitmentInterviews() {
       CalendarDays,
       "bg-primary-50 text-primary-600",
     ],
-    ["Scheduled", stats.scheduled, CalendarCheck, "bg-blue-50 text-blue-600"],
+    ["Scheduled", stats.scheduled, CalendarCheck, "bg-primary-50 text-primary-600"],
     ["Completed", stats.completed, CheckCircle2, "bg-green-50 text-green-600"],
     ["Pending", stats.pending, Clock3, "bg-amber-50 text-amber-600"],
   ];
@@ -1386,11 +1386,11 @@ export default function RecruitmentInterviews() {
         </div>
       }
     >
-      <div className="min-h-screen bg-slate-50 p-4 sm:p-6 lg:p-8">
+      <div className="p-4 sm:p-6 lg:p-8">
         {notice && (
           <div
             role="status"
-            className="mb-4 flex items-start justify-between gap-3 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800"
+            className="mb-4 flex items-start justify-between gap-3 rounded-xl border border-primary-200 bg-primary-50 px-4 py-3 text-sm text-primary-800"
           >
             <span>{notice}</span>
             <button onClick={() => setNotice("")} aria-label="Dismiss notice">
