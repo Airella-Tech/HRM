@@ -6,7 +6,6 @@ import { formatSalary, formatDate } from "../../utils/careersFormat";
 import {
   isRemovedFromShortlist,
   setRemovedFromShortlist,
-  getShortlistRemovedDate,
 } from "../../utils/vacancyRemovalStorage";
 import {
   History,

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { PageLayout } from "../../components/PageLayout";
 import { recruitmentApi } from "../../services/api";
 import { DeadlineMeter } from "../careers/careersShared";
@@ -7,7 +7,6 @@ import { formatSalary, formatDate } from "../../utils/careersFormat";
 import {
   isRemovedFromShortlist,
   setRemovedFromShortlist,
-  getShortlistRemovedDate,
 } from "../../utils/vacancyRemovalStorage";
 import {
   Search,
@@ -212,8 +211,6 @@ function normalizeCandidate(c) {
 }
 
 export default function RecruitmentCandidateShortlist() {
-  const location = useLocation();
-
   const [candidates, setCandidates] = useState([]);
   const [vacancies, setVacancies] = useState([]);
   const [jobOffers, setJobOffers] = useState([]);
@@ -452,27 +449,6 @@ export default function RecruitmentCandidateShortlist() {
       setActionInProgress(false);
       setTimeout(() => setActionNotice(null), 5000);
       await fetchData(true);
-    }
-  };
-
-  // Handler to restore vacancy back to Active Shortlisting
-  const handleRestoreVacancy = async (vac) => {
-    const vacId = vac.rawVacancy?.id || vac.vacancyId || vac.id;
-    setActionInProgress(true);
-    setRemovedFromShortlist(vacId, false, { title: vac.title });
-    try {
-      if (vacId && typeof recruitmentApi?.restoreVacancyToShortlist === "function") {
-        await recruitmentApi.restoreVacancyToShortlist(vacId);
-      }
-      setActionNotice(`Vacancy "${vac.title}" restored to Active Shortlisting.`);
-      await fetchData(true);
-    } catch (err) {
-      console.warn("Backend restore notice:", err);
-      setActionNotice(`Vacancy "${vac.title}" restored to Active Shortlisting.`);
-      await fetchData(true);
-    } finally {
-      setActionInProgress(false);
-      setTimeout(() => setActionNotice(null), 4000);
     }
   };
 

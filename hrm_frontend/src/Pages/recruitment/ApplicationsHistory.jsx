@@ -1,12 +1,11 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { PageLayout } from "../../components/PageLayout";
 import { recruitmentApi } from "../../services/api";
 import { formatSalary, formatDate } from "../../utils/careersFormat";
 import {
   isRemovedFromApplications,
   setRemovedFromApplications,
-  getApplicationsRemovedDate,
 } from "../../utils/vacancyRemovalStorage";
 import {
   History,
@@ -68,7 +67,6 @@ function getInitials(name) {
 }
 
 export default function ApplicationsHistory() {
-  const navigate = useNavigate();
   const [vacancies, setVacancies] = useState([]);
   const [applications, setApplications] = useState([]);
   const [jobOffers, setJobOffers] = useState([]);

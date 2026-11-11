@@ -6,7 +6,6 @@ import { formatSalary, formatDate } from "../../utils/careersFormat";
 import {
   isRemovedFromReview,
   setRemovedFromReview,
-  getReviewRemovedDate,
 } from "../../utils/vacancyRemovalStorage";
 import {
   History,

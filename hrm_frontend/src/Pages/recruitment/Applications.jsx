@@ -260,28 +260,6 @@ export default function RecruitmentApplications() {
     }
   };
 
-  // Handler to restore vacancy from history to active
-  const handleRestoreVacancy = async (group) => {
-    const vacId = group.rawVacancy?.id || group.id;
-    setActionInProgress(true);
-    setRemovedFromApplications(vacId, false, { title: group.title });
-    if (group.key) setRemovedFromApplications(group.key, false, { title: group.title });
-    try {
-      if (vacId && typeof recruitmentApi?.restoreVacancyToApplications === "function") {
-        await recruitmentApi.restoreVacancyToApplications(vacId);
-      }
-      setActionNotice(`Vacancy "${group.title}" restored to Active Applications.`);
-      await loadData(true);
-    } catch (err) {
-      console.error("Failed to restore vacancy:", err);
-      setActionNotice(`Notice: Vacancy restored.`);
-      await loadData(true);
-    } finally {
-      setActionInProgress(false);
-      setTimeout(() => setActionNotice(null), 4000);
-    }
-  };
-
   const handleRefresh = () => {
     loadData(true);
   };

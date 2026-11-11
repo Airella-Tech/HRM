@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
-import { Link, useNavigate, useLocation } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { PageLayout } from "../../components/PageLayout";
 import { recruitmentApi } from "../../services/api";
 import { DeadlineMeter } from "../careers/careersShared";
@@ -7,7 +7,6 @@ import { formatSalary, formatDate } from "../../utils/careersFormat";
 import {
   isRemovedFromReview,
   setRemovedFromReview,
-  getReviewRemovedDate,
 } from "../../utils/vacancyRemovalStorage";
 import {
   ClipboardCheck,
@@ -82,7 +81,6 @@ function getScoreBadge(score) {
  */
 export default function RecruitmentApplicationReview() {
   const navigate = useNavigate();
-  const location = useLocation();
 
   const [candidates, setCandidates] = useState([]);
   const [vacancies, setVacancies] = useState([]);
@@ -411,32 +409,6 @@ export default function RecruitmentApplicationReview() {
         text: `Vacancy "${vacTitle || 'Selected opening'}" removed and moved to Review History.`,
       });
       setConfirmArchiveModal(null);
-      await fetchConfirmedCandidates(true);
-    } finally {
-      setActionInProgress(false);
-    }
-  };
-
-  // Handler to restore vacancy back to Active Reviews
-  const handleRestoreVacancy = async (group) => {
-    const vacId = group.rawVacancy?.id || group.vacancyId || group.id;
-    setActionInProgress(true);
-    setRemovedFromReview(vacId, false, { title: group.title });
-    try {
-      if (vacId && typeof recruitmentApi?.restoreVacancyToReview === "function") {
-        await recruitmentApi.restoreVacancyToReview(vacId);
-      }
-      setToastMessage({
-        type: "success",
-        text: `Vacancy "${group.title}" restored to Active Reviews.`,
-      });
-      await fetchConfirmedCandidates(true);
-    } catch (err) {
-      console.warn("Backend restore notice:", err);
-      setToastMessage({
-        type: "success",
-        text: `Vacancy "${group.title}" restored to Active Reviews.`,
-      });
       await fetchConfirmedCandidates(true);
     } finally {
       setActionInProgress(false);
