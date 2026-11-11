@@ -1,9 +1,14 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { PageLayout } from "../../components/PageLayout";
 import { recruitmentApi } from "../../services/api";
 import { DeadlineMeter } from "../careers/careersShared";
 import { formatSalary, formatDate } from "../../utils/careersFormat";
+import {
+  isRemovedFromShortlist,
+  setRemovedFromShortlist,
+  getShortlistRemovedDate,
+} from "../../utils/vacancyRemovalStorage";
 import {
   Search,
   CheckCircle2,
@@ -43,6 +48,10 @@ import {
   ClipboardCheck,
   ArrowRight,
   Banknote,
+  Archive,
+  RotateCcw,
+  History,
+  FolderKanban,
 } from "lucide-react";
 
 /**
@@ -203,10 +212,18 @@ function normalizeCandidate(c) {
 }
 
 export default function RecruitmentCandidateShortlist() {
+  const location = useLocation();
+
   const [candidates, setCandidates] = useState([]);
   const [vacancies, setVacancies] = useState([]);
+  const [jobOffers, setJobOffers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [actionNotice, setActionNotice] = useState(null);
+
+  // Archive / Restore Modals
+  const [confirmArchiveModal, setConfirmArchiveModal] = useState(null);
+  const [actionInProgress, setActionInProgress] = useState(false);
 
   // Global search & vacancy filter
   const [search, setSearch] = useState("");
@@ -246,16 +263,24 @@ export default function RecruitmentCandidateShortlist() {
 
   // Selected Vacancy Modal (Job Vacancy Details like Public Career Page)
   const [selectedVacancyModal, setSelectedVacancyModal] = useState(null);
+
   // Load applications and vacancies
   const fetchData = useCallback(async (isRefresh = false) => {
     if (isRefresh) setRefreshing(true);
     else setLoading(true);
 
     try {
-      const [appsRes, vacsRes] = await Promise.allSettled([
+      const [appsRes, vacsRes, offersRes] = await Promise.allSettled([
         recruitmentApi.getApplications ? recruitmentApi.getApplications() : Promise.resolve({ data: [] }),
         recruitmentApi.getVacancies ? recruitmentApi.getVacancies() : Promise.resolve({ data: [] }),
+        recruitmentApi.getJobOffers ? recruitmentApi.getJobOffers() : Promise.resolve({ data: [] }),
       ]);
+
+      if (offersRes.status === "fulfilled" && Array.isArray(offersRes.value?.data)) {
+        setJobOffers(offersRes.value.data);
+      } else {
+        setJobOffers([]);
+      }
 
       if (appsRes.status === "fulfilled" && appsRes.value?.data && Array.isArray(appsRes.value.data)) {
         setCandidates(appsRes.value.data.map(normalizeCandidate));
@@ -353,6 +378,103 @@ export default function RecruitmentCandidateShortlist() {
   useEffect(() => {
     fetchData();
   }, [fetchData]);
+
+  // Compute job offer status for a vacancy in shortlist
+  const getVacancyOfferInfo = useCallback((vacKey, candList = [], vacTitle = "") => {
+    const appIds = new Set(candList.map((c) => Number(c.id)).filter(Boolean));
+    const normalizedTitle = (vacTitle || "").trim().toLowerCase();
+    const matched = jobOffers.filter((o) => {
+      const hasAppMatch = o.applicationId && appIds.has(Number(o.applicationId));
+      const hasTitleMatch = normalizedTitle && o.jobTitle && o.jobTitle.trim().toLowerCase() === normalizedTitle;
+      return hasAppMatch || hasTitleMatch;
+    });
+    return {
+      hasOffer: matched.length > 0,
+      offerCount: matched.length,
+      offers: matched,
+    };
+  }, [jobOffers]);
+
+  // Handle archiving vacancy from shortlist page
+  // 1. Archives vacancy and moves to Shortlist History (persisted to client storage and backend)
+  // 2. Automatically updates any unconfirmed candidate in this vacancy to REJECTED with structured reason
+  // 3. Immediately updates their status in the tracking page
+  const handleArchiveVacancy = async () => {
+    if (!confirmArchiveModal) return;
+    const { vacancy } = confirmArchiveModal;
+    const vacId = vacancy?.id || vacancy?.vacancyId;
+    const vacTitle = vacancy?.title;
+    setActionInProgress(true);
+
+    // 1. Persist removal to localStorage immediately
+    setRemovedFromShortlist(vacId, true, { title: vacTitle });
+    if (vacancy?.key) setRemovedFromShortlist(vacancy.key, true, { title: vacTitle });
+
+    // 2. Reject unconfirmed candidates belonging to this vacancy
+    // User requirement: "and also like that shorlist page remove that vacancy and add to history page that all candidate have under shortlist without confirm shortlist that status get as rejected and like that update their status in tracking page"
+    try {
+      const vacCandidates = (confirmArchiveModal.candidates || vacancy.candidates || []).length > 0
+        ? (confirmArchiveModal.candidates || vacancy.candidates)
+        : candidates.filter((c) => {
+            if (vacId != null && String(c.vacancyId) === String(vacId)) return true;
+            if (vacTitle && (c.jobTitle?.trim().toLowerCase() === vacTitle.trim().toLowerCase() || c.vacancyTitle?.trim().toLowerCase() === vacTitle.trim().toLowerCase())) return true;
+            return false;
+          });
+
+      const unconfirmedCandidates = vacCandidates.filter((c) => {
+        const isConfirmed = c.status === "SHORTLISTED" || c.status === "OFFER_MADE" || c.status === "HIRED";
+        return !isConfirmed && c.status !== "REJECTED";
+      });
+
+      if (unconfirmedCandidates.length > 0) {
+        await Promise.allSettled(
+          unconfirmedCandidates.map((c) =>
+            recruitmentApi.rejectCandidate(c.id, "Position closed / archived without shortlist confirmation")
+          )
+        );
+      }
+    } catch (rejectErr) {
+      console.warn("Auto-reject candidates notice:", rejectErr);
+    }
+
+    // 3. Call backend endpoint to remove from shortlist (if backend is running with endpoint)
+    try {
+      if (vacId && typeof recruitmentApi?.removeVacancyFromShortlist === "function") {
+        await recruitmentApi.removeVacancyFromShortlist(vacId);
+      }
+    } catch (err) {
+      console.warn("Backend removeVacancyFromShortlist notice:", err?.message);
+    } finally {
+      setActionNotice(
+        `Vacancy "${vacTitle || 'Selected opening'}" removed and moved to Shortlist History. All unconfirmed candidates have been marked as REJECTED and updated on their tracking page.`
+      );
+      setConfirmArchiveModal(null);
+      setActionInProgress(false);
+      setTimeout(() => setActionNotice(null), 5000);
+      await fetchData(true);
+    }
+  };
+
+  // Handler to restore vacancy back to Active Shortlisting
+  const handleRestoreVacancy = async (vac) => {
+    const vacId = vac.rawVacancy?.id || vac.vacancyId || vac.id;
+    setActionInProgress(true);
+    setRemovedFromShortlist(vacId, false, { title: vac.title });
+    try {
+      if (vacId && typeof recruitmentApi?.restoreVacancyToShortlist === "function") {
+        await recruitmentApi.restoreVacancyToShortlist(vacId);
+      }
+      setActionNotice(`Vacancy "${vac.title}" restored to Active Shortlisting.`);
+      await fetchData(true);
+    } catch (err) {
+      console.warn("Backend restore notice:", err);
+      setActionNotice(`Vacancy "${vac.title}" restored to Active Shortlisting.`);
+      await fetchData(true);
+    } finally {
+      setActionInProgress(false);
+      setTimeout(() => setActionNotice(null), 4000);
+    }
+  };
 
   // Fetch screening configuration for a vacancy
   const loadVacancyConfig = useCallback(async (vacancyId) => {
@@ -793,6 +915,18 @@ export default function RecruitmentCandidateShortlist() {
     return result.filter((g) => g.candidates.length > 0 || selectedVacancyFilter !== "ALL");
   }, [candidates, vacancies, selectedVacancyFilter]);
 
+  // Separate into active vacancies and history/archived vacancies
+  const activeVacancyGroups = useMemo(() => {
+    return vacancyGroups.filter((g) => !isRemovedFromShortlist(g.rawVacancy || g));
+  }, [vacancyGroups]);
+
+  const historyVacancyGroups = useMemo(() => {
+    return vacancyGroups.filter((g) => isRemovedFromShortlist(g.rawVacancy || g));
+  }, [vacancyGroups]);
+
+  // Active vacancies displayed
+  const displayedVacancyGroups = activeVacancyGroups;
+
   // Overall counts
   const totalApplicants = candidates.length;
   const totalShortlisted = candidates.filter((c) => c.status === "SHORTLISTED").length;
@@ -802,7 +936,7 @@ export default function RecruitmentCandidateShortlist() {
   const expandAll = () => setCollapsedGroups({});
   const collapseAll = () => {
     const all = {};
-    vacancyGroups.forEach((g) => {
+    displayedVacancyGroups.forEach((g) => {
       all[g.vacancyKey] = true;
     });
     setCollapsedGroups(all);
@@ -817,12 +951,12 @@ export default function RecruitmentCandidateShortlist() {
       actions={
         <div className="flex items-center gap-2">
           <Link
-            to="/recruitment/applications/review"
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-primary-50 hover:bg-primary-100 text-primary-700 text-xs font-semibold rounded-xl border border-primary-200 shadow-xs transition-all cursor-pointer"
-            title="Go to Review Candidates page to view confirmed shortlist"
+            to="/recruitment/applications/shortlist/history"
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold rounded-xl border border-slate-200/80 shadow-xs transition-all cursor-pointer"
+            title="View closed and archived candidate shortlist history"
           >
-            <ClipboardCheck size={14} className="text-primary-600" />
-            <span>Review Candidates ({totalShortlisted})</span>
+            <History size={14} className="text-primary-600" />
+            <span>Shortlist History ({historyVacancyGroups.length})</span>
           </Link>
           <button
             onClick={() => fetchData(true)}
@@ -836,6 +970,19 @@ export default function RecruitmentCandidateShortlist() {
       }
     >
       <div className="p-6 space-y-6 max-w-7xl mx-auto">
+        {/* ── Action Notice ── */}
+        {actionNotice && (
+          <div className="p-3.5 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center justify-between text-xs text-emerald-800 font-medium shadow-xs">
+            <div className="flex items-center gap-2">
+              <CheckCircle2 size={16} className="text-emerald-600 shrink-0" />
+              <span>{actionNotice}</span>
+            </div>
+            <button onClick={() => setActionNotice(null)} className="text-emerald-600 hover:text-emerald-800 p-1">
+              <X size={14} />
+            </button>
+          </div>
+        )}
+
         {/* ── Top Summary & Metrics ── */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-sm flex items-center gap-3.5">
@@ -846,7 +993,7 @@ export default function RecruitmentCandidateShortlist() {
               <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">
                 Active Vacancies
               </span>
-              <span className="text-xl font-bold text-slate-900">{vacancyGroups.length}</span>
+              <span className="text-xl font-bold text-slate-900">{displayedVacancyGroups.length}</span>
               <span className="text-[11px] text-slate-500 block">Separated Configurations</span>
             </div>
           </div>
@@ -911,8 +1058,8 @@ export default function RecruitmentCandidateShortlist() {
                 onChange={(e) => setSelectedVacancyFilter(e.target.value)}
                 className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:bg-white cursor-pointer"
               >
-                <option value="ALL">All Vacancies ({vacancyGroups.length})</option>
-                {vacancyGroups.map((g) => (
+                <option value="ALL">All Vacancies ({displayedVacancyGroups.length})</option>
+                {displayedVacancyGroups.map((g) => (
                   <option key={g.vacancyKey} value={g.vacancyKey}>
                     {g.title} ({g.candidates.length})
                   </option>
@@ -944,19 +1091,28 @@ export default function RecruitmentCandidateShortlist() {
             <h4 className="font-bold text-slate-800 text-sm">Loading Candidate Applications & Rules...</h4>
             <p className="text-xs text-slate-400 mt-1">Retrieving candidate submissions and vacancy configurations</p>
           </div>
-        ) : vacancyGroups.length === 0 ? (
-          <div className="bg-white rounded-3xl p-16 text-center border border-slate-200/80 shadow-sm max-w-md mx-auto">
+        ) : displayedVacancyGroups.length === 0 ? (
+          <div className="bg-white rounded-3xl p-16 text-center border border-slate-200/80 shadow-sm max-w-md mx-auto space-y-3">
             <div className="w-14 h-14 bg-primary-50 text-primary-600 rounded-2xl flex items-center justify-center mx-auto mb-3">
               <Briefcase size={28} />
             </div>
-            <h4 className="font-bold text-slate-800 text-sm">No Candidate Applications Found</h4>
-            <p className="text-xs text-slate-400 mt-1">
-              There are no candidate applications currently available for shortlisting.
+            <h4 className="font-bold text-slate-800 text-sm">No Active Vacancies Available</h4>
+            <p className="text-xs text-slate-400 mt-1 leading-relaxed">
+              There are no active candidate applications currently open for shortlisting. Removed and archived vacancies can be accessed in Shortlist History.
             </p>
+            {historyVacancyGroups.length > 0 && (
+              <Link
+                to="/recruitment/applications/shortlist/history"
+                className="mt-2 inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-primary-600 text-white hover:bg-primary-700 transition-colors shadow-xs"
+              >
+                <History size={14} />
+                <span>View Shortlist History ({historyVacancyGroups.length})</span>
+              </Link>
+            )}
           </div>
         ) : (
           <div className="space-y-6">
-            {vacancyGroups.map((group) => {
+            {displayedVacancyGroups.map((group) => {
               const vacKey = group.vacancyKey;
               const isCollapsed = !!collapsedGroups[vacKey];
               const stagedSet = getStagedSet(vacKey);
@@ -1030,6 +1186,27 @@ export default function RecruitmentCandidateShortlist() {
                           <span className="text-xs px-2.5 py-0.5 rounded-full bg-slate-700/80 text-slate-300 font-medium border border-slate-600/40">
                             {vacTotal} Applicants
                           </span>
+                          {/* Job Offer Status Badge */}
+                          {(() => {
+                            const offerInfo = getVacancyOfferInfo(vacKey, group.candidates, group.title);
+                            return offerInfo.hasOffer ? (
+                              <span
+                                className="text-xs px-3 py-1 rounded-full bg-emerald-500/25 text-emerald-300 font-semibold border border-emerald-400/40 flex items-center gap-1.5 shadow-xs"
+                                title="Job offer created for this position"
+                              >
+                                <CheckCircle2 size={13} className="text-emerald-400 shrink-0" />
+                                <span>Job Offer Created {offerInfo.offerCount > 1 ? `(${offerInfo.offerCount})` : ""}</span>
+                              </span>
+                            ) : (
+                              <span
+                                className="text-xs px-3 py-1 rounded-full bg-amber-500/25 text-amber-300 font-semibold border border-amber-400/40 flex items-center gap-1.5 shadow-xs"
+                                title="No job offer created yet for this position"
+                              >
+                                <Clock size={13} className="text-amber-400 shrink-0" />
+                                <span>Job Offer Not Created Yet</span>
+                              </span>
+                            );
+                          })()}
                         </div>
                         {/* Persisted Last Run Details from database */}
                         {vacConfig?.lastScreenedAt ? (
@@ -1089,6 +1266,25 @@ export default function RecruitmentCandidateShortlist() {
                         >
                           <SlidersHorizontal size={14} className="text-primary-400 shrink-0" />
                           <span>{loadingConfigFor === group.vacancyId ? "Loading..." : "Define Screening Rules"}</span>
+                        </button>
+
+                        {/* Remove Vacancy Button */}
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setConfirmArchiveModal({
+                              vacancy: group.rawVacancy || { id: group.vacancyId, title: group.title },
+                              candidates: group.candidates,
+                              unconfirmedCount: group.candidates.filter(
+                                (c) => c.status !== "SHORTLISTED" && c.status !== "REJECTED" && c.status !== "HIRED" && c.status !== "OFFER_MADE"
+                              ).length,
+                            })
+                          }
+                          className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold bg-rose-500/20 hover:bg-rose-500/35 text-rose-200 border border-rose-400/30 transition-all cursor-pointer"
+                          title="Remove vacancy, move to Shortlist History, and reject unconfirmed candidates"
+                        >
+                          <Archive size={14} className="text-rose-300 shrink-0" />
+                          <span>Remove Vacancy</span>
                         </button>
                       </div>
 
@@ -2752,6 +2948,63 @@ export default function RecruitmentCandidateShortlist() {
                 className="px-5 py-2.5 rounded-xl bg-slate-200 hover:bg-slate-300 text-slate-800 text-xs font-semibold transition-colors"
               >
                 Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Confirmation Modal: Archive Vacancy from Shortlist */}
+      {confirmArchiveModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+          <div className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center shrink-0">
+                <Archive size={22} />
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-slate-900">Archive Vacancy to Shortlist History</h3>
+                <p className="text-xs text-slate-500">Close vacancy and reject unconfirmed candidates</p>
+              </div>
+            </div>
+
+            <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 text-xs leading-relaxed space-y-2">
+              <p className="font-semibold flex items-center gap-1.5 text-amber-800">
+                <AlertCircle size={15} className="shrink-0" />
+                <span>Notice on Candidate Tracking & Status:</span>
+              </p>
+              <p>
+                Removing this vacancy will move it to the <span className="font-bold">Shortlist History</span> view.
+                All candidates under this vacancy who have <span className="font-bold underline">not been confirmed</span> for shortlist
+                ({confirmArchiveModal.unconfirmedCount} candidate{confirmArchiveModal.unconfirmedCount === 1 ? "" : "s"})
+                will be automatically marked as <span className="font-bold text-rose-700">REJECTED</span>.
+              </p>
+              <p>
+                Their updated status will immediately reflect as <span className="font-bold">REJECTED</span> on the public candidate tracking page (<code className="bg-amber-100 px-1 py-0.5 rounded text-[11px]">/careers/track</code>).
+              </p>
+            </div>
+
+            <p className="text-xs text-slate-600">
+              Are you sure you want to proceed with archiving <span className="font-bold text-slate-900">{confirmArchiveModal.vacancy?.title}</span>?
+            </p>
+
+            <div className="flex items-center justify-end gap-2.5 pt-2">
+              <button
+                type="button"
+                disabled={actionInProgress}
+                onClick={() => setConfirmArchiveModal(null)}
+                className="px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 transition-colors cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={actionInProgress}
+                onClick={handleArchiveVacancy}
+                className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-semibold text-white bg-rose-600 hover:bg-rose-700 transition-colors shadow-sm cursor-pointer disabled:opacity-50"
+              >
+                {actionInProgress ? <Loader2 size={14} className="animate-spin" /> : <Archive size={14} />}
+                <span>Confirm & Archive</span>
               </button>
             </div>
           </div>

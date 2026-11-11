@@ -85,6 +85,25 @@ public class JobVacancy {
     @Column(name = "closed_at")
     private LocalDateTime closedAt;
 
+    /** Stage removal / archive flags for the recruitment workflow (after process) */
+    @Column(name = "removed_from_applications")
+    private Boolean removedFromApplications = false;
+
+    @Column(name = "removed_from_applications_at")
+    private LocalDateTime removedFromApplicationsAt;
+
+    @Column(name = "removed_from_shortlist")
+    private Boolean removedFromShortlist = false;
+
+    @Column(name = "removed_from_shortlist_at")
+    private LocalDateTime removedFromShortlistAt;
+
+    @Column(name = "removed_from_review")
+    private Boolean removedFromReview = false;
+
+    @Column(name = "removed_from_review_at")
+    private LocalDateTime removedFromReviewAt;
+
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
