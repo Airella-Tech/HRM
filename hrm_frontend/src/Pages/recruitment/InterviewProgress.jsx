@@ -560,7 +560,7 @@ function ProgressBar({ candidate }) {
           className={`h-full rounded-full transition-all ${
             candidate.overallStatus === "Rejected"
               ? "bg-red-400"
-              : "bg-indigo-500"
+              : "bg-primary-500"
           }`}
           style={{ width: `${progress}%` }}
         />
@@ -590,7 +590,7 @@ function CandidateProgressModal({ candidate, onClose }) {
       >
         <div className="flex items-start justify-between gap-4 border-b border-slate-200 px-5 py-5 sm:px-7">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-wider text-indigo-600">
+            <p className="text-xs font-semibold uppercase tracking-wider text-primary-600">
               Candidate Interview Journey
             </p>
             <h2
@@ -614,7 +614,7 @@ function CandidateProgressModal({ candidate, onClose }) {
         <div className="max-h-[calc(100vh-180px)] space-y-6 overflow-y-auto p-5 sm:p-7">
           <div className="grid grid-cols-1 gap-4 rounded-xl bg-slate-50 p-4 sm:grid-cols-2">
             <div className="flex items-start gap-3">
-              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-indigo-700">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary-100 text-primary-700">
                 <UserRound size={22} />
               </div>
               <div>
@@ -652,7 +652,7 @@ function CandidateProgressModal({ candidate, onClose }) {
           <div className="rounded-xl border border-slate-200 p-4">
             <div className="mb-3 flex items-center justify-between gap-3">
               <h3 className="font-semibold text-slate-900">Overall Progress</h3>
-              <span className="text-sm font-bold text-indigo-700">
+              <span className="text-sm font-bold text-primary-700">
                 {progress}%
               </span>
             </div>
@@ -661,7 +661,7 @@ function CandidateProgressModal({ candidate, onClose }) {
                 className={`h-full rounded-full ${
                   candidate.overallStatus === "Rejected"
                     ? "bg-red-400"
-                    : "bg-indigo-500"
+                    : "bg-primary-500"
                 }`}
                 style={{ width: `${progress}%` }}
               />
@@ -1001,7 +1001,7 @@ export default function InterviewProgress() {
               value={stats.total}
               description="Applications with interview records"
               icon={Users}
-              iconStyle="bg-indigo-50 text-indigo-600"
+              iconStyle="bg-primary-50 text-primary-600"
             />
             <StatCard
               title="In Progress"
@@ -1022,7 +1022,7 @@ export default function InterviewProgress() {
               value={stats.stageCompletions}
               description="Total interview stages completed"
               icon={TrendingUp}
-              iconStyle="bg-violet-50 text-violet-600"
+              iconStyle="bg-primary-50 text-primary-600"
             />
           </div>
 
@@ -1063,12 +1063,12 @@ export default function InterviewProgress() {
                     }
                     className={`rounded-xl border p-4 text-left transition ${
                       selected
-                        ? "border-indigo-400 bg-indigo-50 ring-1 ring-indigo-100"
-                        : "border-slate-200 hover:border-indigo-200 hover:bg-slate-50"
+                        ? "border-primary-400 bg-primary-50 ring-1 ring-primary-100"
+                        : "border-slate-200 hover:border-primary-200 hover:bg-slate-50"
                     }`}
                   >
                     <div className="flex items-center justify-between gap-2">
-                      <span className="flex h-8 w-8 items-center justify-center rounded-full bg-indigo-100 text-sm font-bold text-indigo-700">
+                      <span className="flex h-8 w-8 items-center justify-center rounded-full bg-primary-100 text-sm font-bold text-primary-700">
                         {index + 1}
                       </span>
                       <span className="text-xs text-slate-500">
@@ -1112,7 +1112,7 @@ export default function InterviewProgress() {
                     onChange={(event) => setSearchTerm(event.target.value)}
                     placeholder="Search candidates..."
                     aria-label="Search candidates"
-                    className="w-full rounded-lg border border-slate-200 py-2.5 pl-9 pr-3 text-sm outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 sm:w-64"
+                    className="w-full rounded-lg border border-slate-200 py-2.5 pl-9 pr-3 text-sm outline-none focus:border-primary-400 focus:ring-2 focus:ring-primary-100 sm:w-64"
                   />
                 </div>
 
@@ -1122,7 +1122,7 @@ export default function InterviewProgress() {
                   aria-expanded={showFilters}
                   className={`inline-flex items-center justify-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-medium ${
                     showFilters
-                      ? "border-indigo-200 bg-indigo-50 text-indigo-700"
+                      ? "border-primary-200 bg-primary-50 text-primary-700"
                       : "border-slate-200 text-slate-700 hover:bg-slate-50"
                   }`}
                 >
@@ -1241,7 +1241,7 @@ export default function InterviewProgress() {
                       >
                         <td className="px-5 py-4">
                           <div className="flex items-center gap-3">
-                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-indigo-50 text-sm font-bold text-indigo-700">
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary-50 text-sm font-bold text-primary-700">
                               {(candidate.candidateName || "Candidate")
                                 .split(" ")
                                 .map((part) => part[0])
@@ -1296,7 +1296,7 @@ export default function InterviewProgress() {
                             <button
                               type="button"
                               onClick={() => setSelectedCandidate(candidate)}
-                              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700 hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700"
+                              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700 hover:border-primary-200 hover:bg-primary-50 hover:text-primary-700"
                             >
                               <Eye size={15} /> View Progress{" "}
                               <ArrowRight size={14} />
@@ -1332,7 +1332,7 @@ export default function InterviewProgress() {
                         <button
                           type="button"
                           onClick={resetFilters}
-                          className="mt-3 text-sm font-semibold text-indigo-600"
+                          className="mt-3 text-sm font-semibold text-primary-600"
                         >
                           Clear filters
                         </button>

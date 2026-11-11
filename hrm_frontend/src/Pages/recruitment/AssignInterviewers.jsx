@@ -835,7 +835,7 @@ export default function AssignInterviewers() {
         {assignedPeople.map(({ id, person }) => (
           <div key={id} className="flex items-center gap-2">
             {!compact && (
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-xs font-semibold text-indigo-700">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary-100 text-xs font-semibold text-primary-700">
                 {getInitials(person?.name ?? "Unknown")}
               </div>
             )}
@@ -884,7 +884,7 @@ export default function AssignInterviewers() {
             </div>
 
             <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-600 shadow-sm">
-              <Users size={18} className="text-indigo-600" />
+              <Users size={18} className="text-primary-600" />
               <span>
                 <strong className="text-slate-900">
                   {interviewers.length}
@@ -913,7 +913,7 @@ export default function AssignInterviewers() {
           </div>
 
           {(loading || employeesLoading) && (
-            <div className="flex items-center gap-2 rounded-xl border border-indigo-100 bg-indigo-50 p-4 text-sm text-indigo-700">
+            <div className="flex items-center gap-2 rounded-xl border border-primary-100 bg-primary-50 p-4 text-sm text-primary-700">
               <LoaderCircle size={17} className="animate-spin" />
               Loading data from the backend...
             </div>
@@ -1022,7 +1022,7 @@ export default function AssignInterviewers() {
                     value={search}
                     onChange={(event) => setSearch(event.target.value)}
                     placeholder="Search candidates or positions..."
-                    className="w-full rounded-xl border border-slate-200 py-2.5 pl-10 pr-4 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+                    className="w-full rounded-xl border border-slate-200 py-2.5 pl-10 pr-4 text-sm outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-100"
                   />
                 </div>
               </div>
@@ -1036,7 +1036,7 @@ export default function AssignInterviewers() {
                   <select
                     value={stageFilter}
                     onChange={(event) => setStageFilter(event.target.value)}
-                    className="w-full appearance-none rounded-xl border border-slate-200 bg-white py-2.5 pl-9 pr-9 text-sm text-slate-700 outline-none focus:border-indigo-500"
+                    className="w-full appearance-none rounded-xl border border-slate-200 bg-white py-2.5 pl-9 pr-9 text-sm text-slate-700 outline-none focus:border-primary-500"
                   >
                     <option>All Stages</option>
                     {STAGES.map((stage) => (
@@ -1055,7 +1055,7 @@ export default function AssignInterviewers() {
                     onChange={(event) =>
                       setAssignmentFilter(event.target.value)
                     }
-                    className="w-full appearance-none rounded-xl border border-slate-200 bg-white px-4 py-2.5 pr-9 text-sm text-slate-700 outline-none focus:border-indigo-500"
+                    className="w-full appearance-none rounded-xl border border-slate-200 bg-white px-4 py-2.5 pr-9 text-sm text-slate-700 outline-none focus:border-primary-500"
                   >
                     <option>All Interviews</option>
                     <option>Assigned</option>
@@ -1148,7 +1148,7 @@ export default function AssignInterviewers() {
                             <button
                               type="button"
                               onClick={() => openAssignmentModal(interview)}
-                              className="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-3 py-2 text-sm font-medium text-white hover:bg-indigo-700"
+                              className="inline-flex items-center gap-2 rounded-lg bg-primary-600 px-3 py-2 text-sm font-medium text-white hover:bg-primary-700"
                             >
                               {assignedCountForRow ? (
                                 <Pencil size={15} />
@@ -1227,7 +1227,7 @@ export default function AssignInterviewers() {
                       <button
                         type="button"
                         onClick={() => openAssignmentModal(interview)}
-                        className="mt-4 flex w-full items-center justify-center gap-2 rounded-lg bg-indigo-600 px-3 py-2.5 text-sm font-medium text-white hover:bg-indigo-700"
+                        className="mt-4 flex w-full items-center justify-center gap-2 rounded-lg bg-primary-600 px-3 py-2.5 text-sm font-medium text-white hover:bg-primary-700"
                       >
                         {assignedCountForRow ? (
                           <Pencil size={16} />
@@ -1352,7 +1352,7 @@ export default function AssignInterviewers() {
                   <h3 className="font-semibold text-slate-900">
                     Available interviewers
                   </h3>
-                  <span className="rounded-full bg-indigo-50 px-3 py-1 text-xs font-medium text-indigo-700">
+                  <span className="rounded-full bg-primary-50 px-3 py-1 text-xs font-medium text-primary-700">
                     {selectedInterviewers.length} selected
                   </span>
                 </div>
@@ -1381,7 +1381,7 @@ export default function AssignInterviewers() {
                           key={person.id}
                           className={`flex cursor-pointer items-start gap-3 rounded-xl border p-3 transition ${
                             checked
-                              ? "border-indigo-300 bg-indigo-50/60"
+                              ? "border-primary-300 bg-primary-50/60"
                               : "border-slate-200 hover:border-slate-300"
                           }`}
                         >
@@ -1389,10 +1389,10 @@ export default function AssignInterviewers() {
                             type="checkbox"
                             checked={checked}
                             onChange={() => toggleInterviewer(person.id)}
-                            className="mt-1 h-4 w-4 accent-indigo-600"
+                            className="mt-1 h-4 w-4 accent-primary-600"
                           />
 
-                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-sm font-semibold text-indigo-700">
+                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary-100 text-sm font-semibold text-primary-700">
                             {getInitials(person.name)}
                           </div>
 
@@ -1429,7 +1429,7 @@ export default function AssignInterviewers() {
                           {checked && (
                             <CheckCircle2
                               size={18}
-                              className="shrink-0 text-indigo-600"
+                              className="shrink-0 text-primary-600"
                             />
                           )}
                         </label>
@@ -1469,7 +1469,7 @@ export default function AssignInterviewers() {
                   interviewers.length === 0 ||
                   isInterviewLocked(selectedInterview)
                 }
-                className="inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50"
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {saving ? (
                   <LoaderCircle size={17} className="animate-spin" />
@@ -1488,7 +1488,7 @@ export default function AssignInterviewers() {
 
 function StatCard({ label, value, icon, color }) {
   const colors = {
-    indigo: "bg-indigo-50 text-indigo-600",
+    indigo: "bg-primary-50 text-primary-600",
     emerald: "bg-emerald-50 text-emerald-600",
     amber: "bg-amber-50 text-amber-600",
     purple: "bg-purple-50 text-purple-600",

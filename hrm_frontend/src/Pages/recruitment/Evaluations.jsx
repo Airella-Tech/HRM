@@ -428,7 +428,7 @@ const formatRecommendation = (value) =>
 
 function SummaryCard({ label, value, icon: Icon, color }) {
   const styles = {
-    indigo: "bg-indigo-50 text-indigo-600",
+    indigo: "bg-primary-50 text-primary-600",
     amber: "bg-amber-50 text-amber-600",
     emerald: "bg-emerald-50 text-emerald-600",
   };
@@ -485,7 +485,7 @@ function InterviewStatusBadge({ status }) {
 function InfoItem({ icon: Icon, label, value }) {
   return (
     <div className="flex min-w-0 items-start gap-3 rounded-xl bg-slate-50 p-3">
-      <Icon size={17} className="mt-0.5 shrink-0 text-indigo-500" />
+      <Icon size={17} className="mt-0.5 shrink-0 text-primary-500" />
       <div className="min-w-0">
         <p className="text-xs text-slate-500">{label}</p>
         <p className="mt-1 break-words text-sm font-semibold text-slate-800">
@@ -1083,7 +1083,7 @@ export default function RecruitmentEvaluations() {
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
                 placeholder="Search candidates or job titles..."
-                className="w-full rounded-xl border border-slate-200 py-2.5 pl-10 pr-4 text-sm outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+                className="w-full rounded-xl border border-slate-200 py-2.5 pl-10 pr-4 text-sm outline-none focus:border-primary-400 focus:ring-2 focus:ring-primary-100"
               />
             </div>
 
@@ -1193,7 +1193,7 @@ export default function RecruitmentEvaluations() {
                         </td>
 
                         <td className="px-5 py-4">
-                          <span className="rounded-lg bg-indigo-50 px-2.5 py-1.5 text-xs font-semibold text-indigo-700">
+                          <span className="rounded-lg bg-primary-50 px-2.5 py-1.5 text-xs font-semibold text-primary-700">
                             {interview.round}
                           </span>
                         </td>
@@ -1295,7 +1295,7 @@ export default function RecruitmentEvaluations() {
                                     ? "Mark the interview completed before evaluating"
                                     : "Evaluate interview"
                               }
-                              className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-3 py-2 text-xs font-medium text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-40"
+                              className="inline-flex items-center gap-2 rounded-xl bg-primary-600 px-3 py-2 text-xs font-medium text-white hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-40"
                             >
                               <Eye size={15} />
                               {evaluationStatus === "Submitted"
@@ -1457,7 +1457,7 @@ export default function RecruitmentEvaluations() {
                     </p>
 
                     <p className="mt-3 text-sm text-slate-500">Average score</p>
-                    <p className="mt-1 text-xl font-bold text-indigo-600">
+                    <p className="mt-1 text-xl font-bold text-primary-600">
                       {Number(selectedEvaluation.averageScore ?? 0).toFixed(2)}
                       /5
                     </p>
@@ -1558,8 +1558,8 @@ export default function RecruitmentEvaluations() {
                                   className={`flex h-10 flex-1 items-center justify-center gap-1 rounded-lg border text-sm font-semibold ${
                                     form.criteriaScores?.[criterion.key] ===
                                     score
-                                      ? "border-indigo-600 bg-indigo-600 text-white"
-                                      : "border-slate-200 text-slate-600 hover:border-indigo-300 hover:bg-indigo-50"
+                                      ? "border-primary-600 bg-primary-600 text-white"
+                                      : "border-slate-200 text-slate-600 hover:border-primary-300 hover:bg-primary-50"
                                   }`}
                                 >
                                   <Star size={13} />
@@ -1572,16 +1572,16 @@ export default function RecruitmentEvaluations() {
                       </div>
                     )}
 
-                    <div className="mt-4 rounded-xl bg-indigo-50 p-3">
+                    <div className="mt-4 rounded-xl bg-primary-50 p-3">
                       <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium text-indigo-800">
+                        <span className="text-sm font-medium text-primary-800">
                           Current Average
                         </span>
-                        <span className="text-lg font-bold text-indigo-700">
+                        <span className="text-lg font-bold text-primary-700">
                           {currentAverage.toFixed(2)}/5
                         </span>
                       </div>
-                      <p className="mt-1 text-xs text-indigo-600">
+                      <p className="mt-1 text-xs text-primary-600">
                         The average is calculated from the six criteria for this
                         interview round.
                       </p>
@@ -1608,7 +1608,7 @@ export default function RecruitmentEvaluations() {
                         }))
                       }
                       placeholder="Describe the candidate's strengths demonstrated during the interview..."
-                      className="w-full rounded-xl border border-slate-200 p-3 text-sm outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+                      className="w-full rounded-xl border border-slate-200 p-3 text-sm outline-none focus:border-primary-400 focus:ring-2 focus:ring-primary-100"
                     />
                     <p className="mt-1 text-right text-xs text-slate-400">
                       {form.strengths.length}/3000 characters
@@ -1634,7 +1634,7 @@ export default function RecruitmentEvaluations() {
                         }))
                       }
                       placeholder="Describe areas where the candidate could improve..."
-                      className="w-full rounded-xl border border-slate-200 p-3 text-sm outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+                      className="w-full rounded-xl border border-slate-200 p-3 text-sm outline-none focus:border-primary-400 focus:ring-2 focus:ring-primary-100"
                     />
                     <p className="mt-1 text-right text-xs text-slate-400">
                       {form.areasForImprovement.length}/3000 characters
@@ -1661,7 +1661,7 @@ export default function RecruitmentEvaluations() {
                         }))
                       }
                       placeholder="Enter interview observations and feedback..."
-                      className="w-full rounded-xl border border-slate-200 p-3 text-sm outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+                      className="w-full rounded-xl border border-slate-200 p-3 text-sm outline-none focus:border-primary-400 focus:ring-2 focus:ring-primary-100"
                     />
                     <p className="mt-1 text-right text-xs text-slate-400">
                       {form.feedback.length}/5000 characters
@@ -1685,7 +1685,7 @@ export default function RecruitmentEvaluations() {
                           recommendation: event.target.value,
                         }))
                       }
-                      className="w-full rounded-xl border border-slate-200 p-3 text-sm outline-none focus:border-indigo-400"
+                      className="w-full rounded-xl border border-slate-200 p-3 text-sm outline-none focus:border-primary-400"
                     >
                       <option value="" disabled>
                         Select recommendation
@@ -1716,7 +1716,7 @@ export default function RecruitmentEvaluations() {
                           "COMPLETED" ||
                         selectedCriteria.length !== 6
                       }
-                      className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-50"
+                      className="inline-flex items-center gap-2 rounded-xl bg-primary-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-primary-700 disabled:opacity-50"
                     >
                       <Send size={15} />
                       {saving ? "Submitting..." : "Submit Evaluation"}

@@ -100,12 +100,12 @@ const STATUS_CONFIG = {
 };
 
 const AVATAR_GRADIENTS = [
-  "from-indigo-500 to-purple-600",
+  "from-primary-500 to-purple-600",
   "from-sky-400 to-blue-600",
   "from-emerald-400 to-teal-600",
   "from-amber-400 to-orange-500",
   "from-pink-500 to-rose-600",
-  "from-violet-500 to-indigo-600",
+  "from-primary-500 to-primary-600",
 ];
 
 export default function RecruitmentApplications() {
@@ -497,7 +497,7 @@ export default function RecruitmentApplications() {
             to="/recruitment/applications/review"
             className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 text-sm font-semibold shadow-sm transition-all"
           >
-            <ClipboardCheck size={15} className="text-indigo-600" />
+            <ClipboardCheck size={15} className="text-primary-600" />
             <span className="hidden sm:inline">Screening</span>
           </Link>
           <button
@@ -507,7 +507,7 @@ export default function RecruitmentApplications() {
           >
             <RefreshCw
               size={15}
-              className={refreshing || loading ? "animate-spin text-indigo-600" : "text-slate-500"}
+              className={refreshing || loading ? "animate-spin text-primary-600" : "text-slate-500"}
             />
             <span>Refresh</span>
           </button>
@@ -552,7 +552,7 @@ export default function RecruitmentApplications() {
               <h3 className="text-2xl font-bold text-slate-900 mt-1">{metrics.total}</h3>
               <p className="text-xs text-slate-400 mt-1">Across all vacancies</p>
             </div>
-            <div className="w-12 h-12 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold">
+            <div className="w-12 h-12 rounded-xl bg-primary-50 text-primary-600 flex items-center justify-center font-bold">
               <FileText size={22} />
             </div>
           </div>
@@ -562,10 +562,10 @@ export default function RecruitmentApplications() {
               <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
                 Positions Applied
               </p>
-              <h3 className="text-2xl font-bold text-violet-600 mt-1">{metrics.positionsWithApps}</h3>
+              <h3 className="text-2xl font-bold text-primary-600 mt-1">{metrics.positionsWithApps}</h3>
               <p className="text-xs text-slate-400 mt-1">Active job openings</p>
             </div>
-            <div className="w-12 h-12 rounded-xl bg-violet-50 text-violet-600 flex items-center justify-center font-bold">
+            <div className="w-12 h-12 rounded-xl bg-primary-50 text-primary-600 flex items-center justify-center font-bold">
               <Briefcase size={22} />
             </div>
           </div>
@@ -608,7 +608,7 @@ export default function RecruitmentApplications() {
                 placeholder="Search candidates by name, email, skills, tracking code..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all"
+                className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:bg-white transition-all"
               />
               {search && (
                 <button
@@ -630,7 +630,7 @@ export default function RecruitmentApplications() {
                 <select
                   value={selectedVacancyId}
                   onChange={(e) => setSelectedVacancyId(e.target.value)}
-                  className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all max-w-[200px]"
+                  className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:bg-white transition-all max-w-[200px]"
                 >
                   <option value="ALL">All Applied Positions ({vacancySelectorList.length})</option>
                   {vacancySelectorList.map((v) => (
@@ -647,7 +647,7 @@ export default function RecruitmentApplications() {
                   onClick={() => setViewMode("grouped")}
                   className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
                     viewMode === "grouped"
-                      ? "bg-white text-indigo-700 shadow-sm"
+                      ? "bg-white text-primary-700 shadow-sm"
                       : "text-slate-600 hover:text-slate-900"
                   }`}
                   title="Separate applicant tables according to applied vacancy"
@@ -659,7 +659,7 @@ export default function RecruitmentApplications() {
                   onClick={() => setViewMode("list")}
                   className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
                     viewMode === "list"
-                      ? "bg-white text-indigo-700 shadow-sm"
+                      ? "bg-white text-primary-700 shadow-sm"
                       : "text-slate-600 hover:text-slate-900"
                   }`}
                   title="View all candidates in one combined master table"
@@ -674,7 +674,7 @@ export default function RecruitmentApplications() {
                 <div className="hidden sm:flex items-center gap-1 border-l border-slate-200 pl-2">
                   <button
                     onClick={() => toggleAllGroups(true)}
-                    className="p-1.5 text-xs text-slate-500 hover:text-indigo-600 rounded-lg hover:bg-slate-100"
+                    className="p-1.5 text-xs text-slate-500 hover:text-primary-600 rounded-lg hover:bg-slate-100"
                     title="Expand all role sections"
                   >
                     Expand All
@@ -682,7 +682,7 @@ export default function RecruitmentApplications() {
                   <span className="text-slate-300">|</span>
                   <button
                     onClick={() => toggleAllGroups(false)}
-                    className="p-1.5 text-xs text-slate-500 hover:text-indigo-600 rounded-lg hover:bg-slate-100"
+                    className="p-1.5 text-xs text-slate-500 hover:text-primary-600 rounded-lg hover:bg-slate-100"
                     title="Collapse all role sections"
                   >
                     Collapse All
@@ -696,8 +696,8 @@ export default function RecruitmentApplications() {
           {vacancySelectorList.length > 1 && (
             <div className="flex items-center justify-between gap-2 pt-2.5 border-t border-slate-100">
               <div className="flex items-center gap-2 overflow-x-auto pb-1 pt-0.5 no-scrollbar flex-1">
-                <span className="text-[11px] font-bold text-indigo-700 bg-indigo-50 px-2.5 py-1 rounded-lg uppercase tracking-wider whitespace-nowrap flex items-center gap-1.5 border border-indigo-200/80 shadow-2xs">
-                  <Briefcase size={12} className="text-indigo-600" />
+                <span className="text-[11px] font-bold text-primary-700 bg-primary-50 px-2.5 py-1 rounded-lg uppercase tracking-wider whitespace-nowrap flex items-center gap-1.5 border border-primary-200/80 shadow-2xs">
+                  <Briefcase size={12} className="text-primary-600" />
                   Positions:
                 </span>
                 <button
@@ -718,7 +718,7 @@ export default function RecruitmentApplications() {
                       onClick={() => setSelectedVacancyId(vac.key)}
                       className={`px-3 py-1 rounded-lg text-xs font-medium whitespace-nowrap transition-all flex items-center gap-1.5 ${
                         active
-                          ? "bg-indigo-600 text-white shadow-sm"
+                          ? "bg-primary-600 text-white shadow-sm"
                           : "bg-slate-100 text-slate-700 hover:bg-slate-200"
                       }`}
                     >
@@ -741,7 +741,7 @@ export default function RecruitmentApplications() {
                     setSearch("");
                     setSelectedVacancyId("ALL");
                   }}
-                  className="text-xs font-semibold text-indigo-600 hover:text-indigo-800 flex items-center gap-1 shrink-0 py-1"
+                  className="text-xs font-semibold text-primary-600 hover:text-primary-800 flex items-center gap-1 shrink-0 py-1"
                 >
                   <RefreshCw size={12} />
                   <span>Reset Filters</span>
@@ -754,14 +754,14 @@ export default function RecruitmentApplications() {
         {/* ── Main Candidate Content Area ── */}
         {loading ? (
           <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-16 text-center space-y-3">
-            <Loader2 className="w-8 h-8 animate-spin text-indigo-600 mx-auto" />
+            <Loader2 className="w-8 h-8 animate-spin text-primary-600 mx-auto" />
             <p className="text-sm font-semibold text-slate-700">Loading candidate applications...</p>
             <p className="text-xs text-slate-400">Connecting to recruitment database</p>
           </div>
         ) : applications.length === 0 ? (
           /* Empty State: Zero Applications in Database */
           <div className="bg-white rounded-3xl border border-slate-200/80 shadow-sm p-16 text-center max-w-xl mx-auto space-y-4">
-            <div className="w-16 h-16 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center mx-auto shadow-inner">
+            <div className="w-16 h-16 rounded-2xl bg-primary-50 text-primary-600 flex items-center justify-center mx-auto shadow-inner">
               <FolderKanban size={32} />
             </div>
             <div>
@@ -775,7 +775,7 @@ export default function RecruitmentApplications() {
             <div className="pt-2 flex flex-wrap items-center justify-center gap-3">
               <Link
                 to="/recruitment/vacancies"
-                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold shadow-sm transition-all"
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-primary-600 hover:bg-primary-700 text-white text-xs font-semibold shadow-sm transition-all"
               >
                 <Briefcase size={14} />
                 <span>View Job Vacancies</span>
@@ -812,7 +812,7 @@ export default function RecruitmentApplications() {
                 setSearch("");
                 setSelectedVacancyId("ALL");
               }}
-              className="mt-2 inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold bg-indigo-50 text-indigo-600 hover:bg-indigo-100 transition-colors"
+              className="mt-2 inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold bg-primary-50 text-primary-600 hover:bg-primary-100 transition-colors"
             >
               Reset Search Filter
             </button>
@@ -843,16 +843,16 @@ export default function RecruitmentApplications() {
               return (
                 <div
                   key={group.key}
-                  className="bg-white rounded-3xl border-2 border-indigo-100 shadow-md overflow-hidden transition-all duration-200 hover:shadow-lg"
+                  className="bg-white rounded-3xl border-2 border-primary-100 shadow-md overflow-hidden transition-all duration-200 hover:shadow-lg"
                 >
                   {/* ── Vacancy Group Header (Prominently Highlighted Position Topic) ── */}
                   <div
                     onClick={() => toggleGroup(group.key)}
-                    className="p-5 sm:p-6 bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white flex flex-col md:flex-row md:items-center justify-between gap-4 cursor-pointer hover:from-slate-800 hover:to-indigo-900 transition-all border-b border-indigo-900/60"
+                    className="p-5 sm:p-6 bg-gradient-to-r from-slate-900 via-primary-950 to-slate-900 text-white flex flex-col md:flex-row md:items-center justify-between gap-4 cursor-pointer hover:from-slate-800 hover:to-primary-900 transition-all border-b border-primary-900/60"
                   >
                     {/* Left: Highlighted Position Topic Field */}
                     <div className="flex items-start sm:items-center gap-4">
-                      <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-gradient-to-br from-indigo-500 to-indigo-700 text-white flex items-center justify-center shrink-0 shadow-lg shadow-indigo-500/30 border border-indigo-400/40">
+                      <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-gradient-to-br from-primary-500 to-primary-700 text-white flex items-center justify-center shrink-0 shadow-lg shadow-primary-500/30 border border-primary-400/40">
                         <Briefcase size={24} />
                       </div>
                       <div>
@@ -886,12 +886,12 @@ export default function RecruitmentApplications() {
                         className="px-3.5 py-1.5 rounded-xl bg-white/15 hover:bg-white/25 text-white text-xs font-semibold border border-white/20 backdrop-blur-sm shadow-xs transition-all flex items-center gap-1.5 cursor-pointer hover:border-white/40"
                         title="Display job vacancy details like public career page"
                       >
-                        <FileText size={14} className="text-indigo-300" />
+                        <FileText size={14} className="text-primary-300" />
                         <span>Job Vacancy Details</span>
                       </button>
 
                       <span className="px-3.5 py-1.5 rounded-xl bg-white/15 text-white text-xs font-bold border border-white/20 backdrop-blur-sm shadow-xs flex items-center gap-1.5">
-                        <Users size={14} className="text-indigo-300" />
+                        <Users size={14} className="text-primary-300" />
                         <span>{totalForGroup} {totalForGroup === 1 ? "Applicant" : "Applicants"}</span>
                       </span>
 
@@ -926,7 +926,7 @@ export default function RecruitmentApplications() {
                                 onClick={() => setGroupStatus(group.key, tab.id)}
                                 className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 ${
                                   active
-                                    ? "bg-indigo-600 text-white shadow-sm"
+                                    ? "bg-primary-600 text-white shadow-sm"
                                     : "bg-white text-slate-600 hover:bg-slate-100 border border-slate-200/80"
                                 }`}
                               >
@@ -946,7 +946,7 @@ export default function RecruitmentApplications() {
                         {currentStatus !== "ALL" && (
                           <button
                             onClick={() => setGroupStatus(group.key, "ALL")}
-                            className="text-xs font-semibold text-indigo-600 hover:text-indigo-800 flex items-center gap-1"
+                            className="text-xs font-semibold text-primary-600 hover:text-primary-800 flex items-center gap-1"
                           >
                             <RefreshCw size={11} />
                             <span>Show All ({totalForGroup})</span>
@@ -968,7 +968,7 @@ export default function RecruitmentApplications() {
                             {currentStatus !== "ALL" && (
                               <button
                                 onClick={() => setGroupStatus(group.key, "ALL")}
-                                className="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-indigo-50 text-indigo-600 hover:bg-indigo-100"
+                                className="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-primary-50 text-primary-600 hover:bg-primary-100"
                               >
                                 View all {totalForGroup} applicants for this position
                               </button>
@@ -998,7 +998,7 @@ export default function RecruitmentApplications() {
                                       setSelectedApp(app);
                                       setShowResumeText(false);
                                     }}
-                                    className="hover:bg-indigo-50/30 cursor-pointer transition-colors"
+                                    className="hover:bg-primary-50/30 cursor-pointer transition-colors"
                                   >
                                     {/* Candidate Name, Avatar & Contact */}
                                     <td className="px-6 py-4">
@@ -1009,13 +1009,13 @@ export default function RecruitmentApplications() {
                                           {getInitials(app.candidateName)}
                                         </div>
                                         <div>
-                                          <div className="font-semibold text-slate-900 hover:text-indigo-600 transition-colors flex items-center gap-2">
+                                          <div className="font-semibold text-slate-900 hover:text-primary-600 transition-colors flex items-center gap-2">
                                             <span>{app.candidateName}</span>
                                             {app.trackingCode && (
                                               <span
                                                 onClick={(e) => handleCopyCode(app.trackingCode, e)}
                                                 title="Click to copy tracking code"
-                                                className="font-mono text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 hover:bg-indigo-50 hover:text-indigo-600 transition-colors inline-flex items-center gap-1"
+                                                className="font-mono text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 hover:bg-primary-50 hover:text-primary-600 transition-colors inline-flex items-center gap-1"
                                               >
                                                 {copiedCode === app.trackingCode ? (
                                                   <>
@@ -1112,12 +1112,12 @@ export default function RecruitmentApplications() {
                                           onClick={(e) => handleDownloadResume(app, e)}
                                           disabled={downloadingId === app.id}
                                           title="Download Resume Document"
-                                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 hover:text-indigo-600 transition-all disabled:opacity-50"
+                                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 hover:text-primary-600 transition-all disabled:opacity-50"
                                         >
                                           {downloadingId === app.id ? (
                                             <Loader2
                                               size={13}
-                                              className="animate-spin text-indigo-600"
+                                              className="animate-spin text-primary-600"
                                             />
                                           ) : (
                                             <FileDown size={14} />
@@ -1132,7 +1132,7 @@ export default function RecruitmentApplications() {
                                             setShowResumeText(false);
                                           }}
                                           title="View Full Profile"
-                                          className="p-1.5 rounded-xl text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 transition-colors"
+                                          className="p-1.5 rounded-xl text-slate-400 hover:text-primary-600 hover:bg-primary-50 transition-colors"
                                         >
                                           <Eye size={17} />
                                         </button>
@@ -1156,7 +1156,7 @@ export default function RecruitmentApplications() {
                     </span>
                     <button
                       onClick={() => toggleGroup(group.key)}
-                      className="text-xs font-semibold text-indigo-600 hover:text-indigo-800"
+                      className="text-xs font-semibold text-primary-600 hover:text-primary-800"
                     >
                       {isCollapsed ? "Show Table" : "Hide Table"}
                     </button>
@@ -1185,7 +1185,7 @@ export default function RecruitmentApplications() {
                       onClick={() => setMasterStatusFilter(st)}
                       className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 ${
                         active
-                          ? "bg-indigo-600 text-white shadow-sm"
+                          ? "bg-primary-600 text-white shadow-sm"
                           : "bg-white text-slate-600 hover:bg-slate-100 border border-slate-200/80"
                       }`}
                     >
@@ -1205,7 +1205,7 @@ export default function RecruitmentApplications() {
               {masterStatusFilter !== "ALL" && (
                 <button
                   onClick={() => setMasterStatusFilter("ALL")}
-                  className="text-xs font-semibold text-indigo-600 hover:text-indigo-800"
+                  className="text-xs font-semibold text-primary-600 hover:text-primary-800"
                 >
                   Show All ({applications.length})
                 </button>
@@ -1248,13 +1248,13 @@ export default function RecruitmentApplications() {
                               {getInitials(app.candidateName)}
                             </div>
                             <div>
-                              <div className="font-semibold text-slate-900 hover:text-indigo-600 transition-colors flex items-center gap-2">
+                              <div className="font-semibold text-slate-900 hover:text-primary-600 transition-colors flex items-center gap-2">
                                 <span>{app.candidateName}</span>
                                 {app.trackingCode && (
                                   <span
                                     onClick={(e) => handleCopyCode(app.trackingCode, e)}
                                     title="Click to copy tracking code"
-                                    className="font-mono text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 hover:bg-indigo-50 hover:text-indigo-600 transition-colors inline-flex items-center gap-1"
+                                    className="font-mono text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 hover:bg-primary-50 hover:text-primary-600 transition-colors inline-flex items-center gap-1"
                                   >
                                     {copiedCode === app.trackingCode ? (
                                       <>
@@ -1289,8 +1289,8 @@ export default function RecruitmentApplications() {
                         {/* Vacancy */}
                         <td className="px-6 py-4">
                           <div className="inline-flex flex-col items-start gap-1">
-                            <span className="px-2.5 py-1 rounded-xl bg-indigo-50 border border-indigo-200/90 text-indigo-900 font-bold text-xs flex items-center gap-1.5 shadow-2xs">
-                              <Briefcase size={12} className="text-indigo-600 shrink-0" />
+                            <span className="px-2.5 py-1 rounded-xl bg-primary-50 border border-primary-200/90 text-primary-900 font-bold text-xs flex items-center gap-1.5 shadow-2xs">
+                              <Briefcase size={12} className="text-primary-600 shrink-0" />
                               <span>{jobName}</span>
                             </span>
                             {app.department && (
@@ -1335,10 +1335,10 @@ export default function RecruitmentApplications() {
                               onClick={(e) => handleDownloadResume(app, e)}
                               disabled={downloadingId === app.id}
                               title="Download Resume Document"
-                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 hover:text-indigo-600 transition-all disabled:opacity-50"
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 hover:text-primary-600 transition-all disabled:opacity-50"
                             >
                               {downloadingId === app.id ? (
-                                <Loader2 size={13} className="animate-spin text-indigo-600" />
+                                <Loader2 size={13} className="animate-spin text-primary-600" />
                               ) : (
                                 <FileDown size={14} />
                               )}
@@ -1351,7 +1351,7 @@ export default function RecruitmentApplications() {
                                 setShowResumeText(false);
                               }}
                               title="View Application Details"
-                              className="p-1.5 rounded-xl text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 transition-colors"
+                              className="p-1.5 rounded-xl text-slate-400 hover:text-primary-600 hover:bg-primary-50 transition-colors"
                             >
                               <Eye size={17} />
                             </button>
@@ -1383,7 +1383,7 @@ export default function RecruitmentApplications() {
             {/* Modal Header */}
             <div className="p-6 border-b border-slate-100 flex items-start justify-between bg-slate-50/50">
               <div className="flex items-center gap-4">
-                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 text-white font-bold text-lg flex items-center justify-center shadow-md">
+                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary-500 to-purple-600 text-white font-bold text-lg flex items-center justify-center shadow-md">
                   {getInitials(selectedApp.candidateName)}
                 </div>
                 <div>
@@ -1392,7 +1392,7 @@ export default function RecruitmentApplications() {
                     {selectedApp.trackingCode && (
                       <button
                         onClick={(e) => handleCopyCode(selectedApp.trackingCode, e)}
-                        className="font-mono text-xs font-semibold px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 border border-indigo-100 hover:bg-indigo-100 inline-flex items-center gap-1"
+                        className="font-mono text-xs font-semibold px-2 py-0.5 rounded-md bg-primary-50 text-primary-700 border border-primary-100 hover:bg-primary-100 inline-flex items-center gap-1"
                         title="Click to copy tracking code"
                       >
                         <span>{selectedApp.trackingCode}</span>
@@ -1405,7 +1405,7 @@ export default function RecruitmentApplications() {
                     )}
                   </div>
                   <div className="flex items-center gap-2 mt-1">
-                    <span className="text-sm font-semibold text-indigo-600">
+                    <span className="text-sm font-semibold text-primary-600">
                       {selectedApp.jobTitle || selectedApp.vacancyTitle || "General Role"}
                     </span>
                     {selectedApp.department && (
@@ -1505,7 +1505,7 @@ export default function RecruitmentApplications() {
                     Education
                   </h4>
                   <div className="flex items-center gap-2.5 p-3.5 bg-slate-50/70 rounded-2xl border border-slate-100 text-sm text-slate-800">
-                    <GraduationCap size={18} className="text-indigo-600 shrink-0" />
+                    <GraduationCap size={18} className="text-primary-600 shrink-0" />
                     <span>{selectedApp.education}</span>
                   </div>
                 </div>
@@ -1521,7 +1521,7 @@ export default function RecruitmentApplications() {
                     {selectedApp.skills.map((skill) => (
                       <span
                         key={skill}
-                        className="px-3 py-1 rounded-xl text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-100"
+                        className="px-3 py-1 rounded-xl text-xs font-semibold bg-primary-50 text-primary-700 border border-primary-100"
                       >
                         {skill}
                       </span>
@@ -1539,7 +1539,7 @@ export default function RecruitmentApplications() {
                   {selectedApp.resumeText && (
                     <button
                       onClick={() => setShowResumeText(!showResumeText)}
-                      className="text-xs font-semibold text-indigo-600 hover:text-indigo-800 inline-flex items-center gap-1"
+                      className="text-xs font-semibold text-primary-600 hover:text-primary-800 inline-flex items-center gap-1"
                     >
                       <span>{showResumeText ? "Hide Resume Text" : "View Extracted Text"}</span>
                       <ChevronRight
@@ -1552,7 +1552,7 @@ export default function RecruitmentApplications() {
 
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-200/80 gap-3">
                   <div className="flex items-center gap-3 min-w-0">
-                    <div className="w-10 h-10 rounded-xl bg-indigo-100 text-indigo-600 flex items-center justify-center shrink-0">
+                    <div className="w-10 h-10 rounded-xl bg-primary-100 text-primary-600 flex items-center justify-center shrink-0">
                       <FileText size={20} />
                     </div>
                     <div className="min-w-0">
@@ -1568,7 +1568,7 @@ export default function RecruitmentApplications() {
                   <button
                     onClick={() => handleDownloadResume(selectedApp)}
                     disabled={downloadingId === selectedApp.id}
-                    className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold shadow-sm transition-all shrink-0 disabled:opacity-50"
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-primary-600 hover:bg-primary-700 text-white text-xs font-semibold shadow-sm transition-all shrink-0 disabled:opacity-50"
                   >
                     {downloadingId === selectedApp.id ? (
                       <Loader2 size={14} className="animate-spin text-white" />
@@ -1583,7 +1583,7 @@ export default function RecruitmentApplications() {
                 {showResumeText && selectedApp.resumeText && (
                   <div className="p-4 bg-slate-900 text-slate-100 rounded-2xl text-xs font-mono leading-relaxed max-h-56 overflow-y-auto border border-slate-800 space-y-2 animate-fadeIn">
                     <div className="flex items-center justify-between text-[11px] text-slate-400 border-b border-slate-800 pb-2">
-                      <span className="flex items-center gap-1.5 font-sans font-semibold text-indigo-400">
+                      <span className="flex items-center gap-1.5 font-sans font-semibold text-primary-400">
                         <Sparkles size={13} />
                         Apache PDFBox ATS Text Extraction
                       </span>
@@ -1601,7 +1601,7 @@ export default function RecruitmentApplications() {
             <div className="p-4 border-t border-slate-100 bg-slate-50/50 flex items-center justify-between">
               <Link
                 to={`/recruitment/applications/review${selectedApp.id ? `?id=${selectedApp.id}` : ""}`}
-                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-indigo-50 text-indigo-700 hover:bg-indigo-100 transition-colors"
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-primary-50 text-primary-700 hover:bg-primary-100 transition-colors"
               >
                 <ClipboardCheck size={14} />
                 <span>Screen & Review Candidate</span>
@@ -1621,10 +1621,10 @@ export default function RecruitmentApplications() {
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto animate-fadeIn">
           <div className="bg-white rounded-3xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col border border-slate-100 animate-scaleUp">
             {/* Header: Dark Navy banner styled like Public Careers layout */}
-            <div className="p-6 bg-gradient-to-r from-[#0F1B3D] via-[#162752] to-[#0F1B3D] text-white flex items-start justify-between border-b border-indigo-900/40 relative">
+            <div className="p-6 bg-gradient-to-r from-[#0F1B3D] via-[#162752] to-[#0F1B3D] text-white flex items-start justify-between border-b border-primary-900/40 relative">
               <div className="space-y-3 max-w-xl">
                 <div className="flex flex-wrap items-center gap-2">
-                  <span className="px-2.5 py-0.5 rounded-full bg-indigo-500/30 border border-indigo-400/40 text-indigo-200 text-[10px] font-extrabold uppercase tracking-widest flex items-center gap-1 shadow-xs">
+                  <span className="px-2.5 py-0.5 rounded-full bg-primary-500/30 border border-primary-400/40 text-primary-200 text-[10px] font-extrabold uppercase tracking-widest flex items-center gap-1 shadow-xs">
                     <Sparkles size={11} className="text-amber-400" />
                     Career Vacancy Details
                   </span>
@@ -1642,17 +1642,17 @@ export default function RecruitmentApplications() {
 
                 {/* Hero Chips: Department & Job Type */}
                 <div className="flex flex-wrap items-center gap-2 pt-1">
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-xs font-medium text-indigo-100 border border-white/15">
-                    <Building2 size={13} className="text-indigo-300" />
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-xs font-medium text-primary-100 border border-white/15">
+                    <Building2 size={13} className="text-primary-300" />
                     {selectedVacancyModal.department || "General"}
                   </span>
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-xs font-medium text-indigo-100 border border-white/15">
-                    <Clock size={13} className="text-indigo-300" />
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-xs font-medium text-primary-100 border border-white/15">
+                    <Clock size={13} className="text-primary-300" />
                     {selectedVacancyModal.jobType || "Full-time"}
                   </span>
                   {selectedVacancyModal.vacancyCount && (
-                    <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-xs font-medium text-indigo-100 border border-white/15">
-                      <Users size={13} className="text-indigo-300" />
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-xs font-medium text-primary-100 border border-white/15">
+                      <Users size={13} className="text-primary-300" />
                       {selectedVacancyModal.vacancyCount} {selectedVacancyModal.vacancyCount === 1 ? "Opening" : "Openings"}
                     </span>
                   )}
@@ -1676,7 +1676,7 @@ export default function RecruitmentApplications() {
                   {/* About the Role / Description */}
                   <div>
                     <h4 className="text-sm font-bold text-slate-900 tracking-tight uppercase flex items-center gap-2 mb-2">
-                      <Briefcase size={16} className="text-indigo-600" />
+                      <Briefcase size={16} className="text-primary-600" />
                       About the Role / Job Description
                     </h4>
                     <div className="text-sm text-slate-600 leading-relaxed bg-slate-50 p-4 rounded-2xl border border-slate-200/80 whitespace-pre-line">
@@ -1688,7 +1688,7 @@ export default function RecruitmentApplications() {
                   {/* Requirements & Qualifications */}
                   <div>
                     <h4 className="text-sm font-bold text-slate-900 tracking-tight uppercase flex items-center gap-2 mb-2">
-                      <GraduationCap size={16} className="text-indigo-600" />
+                      <GraduationCap size={16} className="text-primary-600" />
                       Requirements & Qualifications
                     </h4>
                     <div className="text-sm text-slate-600 leading-relaxed bg-slate-50 p-4 rounded-2xl border border-slate-200/80 whitespace-pre-line">
@@ -1709,7 +1709,7 @@ export default function RecruitmentApplications() {
                         {selectedVacancyModal.requiredSkills.map((sk) => (
                           <span
                             key={sk}
-                            className="px-3 py-1 rounded-xl text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200/80 shadow-2xs"
+                            className="px-3 py-1 rounded-xl text-xs font-semibold bg-primary-50 text-primary-700 border border-primary-200/80 shadow-2xs"
                           >
                             {sk}
                           </span>
@@ -1720,7 +1720,7 @@ export default function RecruitmentApplications() {
                         {selectedVacancyModal.skills.split(",").map((sk) => (
                           <span
                             key={sk.trim()}
-                            className="px-3 py-1 rounded-xl text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200/80 shadow-2xs"
+                            className="px-3 py-1 rounded-xl text-xs font-semibold bg-primary-50 text-primary-700 border border-primary-200/80 shadow-2xs"
                           >
                             {sk.trim()}
                           </span>
@@ -1797,7 +1797,7 @@ export default function RecruitmentApplications() {
                       <Link
                         to={`/careers/jobs/${selectedVacancyModal.id}`}
                         target="_blank"
-                        className="w-full inline-flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold shadow-sm transition-all"
+                        className="w-full inline-flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-primary-600 hover:bg-primary-700 text-white text-xs font-semibold shadow-sm transition-all"
                       >
                         <ExternalLink size={13} />
                         <span>View on Public Careers</span>
@@ -1812,7 +1812,7 @@ export default function RecruitmentApplications() {
             <div className="p-4 border-t border-slate-100 bg-slate-50/50 flex items-center justify-between">
               <Link
                 to="/recruitment/vacancies"
-                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200/80 transition-colors"
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold text-primary-700 bg-primary-50 hover:bg-primary-100 border border-primary-200/80 transition-colors"
               >
                 <Briefcase size={14} />
                 <span>Manage Vacancy Postings</span>

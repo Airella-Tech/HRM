@@ -58,12 +58,12 @@ const REJECTION_REASONS = [
 ];
 
 const AVATAR_GRADIENTS = [
-  "from-indigo-500 to-purple-600",
+  "from-primary-500 to-purple-600",
   "from-sky-400 to-blue-600",
   "from-emerald-400 to-teal-600",
   "from-amber-400 to-orange-500",
   "from-pink-500 to-rose-600",
-  "from-violet-500 to-indigo-600",
+  "from-primary-500 to-primary-600",
 ];
 
 /**
@@ -818,10 +818,10 @@ export default function RecruitmentCandidateShortlist() {
         <div className="flex items-center gap-2">
           <Link
             to="/recruitment/applications/review"
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-semibold rounded-xl border border-indigo-200 shadow-xs transition-all cursor-pointer"
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-primary-50 hover:bg-primary-100 text-primary-700 text-xs font-semibold rounded-xl border border-primary-200 shadow-xs transition-all cursor-pointer"
             title="Go to Review Candidates page to view confirmed shortlist"
           >
-            <ClipboardCheck size={14} className="text-indigo-600" />
+            <ClipboardCheck size={14} className="text-primary-600" />
             <span>Review Candidates ({totalShortlisted})</span>
           </Link>
           <button
@@ -829,7 +829,7 @@ export default function RecruitmentCandidateShortlist() {
             disabled={refreshing || loading}
             className="inline-flex items-center gap-2 px-4 py-2 bg-white/90 hover:bg-white text-slate-700 text-xs font-semibold rounded-xl border border-slate-200/80 shadow-sm transition-all disabled:opacity-50 cursor-pointer"
           >
-            <RefreshCw size={14} className={refreshing ? "animate-spin text-indigo-600" : "text-slate-500"} />
+            <RefreshCw size={14} className={refreshing ? "animate-spin text-primary-600" : "text-slate-500"} />
             <span>{refreshing ? "Refreshing..." : "Refresh"}</span>
           </button>
         </div>
@@ -839,7 +839,7 @@ export default function RecruitmentCandidateShortlist() {
         {/* ── Top Summary & Metrics ── */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-sm flex items-center gap-3.5">
-            <div className="w-11 h-11 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 shrink-0">
+            <div className="w-11 h-11 rounded-xl bg-primary-50 border border-primary-100 flex items-center justify-center text-primary-600 shrink-0">
               <Briefcase size={22} />
             </div>
             <div>
@@ -901,7 +901,7 @@ export default function RecruitmentCandidateShortlist() {
                 placeholder="Search candidate name, email, or skill..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white"
+                className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:bg-white"
               />
             </div>
 
@@ -909,7 +909,7 @@ export default function RecruitmentCandidateShortlist() {
               <select
                 value={selectedVacancyFilter}
                 onChange={(e) => setSelectedVacancyFilter(e.target.value)}
-                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white cursor-pointer"
+                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:bg-white cursor-pointer"
               >
                 <option value="ALL">All Vacancies ({vacancyGroups.length})</option>
                 {vacancyGroups.map((g) => (
@@ -924,13 +924,13 @@ export default function RecruitmentCandidateShortlist() {
           <div className="flex items-center gap-2 self-end md:self-center">
             <button
               onClick={expandAll}
-              className="px-3 py-1.5 text-xs font-medium text-slate-600 hover:text-indigo-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition-all cursor-pointer"
+              className="px-3 py-1.5 text-xs font-medium text-slate-600 hover:text-primary-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition-all cursor-pointer"
             >
               Expand All
             </button>
             <button
               onClick={collapseAll}
-              className="px-3 py-1.5 text-xs font-medium text-slate-600 hover:text-indigo-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition-all cursor-pointer"
+              className="px-3 py-1.5 text-xs font-medium text-slate-600 hover:text-primary-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition-all cursor-pointer"
             >
               Collapse All
             </button>
@@ -940,13 +940,13 @@ export default function RecruitmentCandidateShortlist() {
         {/* ── Vacancy Separated Shortlist Sections ── */}
         {loading ? (
           <div className="bg-white rounded-3xl p-16 text-center border border-slate-200/80 shadow-sm">
-            <Loader2 size={36} className="animate-spin text-indigo-600 mx-auto mb-3" />
+            <Loader2 size={36} className="animate-spin text-primary-600 mx-auto mb-3" />
             <h4 className="font-bold text-slate-800 text-sm">Loading Candidate Applications & Rules...</h4>
             <p className="text-xs text-slate-400 mt-1">Retrieving candidate submissions and vacancy configurations</p>
           </div>
         ) : vacancyGroups.length === 0 ? (
           <div className="bg-white rounded-3xl p-16 text-center border border-slate-200/80 shadow-sm max-w-md mx-auto">
-            <div className="w-14 h-14 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-3">
+            <div className="w-14 h-14 bg-primary-50 text-primary-600 rounded-2xl flex items-center justify-center mx-auto mb-3">
               <Briefcase size={28} />
             </div>
             <h4 className="font-bold text-slate-800 text-sm">No Candidate Applications Found</h4>
@@ -1019,7 +1019,7 @@ export default function RecruitmentCandidateShortlist() {
                   className="bg-white rounded-3xl border border-slate-200/90 shadow-sm overflow-hidden transition-all duration-200 hover:shadow-md"
                 >
                   {/* ── Vacancy Header & Full-Width Controls Bar ── */}
-                  <div className="p-5 sm:p-6 bg-gradient-to-r from-slate-900 via-slate-800 to-indigo-950 text-white relative">
+                  <div className="p-5 sm:p-6 bg-gradient-to-r from-slate-900 via-slate-800 to-primary-950 text-white relative">
                     {/* Top Row: Title, Applicants Count, Last Screened Status & Collapse Button */}
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex flex-col gap-1.5 min-w-0">
@@ -1033,8 +1033,8 @@ export default function RecruitmentCandidateShortlist() {
                         </div>
                         {/* Persisted Last Run Details from database */}
                         {vacConfig?.lastScreenedAt ? (
-                          <div className="flex flex-wrap items-center gap-1.5 text-xs text-indigo-200">
-                            <Clock size={13} className="text-indigo-400 shrink-0" />
+                          <div className="flex flex-wrap items-center gap-1.5 text-xs text-primary-200">
+                            <Clock size={13} className="text-primary-400 shrink-0" />
                             <span className="font-semibold text-slate-200">Last screened:</span>
                             <span className="text-slate-300">
                               {new Date(vacConfig.lastScreenedAt).toLocaleString(undefined, {
@@ -1043,7 +1043,7 @@ export default function RecruitmentCandidateShortlist() {
                               })}
                             </span>
                             {vacConfig.lastScreenedSummary && (
-                              <span className="text-indigo-300">• {vacConfig.lastScreenedSummary}</span>
+                              <span className="text-primary-300">• {vacConfig.lastScreenedSummary}</span>
                             )}
                           </div>
                         ) : (
@@ -1075,7 +1075,7 @@ export default function RecruitmentCandidateShortlist() {
                           className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold bg-white/10 hover:bg-white/20 text-white border border-white/15 shadow-xs transition-all cursor-pointer"
                           title="Display job vacancy details like public career page"
                         >
-                          <FileText size={14} className="text-indigo-300 shrink-0" />
+                          <FileText size={14} className="text-primary-300 shrink-0" />
                           <span>Job Vacancy Details</span>
                         </button>
 
@@ -1087,7 +1087,7 @@ export default function RecruitmentCandidateShortlist() {
                           className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold bg-slate-800/90 hover:bg-slate-700 text-slate-200 hover:text-white border border-slate-700/70 shadow-xs transition-all cursor-pointer disabled:opacity-50"
                           title="Define screening criteria, weights, mandatory rules, and thresholds for this vacancy"
                         >
-                          <SlidersHorizontal size={14} className="text-indigo-400 shrink-0" />
+                          <SlidersHorizontal size={14} className="text-primary-400 shrink-0" />
                           <span>{loadingConfigFor === group.vacancyId ? "Loading..." : "Define Screening Rules"}</span>
                         </button>
                       </div>
@@ -1106,7 +1106,7 @@ export default function RecruitmentCandidateShortlist() {
                             })
                           }
                           disabled={isRunningAuto || vacTotal === 0}
-                          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-indigo-500 to-indigo-600 hover:from-indigo-600 hover:to-indigo-700 text-white font-bold text-xs shadow-md shadow-indigo-950/40 border border-indigo-400/30 transition-all disabled:opacity-50 cursor-pointer"
+                          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 text-white font-bold text-xs shadow-md shadow-primary-950/40 border border-primary-400/30 transition-all disabled:opacity-50 cursor-pointer"
                           title={`Evaluate applicants against vacancy rules ${autoShortlistActive ? "and auto-shortlist qualifying candidates" : ""}`}
                         >
                           {isRunningAuto ? (
@@ -1118,7 +1118,7 @@ export default function RecruitmentCandidateShortlist() {
                             <>
                               <Sparkles size={14} className="text-amber-300" />
                               <span>{autoShortlistActive ? "Screen & Auto-Shortlist" : "Run Screening"}</span>
-                              <span className="px-1.5 py-0.5 rounded-md bg-indigo-900/70 border border-indigo-400/30 text-[10px] font-bold text-indigo-100">
+                              <span className="px-1.5 py-0.5 rounded-md bg-primary-900/70 border border-primary-400/30 text-[10px] font-bold text-primary-100">
                                 ≥{minScore}%
                               </span>
                             </>
@@ -1249,7 +1249,7 @@ export default function RecruitmentCandidateShortlist() {
                                 statusFilter === t.id
                                   ? t.highlight
                                     ? "bg-amber-500 text-slate-950 shadow-sm"
-                                    : "bg-indigo-600 text-white shadow-sm"
+                                    : "bg-primary-600 text-white shadow-sm"
                                   : t.highlight
                                   ? "bg-amber-50 text-amber-800 border border-amber-200 hover:bg-amber-100"
                                   : "bg-slate-100 text-slate-600 hover:bg-slate-200"
@@ -1343,7 +1343,7 @@ export default function RecruitmentCandidateShortlist() {
                                             <button
                                               type="button"
                                               onClick={() => toggleStageCandidate(vacKey, cand.id)}
-                                              className="text-slate-400 hover:text-indigo-600 transition-colors cursor-pointer inline-flex items-center justify-center p-0.5"
+                                              className="text-slate-400 hover:text-primary-600 transition-colors cursor-pointer inline-flex items-center justify-center p-0.5"
                                               title={isStaged ? "Remove from staged shortlist" : "Stage for shortlist"}
                                             >
                                               {isStaged ? (
@@ -1446,7 +1446,7 @@ export default function RecruitmentCandidateShortlist() {
                                         <button
                                           type="button"
                                           onClick={() => setBreakdownCandidate(cand)}
-                                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-indigo-700 hover:text-indigo-900 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 transition-all cursor-pointer shadow-xs"
+                                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-primary-700 hover:text-primary-900 bg-primary-50 hover:bg-primary-100 border border-primary-200 transition-all cursor-pointer shadow-xs"
                                           title="View matching details: what matched and what did not match"
                                         >
                                           <Eye size={13} />
@@ -1477,7 +1477,7 @@ export default function RecruitmentCandidateShortlist() {
             {/* Header */}
             <div className="flex items-start justify-between border-b border-slate-100 pb-3">
               <div>
-                <span className="text-xs font-semibold text-indigo-600 uppercase tracking-wider block">
+                <span className="text-xs font-semibold text-primary-600 uppercase tracking-wider block">
                   Define Screening Rules
                 </span>
                 <h3 className="text-xl font-bold text-slate-900 mt-0.5">{configModalVacancy.title}</h3>
@@ -1506,7 +1506,7 @@ export default function RecruitmentCandidateShortlist() {
                   type="button"
                   className={`py-2 px-3.5 text-xs font-bold border-b-2 transition-all cursor-pointer ${
                     configModalTab === tab.id
-                      ? "border-indigo-600 text-indigo-600 bg-indigo-50/40 rounded-t-lg"
+                      ? "border-primary-600 text-primary-600 bg-primary-50/40 rounded-t-lg"
                       : "border-transparent text-slate-500 hover:text-slate-800"
                   }`}
                 >
@@ -1541,7 +1541,7 @@ export default function RecruitmentCandidateShortlist() {
                     <button
                       type="button"
                       onClick={handleAutoBalanceWeights}
-                      className="text-xs font-semibold text-indigo-600 hover:underline flex items-center gap-1 cursor-pointer"
+                      className="text-xs font-semibold text-primary-600 hover:underline flex items-center gap-1 cursor-pointer"
                     >
                       <Sliders size={12} /> Auto-Balance (100%)
                     </button>
@@ -1553,7 +1553,7 @@ export default function RecruitmentCandidateShortlist() {
                         setActiveConfigForm({ ...activeConfigForm, skillsWeight: 40, experienceWeight: 25, qualificationsWeight: 20, evidenceWeight: 15 });
                         setConfigSaveError(null);
                       }}
-                      className="p-2.5 bg-white hover:bg-indigo-50 border border-slate-200 rounded-xl text-left transition-colors cursor-pointer"
+                      className="p-2.5 bg-white hover:bg-primary-50 border border-slate-200 rounded-xl text-left transition-colors cursor-pointer"
                     >
                       <span className="font-bold block text-slate-900 text-xs">Balanced</span>
                       <span className="text-[10px] text-slate-400">40 / 25 / 20 / 15</span>
@@ -1564,7 +1564,7 @@ export default function RecruitmentCandidateShortlist() {
                         setActiveConfigForm({ ...activeConfigForm, skillsWeight: 50, experienceWeight: 30, qualificationsWeight: 10, evidenceWeight: 10 });
                         setConfigSaveError(null);
                       }}
-                      className="p-2.5 bg-white hover:bg-indigo-50 border border-slate-200 rounded-xl text-left transition-colors cursor-pointer"
+                      className="p-2.5 bg-white hover:bg-primary-50 border border-slate-200 rounded-xl text-left transition-colors cursor-pointer"
                     >
                       <span className="font-bold block text-slate-900 text-xs">Technical</span>
                       <span className="text-[10px] text-slate-400">50 / 30 / 10 / 10</span>
@@ -1575,7 +1575,7 @@ export default function RecruitmentCandidateShortlist() {
                         setActiveConfigForm({ ...activeConfigForm, skillsWeight: 30, experienceWeight: 35, qualificationsWeight: 20, evidenceWeight: 15 });
                         setConfigSaveError(null);
                       }}
-                      className="p-2.5 bg-white hover:bg-indigo-50 border border-slate-200 rounded-xl text-left transition-colors cursor-pointer"
+                      className="p-2.5 bg-white hover:bg-primary-50 border border-slate-200 rounded-xl text-left transition-colors cursor-pointer"
                     >
                       <span className="font-bold block text-slate-900 text-xs">Management</span>
                       <span className="text-[10px] text-slate-400">30 / 35 / 20 / 15</span>
@@ -1586,7 +1586,7 @@ export default function RecruitmentCandidateShortlist() {
                         setActiveConfigForm({ ...activeConfigForm, skillsWeight: 35, experienceWeight: 15, qualificationsWeight: 30, evidenceWeight: 20 });
                         setConfigSaveError(null);
                       }}
-                      className="p-2.5 bg-white hover:bg-indigo-50 border border-slate-200 rounded-xl text-left transition-colors cursor-pointer"
+                      className="p-2.5 bg-white hover:bg-primary-50 border border-slate-200 rounded-xl text-left transition-colors cursor-pointer"
                     >
                       <span className="font-bold block text-slate-900 text-xs">Graduate</span>
                       <span className="text-[10px] text-slate-400">35 / 15 / 30 / 20</span>
@@ -1621,7 +1621,7 @@ export default function RecruitmentCandidateShortlist() {
                               <button
                                 type="button"
                                 onClick={handleAutoBalanceWeights}
-                                className="px-2.5 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold rounded-xl text-xs border border-indigo-200 transition-colors cursor-pointer"
+                                className="px-2.5 py-1 bg-primary-50 hover:bg-primary-100 text-primary-700 font-bold rounded-xl text-xs border border-primary-200 transition-colors cursor-pointer"
                               >
                                 Auto-Balance
                               </button>
@@ -1637,7 +1637,7 @@ export default function RecruitmentCandidateShortlist() {
                     <div className="p-3 bg-slate-50 rounded-2xl border border-slate-200 space-y-2">
                       <div className="flex items-center justify-between text-xs">
                         <span className="font-bold text-slate-700">1. Skills</span>
-                        <span className="font-extrabold text-indigo-600 bg-white px-2 py-0.5 rounded-lg border border-indigo-100">
+                        <span className="font-extrabold text-primary-600 bg-white px-2 py-0.5 rounded-lg border border-primary-100">
                           {activeConfigForm.skillsWeight}%
                         </span>
                       </div>
@@ -1648,7 +1648,7 @@ export default function RecruitmentCandidateShortlist() {
                         step="5"
                         value={activeConfigForm.skillsWeight}
                         onChange={(e) => setActiveConfigForm({ ...activeConfigForm, skillsWeight: Number(e.target.value) })}
-                        className="w-full accent-indigo-600 cursor-pointer"
+                        className="w-full accent-primary-600 cursor-pointer"
                       />
                       <span className="text-[10px] text-slate-400 block leading-tight">Required and preferred skills match</span>
                     </div>
@@ -1657,7 +1657,7 @@ export default function RecruitmentCandidateShortlist() {
                     <div className="p-3 bg-slate-50 rounded-2xl border border-slate-200 space-y-2">
                       <div className="flex items-center justify-between text-xs">
                         <span className="font-bold text-slate-700">2. Experience</span>
-                        <span className="font-extrabold text-indigo-600 bg-white px-2 py-0.5 rounded-lg border border-indigo-100">
+                        <span className="font-extrabold text-primary-600 bg-white px-2 py-0.5 rounded-lg border border-primary-100">
                           {activeConfigForm.experienceWeight}%
                         </span>
                       </div>
@@ -1668,7 +1668,7 @@ export default function RecruitmentCandidateShortlist() {
                         step="5"
                         value={activeConfigForm.experienceWeight}
                         onChange={(e) => setActiveConfigForm({ ...activeConfigForm, experienceWeight: Number(e.target.value) })}
-                        className="w-full accent-indigo-600 cursor-pointer"
+                        className="w-full accent-primary-600 cursor-pointer"
                       />
                       <span className="text-[10px] text-slate-400 block leading-tight">Minimum years & responsibilities</span>
                     </div>
@@ -1677,7 +1677,7 @@ export default function RecruitmentCandidateShortlist() {
                     <div className="p-3 bg-slate-50 rounded-2xl border border-slate-200 space-y-2">
                       <div className="flex items-center justify-between text-xs">
                         <span className="font-bold text-slate-700">3. Education</span>
-                        <span className="font-extrabold text-indigo-600 bg-white px-2 py-0.5 rounded-lg border border-indigo-100">
+                        <span className="font-extrabold text-primary-600 bg-white px-2 py-0.5 rounded-lg border border-primary-100">
                           {activeConfigForm.qualificationsWeight}%
                         </span>
                       </div>
@@ -1688,7 +1688,7 @@ export default function RecruitmentCandidateShortlist() {
                         step="5"
                         value={activeConfigForm.qualificationsWeight}
                         onChange={(e) => setActiveConfigForm({ ...activeConfigForm, qualificationsWeight: Number(e.target.value) })}
-                        className="w-full accent-indigo-600 cursor-pointer"
+                        className="w-full accent-primary-600 cursor-pointer"
                       />
                       <span className="text-[10px] text-slate-400 block leading-tight">Degrees & certifications</span>
                     </div>
@@ -1697,7 +1697,7 @@ export default function RecruitmentCandidateShortlist() {
                     <div className="p-3 bg-slate-50 rounded-2xl border border-slate-200 space-y-2">
                       <div className="flex items-center justify-between text-xs">
                         <span className="font-bold text-slate-700">4. CV Evidence</span>
-                        <span className="font-extrabold text-indigo-600 bg-white px-2 py-0.5 rounded-lg border border-indigo-100">
+                        <span className="font-extrabold text-primary-600 bg-white px-2 py-0.5 rounded-lg border border-primary-100">
                           {activeConfigForm.evidenceWeight}%
                         </span>
                       </div>
@@ -1708,7 +1708,7 @@ export default function RecruitmentCandidateShortlist() {
                         step="5"
                         value={activeConfigForm.evidenceWeight}
                         onChange={(e) => setActiveConfigForm({ ...activeConfigForm, evidenceWeight: Number(e.target.value) })}
-                        className="w-full accent-indigo-600 cursor-pointer"
+                        className="w-full accent-primary-600 cursor-pointer"
                       />
                       <span className="text-[10px] text-slate-400 block leading-tight">Practical project evidence</span>
                     </div>
@@ -1716,11 +1716,11 @@ export default function RecruitmentCandidateShortlist() {
                 </div>
 
                 {/* Minimum Passing Score & Policy */}
-                <div className="p-4 bg-indigo-50/50 rounded-2xl border border-indigo-100 space-y-3">
+                <div className="p-4 bg-primary-50/50 rounded-2xl border border-primary-100 space-y-3">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <div>
                       <h4 className="text-sm font-bold text-slate-900 flex items-center gap-1.5">
-                        <Award size={16} className="text-indigo-600" />
+                        <Award size={16} className="text-primary-600" />
                         Minimum Shortlist Score & Policy
                       </h4>
                       <p className="text-xs text-slate-500">
@@ -1728,7 +1728,7 @@ export default function RecruitmentCandidateShortlist() {
                       </p>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="text-xs font-bold text-indigo-700 bg-white px-3 py-1 rounded-xl border border-indigo-200">
+                      <span className="text-xs font-bold text-primary-700 bg-white px-3 py-1 rounded-xl border border-primary-200">
                         Cutoff: ≥{activeConfigForm.minimumScore}%
                       </span>
                     </div>
@@ -1741,17 +1741,17 @@ export default function RecruitmentCandidateShortlist() {
                     step="5"
                     value={activeConfigForm.minimumScore}
                     onChange={(e) => setActiveConfigForm({ ...activeConfigForm, minimumScore: Number(e.target.value) })}
-                    className="w-full accent-indigo-600 cursor-pointer"
+                    className="w-full accent-primary-600 cursor-pointer"
                   />
 
                   {/* Automatic Shortlisting Toggle */}
-                  <div className="flex items-start gap-3 p-3 bg-white rounded-xl border border-indigo-100">
+                  <div className="flex items-start gap-3 p-3 bg-white rounded-xl border border-primary-100">
                     <input
                       type="checkbox"
                       id="autoShortlistToggle"
                       checked={Boolean(activeConfigForm.autoShortlistEnabled)}
                       onChange={(e) => setActiveConfigForm({ ...activeConfigForm, autoShortlistEnabled: e.target.checked })}
-                      className="mt-1 w-4 h-4 rounded text-indigo-600 accent-indigo-600 cursor-pointer"
+                      className="mt-1 w-4 h-4 rounded text-primary-600 accent-primary-600 cursor-pointer"
                     />
                     <label htmlFor="autoShortlistToggle" className="text-xs text-slate-700 cursor-pointer">
                       <span className="font-bold block text-slate-900">Enable Automatic Shortlisting for this Vacancy</span>
@@ -1773,7 +1773,7 @@ export default function RecruitmentCandidateShortlist() {
                         Candidates missing any skill marked "Mandatory" will be flagged for review.
                       </span>
                     </div>
-                    <span className="text-xs font-bold text-indigo-600 bg-white px-2.5 py-1 rounded-xl border border-indigo-100">
+                    <span className="text-xs font-bold text-primary-600 bg-white px-2.5 py-1 rounded-xl border border-primary-100">
                       {activeConfigForm.requiredSkills?.length || 0} skills configured
                     </span>
                   </div>
@@ -1792,7 +1792,7 @@ export default function RecruitmentCandidateShortlist() {
                                 updated[sIdx] = { ...skill, mandatory: e.target.checked };
                                 setActiveConfigForm({ ...activeConfigForm, requiredSkills: updated });
                               }}
-                              className="rounded text-indigo-600 accent-indigo-600 cursor-pointer"
+                              className="rounded text-primary-600 accent-primary-600 cursor-pointer"
                             />
                             <span>Mandatory</span>
                           </label>
@@ -1834,7 +1834,7 @@ export default function RecruitmentCandidateShortlist() {
                           e.target.value = "";
                         }
                       }}
-                      className="flex-1 px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      className="flex-1 px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-primary-500"
                     />
                     <button
                       type="button"
@@ -1849,7 +1849,7 @@ export default function RecruitmentCandidateShortlist() {
                           input.value = "";
                         }
                       }}
-                      className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl cursor-pointer"
+                      className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white font-bold text-xs rounded-xl cursor-pointer"
                     >
                       Add Skill
                     </button>
@@ -1884,7 +1884,7 @@ export default function RecruitmentCandidateShortlist() {
                           type="checkbox"
                           checked={Boolean(activeConfigForm.experienceMandatory)}
                           onChange={(e) => setActiveConfigForm({ ...activeConfigForm, experienceMandatory: e.target.checked })}
-                          className="w-4 h-4 rounded text-indigo-600 accent-indigo-600"
+                          className="w-4 h-4 rounded text-primary-600 accent-primary-600"
                         />
                         <span className="font-semibold">Experience threshold is strictly mandatory</span>
                       </label>
@@ -1918,7 +1918,7 @@ export default function RecruitmentCandidateShortlist() {
                           type="checkbox"
                           checked={Boolean(activeConfigForm.educationMandatory)}
                           onChange={(e) => setActiveConfigForm({ ...activeConfigForm, educationMandatory: e.target.checked })}
-                          className="w-4 h-4 rounded text-indigo-600 accent-indigo-600"
+                          className="w-4 h-4 rounded text-primary-600 accent-primary-600"
                         />
                         <span className="font-semibold">Qualification level is mandatory</span>
                       </label>
@@ -1941,7 +1941,7 @@ export default function RecruitmentCandidateShortlist() {
                 type="button"
                 onClick={handleSaveConfig}
                 disabled={savingConfig}
-                className="inline-flex items-center gap-2 px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow-md transition-all disabled:opacity-60 cursor-pointer"
+                className="inline-flex items-center gap-2 px-5 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-xl text-xs font-bold shadow-md transition-all disabled:opacity-60 cursor-pointer"
               >
                 {savingConfig ? (
                   <>
@@ -2001,7 +2001,7 @@ export default function RecruitmentCandidateShortlist() {
               {/* Header */}
               <div className="flex items-start justify-between border-b border-slate-100 pb-3">
                 <div>
-                  <span className="text-xs font-semibold text-indigo-600 uppercase tracking-wider block">
+                  <span className="text-xs font-semibold text-primary-600 uppercase tracking-wider block">
                     Candidate Profile & Matching Details
                   </span>
                   <h3 className="text-xl font-bold text-slate-900 mt-0.5">{breakdownCandidate.candidateName}</h3>
@@ -2123,7 +2123,7 @@ export default function RecruitmentCandidateShortlist() {
               <div className="space-y-4">
                 <div className="flex items-center justify-between border-b border-slate-100 pb-2">
                   <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
-                    <Sparkles size={14} className="text-indigo-600" />
+                    <Sparkles size={14} className="text-primary-600" />
                     Requirements Matching Breakdown (Matched vs Not Matched)
                   </h4>
                 </div>
@@ -2132,7 +2132,7 @@ export default function RecruitmentCandidateShortlist() {
                 <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200/80 space-y-3">
                   <div className="flex items-center justify-between">
                     <span className="font-bold text-slate-800 text-xs flex items-center gap-1.5">
-                      <Award size={14} className="text-indigo-600" />
+                      <Award size={14} className="text-primary-600" />
                       1. Skills Matching Evaluation (Score: {breakdownCandidate.skillsScore ?? "—"}%)
                     </span>
                     <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full border ${
@@ -2217,7 +2217,7 @@ export default function RecruitmentCandidateShortlist() {
                 <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200/80 space-y-2.5">
                   <div className="flex items-center justify-between">
                     <span className="font-bold text-slate-800 text-xs flex items-center gap-1.5">
-                      <Briefcase size={14} className="text-indigo-600" />
+                      <Briefcase size={14} className="text-primary-600" />
                       2. Work Experience Matching (Score: {breakdownCandidate.experienceScore ?? "—"}%)
                     </span>
                     <span
@@ -2249,7 +2249,7 @@ export default function RecruitmentCandidateShortlist() {
                 <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200/80 space-y-2.5">
                   <div className="flex items-center justify-between">
                     <span className="font-bold text-slate-800 text-xs flex items-center gap-1.5">
-                      <GraduationCap size={14} className="text-indigo-600" />
+                      <GraduationCap size={14} className="text-primary-600" />
                       3. Education & Qualification Matching (Score: {breakdownCandidate.qualificationsScore ?? "—"}%)
                     </span>
                     <span
@@ -2278,7 +2278,7 @@ export default function RecruitmentCandidateShortlist() {
                 {/* 4. CV & Responsibility Evidence */}
                 <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200/80 space-y-2.5">
                   <span className="font-bold text-slate-800 text-xs flex items-center gap-1.5">
-                    <FileText size={14} className="text-indigo-600" />
+                    <FileText size={14} className="text-primary-600" />
                     4. CV & Responsibility Evidence (Score: {breakdownCandidate.evidenceScore ?? "—"}%)
                   </span>
                   {breakdownCandidate.breakdown?.extractedSnippets?.length > 0 ? (
@@ -2438,7 +2438,7 @@ export default function RecruitmentCandidateShortlist() {
               </div>
               <div className="flex justify-between">
                 <span>Qualification passing score:</span>
-                <strong className="text-indigo-600">≥ {pendingScreeningVacancy.minScore}%</strong>
+                <strong className="text-primary-600">≥ {pendingScreeningVacancy.minScore}%</strong>
               </div>
               <div className="pt-2 border-t border-slate-200/60">
                 <label className="flex items-start gap-2 cursor-pointer">
@@ -2451,7 +2451,7 @@ export default function RecruitmentCandidateShortlist() {
                         autoShortlistActive: e.target.checked,
                       }))
                     }
-                    className="mt-0.5 rounded text-indigo-600 accent-indigo-600"
+                    className="mt-0.5 rounded text-primary-600 accent-primary-600"
                   />
                   <span>
                     <strong className="text-slate-900">Auto-shortlist qualifying candidates</strong>
@@ -2551,10 +2551,10 @@ export default function RecruitmentCandidateShortlist() {
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto animate-fadeIn">
           <div className="bg-white rounded-3xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col border border-slate-100 animate-scaleUp">
             {/* Header: Dark Navy banner styled like Public Careers layout */}
-            <div className="p-6 bg-gradient-to-r from-[#0F1B3D] via-[#162752] to-[#0F1B3D] text-white flex items-start justify-between border-b border-indigo-900/40 relative">
+            <div className="p-6 bg-gradient-to-r from-[#0F1B3D] via-[#162752] to-[#0F1B3D] text-white flex items-start justify-between border-b border-primary-900/40 relative">
               <div className="space-y-3 max-w-xl">
                 <div className="flex flex-wrap items-center gap-2">
-                  <span className="px-2.5 py-0.5 rounded-full bg-indigo-500/30 border border-indigo-400/40 text-indigo-200 text-[10px] font-extrabold uppercase tracking-widest flex items-center gap-1 shadow-xs">
+                  <span className="px-2.5 py-0.5 rounded-full bg-primary-500/30 border border-primary-400/40 text-primary-200 text-[10px] font-extrabold uppercase tracking-widest flex items-center gap-1 shadow-xs">
                     <Sparkles size={11} className="text-amber-400" />
                     Career Vacancy Details
                   </span>
@@ -2572,17 +2572,17 @@ export default function RecruitmentCandidateShortlist() {
 
                 {/* Hero Chips: Department & Job Type */}
                 <div className="flex flex-wrap items-center gap-2 pt-1">
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-xs font-medium text-indigo-100 border border-white/15">
-                    <Building2 size={13} className="text-indigo-300" />
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-xs font-medium text-primary-100 border border-white/15">
+                    <Building2 size={13} className="text-primary-300" />
                     {selectedVacancyModal.department || "General"}
                   </span>
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-xs font-medium text-indigo-100 border border-white/15">
-                    <Clock size={13} className="text-indigo-300" />
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-xs font-medium text-primary-100 border border-white/15">
+                    <Clock size={13} className="text-primary-300" />
                     {selectedVacancyModal.jobType || "Full-time"}
                   </span>
                   {selectedVacancyModal.vacancyCount && (
-                    <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-xs font-medium text-indigo-100 border border-white/15">
-                      <Users size={13} className="text-indigo-300" />
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-xs font-medium text-primary-100 border border-white/15">
+                      <Users size={13} className="text-primary-300" />
                       {selectedVacancyModal.vacancyCount} {selectedVacancyModal.vacancyCount === 1 ? "Opening" : "Openings"}
                     </span>
                   )}
@@ -2606,7 +2606,7 @@ export default function RecruitmentCandidateShortlist() {
                   {/* About the Role / Description */}
                   <div>
                     <h4 className="text-sm font-bold text-slate-900 tracking-tight uppercase flex items-center gap-2 mb-2">
-                      <Briefcase size={16} className="text-indigo-600" />
+                      <Briefcase size={16} className="text-primary-600" />
                       About the Role / Job Description
                     </h4>
                     <div className="text-sm text-slate-600 leading-relaxed bg-slate-50 p-4 rounded-2xl border border-slate-200/80 whitespace-pre-line">
@@ -2618,7 +2618,7 @@ export default function RecruitmentCandidateShortlist() {
                   {/* Requirements & Qualifications */}
                   <div>
                     <h4 className="text-sm font-bold text-slate-900 tracking-tight uppercase flex items-center gap-2 mb-2">
-                      <GraduationCap size={16} className="text-indigo-600" />
+                      <GraduationCap size={16} className="text-primary-600" />
                       Requirements & Qualifications
                     </h4>
                     <div className="text-sm text-slate-600 leading-relaxed bg-slate-50 p-4 rounded-2xl border border-slate-200/80 whitespace-pre-line">
@@ -2639,7 +2639,7 @@ export default function RecruitmentCandidateShortlist() {
                         {selectedVacancyModal.requiredSkills.map((sk) => (
                           <span
                             key={sk}
-                            className="px-3 py-1 rounded-xl text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200/80 shadow-2xs"
+                            className="px-3 py-1 rounded-xl text-xs font-semibold bg-primary-50 text-primary-700 border border-primary-200/80 shadow-2xs"
                           >
                             {sk}
                           </span>
@@ -2650,7 +2650,7 @@ export default function RecruitmentCandidateShortlist() {
                         {selectedVacancyModal.skills.split(",").map((sk) => (
                           <span
                             key={sk.trim()}
-                            className="px-3 py-1 rounded-xl text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200/80 shadow-2xs"
+                            className="px-3 py-1 rounded-xl text-xs font-semibold bg-primary-50 text-primary-700 border border-primary-200/80 shadow-2xs"
                           >
                             {sk.trim()}
                           </span>
@@ -2727,7 +2727,7 @@ export default function RecruitmentCandidateShortlist() {
                       <Link
                         to={`/careers/jobs/${selectedVacancyModal.id}`}
                         target="_blank"
-                        className="w-full inline-flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold shadow-sm transition-all"
+                        className="w-full inline-flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-primary-600 hover:bg-primary-700 text-white text-xs font-semibold shadow-sm transition-all"
                       >
                         <ExternalLink size={13} />
                         <span>View on Public Careers</span>
@@ -2742,7 +2742,7 @@ export default function RecruitmentCandidateShortlist() {
             <div className="p-4 border-t border-slate-100 bg-slate-50/50 flex items-center justify-between">
               <Link
                 to="/recruitment/vacancies"
-                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200/80 transition-colors"
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold text-primary-700 bg-primary-50 hover:bg-primary-100 border border-primary-200/80 transition-colors"
               >
                 <Briefcase size={14} />
                 <span>Manage Vacancy Postings</span>

@@ -43,12 +43,12 @@ import {
 } from "lucide-react";
 
 const AVATAR_GRADIENTS = [
-  "from-indigo-500 to-purple-600",
+  "from-primary-500 to-purple-600",
   "from-sky-400 to-blue-600",
   "from-emerald-400 to-teal-600",
   "from-amber-400 to-orange-500",
   "from-pink-500 to-rose-600",
-  "from-violet-500 to-indigo-600",
+  "from-primary-500 to-primary-600",
 ];
 
 const REJECTION_REASONS = [
@@ -555,7 +555,7 @@ export default function RecruitmentApplicationReview() {
             disabled={refreshing || loading}
             className="inline-flex items-center gap-2 px-3.5 py-2 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold rounded-xl border border-slate-200 shadow-xs transition-all disabled:opacity-50 cursor-pointer"
           >
-            <RefreshCw size={14} className={refreshing ? "animate-spin text-indigo-600" : "text-slate-500"} />
+            <RefreshCw size={14} className={refreshing ? "animate-spin text-primary-600" : "text-slate-500"} />
             <span>{refreshing ? "Refreshing..." : "Refresh"}</span>
           </button>
         </div>
@@ -598,10 +598,10 @@ export default function RecruitmentApplicationReview() {
               <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
                 Ready for Interview
               </p>
-              <h3 className="text-2xl font-bold text-indigo-600 mt-1">{readyInterviewCount}</h3>
+              <h3 className="text-2xl font-bold text-primary-600 mt-1">{readyInterviewCount}</h3>
               <p className="text-xs text-slate-500 mt-0.5">Qualified for scheduling</p>
             </div>
-            <div className="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold">
+            <div className="w-12 h-12 rounded-2xl bg-primary-50 text-primary-600 flex items-center justify-center font-bold">
               <CalendarClock size={22} />
             </div>
           </div>
@@ -643,7 +643,7 @@ export default function RecruitmentApplicationReview() {
                 placeholder="Search candidate, email, skill..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white"
+                className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:outline-none focus:ring-2 focus:ring-primary-500 focus:bg-white"
               />
             </div>
 
@@ -652,7 +652,7 @@ export default function RecruitmentApplicationReview() {
               <select
                 value={selectedVacancyFilter}
                 onChange={(e) => setSelectedVacancyFilter(e.target.value)}
-                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white cursor-pointer"
+                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:bg-white cursor-pointer"
               >
                 <option value="ALL">All Positions ({totalConfirmed})</option>
                 {vacancyOptions.map((v) => (
@@ -679,7 +679,7 @@ export default function RecruitmentApplicationReview() {
                 onClick={() => setStatusTab(tab.id)}
                 className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
                   statusTab === tab.id
-                    ? "bg-indigo-600 text-white shadow-xs"
+                    ? "bg-primary-600 text-white shadow-xs"
                     : "bg-slate-100 text-slate-600 hover:bg-slate-200"
                 }`}
               >
@@ -692,7 +692,7 @@ export default function RecruitmentApplicationReview() {
         {/* ── Confirmed Candidates Table ── */}
         {loading ? (
           <div className="bg-white rounded-3xl p-16 text-center border border-slate-200/80 shadow-xs">
-            <Loader2 size={36} className="animate-spin text-indigo-600 mx-auto mb-3" />
+            <Loader2 size={36} className="animate-spin text-primary-600 mx-auto mb-3" />
             <h4 className="font-bold text-slate-800 text-sm">Loading Confirmed Candidates...</h4>
             <p className="text-xs text-slate-400 mt-1">Retrieving candidates confirmed from shortlist</p>
           </div>
@@ -711,7 +711,7 @@ export default function RecruitmentApplicationReview() {
             <div className="pt-2">
               <Link
                 to="/recruitment/applications/shortlist"
-                className="inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow-md transition-all cursor-pointer"
+                className="inline-flex items-center gap-2 px-5 py-2.5 bg-primary-600 hover:bg-primary-700 text-white rounded-xl text-xs font-bold shadow-md transition-all cursor-pointer"
               >
                 <Sparkles size={14} />
                 <span>Go to Candidate Shortlist & Confirm Applicants</span>
@@ -731,11 +731,11 @@ export default function RecruitmentApplicationReview() {
             {/* Vacancy groups summary & Expand/Collapse All buttons */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-1">
               <div className="flex items-center gap-2">
-                <Layers size={16} className="text-indigo-600" />
+                <Layers size={16} className="text-primary-600" />
                 <h2 className="text-sm font-bold text-slate-900">
                   Confirmed Candidates by Vacancy
                 </h2>
-                <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
+                <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-primary-50 text-primary-700 border border-primary-200">
                   {vacancyGroups.length} {vacancyGroups.length === 1 ? "Vacancy" : "Vacancies"} • {filteredCandidates.length} {filteredCandidates.length === 1 ? "Candidate" : "Candidates"}
                 </span>
               </div>
@@ -745,7 +745,7 @@ export default function RecruitmentApplicationReview() {
                   <button
                     type="button"
                     onClick={expandAll}
-                    className="text-slate-600 hover:text-indigo-600 font-semibold transition-colors cursor-pointer"
+                    className="text-slate-600 hover:text-primary-600 font-semibold transition-colors cursor-pointer"
                   >
                     Expand All
                   </button>
@@ -753,7 +753,7 @@ export default function RecruitmentApplicationReview() {
                   <button
                     type="button"
                     onClick={() => collapseAll(vacancyGroups)}
-                    className="text-slate-600 hover:text-indigo-600 font-semibold transition-colors cursor-pointer"
+                    className="text-slate-600 hover:text-primary-600 font-semibold transition-colors cursor-pointer"
                   >
                     Collapse All
                   </button>
@@ -778,9 +778,9 @@ export default function RecruitmentApplicationReview() {
                   className="bg-white rounded-3xl border border-slate-200/90 shadow-xs overflow-hidden transition-all duration-200 hover:shadow-sm"
                 >
                   {/* ── Vacancy Header ── */}
-                  <div className="p-5 sm:p-6 bg-gradient-to-r from-slate-900 via-slate-800 to-indigo-950 text-white flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div className="p-5 sm:p-6 bg-gradient-to-r from-slate-900 via-slate-800 to-primary-950 text-white flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div className="flex items-start sm:items-center gap-3.5">
-                      <div className="w-11 h-11 rounded-2xl bg-indigo-500/20 border border-indigo-400/30 text-indigo-300 flex items-center justify-center shrink-0 shadow-inner">
+                      <div className="w-11 h-11 rounded-2xl bg-primary-500/20 border border-primary-400/30 text-primary-300 flex items-center justify-center shrink-0 shadow-inner">
                         <Briefcase size={20} />
                       </div>
                       <div>
@@ -788,7 +788,7 @@ export default function RecruitmentApplicationReview() {
                           <h3 className="text-lg font-bold text-white tracking-tight">
                             {group.title}
                           </h3>
-                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-indigo-500/20 text-indigo-200 border border-indigo-400/30">
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-primary-500/20 text-primary-200 border border-primary-400/30">
                             <Building2 size={11} />
                             <span>{group.department}</span>
                           </span>
@@ -825,7 +825,7 @@ export default function RecruitmentApplicationReview() {
                         className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-semibold border border-white/15 transition-all cursor-pointer backdrop-blur-xs"
                         title="Display job vacancy details like public career page"
                       >
-                        <FileText size={13} className="text-indigo-300 shrink-0" />
+                        <FileText size={13} className="text-primary-300 shrink-0" />
                         <span>Job Vacancy Details</span>
                       </button>
 
@@ -888,7 +888,7 @@ export default function RecruitmentApplicationReview() {
                                           {cand.candidateName}
                                         </span>
                                         {cand.decisionSource === "SYSTEM_AUTOMATED" && (
-                                          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-indigo-50 text-indigo-600 border border-indigo-100 shrink-0">
+                                          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-primary-50 text-primary-600 border border-primary-100 shrink-0">
                                             <Sparkles size={10} />
                                             <span>AI</span>
                                           </span>
@@ -960,7 +960,7 @@ export default function RecruitmentApplicationReview() {
                                     <button
                                       type="button"
                                       onClick={() => openReviewModal(cand)}
-                                      className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-xl text-xs font-semibold border border-indigo-200 transition-all cursor-pointer shadow-2xs"
+                                      className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary-50 hover:bg-primary-100 text-primary-700 rounded-xl text-xs font-semibold border border-primary-200 transition-all cursor-pointer shadow-2xs"
                                       title="Review candidate profile and document evaluation notes"
                                     >
                                       <ClipboardCheck size={13} />
@@ -1008,7 +1008,7 @@ export default function RecruitmentApplicationReview() {
             {/* Modal Header */}
             <div className="p-6 border-b border-slate-100 bg-slate-50/70 flex justify-between items-start">
               <div>
-                <span className="text-[11px] font-bold text-indigo-600 uppercase tracking-wider block">
+                <span className="text-[11px] font-bold text-primary-600 uppercase tracking-wider block">
                   Confirmed Candidate Assessment
                 </span>
                 <h3 className="text-xl font-bold text-slate-900 mt-0.5">
@@ -1088,7 +1088,7 @@ export default function RecruitmentApplicationReview() {
                     {activeReviewCandidate.skills.map((s) => (
                       <span
                         key={s}
-                        className="px-2.5 py-1 rounded-lg text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200/80"
+                        className="px-2.5 py-1 rounded-lg text-xs font-semibold bg-primary-50 text-primary-700 border border-primary-200/80"
                       >
                         {s}
                       </span>
@@ -1100,7 +1100,7 @@ export default function RecruitmentApplicationReview() {
               {/* Resume / CV Document Access */}
               <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-200/80 flex items-center justify-between">
                 <div className="flex items-center gap-2 text-xs">
-                  <FileText size={16} className="text-indigo-600" />
+                  <FileText size={16} className="text-primary-600" />
                   <span className="font-semibold text-slate-800">
                     {activeReviewCandidate.resumeFileName || "Candidate_Resume.pdf"}
                   </span>
@@ -1110,7 +1110,7 @@ export default function RecruitmentApplicationReview() {
                     <button
                       type="button"
                       onClick={() => setShowResumeText(!showResumeText)}
-                      className="px-2.5 py-1 text-xs font-semibold bg-white text-indigo-600 border border-indigo-200 hover:bg-indigo-50 rounded-lg cursor-pointer"
+                      className="px-2.5 py-1 text-xs font-semibold bg-white text-primary-600 border border-primary-200 hover:bg-primary-50 rounded-lg cursor-pointer"
                     >
                       {showResumeText ? "Hide Resume Text" : "View Resume Text"}
                     </button>
@@ -1118,7 +1118,7 @@ export default function RecruitmentApplicationReview() {
                   <button
                     type="button"
                     onClick={() => handleDownloadResume(activeReviewCandidate)}
-                    className="inline-flex items-center gap-1 px-3 py-1 text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg cursor-pointer"
+                    className="inline-flex items-center gap-1 px-3 py-1 text-xs font-bold bg-primary-600 hover:bg-primary-700 text-white rounded-lg cursor-pointer"
                   >
                     <Download size={13} />
                     <span>Download CV</span>
@@ -1129,7 +1129,7 @@ export default function RecruitmentApplicationReview() {
               {/* ATS Resume Plaintext Extracted Preview */}
               {showResumeText && activeReviewCandidate.resumeText && (
                 <div className="p-3 bg-slate-900 text-slate-200 rounded-xl text-[11px] font-mono max-h-40 overflow-y-auto space-y-1">
-                  <span className="text-indigo-300 font-sans font-bold block pb-1 border-b border-slate-800">
+                  <span className="text-primary-300 font-sans font-bold block pb-1 border-b border-slate-800">
                     ATS Resume Extracted Plaintext
                   </span>
                   <pre className="whitespace-pre-wrap">{activeReviewCandidate.resumeText}</pre>
@@ -1168,7 +1168,7 @@ export default function RecruitmentApplicationReview() {
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <label className="text-[11px] font-bold uppercase tracking-wider text-slate-600 flex items-center gap-1.5">
-                    <Sparkles size={13} className="text-indigo-600" />
+                    <Sparkles size={13} className="text-primary-600" />
                     <span>System Screening Assessment</span>
                   </label>
                   <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
@@ -1284,7 +1284,7 @@ export default function RecruitmentApplicationReview() {
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
                   placeholder="Record strengths, interview discussion topics, technical focus areas, or recruiter observations..."
-                  className="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white resize-none"
+                  className="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:bg-white resize-none"
                 />
               </div>
 
@@ -1313,7 +1313,7 @@ export default function RecruitmentApplicationReview() {
                   <button
                     type="submit"
                     disabled={saving}
-                    className="inline-flex items-center gap-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow-sm disabled:opacity-50 cursor-pointer"
+                    className="inline-flex items-center gap-1.5 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-xl text-xs font-bold shadow-sm disabled:opacity-50 cursor-pointer"
                   >
                     <Save size={14} />
                     <span>{saving ? "Saving..." : "Save Assessment Notes"}</span>
@@ -1431,10 +1431,10 @@ export default function RecruitmentApplicationReview() {
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto animate-fadeIn">
           <div className="bg-white rounded-3xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col border border-slate-100 animate-scaleUp">
             {/* Header: Dark Navy banner styled like Public Careers layout */}
-            <div className="p-6 bg-gradient-to-r from-[#0F1B3D] via-[#162752] to-[#0F1B3D] text-white flex items-start justify-between border-b border-indigo-900/40 relative">
+            <div className="p-6 bg-gradient-to-r from-[#0F1B3D] via-[#162752] to-[#0F1B3D] text-white flex items-start justify-between border-b border-primary-900/40 relative">
               <div className="space-y-3 max-w-xl">
                 <div className="flex flex-wrap items-center gap-2">
-                  <span className="px-2.5 py-0.5 rounded-full bg-indigo-500/30 border border-indigo-400/40 text-indigo-200 text-[10px] font-extrabold uppercase tracking-widest flex items-center gap-1 shadow-xs">
+                  <span className="px-2.5 py-0.5 rounded-full bg-primary-500/30 border border-primary-400/40 text-primary-200 text-[10px] font-extrabold uppercase tracking-widest flex items-center gap-1 shadow-xs">
                     <Sparkles size={11} className="text-amber-400" />
                     Career Vacancy Details
                   </span>
@@ -1452,17 +1452,17 @@ export default function RecruitmentApplicationReview() {
 
                 {/* Hero Chips: Department & Job Type */}
                 <div className="flex flex-wrap items-center gap-2 pt-1">
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-xs font-medium text-indigo-100 border border-white/15">
-                    <Building2 size={13} className="text-indigo-300" />
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-xs font-medium text-primary-100 border border-white/15">
+                    <Building2 size={13} className="text-primary-300" />
                     {selectedVacancyModal.department || "General"}
                   </span>
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-xs font-medium text-indigo-100 border border-white/15">
-                    <Clock size={13} className="text-indigo-300" />
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-xs font-medium text-primary-100 border border-white/15">
+                    <Clock size={13} className="text-primary-300" />
                     {selectedVacancyModal.jobType || "Full-time"}
                   </span>
                   {selectedVacancyModal.vacancyCount && (
-                    <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-xs font-medium text-indigo-100 border border-white/15">
-                      <Users size={13} className="text-indigo-300" />
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-xs font-medium text-primary-100 border border-white/15">
+                      <Users size={13} className="text-primary-300" />
                       {selectedVacancyModal.vacancyCount} {selectedVacancyModal.vacancyCount === 1 ? "Opening" : "Openings"}
                     </span>
                   )}
@@ -1486,7 +1486,7 @@ export default function RecruitmentApplicationReview() {
                   {/* About the Role / Description */}
                   <div>
                     <h4 className="text-sm font-bold text-slate-900 tracking-tight uppercase flex items-center gap-2 mb-2">
-                      <Briefcase size={16} className="text-indigo-600" />
+                      <Briefcase size={16} className="text-primary-600" />
                       About the Role / Job Description
                     </h4>
                     <div className="text-sm text-slate-600 leading-relaxed bg-slate-50 p-4 rounded-2xl border border-slate-200/80 whitespace-pre-line">
@@ -1498,7 +1498,7 @@ export default function RecruitmentApplicationReview() {
                   {/* Requirements & Qualifications */}
                   <div>
                     <h4 className="text-sm font-bold text-slate-900 tracking-tight uppercase flex items-center gap-2 mb-2">
-                      <GraduationCap size={16} className="text-indigo-600" />
+                      <GraduationCap size={16} className="text-primary-600" />
                       Requirements & Qualifications
                     </h4>
                     <div className="text-sm text-slate-600 leading-relaxed bg-slate-50 p-4 rounded-2xl border border-slate-200/80 whitespace-pre-line">
@@ -1519,7 +1519,7 @@ export default function RecruitmentApplicationReview() {
                         {selectedVacancyModal.requiredSkills.map((sk) => (
                           <span
                             key={sk}
-                            className="px-3 py-1 rounded-xl text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200/80 shadow-2xs"
+                            className="px-3 py-1 rounded-xl text-xs font-semibold bg-primary-50 text-primary-700 border border-primary-200/80 shadow-2xs"
                           >
                             {sk}
                           </span>
@@ -1530,7 +1530,7 @@ export default function RecruitmentApplicationReview() {
                         {selectedVacancyModal.skills.split(",").map((sk) => (
                           <span
                             key={sk.trim()}
-                            className="px-3 py-1 rounded-xl text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200/80 shadow-2xs"
+                            className="px-3 py-1 rounded-xl text-xs font-semibold bg-primary-50 text-primary-700 border border-primary-200/80 shadow-2xs"
                           >
                             {sk.trim()}
                           </span>
@@ -1607,7 +1607,7 @@ export default function RecruitmentApplicationReview() {
                       <Link
                         to={`/careers/jobs/${selectedVacancyModal.id}`}
                         target="_blank"
-                        className="w-full inline-flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold shadow-sm transition-all"
+                        className="w-full inline-flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-primary-600 hover:bg-primary-700 text-white text-xs font-semibold shadow-sm transition-all"
                       >
                         <ExternalLink size={13} />
                         <span>View on Public Careers</span>
@@ -1622,7 +1622,7 @@ export default function RecruitmentApplicationReview() {
             <div className="p-4 border-t border-slate-100 bg-slate-50/50 flex items-center justify-between">
               <Link
                 to="/recruitment/vacancies"
-                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200/80 transition-colors"
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold text-primary-700 bg-primary-50 hover:bg-primary-100 border border-primary-200/80 transition-colors"
               >
                 <Briefcase size={14} />
                 <span>Manage Vacancy Postings</span>
