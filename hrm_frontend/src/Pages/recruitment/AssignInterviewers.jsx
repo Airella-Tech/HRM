@@ -875,9 +875,6 @@ export default function AssignInterviewers() {
         <div className="mx-auto max-w-7xl space-y-6">
           <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
             <div>
-              <p className="mb-2 text-sm font-medium text-indigo-600">
-                Recruitment / Interviews
-              </p>
               <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
                 Assign Interviewers
               </h1>

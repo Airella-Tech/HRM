@@ -1404,7 +1404,7 @@ export default function RecruitmentInterviews() {
             {loading
               ? "Loading interviews..."
               : backendConnected
-                ? "Connected to Recruitment backend"
+                ? " "
                 : "Backend unavailable — no sample data shown"}
           </div>
           <button
@@ -1806,7 +1806,7 @@ export default function RecruitmentInterviews() {
                 </span>
                 <span>
                   {backendConnected
-                    ? "Backend interview records"
+                    ? " "
                     : "Backend unavailable — no sample data shown"}
                 </span>
               </div>
