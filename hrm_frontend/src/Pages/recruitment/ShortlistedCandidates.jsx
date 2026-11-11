@@ -1573,14 +1573,16 @@ export default function ShortlistedCandidates() {
     <PageLayout
       role="recruiter"
       activePage="Interviews"
+         activeNav="Schedule Interviews"
       title="Shortlisted Candidates"
+      subtitle="Review confirmed candidates and schedule their interviews"
       actions={
         <div className="flex flex-wrap items-center gap-2">
           <button
             type="button"
             onClick={() => loadData(true)}
             disabled={loading || refreshing}
-            className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-3 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50 disabled:opacity-50"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-slate-200 bg-white text-slate-700 text-sm font-semibold hover:bg-slate-50 disabled:opacity-60"
           >
             <RefreshCw size={16} className={refreshing ? "animate-spin" : ""} />
             Refresh
@@ -1589,7 +1591,7 @@ export default function ShortlistedCandidates() {
           <button
             type="button"
             onClick={() => navigate("/recruitment/interviews")}
-            className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-slate-200 bg-white text-slate-700 text-sm font-semibold hover:bg-slate-50"
           >
             <ArrowLeft size={17} />
             Back to Interviews
@@ -1597,11 +1599,11 @@ export default function ShortlistedCandidates() {
         </div>
       }
     >
-      <div className="p-4 sm:p-6 lg:p-8">
+      <div>
         {error && (
           <div
             role="alert"
-            className="mb-5 flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-900"
+            className="mb-5 flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700"
           >
             <CircleAlert size={19} className="mt-0.5 shrink-0" />
 

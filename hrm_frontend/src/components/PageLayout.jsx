@@ -255,6 +255,7 @@ let savedNavScroll = 0;
 export const PageLayout = ({
   role = "employee",
   activePage,
+  activeNav,
   title,
   subtitle,
   actions,
@@ -436,8 +437,9 @@ export const PageLayout = ({
               item.path && !location.search && itemBase === currentBase,
             );
 
-            const isActive =
-              exactUrlMatches ||
+              const isActive = activeNav
+     ? item.name === activeNav
+     : exactUrlMatches ||
               (nameMatches &&
                 (location.search
                   ? exactUrlMatches

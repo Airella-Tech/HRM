@@ -645,52 +645,45 @@ export default function JobOffers() {
   // ==========================================================
 
   return (
-    <PageLayout role="recruiter" activePage="Job Offers">
-      <div className="p-4 sm:p-6 lg:p-8">
-        {/* PAGE HEADER */}
-        <div className="mb-7 flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-          <div>
-            <h1 className="text-2xl font-bold text-slate-900">
-              Manage Job Offers
-            </h1>
-            <p className="mt-1 text-sm text-slate-500">
-              Create offers, email candidates, and manage hiring decisions.
-            </p>
-          </div>
-
-          <div className="flex flex-wrap gap-2">
-            <button
-              type="button"
-              onClick={() => {
-                loadOffers();
-                loadEligibleCandidates();
-              }}
-              disabled={loading || eligibleLoading}
-              className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
-            >
-              <RefreshCw
-                size={17}
-                className={loading || eligibleLoading ? "animate-spin" : ""}
-              />
-              Refresh
-            </button>
-
-            <button
-              type="button"
-              onClick={openCreate}
-              className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-primary-700"
-            >
-              <Plus size={18} />
-              Create Job Offer
-            </button>
-          </div>
+    <PageLayout
+      role="recruiter"
+      activePage="Job Offers"
+      title="Manage Job Offers"
+      subtitle="Create offers, email candidates, and manage hiring decisions"
+      actions={
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => {
+              loadOffers();
+              loadEligibleCandidates();
+            }}
+            disabled={loading || eligibleLoading}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-slate-200 bg-white text-slate-700 text-sm font-semibold hover:bg-slate-50 disabled:opacity-60"
+          >
+            <RefreshCw
+              size={16}
+              className={loading || eligibleLoading ? "animate-spin" : ""}
+            />
+            Refresh
+          </button>
+          <button
+            type="button"
+            onClick={openCreate}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-primary-600 hover:bg-primary-700 text-white text-sm font-semibold shadow-sm"
+          >
+            <Plus size={16} />
+            Create Job Offer
+          </button>
         </div>
-
+      }
+    >
+      <>
         {/* API ERROR */}
         {apiError && (
           <div
             role="alert"
-            className="mb-5 flex items-start gap-3 rounded-lg border border-rose-200 bg-rose-50 p-4 text-sm text-rose-800"
+            className="mb-5 flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700"
           >
             <AlertCircle size={19} className="mt-0.5 shrink-0" />
 
@@ -702,7 +695,7 @@ export default function JobOffers() {
             <button
               type="button"
               onClick={() => setApiError("")}
-              className="rounded p-1 hover:bg-rose-100"
+              className="rounded p-1 hover:bg-red-100"
               aria-label="Dismiss error"
             >
               <X size={17} />
@@ -1663,7 +1656,7 @@ export default function JobOffers() {
             </div>
           </div>
         )}
-      </div>
+      </>
     </PageLayout>
   );
 }
