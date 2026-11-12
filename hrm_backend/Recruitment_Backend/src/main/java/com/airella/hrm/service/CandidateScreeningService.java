@@ -257,7 +257,7 @@ public class CandidateScreeningService {
         Long currentUserId = permissionService.currentUserId();
 
         for (CandidateApplication app : applications) {
-            CandidateScreeningResultDTO result = runCandidateEvaluation(app, vacancy, config, currentUserId);
+            CandidateScreeningResultDTO result = runCandidateEvaluation(app, vacancy, config, currentUserId, false);
             results.add(result);
 
             if (Boolean.TRUE.equals(result.getAutoShortlisted())) {
@@ -285,6 +285,15 @@ public class CandidateScreeningService {
                         " applicants; Auto-shortlisted: " + autoShortlistedCount + "; Recommended: " + recommendedCount,
                 vacancy.getCompanyRef()
         );
+
+        // Batched notification for automated candidate shortlisting
+        if (autoShortlistedCount > 0 && notificationService != null) {
+            try {
+                notificationService.candidatesAutoShortlistedBatch(vacancy, autoShortlistedCount, applications.size());
+            } catch (Exception e) {
+                log.warn("Could not dispatch automated shortlisting batch notification: {}", e.getMessage());
+            }
+        }
 
         return CandidateEvaluationResponseDTO.builder()
                 .vacancyId(vacancyId)
@@ -314,6 +323,14 @@ public class CandidateScreeningService {
                                                                JobVacancy vacancy,
                                                                VacancyScreeningConfig config,
                                                                Long evaluatorUserId) {
+        return runCandidateEvaluation(app, vacancy, config, evaluatorUserId, true);
+    }
+
+    private CandidateScreeningResultDTO runCandidateEvaluation(CandidateApplication app,
+                                                               JobVacancy vacancy,
+                                                               VacancyScreeningConfig config,
+                                                               Long evaluatorUserId,
+                                                               boolean notifyIndividual) {
         VacancyScreeningConfigDTO configDto = toConfigDto(config, vacancy.getTitle());
 
         String resumeText = app.getResumeText() != null ? app.getResumeText().toLowerCase(Locale.ROOT) : "";
@@ -485,7 +502,7 @@ public class CandidateScreeningService {
 
         applicationRepo.save(app);
 
-        if (autoShortlisted && app.getStatus() == ApplicationStatus.SHORTLISTED) {
+        if (notifyIndividual && autoShortlisted && app.getStatus() == ApplicationStatus.SHORTLISTED) {
             try {
                 if (notificationService != null) {
                     notificationService.candidateShortlisted(app, vacancy);

@@ -114,7 +114,7 @@ const Payslip = () => {
     const onFocus = () => loadPayslips(true);
     window.addEventListener("focus", onFocus);
     return () => window.removeEventListener("focus", onFocus);
-  }, [user]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [user]);
 
   const handleDownload = (p) => printPayslip(p, user, {
     department: paySheet?.departmentName,

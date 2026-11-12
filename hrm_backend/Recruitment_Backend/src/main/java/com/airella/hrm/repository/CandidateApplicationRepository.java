@@ -20,6 +20,11 @@ public interface CandidateApplicationRepository extends JpaRepository<CandidateA
             String email, Long vacancyId, LocalDateTime cutoffDate);
 
     /**
+     * Find all applications submitted for a vacancy.
+     */
+    List<CandidateApplication> findByVacancyId(Long vacancyId);
+
+    /**
      * Lookup by tracking code and email.
      */
     Optional<CandidateApplication> findByTrackingCodeIgnoreCaseAndEmailIgnoreCase(

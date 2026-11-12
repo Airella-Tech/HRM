@@ -6,11 +6,20 @@ export const errorText = (error, fallback) =>
 
 export const formatDate = (iso) => {
   if (!iso) return "";
-  return new Date(`${iso}T00:00:00`).toLocaleDateString(undefined, {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  });
+  try {
+    const d =
+      typeof iso === "string" && !iso.includes("T")
+        ? new Date(`${iso}T00:00:00`)
+        : new Date(iso);
+    if (isNaN(d.getTime())) return "";
+    return d.toLocaleDateString(undefined, {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    });
+  } catch {
+    return "";
+  }
 };
 
 export const formatSalary = (min, max) => {

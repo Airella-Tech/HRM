@@ -59,6 +59,10 @@ const KIND = {
     icon: UserCheck,
     chip: "bg-emerald-100 text-emerald-700",
   },
+  CANDIDATES_AUTO_SHORTLISTED: {
+    icon: UserCheck,
+    chip: "bg-emerald-100 text-emerald-700",
+  },
   // Interview notifications
   INTERVIEW_SCHEDULED: {
     icon: CalendarDays,
@@ -179,6 +183,7 @@ export const linkLabel = (n) => {
     case "VACANCY_CLOSED": return "View vacancies";
     case "CANDIDATE_APPLIED": return "Review applications";
     case "CANDIDATE_SHORTLISTED": return "Schedule interview";
+    case "CANDIDATES_AUTO_SHORTLISTED": return "View shortlisted candidates";
     case "INTERVIEW_SCHEDULED": return "View scheduled interview";
     case "INTERVIEW_RESCHEDULED": return "View rescheduled interview";
     case "INTERVIEWER_ASSIGNED": return "View assigned interview";
