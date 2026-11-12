@@ -783,8 +783,8 @@ export default function AssignInterviewers() {
   };
 
   const stageColor = (stage) => {
-    if (stage === "Technical Interview") return "bg-blue-50 text-blue-700";
-    if (stage === "HR Interview") return "bg-purple-50 text-purple-700";
+    if (stage === "Technical Interview") return "bg-primary-50 text-primary-700";
+    if (stage === "HR Interview") return "bg-slate-100 text-slate-700";
     if (stage === "Hiring Manager Interview")
       return "bg-amber-50 text-amber-700";
 
@@ -802,7 +802,7 @@ export default function AssignInterviewers() {
           ? "bg-red-50 text-red-700"
           : locked
             ? "bg-slate-100 text-slate-600"
-            : "bg-blue-50 text-blue-700";
+            : "bg-primary-50 text-primary-700";
 
     return (
       <span
@@ -870,50 +870,36 @@ export default function AssignInterviewers() {
   };
 
   return (
-    <PageLayout role="recruiter" activePage="Assign Interviewers">
-      <div className="min-h-screen bg-slate-50 p-4 sm:p-6 lg:p-8">
-        <div className="mx-auto max-w-7xl space-y-6">
-          <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-            <div>
-              <p className="mb-2 text-sm font-medium text-primary-600">
-                Recruitment / Interviews
-              </p>
-              <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
-                Assign Interviewers
-              </h1>
-              <p className="mt-2 text-sm text-slate-500">
-                Assign the right interview panel to every interview stage.
-              </p>
-            </div>
-
-            <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-600 shadow-sm">
-              <Users size={18} className="text-primary-600" />
-              <span>
-                <strong className="text-slate-900">
-                  {interviewers.length}
-                </strong>{" "}
-                available interviewers
-              </span>
-
-              <button
-                type="button"
-                onClick={() => refreshAll(true)}
-                disabled={refreshing || loading || employeesLoading}
-                title="Refresh lists"
-                aria-label="Refresh lists"
-                className="ml-2 rounded-lg p-2 text-slate-500 hover:bg-slate-100 disabled:opacity-50"
-              >
-                <RefreshCw
-                  size={15}
-                  className={
-                    refreshing || loading || employeesLoading
-                      ? "animate-spin"
-                      : ""
-                  }
-                />
-              </button>
-            </div>
-          </div>
+    <PageLayout
+      role="recruiter"
+      activePage="Assign Interviewers"
+      title="Assign Interviewers"
+      subtitle="Assign the right interview panel to every interview stage"
+      actions={
+        <div className="flex items-center gap-2">
+          <span className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-600 shadow-sm">
+            <Users size={16} className="text-primary-600" />
+            <span>
+              <strong className="text-slate-900">{interviewers.length}</strong>{" "}
+              available interviewers
+            </span>
+          </span>
+          <button
+            type="button"
+            onClick={() => refreshAll(true)}
+            disabled={refreshing || loading || employeesLoading}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-slate-200 bg-white text-slate-700 text-sm font-semibold hover:bg-slate-50 disabled:opacity-60"
+          >
+            <RefreshCw
+              size={16}
+              className={refreshing || loading || employeesLoading ? "animate-spin" : ""}
+            />
+            Refresh
+          </button>
+        </div>
+      }
+    >
+      <div className="space-y-6">
 
           {(loading || employeesLoading) && (
             <div className="flex items-center gap-2 rounded-xl border border-primary-100 bg-primary-50 p-4 text-sm text-primary-700">
@@ -999,7 +985,7 @@ export default function AssignInterviewers() {
               label="Total Assignments"
               value={loading ? "—" : totalAssignments}
               icon={<Users size={21} />}
-              color="purple"
+              color="slate"
             />
           </div>
 
@@ -1282,7 +1268,6 @@ export default function AssignInterviewers() {
             </div>
           </section>
         </div>
-      </div>
 
       {selectedInterview && (
         <div
@@ -1494,7 +1479,7 @@ function StatCard({ label, value, icon, color }) {
     indigo: "bg-primary-50 text-primary-600",
     emerald: "bg-emerald-50 text-emerald-600",
     amber: "bg-amber-50 text-amber-600",
-    purple: "bg-purple-50 text-purple-600",
+    slate: "bg-slate-100 text-slate-600",
   };
 
   return (

@@ -880,44 +880,24 @@ export default function InterviewEvaluationReview() {
       activePage="Evaluation Review"
       title="Interview Evaluation Review"
       subtitle="Review interviewer feedback and approve candidates for the next round"
+      actions={
+        <button
+          type="button"
+          onClick={() => loadData(true)}
+          disabled={refreshing || loading}
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-slate-200 bg-white text-slate-700 text-sm font-semibold hover:bg-slate-50 disabled:opacity-60"
+        >
+          <RefreshCw size={16} className={refreshing ? "animate-spin" : ""} />
+          Refresh
+        </button>
+      }
     >
-      <div className="min-h-screen bg-slate-50 p-4 sm:p-6 lg:p-8">
-        <div className="mx-auto max-w-7xl space-y-6">
-          {/* Header */}
-          <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-            <div>
-              <div className="flex items-center gap-2 text-sm font-medium text-primary-600">
-                <ClipboardCheck size={17} />
-                Recruitment Management
-              </div>
-
-              <h1 className="mt-2 text-2xl font-bold text-slate-900 sm:text-3xl">
-                Interview Evaluation Review
-              </h1>
-
-              <p className="mt-1 text-sm text-slate-500">
-                Review interviewer evaluations and make decisions for
-                the next interview round.
-              </p>
-            </div>
-
-            <button
-              type="button"
-              onClick={() => loadData(true)}
-              disabled={refreshing || loading}
-              className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              <RefreshCw
-                size={16}
-                className={refreshing ? "animate-spin" : ""}
-              />
-              Refresh
-            </button>
-          </div>
+      <>
+        <div className="space-y-6">
 
           {/* Error message */}
           {error && (
-            <div className="flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+            <div className="flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
               <AlertCircle
                 size={19}
                 className="mt-0.5 shrink-0"
@@ -1185,7 +1165,7 @@ export default function InterviewEvaluationReview() {
                               <button
                                 type="button"
                                 onClick={() => openReview(interview)}
-                                className="inline-flex items-center gap-2 rounded-lg bg-primary-600 px-3 py-2 text-xs font-semibold text-white hover:bg-primary-700"
+                                className="inline-flex items-center gap-2 rounded-xl bg-primary-600 px-3 py-2 text-xs font-semibold text-white hover:bg-primary-700"
                               >
                                 <Eye size={15} />
                                 View Reviews
@@ -1232,7 +1212,7 @@ export default function InterviewEvaluationReview() {
                         <button
                           type="button"
                           onClick={() => openReview(interview)}
-                          className="w-full rounded-lg bg-primary-600 px-4 py-2.5 text-sm font-semibold text-white"
+                          className="w-full rounded-xl bg-primary-600 px-4 py-2.5 text-sm font-semibold text-white"
                         >
                           View Evaluations
                         </button>
@@ -1732,7 +1712,7 @@ export default function InterviewEvaluationReview() {
             </div>
           </div>
         )}
-      </div>
+      </>
     </PageLayout>
   );
 }

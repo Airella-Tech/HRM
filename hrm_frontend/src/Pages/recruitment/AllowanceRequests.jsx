@@ -171,7 +171,7 @@ const AllowanceRequests = ({ showForm, onCloseForm }) => {
 
   const documentButton = (r) => (
     <button onClick={() => viewDocument(r)} title={r.documentName}
-      className="inline-flex items-center gap-1.5 text-xs font-semibold text-blue-600 hover:text-blue-700 bg-sky-50 hover:bg-sky-100 px-2.5 py-1.5 rounded-lg transition-colors">
+      className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary-600 hover:text-primary-700 bg-primary-50 hover:bg-primary-100 px-2.5 py-1.5 rounded-lg transition-colors">
       <FileText size={13} /> PDF
     </button>
   );
@@ -254,7 +254,7 @@ const AllowanceRequests = ({ showForm, onCloseForm }) => {
                     {r.description && <p className="text-xs text-slate-400 truncate mt-0.5" title={r.description}>{r.description}</p>}
                   </div>
                 </div>
-                <span className="text-sm font-bold text-blue-700">Rs. {money(r.amount)}</span>
+                <span className="text-sm font-bold text-primary-700">Rs. {money(r.amount)}</span>
                 <span className="flex items-center gap-1.5 text-xs text-slate-600">
                   <Calendar size={13} className="text-slate-400" /> {formatDate(r.createdAt)}
                 </span>

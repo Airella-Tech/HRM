@@ -577,53 +577,44 @@ export default function InterviewEmails() {
     <PageLayout
       role="recruiter"
       activePage="Interviews"
+         activeNav="Schedule Interviews"
       title="Interview Email History"
-    >
-      <div className="min-h-screen bg-slate-50 p-4 sm:p-6 lg:p-8">
-        {/* Back button stays above the title and action buttons. */}
-        <div className="mb-4">
+      subtitle="Interview emails sent to candidates and interviewers, with retry"
+      actions={
+        <div className="flex flex-wrap items-center gap-2">
           <button
             type="button"
             onClick={() => navigate(-1)}
-            className="inline-flex items-center gap-2 rounded-lg py-2 text-sm font-medium text-slate-500 transition hover:text-primary-600"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-slate-200 bg-white text-slate-700 text-sm font-semibold hover:bg-slate-50"
           >
             <ArrowLeft size={16} />
             Back
           </button>
+          <button
+            type="button"
+            onClick={() => refreshLogs(true)}
+            disabled={loading}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-slate-200 bg-white text-slate-700 text-sm font-semibold hover:bg-slate-50 disabled:opacity-60"
+          >
+            {loading ? (
+              <LoaderCircle size={16} className="animate-spin" />
+            ) : (
+              <RefreshCw size={16} />
+            )}
+            Refresh records
+          </button>
+          <button
+            type="button"
+            onClick={() => navigate("/recruitment/interviews")}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-primary-600 hover:bg-primary-700 text-white text-sm font-semibold shadow-sm"
+          >
+            <CalendarDays size={16} />
+            Interview Scheduling
+          </button>
         </div>
-
-        {/* Title and actions share one row on desktop. */}
-        <div className="mb-7 flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
-          <h1 className="min-w-0 text-2xl font-bold tracking-tight text-slate-800 sm:text-3xl">
-            Interview Email History
-          </h1>
-
-          <div className="flex flex-wrap items-center gap-3">
-            <button
-              type="button"
-              onClick={() => refreshLogs(true)}
-              disabled={loading}
-              className="inline-flex min-h-11 items-center justify-center gap-2 whitespace-nowrap rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-primary-200 hover:bg-primary-50 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              {loading ? (
-                <LoaderCircle size={17} className="animate-spin" />
-              ) : (
-                <RefreshCw size={17} />
-              )}
-              Refresh records
-            </button>
-
-            <button
-              type="button"
-              onClick={() => navigate("/recruitment/interviews")}
-              className="inline-flex min-h-11 items-center justify-center gap-2 whitespace-nowrap rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-primary-200 hover:bg-primary-50"
-            >
-              <CalendarDays size={17} />
-              Interview Scheduling
-            </button>
-          </div>
-        </div>
-
+      }
+    >
+      <div>
         {message && (
           <div
             role="status"

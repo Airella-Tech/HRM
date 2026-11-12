@@ -143,7 +143,7 @@ const Attendance = () => {
   const statusBadge = (s) => ({
     PRESENT: "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200",
     ABSENT: "bg-yellow-50 text-red-700 ring-1 ring-red-200",
-    HALF_DAY: "bg-violet-50 text-violet-700 ring-1 ring-violet-200",
+    HALF_DAY: "bg-primary-50 text-primary-700 ring-1 ring-primary-200",
     LATE: "bg-amber-50 text-amber-700 ring-1 ring-amber-200",
   }[s] || "bg-slate-50 text-slate-600 ring-1 ring-slate-200");
 
@@ -225,7 +225,7 @@ const Attendance = () => {
         {/* Clock In/Out card */}
         <div className="bg-gradient-to-br from-white to-employee-50 rounded-xl border border-employee-100 shadow-sm p-6">
           <h2 className="text-lg font-semibold text-slate-800 flex items-center gap-3 mb-5">
-            <span className="bg-indigo-50 p-2 rounded-lg"><Timer className="text-indigo-600" size={20} /></span>
+            <span className="bg-primary-50 p-2 rounded-lg"><Timer className="text-primary-600" size={20} /></span>
             Today's Attendance
           </h2>
 
@@ -240,7 +240,7 @@ const Attendance = () => {
                   { label: "Last Clock In",  value: formatTime(attendance?.clockInTime),  text: "text-slate-900" },
                   { label: "Last Clock Out", value: formatTime(attendance?.clockOutTime), text: "text-slate-900" },
                   { label: "Working Hours",  value: formatMinutes(attendance?.totalWorkingMinutes || 0, isClockedIn), text: "text-slate-900" },
-                  { label: "Status",         value: !attendance ? "Not Started" : attendance.isClockedIn ? "Clocked In" : "Clocked Out", text: "text-blue-600" },
+                  { label: "Status",         value: !attendance ? "Not Started" : attendance.isClockedIn ? "Clocked In" : "Clocked Out", text: "text-primary-600" },
                 ].map(t => (
                   <div key={t.label} className="bg-white/70 border border-employee-100 rounded-lg p-4 text-center">
                     <p className="text-slate-500 text-xs mb-2">{t.label}</p>
@@ -255,7 +255,7 @@ const Attendance = () => {
                 <button
                   onClick={handleClockIn}
                   disabled={clockInLoading || attendance?.isClockedIn}
-                  className={`flex-1 ${EMP_GRADIENT} hover:from-sky-500 hover:to-blue-600 shadow-sm shadow-blue-500/20 text-white disabled:opacity-40 disabled:cursor-not-allowed py-3 rounded-lg flex items-center justify-center gap-2 font-semibold text-sm transition-colors`}
+                  className={`flex-1 ${EMP_GRADIENT} hover:from-primary-500 hover:to-primary-600 shadow-sm shadow-primary-500/20 text-white disabled:opacity-40 disabled:cursor-not-allowed py-3 rounded-lg flex items-center justify-center gap-2 font-semibold text-sm transition-colors`}
                 >
                   <CheckCircle size={18} /> {clockInLoading ? "Getting location..." : "Clock In"}
                 </button>

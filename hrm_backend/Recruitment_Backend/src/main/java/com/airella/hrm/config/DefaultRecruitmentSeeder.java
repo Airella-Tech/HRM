@@ -36,9 +36,7 @@ public class DefaultRecruitmentSeeder implements CommandLineRunner {
                 new RecruitmentPermission("OFFER_MANAGE", "OFFER", "Create, issue, and manage formal job offers"),
                 new RecruitmentPermission("RECRUITMENT_ROLE_ADMIN", "SETTINGS", "Create and manage custom recruitment roles and assign users"),
                 new RecruitmentPermission("INTERVIEW_DECIDE", "INTERVIEW", "Approve or reject candidates after reviewing interview evaluations"),
-                new RecruitmentPermission("INTERVIEW_DECIDE", "INTERVIEW", "Approve or reject candidates after reviewing interview evaluations"),
-new RecruitmentPermission("AUDIT_VIEW", "SETTINGS", "View the recruitment audit log")
-
+                new RecruitmentPermission("AUDIT_VIEW", "SETTINGS", "View the recruitment audit log")
     );
 
         for (RecruitmentPermission p : defaultPermissions) {

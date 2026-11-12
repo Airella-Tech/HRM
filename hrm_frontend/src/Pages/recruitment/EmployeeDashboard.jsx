@@ -161,15 +161,15 @@ const EmployeeDashboard = () => {
 
           <div className="bg-gradient-to-br from-white to-employee-50 p-6 rounded-xl border border-employee-100 shadow-sm">
             <h3 className="text-lg font-semibold mb-6 flex items-center text-slate-800">
-              <div className="bg-violet-50 p-2 rounded-lg mr-3">
-                <Calendar className="text-violet-600" size={20} />
+              <div className="bg-primary-50 p-2 rounded-lg mr-3">
+                <Calendar className="text-primary-600" size={20} />
               </div>
               Upcoming Leave
             </h3>
             <div className="space-y-3">
               {upcomingLeaves.map(l => (
                 <div key={l.id} className="flex items-start gap-3 p-3 border border-employee-100 bg-white/70 hover:bg-white rounded-lg transition">
-                  <div className="bg-sky-50 text-blue-600 p-2 rounded-lg"><CalendarDays size={18} /></div>
+                  <div className="bg-primary-50 text-primary-600 p-2 rounded-lg"><CalendarDays size={18} /></div>
                   <div className="flex-1">
                     <p className="font-medium text-slate-800">{l.leaveTypeName || "Leave"}</p>
                     <p className="text-sm text-slate-500">
@@ -182,7 +182,7 @@ const EmployeeDashboard = () => {
                 </div>
               ))}
               {upcomingLeaves.length === 0 && (
-                <div className="text-center py-5 text-gray-400 text-sm">No upcoming leave.</div>
+                <div className="text-center py-5 text-slate-400 text-sm">No upcoming leave.</div>
               )}
             </div>
           </div>
@@ -203,14 +203,14 @@ const EmployeeDashboard = () => {
                 onClick={() => n.link && navigate(n.link)}
                 className={`flex items-start gap-3 p-3 hover:bg-white/70 rounded-lg transition ${n.link ? "cursor-pointer hover:shadow-xs" : ""}`}
               >
-                <CheckCircle2 className={`${(n.isRead ?? n.seen ?? n.read) ? "text-gray-300" : "text-rose-500"} mt-1 flex-shrink-0`} size={20} />
+                <CheckCircle2 className={`${(n.isRead ?? n.seen ?? n.read) ? "text-slate-300" : "text-rose-500"} mt-1 flex-shrink-0`} size={20} />
                 <div className="flex-1 min-w-0">
                   <p className="font-medium text-slate-800">{n.title}</p>
-                  <p className="text-sm text-gray-500">{n.message}</p>
+                  <p className="text-sm text-slate-500">{n.message}</p>
                   <div className="flex items-center gap-2 mt-1">
-                    <p className="text-xs text-gray-400">{n.createdAt ? n.createdAt.replace("T", " ").substring(0, 16) : ""}</p>
+                    <p className="text-xs text-slate-400">{n.createdAt ? n.createdAt.replace("T", " ").substring(0, 16) : ""}</p>
                     {n.link && (
-                      <span className="text-xs font-semibold text-sky-600 hover:underline">
+                      <span className="text-xs font-semibold text-primary-600 hover:underline">
                         Open →
                       </span>
                     )}
@@ -219,7 +219,7 @@ const EmployeeDashboard = () => {
               </div>
             ))}
             {notifications.length === 0 && (
-              <div className="text-center py-5 text-gray-400 text-sm">
+              <div className="text-center py-5 text-slate-400 text-sm">
                 No recent notifications.
               </div>
             )}
