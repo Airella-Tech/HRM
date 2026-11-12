@@ -161,10 +161,10 @@ const NAV = {
     },
 
     {
-      name: "Evaluation Review",
-      icon: CheckCircle2,
-      path: "/recruitment/evaluation-review",
-      requiresAny: ["INTERVIEW_DECIDE", "INTERVIEW_SCHEDULE"],
+     name: "Interview Evaluation Review",
+     icon: CheckCircle2,
+     path: "/recruitment/evaluation-review",
+     requiresAny: ["INTERVIEW_DECIDE", "INTERVIEW_SCHEDULE"],
     },
 
     // Job Offers
@@ -182,14 +182,13 @@ const NAV = {
       path: "/recruitment/roles-permissions",
       requiresAny: ["RECRUITMENT_ROLE_ADMIN", "MANAGE_ROLES_PERMISSIONS"],
     },
-    // Audit trail (HR Manager / Admin only)
-    {
-      name: "Audit Log",
-      icon: Activity,
-      path: "/recruitment/audit-log",
-      requiresAny: [],
-      requiresFullAccess: true,
-    },
+    // Audit trail (needs AUDIT_VIEW, or full access)
+{
+  name: "Audit Log",
+  icon: Activity,
+  path: "/recruitment/audit-log",
+  requiresAny: ["AUDIT_VIEW"],
+},
   ],
 };
 
@@ -255,6 +254,7 @@ let savedNavScroll = 0;
 export const PageLayout = ({
   role = "employee",
   activePage,
+  activeNav,
   title,
   subtitle,
   actions,
@@ -438,8 +438,9 @@ export const PageLayout = ({
               item.path && !location.search && itemBase === currentBase,
             );
 
-            const isActive =
-              exactUrlMatches ||
+              const isActive = activeNav
+     ? item.name === activeNav
+     : exactUrlMatches ||
               (nameMatches &&
                 (location.search
                   ? exactUrlMatches
