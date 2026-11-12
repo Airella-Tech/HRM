@@ -73,7 +73,7 @@ const invitationStyle = {
 };
 
 const statusStyle = {
-  Scheduled: "bg-primary-50 text-primary-700 ring-primary-200",
+  Scheduled: "bg-blue-50 text-blue-700 ring-blue-200",
   Completed: "bg-green-50 text-green-700 ring-green-200",
   Pending: "bg-amber-50 text-amber-700 ring-amber-200",
   Cancelled: "bg-red-50 text-red-700 ring-red-200",
@@ -1357,7 +1357,7 @@ export default function RecruitmentInterviews() {
       CalendarDays,
       "bg-primary-50 text-primary-600",
     ],
-    ["Scheduled", stats.scheduled, CalendarCheck, "bg-primary-50 text-primary-600"],
+    ["Scheduled", stats.scheduled, CalendarCheck, "bg-blue-50 text-blue-600"],
     ["Completed", stats.completed, CheckCircle2, "bg-green-50 text-green-600"],
     ["Pending", stats.pending, Clock3, "bg-amber-50 text-amber-600"],
   ];
@@ -1367,39 +1367,30 @@ export default function RecruitmentInterviews() {
       role="recruiter"
       activePage="Interviews"
       title="Interview Scheduling"
-      subtitle="Schedule, track, and manage candidate interviews"
       actions={
         <div className="flex flex-wrap items-center gap-2">
           <button
-            onClick={loadInterviews}
-            disabled={loading}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-slate-200 bg-white text-slate-700 text-sm font-semibold hover:bg-slate-50 disabled:opacity-60"
-          >
-            <RefreshCw size={16} className={loading ? "animate-spin" : ""} />
-            Refresh
-          </button>
-          <button
             onClick={() => navigate("/recruiter/interview-emails")}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-slate-200 bg-white text-slate-700 text-sm font-semibold hover:bg-slate-50"
+            className="rounded-xl border border-primary-200 bg-primary-50 px-3 py-3 text-sm font-semibold text-primary-700 hover:bg-primary-100"
           >
-            <Mail size={16} />
+            <Mail className="mr-2 inline" size={16} />
             Interview Emails
           </button>
           <button
             onClick={() => navigate("/recruitment/shortlisted-candidates")}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-primary-600 hover:bg-primary-700 text-white text-sm font-semibold shadow-sm"
+            className="rounded-xl bg-primary-600 px-3 py-3 text-sm font-semibold text-white hover:bg-primary-700"
           >
-            <CalendarCheck size={16} />
+            <CalendarCheck className="mr-2 inline" size={16} />
             Schedule Interview
           </button>
         </div>
       }
     >
-      <div>
+      <div className="min-h-screen bg-slate-50 p-4 sm:p-6 lg:p-8">
         {notice && (
           <div
             role="status"
-            className="mb-4 flex items-start justify-between gap-3 rounded-xl border border-primary-200 bg-primary-50 px-4 py-3 text-sm text-primary-800"
+            className="mb-4 flex items-start justify-between gap-3 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800"
           >
             <span>{notice}</span>
             <button onClick={() => setNotice("")} aria-label="Dismiss notice">
@@ -1408,19 +1399,23 @@ export default function RecruitmentInterviews() {
           </div>
         )}
 
-        {loading && (
-          <div className="mb-4 text-sm text-slate-500">
-            Loading interviews...
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+          <div className="text-sm text-slate-500">
+            {loading
+              ? "Loading interviews..."
+              : backendConnected
+                ? " "
+                : "Backend unavailable — no sample data shown"}
           </div>
-        )}
-        {!loading && !backendConnected && (
-          <div
-            role="alert"
-            className="mb-4 px-4 py-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm font-medium"
+          <button
+            onClick={loadInterviews}
+            disabled={loading}
+            className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 disabled:opacity-50"
           >
-            Backend unavailable — no sample data shown
-          </div>
-        )}
+            <RefreshCw size={16} className={loading ? "animate-spin" : ""} />
+            Refresh
+          </button>
+        </div>
 
         <div className="mb-7 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
           {statCards.map(([label, value, Icon, style]) => (
@@ -1811,7 +1806,7 @@ export default function RecruitmentInterviews() {
                 </span>
                 <span>
                   {backendConnected
-                    ? "Backend interview records"
+                    ? " "
                     : "Backend unavailable — no sample data shown"}
                 </span>
               </div>

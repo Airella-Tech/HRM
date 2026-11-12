@@ -114,7 +114,7 @@ const Payslip = () => {
     const onFocus = () => loadPayslips(true);
     window.addEventListener("focus", onFocus);
     return () => window.removeEventListener("focus", onFocus);
-  }, [user]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [user]);
 
   const handleDownload = (p) => printPayslip(p, user, {
     department: paySheet?.departmentName,
@@ -205,10 +205,10 @@ const Payslip = () => {
         {/* Summary cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5">
           {[
-            { label: "Last Salary",   value: `Rs. ${lastNet.toLocaleString()}`, icon: <CreditCard size={20} />, tone: CARD_TONES.blue, sub: latest ? `${getMonthName(latest.month)} ${latest.year}` : "No payslip yet" },
-            { label: "Avg. Monthly",  value: `Rs. ${avgNet.toLocaleString()}`, icon: <TrendingUp size={20} />, tone: CARD_TONES.green, sub: payslips.length ? `Across ${payslips.length} payslip${payslips.length === 1 ? "" : "s"}` : "No payslip yet" },
-            { label: "Total Earnings",  value: `Rs. ${ytdNet.toLocaleString()}`, icon: <DollarSign size={20} />, tone: CARD_TONES.yellow, sub: `Net pay in ${thisYear}` },
-            { label: "Total Payslips",value: payslips.length, icon: <FileText size={20} />, tone: CARD_TONES.purple, sub: "Available" },
+            { label: "Last Salary", value: `Rs. ${lastNet.toLocaleString()}`, icon: <CreditCard size={20} />, tone: CARD_TONES.blue, sub: latest ? `${getMonthName(latest.month)} ${latest.year}` : "No payslip yet" },
+            { label: "Avg. Monthly", value: `Rs. ${avgNet.toLocaleString()}`, icon: <TrendingUp size={20} />, tone: CARD_TONES.green, sub: payslips.length ? `Across ${payslips.length} payslip${payslips.length === 1 ? "" : "s"}` : "No payslip yet" },
+            { label: "Total Earnings", value: `Rs. ${ytdNet.toLocaleString()}`, icon: <DollarSign size={20} />, tone: CARD_TONES.yellow, sub: `Net pay in ${thisYear}` },
+            { label: "Total Payslips", value: payslips.length, icon: <FileText size={20} />, tone: CARD_TONES.purple, sub: "Available" },
           ].map(s => (
             <SummaryCard key={s.label} icon={s.icon} title={s.label} value={s.value} description={s.sub} className={s.tone} />
           ))}
@@ -254,7 +254,7 @@ const Payslip = () => {
                   <h3 className="text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-3">Earnings</h3>
                   <div className="space-y-2">
                     {[["Basic Salary", paySheet.basicSalary], ["Job Role Allowance", paySheet.roleAllowance],
-                      ...(paySheet.additionalItems || []).filter(i => i.type === "ALLOWANCE").map(i => [i.name, i.amount])].map(([l, v], idx) => (
+                    ...(paySheet.additionalItems || []).filter(i => i.type === "ALLOWANCE").map(i => [i.name, i.amount])].map(([l, v], idx) => (
                       <div key={`${l}-${idx}`} className="flex justify-between py-2 border-b border-slate-100">
                         <span className="text-slate-600">{l}</span><span className="font-semibold">Rs. {money(v)}</span>
                       </div>
@@ -268,7 +268,7 @@ const Payslip = () => {
                   <h3 className="text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-3">Deductions</h3>
                   <div className="space-y-2">
                     {[["Job Role Deduction", paySheet.roleDeduction],
-                      ...(paySheet.additionalItems || []).filter(i => i.type === "DEDUCTION").map(i => [i.name, i.amount])].map(([l, v], idx) => (
+                    ...(paySheet.additionalItems || []).filter(i => i.type === "DEDUCTION").map(i => [i.name, i.amount])].map(([l, v], idx) => (
                       <div key={`${l}-${idx}`} className="flex justify-between py-2 border-b border-slate-100">
                         <span className="text-slate-600">{l}</span><span className="font-semibold">Rs. {money(v)}</span>
                       </div>
@@ -389,7 +389,7 @@ const Payslip = () => {
                   ["Designation", paySheet?.designation],
                   ["Days Present", viewingPayslip.presentDays != null ? `${viewingPayslip.presentDays} of ${viewingPayslip.workingDays ?? "—"}` : null],
                   ["Status", viewingPayslip.status || "PAID"]
-                ].map(([l,v]) => (
+                ].map(([l, v]) => (
                   <div key={l}><p className="text-slate-400 text-xs">{l}</p><p className="font-semibold text-slate-800">{v || "N/A"}</p></div>
                 ))}
               </div>

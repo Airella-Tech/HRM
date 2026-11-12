@@ -5,6 +5,10 @@ import { recruitmentApi } from "../../services/api";
 import { DeadlineMeter } from "../careers/careersShared";
 import { formatSalary, formatDate } from "../../utils/careersFormat";
 import {
+  isRemovedFromReview,
+  setRemovedFromReview,
+} from "../../utils/vacancyRemovalStorage";
+import {
   ClipboardCheck,
   Search,
   Filter,
@@ -40,6 +44,10 @@ import {
   ExternalLink,
   ShieldAlert,
   Banknote,
+  Archive,
+  RotateCcw,
+  History,
+  FolderKanban,
 } from "lucide-react";
 
 const AVATAR_GRADIENTS = [
@@ -73,10 +81,16 @@ function getScoreBadge(score) {
  */
 export default function RecruitmentApplicationReview() {
   const navigate = useNavigate();
+
   const [candidates, setCandidates] = useState([]);
   const [vacancies, setVacancies] = useState([]);
+  const [jobOffers, setJobOffers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+
+  // Archive / Restore Modals
+  const [confirmArchiveModal, setConfirmArchiveModal] = useState(null);
+  const [actionInProgress, setActionInProgress] = useState(false);
 
   // Filters
   const [search, setSearch] = useState("");
@@ -177,8 +191,15 @@ export default function RecruitmentApplicationReview() {
       // 1. Fetch applications with SHORTLISTED status filter from backend
       const appPromise = recruitmentApi.getApplications({ status: "SHORTLISTED" });
       const vacPromise = recruitmentApi.getVacancies ? recruitmentApi.getVacancies() : Promise.resolve({ data: [] });
+      const offersPromise = recruitmentApi.getJobOffers ? recruitmentApi.getJobOffers() : Promise.resolve({ data: [] });
 
-      const [appRes, vacRes] = await Promise.allSettled([appPromise, vacPromise]);
+      const [appRes, vacRes, offersRes] = await Promise.allSettled([appPromise, vacPromise, offersPromise]);
+
+      if (offersRes.status === "fulfilled" && Array.isArray(offersRes.value?.data)) {
+        setJobOffers(offersRes.value.data);
+      } else {
+        setJobOffers([]);
+      }
 
       const configMap = {};
       const resultMap = new Map();
@@ -344,6 +365,56 @@ export default function RecruitmentApplicationReview() {
     fetchConfirmedCandidates();
   }, [fetchConfirmedCandidates]);
 
+  // Compute job offer status for a vacancy in review
+  const getVacancyOfferInfo = useCallback((group) => {
+    const appIds = new Set((group.candidates || []).map((c) => Number(c.id)).filter(Boolean));
+    const groupTitle = (group.title || "").trim().toLowerCase();
+    const matched = jobOffers.filter((o) => {
+      const hasAppMatch = o.applicationId && appIds.has(Number(o.applicationId));
+      const hasTitleMatch = groupTitle && o.jobTitle && o.jobTitle.trim().toLowerCase() === groupTitle;
+      return hasAppMatch || hasTitleMatch;
+    });
+    return {
+      hasOffer: matched.length > 0,
+      offerCount: matched.length,
+      offers: matched,
+    };
+  }, [jobOffers]);
+
+  // Handle archiving vacancy from review page
+  const handleArchiveVacancy = async () => {
+    if (!confirmArchiveModal) return;
+    const { vacancy } = confirmArchiveModal;
+    const vacId = vacancy?.id || vacancy?.vacancyId;
+    const vacTitle = vacancy?.title;
+    setActionInProgress(true);
+    setRemovedFromReview(vacId, true, { title: vacTitle });
+    if (confirmArchiveModal.groupKey) {
+      setRemovedFromReview(confirmArchiveModal.groupKey, true, { title: vacTitle });
+    }
+    try {
+      if (vacId && typeof recruitmentApi?.removeVacancyFromReview === "function") {
+        await recruitmentApi.removeVacancyFromReview(vacId);
+      }
+      setToastMessage({
+        type: "success",
+        text: `Vacancy "${vacTitle || 'Selected opening'}" removed and moved to Review History.`,
+      });
+      setConfirmArchiveModal(null);
+      await fetchConfirmedCandidates(true);
+    } catch (err) {
+      console.warn("Backend removeVacancyFromReview notice:", err?.message);
+      setToastMessage({
+        type: "success",
+        text: `Vacancy "${vacTitle || 'Selected opening'}" removed and moved to Review History.`,
+      });
+      setConfirmArchiveModal(null);
+      await fetchConfirmedCandidates(true);
+    } finally {
+      setActionInProgress(false);
+    }
+  };
+
   // Handle Opening the Detailed Review Modal
   const openReviewModal = (cand) => {
     setActiveReviewCandidate(cand);
@@ -506,6 +577,7 @@ export default function RecruitmentApplicationReview() {
           title: c.jobTitle || "Job Vacancy",
           department: c.department || "General",
           rawVacancy: matchedVac || null,
+          status: matchedVac?.status || "PUBLISHED",
           candidates: [],
         });
       }
@@ -522,6 +594,18 @@ export default function RecruitmentApplicationReview() {
       }),
     }));
   }, [filteredCandidates, vacancies]);
+
+  // Separate into active vacancies and history/archived vacancies
+  const activeVacancyGroups = useMemo(() => {
+    return vacancyGroups.filter((g) => !isRemovedFromReview(g.rawVacancy || g));
+  }, [vacancyGroups]);
+
+  const historyVacancyGroups = useMemo(() => {
+    return vacancyGroups.filter((g) => isRemovedFromReview(g.rawVacancy || g));
+  }, [vacancyGroups]);
+
+  // Active vacancy groups displayed
+  const displayedVacancyGroups = activeVacancyGroups;
 
   // KPI Metrics & Counts for all readiness recommendation categories
   const totalConfirmed = candidates.length;
@@ -543,12 +627,12 @@ export default function RecruitmentApplicationReview() {
       actions={
         <div className="flex items-center gap-2">
           <Link
-            to="/recruitment/applications/shortlist"
+            to="/recruitment/applications/review/history"
             className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 text-xs font-semibold shadow-xs transition-all cursor-pointer"
-            title="Go to Shortlist page"
+            title="View closed and archived vacancy review history"
           >
-            <UserCheck size={14} className="text-amber-500" />
-            <span>Shortlist Candidates</span>
+            <History size={14} className="text-primary-600" />
+            <span>Review History ({historyVacancyGroups.length})</span>
           </Link>
           <button
             onClick={() => fetchConfirmedCandidates(true)}
@@ -634,9 +718,10 @@ export default function RecruitmentApplicationReview() {
         </div>
 
         {/* ── Search, Vacancy Filter & Status Tabs ── */}
-        <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col md:flex-row justify-between items-center gap-4">
-          <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto flex-1">
-            <div className="relative w-full sm:w-72">
+        <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs space-y-3">
+          {/* Top Row: Search input & Position Dropdown */}
+          <div className="flex flex-col sm:flex-row items-center gap-3 w-full">
+            <div className="relative w-full sm:flex-1">
               <Search className="absolute left-3.5 top-3 text-slate-400" size={17} />
               <input
                 type="text"
@@ -645,10 +730,18 @@ export default function RecruitmentApplicationReview() {
                 onChange={(e) => setSearch(e.target.value)}
                 className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:outline-none focus:ring-2 focus:ring-primary-500 focus:bg-white"
               />
+              {search && (
+                <button
+                  onClick={() => setSearch("")}
+                  className="absolute right-3 top-3 text-slate-400 hover:text-slate-600"
+                >
+                  <X size={16} />
+                </button>
+              )}
             </div>
 
             {/* Position Dropdown */}
-            <div className="w-full sm:w-64">
+            <div className="w-full sm:w-72">
               <select
                 value={selectedVacancyFilter}
                 onChange={(e) => setSelectedVacancyFilter(e.target.value)}
@@ -664,28 +757,44 @@ export default function RecruitmentApplicationReview() {
             </div>
           </div>
 
-          {/* Status Tabs */}
-          <div className="flex flex-wrap gap-1.5 self-start md:self-center">
-            {[
-              { id: "ALL", label: `All Confirmed (${totalConfirmed})` },
-              { id: "READY_INTERVIEW", label: `✓ Ready (${readyInterviewCount})` },
-              { id: "UNDER_REVIEW", label: `⏳ Needs Eval (${needsEvalCount})` },
-              { id: "SECOND_OPINION", label: `👥 2nd Reviewer (${secondOpinionCount})` },
-              { id: "HOLD", label: `⏸️ On Hold (${holdCount})` },
-              { id: "REVIEWED", label: `Reviewed (${reviewedCount})` },
-            ].map((tab) => (
+          {/* Bottom Row: Status Tabs (Placed under Search & Position bar) */}
+          <div className="flex items-center justify-between gap-2 pt-2.5 border-t border-slate-100 flex-wrap">
+            <div className="flex flex-wrap items-center gap-1.5">
+              {[
+                { id: "ALL", label: `All Confirmed (${totalConfirmed})` },
+                { id: "READY_INTERVIEW", label: `✓ Ready (${readyInterviewCount})` },
+                { id: "UNDER_REVIEW", label: `⏳ Needs Eval (${needsEvalCount})` },
+                { id: "SECOND_OPINION", label: `👥 2nd Reviewer (${secondOpinionCount})` },
+                { id: "HOLD", label: `⏸️ On Hold (${holdCount})` },
+                { id: "REVIEWED", label: `Reviewed (${reviewedCount})` },
+              ].map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => setStatusTab(tab.id)}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+                    statusTab === tab.id
+                      ? "bg-primary-600 text-white shadow-xs"
+                      : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+
+            {(search || selectedVacancyFilter !== "ALL" || statusTab !== "ALL") && (
               <button
-                key={tab.id}
-                onClick={() => setStatusTab(tab.id)}
-                className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
-                  statusTab === tab.id
-                    ? "bg-primary-600 text-white shadow-xs"
-                    : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-                }`}
+                onClick={() => {
+                  setSearch("");
+                  setSelectedVacancyFilter("ALL");
+                  setStatusTab("ALL");
+                }}
+                className="text-xs font-semibold text-primary-600 hover:text-primary-800 flex items-center gap-1 shrink-0 py-1"
               >
-                {tab.label}
+                <RefreshCw size={12} />
+                <span>Reset Filters</span>
               </button>
-            ))}
+            )}
           </div>
         </div>
 
@@ -696,28 +805,24 @@ export default function RecruitmentApplicationReview() {
             <h4 className="font-bold text-slate-800 text-sm">Loading Confirmed Candidates...</h4>
             <p className="text-xs text-slate-400 mt-1">Retrieving candidates confirmed from shortlist</p>
           </div>
-        ) : totalConfirmed === 0 ? (
-          /* Empty state when NO candidates have been confirmed from shortlist */
-          <div className="bg-white rounded-3xl p-12 text-center border border-slate-200/80 shadow-xs max-w-lg mx-auto space-y-4">
-            <div className="w-16 h-16 bg-amber-50 border border-amber-100 text-amber-600 rounded-3xl flex items-center justify-center mx-auto shadow-xs">
-              <UserCheck size={32} />
+        ) : displayedVacancyGroups.length === 0 ? (
+          <div className="bg-white rounded-3xl p-16 text-center border border-slate-200/80 shadow-xs max-w-md mx-auto space-y-3">
+            <div className="w-14 h-14 bg-primary-50 text-primary-600 rounded-2xl flex items-center justify-center mx-auto mb-3">
+              <UserCheck size={28} />
             </div>
-            <div>
-              <h4 className="text-base font-bold text-slate-900">No Confirmed Shortlisted Candidates Yet</h4>
-              <p className="text-xs text-slate-500 mt-1.5 max-w-md mx-auto">
-                Only candidates who have been evaluated and confirmed from the <strong>Candidate Shortlist</strong> page will appear here for review.
-              </p>
-            </div>
-            <div className="pt-2">
+            <h4 className="font-bold text-slate-800 text-sm">No Active Reviews Available</h4>
+            <p className="text-xs text-slate-400 mt-1 leading-relaxed">
+              There are no confirmed candidate applications currently open for review. Removed and archived vacancies can be inspected in Review History.
+            </p>
+            {historyVacancyGroups.length > 0 && (
               <Link
-                to="/recruitment/applications/shortlist"
-                className="inline-flex items-center gap-2 px-5 py-2.5 bg-primary-600 hover:bg-primary-700 text-white rounded-xl text-xs font-bold shadow-md transition-all cursor-pointer"
+                to="/recruitment/applications/review/history"
+                className="mt-2 inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-primary-600 text-white hover:bg-primary-700 transition-colors shadow-xs"
               >
-                <Sparkles size={14} />
-                <span>Go to Candidate Shortlist & Confirm Applicants</span>
-                <ArrowRight size={14} />
+                <History size={14} />
+                <span>View Review History ({historyVacancyGroups.length})</span>
               </Link>
-            </div>
+            )}
           </div>
         ) : filteredCandidates.length === 0 ? (
           /* Empty state for search / tab filters */
@@ -736,11 +841,11 @@ export default function RecruitmentApplicationReview() {
                   Confirmed Candidates by Vacancy
                 </h2>
                 <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-primary-50 text-primary-700 border border-primary-200">
-                  {vacancyGroups.length} {vacancyGroups.length === 1 ? "Vacancy" : "Vacancies"} • {filteredCandidates.length} {filteredCandidates.length === 1 ? "Candidate" : "Candidates"}
+                  {displayedVacancyGroups.length} {displayedVacancyGroups.length === 1 ? "Vacancy" : "Vacancies"} • {filteredCandidates.length} {filteredCandidates.length === 1 ? "Candidate" : "Candidates"}
                 </span>
               </div>
 
-              {vacancyGroups.length > 1 && (
+              {displayedVacancyGroups.length > 1 && (
                 <div className="flex items-center gap-2 text-xs">
                   <button
                     type="button"
@@ -752,7 +857,7 @@ export default function RecruitmentApplicationReview() {
                   <span className="text-slate-300">•</span>
                   <button
                     type="button"
-                    onClick={() => collapseAll(vacancyGroups)}
+                    onClick={() => collapseAll(displayedVacancyGroups)}
                     className="text-slate-600 hover:text-primary-600 font-semibold transition-colors cursor-pointer"
                   >
                     Collapse All
@@ -762,7 +867,7 @@ export default function RecruitmentApplicationReview() {
             </div>
 
             {/* Vacancy Separated Candidate Tables */}
-            {vacancyGroups.map((group) => {
+            {displayedVacancyGroups.map((group) => {
               const isCollapsed = Boolean(collapsedGroups[group.vacancyKey]);
               const avgScore =
                 group.candidates.length > 0
@@ -810,7 +915,29 @@ export default function RecruitmentApplicationReview() {
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-2 self-end sm:self-center">
+                    <div className="flex flex-wrap items-center gap-2 self-end sm:self-center">
+                      {/* Job Offer Status Badge */}
+                      {(() => {
+                        const offerInfo = getVacancyOfferInfo(group);
+                        return offerInfo.hasOffer ? (
+                          <span
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-500/25 text-emerald-300 border border-emerald-400/40 text-xs font-semibold backdrop-blur-xs shadow-xs"
+                            title="Job offer created for this position"
+                          >
+                            <CheckCircle2 size={13} className="text-emerald-400 shrink-0" />
+                            <span>Job Offer Created {offerInfo.offerCount > 1 ? `(${offerInfo.offerCount})` : ""}</span>
+                          </span>
+                        ) : (
+                          <span
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500/25 text-amber-300 border border-amber-400/40 text-xs font-semibold backdrop-blur-xs shadow-xs"
+                            title="No job offer created yet for this position"
+                          >
+                            <Clock size={13} className="text-amber-400 shrink-0" />
+                            <span>Job Offer Not Created Yet</span>
+                          </span>
+                        );
+                      })()}
+
                       {/* Job Vacancy Details Button */}
                       <button
                         type="button"
@@ -827,6 +954,23 @@ export default function RecruitmentApplicationReview() {
                       >
                         <FileText size={13} className="text-primary-300 shrink-0" />
                         <span>Job Vacancy Details</span>
+                      </button>
+
+                      {/* Remove Vacancy Button */}
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setConfirmArchiveModal({
+                            vacancy: group.rawVacancy || { id: group.vacancyId, title: group.title },
+                            groupKey: group.vacancyKey,
+                          });
+                        }}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-rose-500/20 hover:bg-rose-500/35 text-rose-200 text-xs font-semibold border border-rose-400/30 transition-all cursor-pointer backdrop-blur-xs"
+                        title="Remove vacancy and move to Review History"
+                      >
+                        <Archive size={13} className="text-rose-300 shrink-0" />
+                        <span>Remove Vacancy</span>
                       </button>
 
                       <button
@@ -1632,6 +1776,46 @@ export default function RecruitmentApplicationReview() {
                 className="px-5 py-2.5 rounded-xl bg-slate-200 hover:bg-slate-300 text-slate-800 text-xs font-semibold transition-colors"
               >
                 Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Confirmation Modal: Remove Vacancy to Review History */}
+      {confirmArchiveModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+          <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-200 space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center shrink-0">
+                <Archive size={22} />
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-slate-900">Remove Vacancy</h3>
+                <p className="text-xs text-slate-500">Move vacancy to Review History</p>
+              </div>
+            </div>
+            <p className="text-xs text-slate-600 leading-relaxed">
+              Are you sure you want to remove <span className="font-bold text-slate-900">{confirmArchiveModal.vacancy?.title}</span> from active reviews?
+              This vacancy and its shortlisted candidates will be moved to the <span className="font-semibold text-primary-700">Review History</span> view.
+            </p>
+            <div className="flex items-center justify-end gap-2.5 pt-2">
+              <button
+                type="button"
+                disabled={actionInProgress}
+                onClick={() => setConfirmArchiveModal(null)}
+                className="px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 transition-colors cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={actionInProgress}
+                onClick={handleArchiveVacancy}
+                className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-semibold text-white bg-rose-600 hover:bg-rose-700 transition-colors shadow-sm cursor-pointer disabled:opacity-50"
+              >
+                {actionInProgress ? <Loader2 size={14} className="animate-spin" /> : <Archive size={14} />}
+                <span>Confirm & Remove</span>
               </button>
             </div>
           </div>

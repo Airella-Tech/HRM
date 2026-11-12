@@ -1,4 +1,4 @@
-﻿/**
+/**
  * ============================================================
  *  HRM Frontend â€” Centralized API Service
  * ============================================================
@@ -614,6 +614,13 @@ export const recruitmentApi = {
   rejectVacancy: (id, reason) => request("POST", `${RECRUITMENT_URL}/recruitment/jobs/${id}/reject`, { reason }),
     publishVacancy: (id) => request("POST", `${RECRUITMENT_URL}/recruitment/jobs/${id}/publish`),
   closeVacancy: (id) => request("POST", `${RECRUITMENT_URL}/recruitment/jobs/${id}/close`),
+  // Recruitment After-Process Vacancy Removal & Restoration
+  removeVacancyFromApplications: (id) => request("POST", `${RECRUITMENT_URL}/recruitment/jobs/${id}/remove-applications`),
+  restoreVacancyToApplications: (id) => request("POST", `${RECRUITMENT_URL}/recruitment/jobs/${id}/restore-applications`),
+  removeVacancyFromShortlist: (id) => request("POST", `${RECRUITMENT_URL}/recruitment/jobs/${id}/remove-shortlist`),
+  restoreVacancyToShortlist: (id) => request("POST", `${RECRUITMENT_URL}/recruitment/jobs/${id}/restore-shortlist`),
+  removeVacancyFromReview: (id) => request("POST", `${RECRUITMENT_URL}/recruitment/jobs/${id}/remove-review`),
+  restoreVacancyToReview: (id) => request("POST", `${RECRUITMENT_URL}/recruitment/jobs/${id}/restore-review`),
 
   // ── Applications & Candidate Management (Member 2) ──
   getApplications: (params) => {
