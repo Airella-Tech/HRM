@@ -161,7 +161,7 @@ const NAV = {
     },
 
     {
-     name: "Interview Evaluation Review",
+     name: "Evaluation Review",
      icon: CheckCircle2,
      path: "/recruitment/evaluation-review",
      requiresAny: ["INTERVIEW_DECIDE", "INTERVIEW_SCHEDULE"],
@@ -182,14 +182,13 @@ const NAV = {
       path: "/recruitment/roles-permissions",
       requiresAny: ["RECRUITMENT_ROLE_ADMIN", "MANAGE_ROLES_PERMISSIONS"],
     },
-    // Audit trail (HR Manager / Admin only)
-    {
-      name: "Audit Log",
-      icon: Activity,
-      path: "/recruitment/audit-log",
-      requiresAny: [],
-      requiresFullAccess: true,
-    },
+    // Audit trail (needs AUDIT_VIEW, or full access)
+{
+  name: "Audit Log",
+  icon: Activity,
+  path: "/recruitment/audit-log",
+  requiresAny: ["AUDIT_VIEW"],
+},
   ],
 };
 
@@ -426,8 +425,8 @@ export const PageLayout = ({
               (activePage === "Evaluations" &&
                 (item.name === "Evaluate Interviews" ||
                   item.name === "Evaluations")) ||
-              (activePage === "Interview Evaluation Review" &&
-                  item.name === "Interview Evaluation Review") ||
+              (activePage === "Evaluation Review" &&
+                  item.name === "Evaluation Review") ||
               (activePage === "Job Offers" &&
                 (item.name === "Manage Job Offers" ||
                   item.name === "Job Offers"));
