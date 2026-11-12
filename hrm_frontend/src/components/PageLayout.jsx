@@ -10,7 +10,7 @@
  *   actions     : ReactNode — optional topbar right-side actions
  *   children    : ReactNode — page content
  */
-import { useState, useEffect, useRef, useLayoutEffect } from "react";
+import { useState, useEffect, useRef, useLayoutEffect, useMemo } from "react";
 import { useRecruitmentAccess, fetchRecruitmentAccess } from "../utils/useRecruitmentAccess";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
@@ -118,19 +118,19 @@ const NAV = {
       name: "View Applications",
       icon: FileText,
       path: "/recruitment/applications",
-      requiresAny: ["APPLICATION_VIEW", "APPLICATION_SCREEN", "APPLICATION_SHORTLIST", "VIEW_APPLICATIONS"],
+      requiresAny: ["APPLICATION_VIEW", "VIEW_APPLICATIONS", "RESUME_DOWNLOAD", "DOWNLOAD_RESUMES"],
     },
     {
       name: "Review Applications",
       icon: ClipboardCheck,
       path: "/recruitment/applications/review",
-      requiresAny: ["APPLICATION_SCREEN", "REVIEW_APPLICATIONS", "APPLICATION_VIEW"],
+      requiresAny: ["APPLICATION_SCREEN", "REVIEW_APPLICATIONS"],
     },
     {
       name: "Shortlist Candidates",
       icon: UserCheck,
       path: "/recruitment/applications/shortlist",
-      requiresAny: ["APPLICATION_SHORTLIST", "SHORTLIST_CANDIDATES", "APPLICATION_VIEW"],
+      requiresAny: ["APPLICATION_SHORTLIST", "SHORTLIST_CANDIDATES"],
     },
 
     // Interviews & Evaluations
@@ -161,7 +161,7 @@ const NAV = {
     },
 
     {
-     name: "Evaluation Review",
+     name: "Interview Evaluation Review",
      icon: CheckCircle2,
      path: "/recruitment/evaluation-review",
      requiresAny: ["INTERVIEW_DECIDE", "INTERVIEW_SCHEDULE"],
@@ -182,14 +182,13 @@ const NAV = {
       path: "/recruitment/roles-permissions",
       requiresAny: ["RECRUITMENT_ROLE_ADMIN", "MANAGE_ROLES_PERMISSIONS"],
     },
-        // Audit trail (HR Manager / Admin only)
-    {
-      name: "Audit Log",
-      icon: Activity,
-      path: "/recruitment/audit-log",
-      requiresAny: [],
-      requiresFullAccess: true,
-    },
+    // Audit trail (needs AUDIT_VIEW, or full access)
+{
+  name: "Audit Log",
+  icon: Activity,
+  path: "/recruitment/audit-log",
+  requiresAny: ["AUDIT_VIEW"],
+},
   ],
 };
 
@@ -231,7 +230,7 @@ const ACCENT = {
     title: "text-gray-900",
     hover: "hover:bg-gray-100",
   },
-    recruiter: {
+  recruiter: {
     from: "rgba(85,99,176,0.9)",
     to: "rgba(63,77,153,0.8)",
     shadow: "rgba(63,77,153,0.35)",
@@ -241,8 +240,8 @@ const ACCENT = {
     surface: "bg-slate-50",
     sidebarBg: "linear-gradient(180deg, #151a35 0%, #1b2142 100%)",
     activeBg: "rgba(63,77,153,0.45)",
-        activeBorder: "border-primary-300",
-        menuBg: "bg-primary-800",
+    activeBorder: "border-primary-300",
+    menuBg: "bg-primary-800",
     ringClass: "ring-primary-900",
     topbar: "border-primary-100",
     title: "text-slate-900",
@@ -255,13 +254,14 @@ let savedNavScroll = 0;
 export const PageLayout = ({
   role = "employee",
   activePage,
+  activeNav,
   title,
   subtitle,
   actions,
   children,
 }) => {
 
-    // Remember the collapsed/expanded sidebar between pages
+  // Remember the collapsed/expanded sidebar between pages
   const [collapsed, setCollapsed] = useState(() => {
     try {
       return sessionStorage.getItem("sidebar_collapsed") === "1";
@@ -299,13 +299,15 @@ export const PageLayout = ({
   } catch {
     storedRole = undefined;
   }
-  const recruitmentAccess =
-    role !== "recruiter"
-      ? null
-      : sharedAccess ||
-        (storedRole === "ADMIN"
-          ? { fullAccess: true, hasRecruitmentAccess: true, permissions: [] }
-          : null);
+  const recruitmentAccess = useMemo(() => {
+    if (role !== "recruiter") return null;
+    return (
+      sharedAccess ||
+      (storedRole === "ADMIN"
+        ? { fullAccess: true, hasRecruitmentAccess: true, permissions: [] }
+        : null)
+    );
+  }, [role, sharedAccess, storedRole]);
   const navListRef = useRef(null);
 
   useLayoutEffect(() => {
@@ -315,35 +317,35 @@ export const PageLayout = ({
     role !== "recruiter"
       ? NAV[role] || []
       : (NAV.recruiter || []).filter((item) => {
-          // Do not show Recruitment pages until access is confirmed.
-          if (!recruitmentAccess?.hasRecruitmentAccess) {
-            return false;
-          }
+        // Do not show Recruitment pages until access is confirmed.
+        if (!recruitmentAccess?.hasRecruitmentAccess) {
+          return false;
+        }
 
-          // Some pages require full access.
-          if (item.requiresFullAccess) {
-            return recruitmentAccess.fullAccess;
-          }
+        // Some pages require full access.
+        if (item.requiresFullAccess) {
+          return recruitmentAccess.fullAccess;
+        }
 
-          // Everyone with recruitment access can see Overview.
-          if (item.name === "Overview") {
-            return true;
-          }
+        // Everyone with recruitment access can see Overview.
+        if (item.name === "Overview") {
+          return true;
+        }
 
-          // Full-access users can see all other Recruitment pages.
-          if (recruitmentAccess.fullAccess) {
-            return true;
-          }
+        // Full-access users can see all other Recruitment pages.
+        if (recruitmentAccess.fullAccess) {
+          return true;
+        }
 
-          // Show the page if no specific permission is required,
-          // or if the user has at least one required permission.
-          return (
-            !item.requiresAny?.length ||
-            item.requiresAny.some((permission) =>
-              recruitmentAccess.permissions.includes(permission),
-            )
-          );
-        });
+        // Show the page if no specific permission is required,
+        // or if the user has at least one required permission.
+        return (
+          !item.requiresAny?.length ||
+          item.requiresAny.some((permission) =>
+            recruitmentAccess.permissions.includes(permission),
+          )
+        );
+      });
 
   const storedUser = localStorage.getItem("user");
   const user = storedUser ? JSON.parse(storedUser) : {};
@@ -392,8 +394,8 @@ export const PageLayout = ({
 
         {/* Nav items */}
         <ul ref={navListRef}
-  onScroll={(e) => { savedNavScroll = e.currentTarget.scrollTop; }} className="flex-1 min-h-0 py-4 pb-8 space-y-1 px-3 overflow-y-auto overflow-x-hidden [scrollbar-width:thin] [scrollbar-color:rgba(255,255,255,0.18)_transparent] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-white/20 [&::-webkit-scrollbar-track]:bg-transparent">
-                  {role === "recruiter" &&
+          onScroll={(e) => { savedNavScroll = e.currentTarget.scrollTop; }} className="flex-1 min-h-0 py-4 pb-8 space-y-1 px-3 overflow-y-auto overflow-x-hidden [scrollbar-width:thin] [scrollbar-color:rgba(255,255,255,0.18)_transparent] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-white/20 [&::-webkit-scrollbar-track]:bg-transparent">
+          {role === "recruiter" &&
             !recruitmentAccess &&
             [0, 1, 2, 3, 4].map((i) => (
               <li key={i} className="h-11 rounded-xl bg-white/5 animate-pulse" />
@@ -423,8 +425,8 @@ export const PageLayout = ({
               (activePage === "Evaluations" &&
                 (item.name === "Evaluate Interviews" ||
                   item.name === "Evaluations")) ||
-              (activePage === "Evaluation Review" &&
-                  item.name === "Evaluation Review") ||
+              (activePage === "Interview Evaluation Review" &&
+                  item.name === "Interview Evaluation Review") ||
               (activePage === "Job Offers" &&
                 (item.name === "Manage Job Offers" ||
                   item.name === "Job Offers"));
@@ -436,8 +438,9 @@ export const PageLayout = ({
               item.path && !location.search && itemBase === currentBase,
             );
 
-            const isActive =
-              exactUrlMatches ||
+              const isActive = activeNav
+     ? item.name === activeNav
+     : exactUrlMatches ||
               (nameMatches &&
                 (location.search
                   ? exactUrlMatches
@@ -445,13 +448,12 @@ export const PageLayout = ({
               (baseUrlMatches && !navItems.some((n) => n.name === activePage));
             return (
               <li key={item.name}>
-                                                <button
+                <button
                   onClick={() => (item.path ? navigate(item.path) : null)}
                   className={`relative flex items-center gap-3 w-full px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200
-                    ${
-                      accent.activeBorder
-                        ? `border-l-[3px] ${isActive ? accent.activeBorder : "border-transparent"}`
-                        : ""
+                    ${accent.activeBorder
+                      ? `border-l-[3px] ${isActive ? accent.activeBorder : "border-transparent"}`
+                      : ""
                     }
                     ${isActive ? "text-white" : "text-gray-400 hover:text-white hover:bg-white/10"}
                     ${collapsed ? "justify-center px-0" : ""}`}
@@ -460,9 +462,9 @@ export const PageLayout = ({
                       ? accent.activeBg
                         ? { backgroundColor: accent.activeBg }
                         : {
-                            background: `linear-gradient(135deg, ${accent.from}, ${accent.to})`,
-                            boxShadow: `0 2px 12px ${accent.shadow}`,
-                          }
+                          background: `linear-gradient(135deg, ${accent.from}, ${accent.to})`,
+                          boxShadow: `0 2px 12px ${accent.shadow}`,
+                        }
                       : {}
                   }
                   title={collapsed ? item.name : undefined}
@@ -475,11 +477,11 @@ export const PageLayout = ({
           })}
         </ul>
         <div className="pointer-events-none h-6 -mt-6 shrink-0" style={{ background: "linear-gradient(to top, #1b2142, transparent)" }} />
-       
 
-               {/* User + logout */}
+
+        {/* User + logout */}
         <div className="border-t border-white/10 p-3 space-y-2 flex-shrink-0">
-                    {role === "hr" || role === "employee" || role === "recruiter" ? (
+          {role === "hr" || role === "employee" || role === "recruiter" ? (
             <UserMenu
               mode={
                 role === "hr"
@@ -537,7 +539,7 @@ export const PageLayout = ({
               </p>
             )}
           </div>
-                           <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3">
             {actions}
             <button
               onClick={() => setIsNotificationsOpen((v) => !v)}

@@ -41,8 +41,11 @@ import AdminSystemConfig from "./Pages/admin/SystemConfig.jsx";
 import RecruitmentDashboard from "./Pages/recruitment/Dashboard.jsx";
 import RecruitmentVacancies from "./Pages/recruitment/Vacancies.jsx";
 import RecruitmentApplications from "./Pages/recruitment/Applications.jsx";
+import RecruitmentApplicationsHistory from "./Pages/recruitment/ApplicationsHistory.jsx";
 import RecruitmentApplicationReview from "./Pages/recruitment/ApplicationReview.jsx";
+import RecruitmentApplicationReviewHistory from "./Pages/recruitment/ApplicationReviewHistory.jsx";
 import RecruitmentCandidateShortlist from "./Pages/recruitment/CandidateShortlist.jsx";
+import RecruitmentCandidateShortlistHistory from "./Pages/recruitment/CandidateShortlistHistory.jsx";
 import RecruitmentCandidates from "./Pages/recruitment/Candidates.jsx";
 import RecruitmentInterviews from "./Pages/recruitment/Interviews.jsx";
 import RecruitmentEvaluations from "./Pages/recruitment/Evaluations.jsx";
@@ -111,12 +114,17 @@ function App() {
 
       <Route path="/recruitment/dashboard" element={<RecruitmentRouteGuard><RecruitmentDashboard /></RecruitmentRouteGuard>} />
       <Route path="/recruitment/vacancies" element={<RecruitmentRouteGuard requiredAny={["VACANCY_CREATE", "VACANCY_APPROVE", "VACANCY_PUBLISH"]}><RecruitmentVacancies /></RecruitmentRouteGuard>} />
-      <Route path="/recruitment/applications" element={<RecruitmentRouteGuard requiredAny={["APPLICATION_VIEW", "APPLICATION_SCREEN", "APPLICATION_SHORTLIST", "INTERVIEW_SCHEDULE"]}><RecruitmentApplications /></RecruitmentRouteGuard>} />
+      <Route path="/recruitment/applications" element={<RecruitmentRouteGuard requiredAny={["APPLICATION_VIEW", "RESUME_DOWNLOAD", "DOWNLOAD_RESUMES", "APPLICATION_SCREEN", "APPLICATION_SHORTLIST", "INTERVIEW_SCHEDULE"]}><RecruitmentApplications /></RecruitmentRouteGuard>} />
+      <Route path="/recruitment/applications/history" element={<RecruitmentRouteGuard requiredAny={["APPLICATION_VIEW", "RESUME_DOWNLOAD", "DOWNLOAD_RESUMES", "APPLICATION_SCREEN", "APPLICATION_SHORTLIST", "INTERVIEW_SCHEDULE"]}><RecruitmentApplicationsHistory /></RecruitmentRouteGuard>} />
       <Route path="/recruitment/applications/review" element={<RecruitmentRouteGuard requiredAny={["APPLICATION_SCREEN", "APPLICATION_VIEW"]}><RecruitmentApplicationReview /></RecruitmentRouteGuard>} />
+      <Route path="/recruitment/applications/review/history" element={<RecruitmentRouteGuard requiredAny={["APPLICATION_SCREEN", "APPLICATION_VIEW"]}><RecruitmentApplicationReviewHistory /></RecruitmentRouteGuard>} />
       <Route path="/recruitment/applications/shortlist" element={<RecruitmentRouteGuard requiredAny={["APPLICATION_SHORTLIST", "APPLICATION_VIEW", "INTERVIEW_SCHEDULE"]}><RecruitmentCandidateShortlist /></RecruitmentRouteGuard>} />
+      <Route path="/recruitment/applications/shortlist/history" element={<RecruitmentRouteGuard requiredAny={["APPLICATION_SHORTLIST", "APPLICATION_VIEW", "INTERVIEW_SCHEDULE"]}><RecruitmentCandidateShortlistHistory /></RecruitmentRouteGuard>} />
       <Route path="/recruitment/applications/resumes" element={<Navigate to="/recruitment/applications" replace />} />
       <Route path="/recruitment/review-applications" element={<RecruitmentRouteGuard requiredAny={["APPLICATION_SCREEN", "APPLICATION_VIEW"]}><RecruitmentApplicationReview /></RecruitmentRouteGuard>} />
+      <Route path="/recruitment/review-applications/history" element={<RecruitmentRouteGuard requiredAny={["APPLICATION_SCREEN", "APPLICATION_VIEW"]}><RecruitmentApplicationReviewHistory /></RecruitmentRouteGuard>} />
       <Route path="/recruitment/shortlist" element={<RecruitmentRouteGuard requiredAny={["APPLICATION_SHORTLIST", "APPLICATION_VIEW", "INTERVIEW_SCHEDULE"]}><RecruitmentCandidateShortlist /></RecruitmentRouteGuard>} />
+      <Route path="/recruitment/shortlist/history" element={<RecruitmentRouteGuard requiredAny={["APPLICATION_SHORTLIST", "APPLICATION_VIEW", "INTERVIEW_SCHEDULE"]}><RecruitmentCandidateShortlistHistory /></RecruitmentRouteGuard>} />
       <Route path="/recruitment/resumes" element={<Navigate to="/recruitment/applications" replace />} />
       <Route path="/recruitment/candidates" element={<RecruitmentRouteGuard requiredAny={["APPLICATION_VIEW", "APPLICATION_SCREEN", "APPLICATION_SHORTLIST", "INTERVIEW_SCHEDULE"]}><RecruitmentCandidates /></RecruitmentRouteGuard>} />
       <Route path="/recruitment/interviews" element={<RecruitmentRouteGuard requiredAny={["INTERVIEW_SCHEDULE", "INTERVIEW_ASSIGN", "INTERVIEW_PROGRESS_VIEW", "INTERVIEW_EVALUATE", "INTERVIEW_DECIDE"]}><RecruitmentInterviews /></RecruitmentRouteGuard>} />

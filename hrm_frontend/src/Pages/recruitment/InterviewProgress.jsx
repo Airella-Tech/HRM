@@ -229,7 +229,7 @@ function normalizeStatus(interviewStatus, evaluation, item, recommendation) {
 const getStatusStyle = (status) =>
   ({
     Completed: "bg-green-100 text-green-700",
-    "In Progress": "bg-blue-100 text-blue-700",
+    "In Progress": "bg-primary-100 text-primary-700",
     Pending: "bg-amber-100 text-amber-700",
     Rejected: "bg-red-100 text-red-700",
     Skipped: "bg-slate-100 text-slate-500",
@@ -692,7 +692,7 @@ function CandidateProgressModal({ candidate, onClose }) {
                         stage.status === "Completed"
                           ? "bg-green-100 text-green-700"
                           : stage.status === "In Progress"
-                            ? "bg-blue-100 text-blue-700"
+                            ? "bg-primary-100 text-primary-700"
                             : stage.status === "Rejected"
                               ? "bg-red-100 text-red-700"
                               : "bg-slate-100 text-slate-400"
@@ -958,22 +958,6 @@ export default function InterviewProgress() {
       <div className="min-h-full bg-slate-50/70 px-4 py-6 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-7xl space-y-6">
           <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-            <div>
-              <div className="mb-2 flex items-center gap-2 text-sm text-slate-500">
-                <BriefcaseBusiness size={16} />
-                <span>Recruitment</span>
-                <ChevronRight size={14} />
-                <span className="text-slate-700">Interview Progress</span>
-              </div>
-              <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
-                Interview Progress
-              </h1>
-              <p className="mt-2 max-w-2xl text-sm text-slate-500 sm:text-base">
-                Monitor candidate journeys from technical interviews to final
-                interviews and review stage outcomes.
-              </p>
-            </div>
-
             <button
               type="button"
               onClick={() => loadProgress()}
@@ -1024,7 +1008,7 @@ export default function InterviewProgress() {
               value={stats.inProgress}
               description="Candidates in active interview stages"
               icon={Clock}
-              iconStyle="bg-blue-50 text-blue-600"
+              iconStyle="bg-primary-50 text-primary-600"
             />
             <StatCard
               title="Completed"
@@ -1382,7 +1366,7 @@ export default function InterviewProgress() {
                       label === "Completed"
                         ? "text-green-600"
                         : label === "In Progress"
-                          ? "text-blue-600"
+                          ? "text-primary-600"
                           : label === "Rejected"
                             ? "text-red-600"
                             : "text-slate-400"

@@ -4,11 +4,16 @@ import com.airella.hrm.dto.VacancyDTO;
 import com.airella.hrm.dto.VacancyRequestDTO;
 import com.airella.hrm.exception.BusinessException;
 import com.airella.hrm.exception.ResourceNotFoundException;
+import com.airella.hrm.model.ApplicationStatus;
+import com.airella.hrm.model.CandidateApplication;
+import com.airella.hrm.model.EligibilityStatus;
 import com.airella.hrm.model.JobVacancy;
 import com.airella.hrm.model.VacancyStatus;
+import com.airella.hrm.repository.CandidateApplicationRepository;
 import com.airella.hrm.repository.JobVacancyRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,18 +33,30 @@ public class JobVacancyService {
     private final AuthService authService;
     private final PermissionService permissionService;
     private final AuditService auditService;
-          private final RecruitmentNotificationService notificationService;
+    private final RecruitmentNotificationService notificationService;
+    private final CandidateApplicationRepository applicationRepo;
 
     public JobVacancyService(JobVacancyRepository vacancyRepo,
                              AuthService authService,
                              PermissionService permissionService,
                              AuditService auditService,
-                            RecruitmentNotificationService notificationService) {
+                             RecruitmentNotificationService notificationService) {
+        this(vacancyRepo, authService, permissionService, auditService, notificationService, null);
+    }
+
+    @Autowired
+    public JobVacancyService(JobVacancyRepository vacancyRepo,
+                             AuthService authService,
+                             PermissionService permissionService,
+                             AuditService auditService,
+                             RecruitmentNotificationService notificationService,
+                             @Autowired(required = false) CandidateApplicationRepository applicationRepo) {
         this.vacancyRepo = vacancyRepo;
         this.authService = authService;
         this.permissionService = permissionService;
         this.auditService = auditService;
         this.notificationService = notificationService;
+        this.applicationRepo = applicationRepo;
     }
 
     public VacancyDTO create(VacancyRequestDTO request) {
@@ -196,7 +213,7 @@ public class JobVacancyService {
         return toDto(vacancy);
     }
 
-    /** PUBLISHED -> CLOSED (closed by hand) */
+    /** PUBLISHED -> CLOSED (closed by hand from Job Vacancy Management page) */
     public VacancyDTO close(Long id) {
         String companyRef = authService.getCurrentCompanyRef();
         JobVacancy vacancy = find(id, companyRef);
@@ -211,7 +228,129 @@ public class JobVacancyService {
         vacancy = vacancyRepo.save(vacancy);
         auditService.logAction("VACANCY_CLOSED", "JobVacancy", vacancy.getId(),
                 "Closed vacancy: " + vacancy.getTitle(), companyRef);
-        notificationService.vacancyClosed(vacancy);
+        if (notificationService != null) {
+            notificationService.vacancyClosed(vacancy);
+        }
+        return toDto(vacancy);
+    }
+
+    // ── Recruitment Workflow ("After Process") Removal & Restoration ──
+    // Does NOT alter vacancy.status so Job Vacancy Management page is not affected.
+
+    /** Remove vacancy from Applications page -> moved to Applications History */
+    public VacancyDTO removeFromApplications(Long id) {
+        String companyRef = authService.getCurrentCompanyRef();
+        JobVacancy vacancy = find(id, companyRef);
+
+        vacancy.setRemovedFromApplications(true);
+        vacancy.setRemovedFromApplicationsAt(LocalDateTime.now());
+
+        vacancy = vacancyRepo.save(vacancy);
+        auditService.logAction("VACANCY_REMOVED_APPLICATIONS", "JobVacancy", vacancy.getId(),
+                "Removed vacancy from active applications: " + vacancy.getTitle(), companyRef);
+        return toDto(vacancy);
+    }
+
+    /** Restore vacancy back to Active Applications */
+    public VacancyDTO restoreToApplications(Long id) {
+        String companyRef = authService.getCurrentCompanyRef();
+        JobVacancy vacancy = find(id, companyRef);
+
+        vacancy.setRemovedFromApplications(false);
+        vacancy.setRemovedFromApplicationsAt(null);
+
+        vacancy = vacancyRepo.save(vacancy);
+        auditService.logAction("VACANCY_RESTORED_APPLICATIONS", "JobVacancy", vacancy.getId(),
+                "Restored vacancy to active applications: " + vacancy.getTitle(), companyRef);
+        return toDto(vacancy);
+    }
+
+    /**
+     * Remove vacancy from Shortlist page:
+     * 1. Marks vacancy as removedFromShortlist = true.
+     * 2. Finds all candidate applications for this vacancy:
+     *    Any candidate not confirmed as SHORTLISTED (and not already REJECTED)
+     *    is automatically set to REJECTED with rejectionReason = "Position archived / closed without shortlist confirmation".
+     *    This immediately updates their status in the public tracking page (/careers/track).
+     * 3. DOES NOT touch vacancy.status (remains PUBLISHED or unchanged in Job Vacancy create page).
+     */
+    public VacancyDTO removeFromShortlist(Long id) {
+        String companyRef = authService.getCurrentCompanyRef();
+        JobVacancy vacancy = find(id, companyRef);
+
+        vacancy.setRemovedFromShortlist(true);
+        vacancy.setRemovedFromShortlistAt(LocalDateTime.now());
+        vacancy = vacancyRepo.save(vacancy);
+
+        if (applicationRepo != null) {
+            List<CandidateApplication> apps = applicationRepo.findByVacancyId(id);
+            int rejectedCount = 0;
+            Long currentUserId = permissionService != null ? permissionService.currentUserId() : null;
+            LocalDateTime now = LocalDateTime.now();
+
+            for (CandidateApplication app : apps) {
+                ApplicationStatus curStatus = app.getStatus();
+                if (curStatus != ApplicationStatus.SHORTLISTED
+                        && curStatus != ApplicationStatus.REJECTED) {
+                    app.setStatus(ApplicationStatus.REJECTED);
+                    app.setEligibilityStatus(EligibilityStatus.INELIGIBLE);
+                    app.setRejectionReason("Position archived / closed without shortlist confirmation");
+                    app.setReviewedBy(currentUserId);
+                    app.setReviewedAt(now);
+                    applicationRepo.save(app);
+                    rejectedCount++;
+
+                    auditService.logAction("CANDIDATE_REJECTED", "CandidateApplication", app.getId(),
+                            "Auto-rejected on vacancy shortlist removal: " + app.getCandidateName(), companyRef);
+                }
+            }
+            log.info("Removed vacancy {} from shortlist and auto-rejected {} unconfirmed candidates", id, rejectedCount);
+        }
+
+        auditService.logAction("VACANCY_REMOVED_SHORTLIST", "JobVacancy", vacancy.getId(),
+                "Removed vacancy from active shortlist and auto-rejected unconfirmed candidates: " + vacancy.getTitle(), companyRef);
+        return toDto(vacancy);
+    }
+
+    /** Restore vacancy back to Active Shortlist */
+    public VacancyDTO restoreToShortlist(Long id) {
+        String companyRef = authService.getCurrentCompanyRef();
+        JobVacancy vacancy = find(id, companyRef);
+
+        vacancy.setRemovedFromShortlist(false);
+        vacancy.setRemovedFromShortlistAt(null);
+
+        vacancy = vacancyRepo.save(vacancy);
+        auditService.logAction("VACANCY_RESTORED_SHORTLIST", "JobVacancy", vacancy.getId(),
+                "Restored vacancy to active shortlist: " + vacancy.getTitle(), companyRef);
+        return toDto(vacancy);
+    }
+
+    /** Remove vacancy from Review page -> moved to Review History */
+    public VacancyDTO removeFromReview(Long id) {
+        String companyRef = authService.getCurrentCompanyRef();
+        JobVacancy vacancy = find(id, companyRef);
+
+        vacancy.setRemovedFromReview(true);
+        vacancy.setRemovedFromReviewAt(LocalDateTime.now());
+
+        vacancy = vacancyRepo.save(vacancy);
+        auditService.logAction("VACANCY_REMOVED_REVIEW", "JobVacancy", vacancy.getId(),
+                "Removed vacancy from active review: " + vacancy.getTitle(), companyRef);
+        return toDto(vacancy);
+    }
+
+    /** Restore vacancy back to Active Review */
+    public VacancyDTO restoreToReview(Long id) {
+        String companyRef = authService.getCurrentCompanyRef();
+        JobVacancy vacancy = find(id, companyRef);
+
+        vacancy.setRemovedFromReview(false);
+        vacancy.setRemovedFromReviewAt(null);
+
+        vacancy = vacancyRepo.save(vacancy);
+        auditService.logAction("VACANCY_RESTORED_REVIEW", "JobVacancy", vacancy.getId(),
+                "Restored vacancy to active review: " + vacancy.getTitle(), companyRef);
         return toDto(vacancy);
     }
 
@@ -282,6 +421,9 @@ public class JobVacancyService {
                 v.getExperienceLevel(), v.getSalaryMin(), v.getSalaryMax(), v.getDeadline(),
                 v.getStatus(), v.getRejectionReason(), v.getReviewedBy(), v.getReviewedAt(),
                 v.getPublishedAt(), v.getClosedAt(),
-                v.getCreatedBy(), v.getCreatedAt(), v.getUpdatedAt());
+                v.getCreatedBy(), v.getCreatedAt(), v.getUpdatedAt(),
+                v.getRemovedFromApplications(), v.getRemovedFromApplicationsAt(),
+                v.getRemovedFromShortlist(), v.getRemovedFromShortlistAt(),
+                v.getRemovedFromReview(), v.getRemovedFromReviewAt());
     }
 }

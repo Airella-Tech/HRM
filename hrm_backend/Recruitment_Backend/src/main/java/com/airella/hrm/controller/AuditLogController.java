@@ -26,8 +26,8 @@ public class AuditLogController {
     }
 
     @GetMapping
-    @PreAuthorize("@perm.isFullAccess()")
-    public ResponseEntity<ApiResponse<List<AuditLogDTO>>> list() {
+@PreAuthorize("@perm.has('AUDIT_VIEW')")
+public ResponseEntity<ApiResponse<List<AuditLogDTO>>> list() {
         String companyRef = authService.getCurrentCompanyRef();
         return ResponseEntity.ok(ApiResponse.success(auditService.getRecentLogs(companyRef)));
     }

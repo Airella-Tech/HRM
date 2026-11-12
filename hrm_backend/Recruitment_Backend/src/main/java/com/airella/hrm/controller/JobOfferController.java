@@ -19,7 +19,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/recruitment/job-offers")
-@PreAuthorize("@perm.has('OFFER_MANAGE')")
 public class JobOfferController {
 
     private final JobOfferService jobOfferService;
@@ -30,6 +29,7 @@ public class JobOfferController {
 
     // Create a job offer
     @PostMapping
+    @PreAuthorize("@perm.has('OFFER_MANAGE')")
     public ResponseEntity<ApiResponse<JobOfferDTO>> create(
             @Valid @RequestBody JobOfferRequestDTO request) {
 
@@ -41,6 +41,7 @@ public class JobOfferController {
 
     // Get all job offers, optionally filtered by status
     @GetMapping
+    @PreAuthorize("@perm.isFullAccess() or @perm.hasRecruitmentAccess()")
     public ResponseEntity<ApiResponse<List<JobOfferDTO>>> list(
             @RequestParam(required = false) JobOfferStatus status) {
 
@@ -51,6 +52,7 @@ public class JobOfferController {
 
     // Get candidates eligible for job offers
     @GetMapping("/eligible-candidates")
+    @PreAuthorize("@perm.isFullAccess() or @perm.hasRecruitmentAccess()")
     public ResponseEntity<ApiResponse<List<EligibleCandidateDTO>>>
     getEligibleCandidates() {
 
@@ -62,6 +64,7 @@ public class JobOfferController {
 
     // Get a job offer by ID
     @GetMapping("/{id}")
+    @PreAuthorize("@perm.isFullAccess() or @perm.hasRecruitmentAccess()")
     public ResponseEntity<ApiResponse<JobOfferDTO>> get(
             @PathVariable Long id) {
 
@@ -72,6 +75,7 @@ public class JobOfferController {
 
     // Update a job offer
     @PutMapping("/{id}")
+    @PreAuthorize("@perm.has('OFFER_MANAGE')")
     public ResponseEntity<ApiResponse<JobOfferDTO>> update(
             @PathVariable Long id,
             @Valid @RequestBody JobOfferRequestDTO request) {
@@ -84,6 +88,7 @@ public class JobOfferController {
 
     // Update a job offer status
     @PatchMapping("/{id}/status")
+    @PreAuthorize("@perm.has('OFFER_MANAGE')")
     public ResponseEntity<ApiResponse<JobOfferDTO>> updateStatus(
             @PathVariable Long id,
             @RequestParam JobOfferStatus status) {
@@ -96,6 +101,7 @@ public class JobOfferController {
 
     // Send the job offer email to the candidate
     @PostMapping("/{id}/send-email")
+    @PreAuthorize("@perm.has('OFFER_MANAGE')")
     public ResponseEntity<ApiResponse<Void>> sendOfferEmail(
             @PathVariable Long id) {
 
@@ -109,6 +115,7 @@ public class JobOfferController {
 
     // Delete a draft job offer
     @DeleteMapping("/{id}")
+    @PreAuthorize("@perm.has('OFFER_MANAGE')")
     public ResponseEntity<ApiResponse<Void>> deleteDraft(
             @PathVariable Long id) {
 

@@ -844,6 +844,10 @@ const RecruitmentRolesPermissions = () => {
 
       closeRoleModal();
 
+      // Permissions changed: refresh the menu access straight away
+      clearRecruitmentAccessCache();
+      fetchRecruitmentAccess(true);
+
       // Refresh custom company roles from backend to get fresh counts and database state
       const rolesRes = await recruitmentApi.getRoles("", true);
       const rawCustom = rolesRes?.data || [];
@@ -1003,8 +1007,11 @@ const RecruitmentRolesPermissions = () => {
       setActionLoading(true);
 
       try {
-        await recruitmentApi.deleteRole(role.id);
+                await recruitmentApi.deleteRole(role.id);
         setConfirmation(null);
+
+        clearRecruitmentAccessCache();
+        fetchRecruitmentAccess(true);
 
         showToast(
           "success",

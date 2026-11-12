@@ -28,14 +28,14 @@ const printPayslip = (p, user, info) => {
   w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>Payslip ${MONTH_NAMES[p.month]} ${p.year}</title>
   <style>
     body{font-family:Segoe UI,Arial,sans-serif;color:#1e293b;margin:32px;}
-    h1{font-size:22px;margin:0;color:#0369a1} .sub{color:#64748b;font-size:13px;margin:4px 0 20px}
+    h1{font-size:22px;margin:0;color:#34407d} .sub{color:#64748b;font-size:13px;margin:4px 0 20px}
     .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px}
     .grid div{background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:8px 12px;font-size:13px}
     .grid b{display:block;font-size:11px;color:#94a3b8;font-weight:600;text-transform:uppercase;letter-spacing:.04em}
     table{width:100%;border-collapse:collapse;margin-bottom:18px;font-size:14px}
     th{text-align:left;font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:#64748b;padding:6px 0;border-bottom:2px solid #e2e8f0}
     td{padding:7px 0;border-bottom:1px solid #f1f5f9} .r{text-align:right} .tot td{font-weight:700;border-top:2px solid #cbd5e1}
-    .net{background:#0369a1;color:#fff;border-radius:10px;padding:16px 20px;display:flex;justify-content:space-between;font-size:18px;font-weight:700}
+    .net{background:#34407d;color:#fff;border-radius:10px;padding:16px 20px;display:flex;justify-content:space-between;font-size:18px;font-weight:700}
     .foot{margin-top:24px;color:#94a3b8;font-size:11px;text-align:center}
     @media print{body{margin:14mm}}
   </style></head><body>
@@ -114,7 +114,7 @@ const Payslip = () => {
     const onFocus = () => loadPayslips(true);
     window.addEventListener("focus", onFocus);
     return () => window.removeEventListener("focus", onFocus);
-  }, [user]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [user]);
 
   const handleDownload = (p) => printPayslip(p, user, {
     department: paySheet?.departmentName,
@@ -167,7 +167,7 @@ const Payslip = () => {
   const rowActions = (p) => (
     <div className="flex items-center justify-end gap-2">
       <button onClick={() => setViewingPayslip(p)} title="View"
-        className="h-8 w-8 rounded-lg bg-sky-50 text-blue-600 hover:bg-sky-100 flex items-center justify-center transition-colors">
+        className="h-8 w-8 rounded-lg bg-primary-50 text-primary-600 hover:bg-primary-100 flex items-center justify-center transition-colors">
         <Eye size={15} />
       </button>
       <button onClick={() => handleDownload(p)} title="Download PDF"
@@ -205,10 +205,10 @@ const Payslip = () => {
         {/* Summary cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5">
           {[
-            { label: "Last Salary",   value: `Rs. ${lastNet.toLocaleString()}`, icon: <CreditCard size={20} />, tone: CARD_TONES.blue, sub: latest ? `${getMonthName(latest.month)} ${latest.year}` : "No payslip yet" },
-            { label: "Avg. Monthly",  value: `Rs. ${avgNet.toLocaleString()}`, icon: <TrendingUp size={20} />, tone: CARD_TONES.green, sub: payslips.length ? `Across ${payslips.length} payslip${payslips.length === 1 ? "" : "s"}` : "No payslip yet" },
-            { label: "Total Earnings",  value: `Rs. ${ytdNet.toLocaleString()}`, icon: <DollarSign size={20} />, tone: CARD_TONES.yellow, sub: `Net pay in ${thisYear}` },
-            { label: "Total Payslips",value: payslips.length, icon: <FileText size={20} />, tone: CARD_TONES.purple, sub: "Available" },
+            { label: "Last Salary", value: `Rs. ${lastNet.toLocaleString()}`, icon: <CreditCard size={20} />, tone: CARD_TONES.blue, sub: latest ? `${getMonthName(latest.month)} ${latest.year}` : "No payslip yet" },
+            { label: "Avg. Monthly", value: `Rs. ${avgNet.toLocaleString()}`, icon: <TrendingUp size={20} />, tone: CARD_TONES.green, sub: payslips.length ? `Across ${payslips.length} payslip${payslips.length === 1 ? "" : "s"}` : "No payslip yet" },
+            { label: "Total Earnings", value: `Rs. ${ytdNet.toLocaleString()}`, icon: <DollarSign size={20} />, tone: CARD_TONES.yellow, sub: `Net pay in ${thisYear}` },
+            { label: "Total Payslips", value: payslips.length, icon: <FileText size={20} />, tone: CARD_TONES.purple, sub: "Available" },
           ].map(s => (
             <SummaryCard key={s.label} icon={s.icon} title={s.label} value={s.value} description={s.sub} className={s.tone} />
           ))}
@@ -254,7 +254,7 @@ const Payslip = () => {
                   <h3 className="text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-3">Earnings</h3>
                   <div className="space-y-2">
                     {[["Basic Salary", paySheet.basicSalary], ["Job Role Allowance", paySheet.roleAllowance],
-                      ...(paySheet.additionalItems || []).filter(i => i.type === "ALLOWANCE").map(i => [i.name, i.amount])].map(([l, v], idx) => (
+                    ...(paySheet.additionalItems || []).filter(i => i.type === "ALLOWANCE").map(i => [i.name, i.amount])].map(([l, v], idx) => (
                       <div key={`${l}-${idx}`} className="flex justify-between py-2 border-b border-slate-100">
                         <span className="text-slate-600">{l}</span><span className="font-semibold">Rs. {money(v)}</span>
                       </div>
@@ -268,7 +268,7 @@ const Payslip = () => {
                   <h3 className="text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-3">Deductions</h3>
                   <div className="space-y-2">
                     {[["Job Role Deduction", paySheet.roleDeduction],
-                      ...(paySheet.additionalItems || []).filter(i => i.type === "DEDUCTION").map(i => [i.name, i.amount])].map(([l, v], idx) => (
+                    ...(paySheet.additionalItems || []).filter(i => i.type === "DEDUCTION").map(i => [i.name, i.amount])].map(([l, v], idx) => (
                       <div key={`${l}-${idx}`} className="flex justify-between py-2 border-b border-slate-100">
                         <span className="text-slate-600">{l}</span><span className="font-semibold">Rs. {money(v)}</span>
                       </div>
@@ -339,7 +339,7 @@ const Payslip = () => {
                       </div>
                       <div className="grid grid-cols-2 gap-2 text-xs">
                         <span className="text-slate-500">Basic: <b className="text-slate-800">Rs. {money(p.basicSalary)}</b></span>
-                        <span className="text-slate-500">Net: <b className="text-blue-700">Rs. {money(p.netSalary)}</b></span>
+                        <span className="text-slate-500">Net: <b className="text-primary-700">Rs. {money(p.netSalary)}</b></span>
                         <span className="text-emerald-700">+{money(p.totalAllowances)}</span>
                         <span className="text-red-600">-{money(p.totalDeductions)}</span>
                       </div>
@@ -356,7 +356,7 @@ const Payslip = () => {
                   <span className="text-sm text-slate-700 font-medium">Rs. {money(p.basicSalary)}</span>
                   <span className="text-sm font-semibold text-emerald-700">+{money(p.totalAllowances)}</span>
                   <span className="text-sm font-semibold text-red-600">-{money(p.totalDeductions)}</span>
-                  <span className="text-sm font-bold text-blue-700">Rs. {money(p.netSalary)}</span>
+                  <span className="text-sm font-bold text-primary-700">Rs. {money(p.netSalary)}</span>
                   <div>{statusPill(p.status)}</div>
                   {rowActions(p)}
                 </TableRow>
@@ -376,7 +376,7 @@ const Payslip = () => {
             <div className={`flex items-center justify-between p-6 ${EMP_GRADIENT} text-white rounded-t-xl`}>
               <div>
                 <h2 className="text-lg font-semibold">Payslip Details</h2>
-                <p className="text-sky-100 text-sm">{getMonthName(viewingPayslip.month)} {viewingPayslip.year}</p>
+                <p className="text-primary-100 text-sm">{getMonthName(viewingPayslip.month)} {viewingPayslip.year}</p>
               </div>
               <button onClick={() => setViewingPayslip(null)} className="h-8 w-8 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors"><X size={17} /></button>
             </div>
@@ -389,7 +389,7 @@ const Payslip = () => {
                   ["Designation", paySheet?.designation],
                   ["Days Present", viewingPayslip.presentDays != null ? `${viewingPayslip.presentDays} of ${viewingPayslip.workingDays ?? "—"}` : null],
                   ["Status", viewingPayslip.status || "PAID"]
-                ].map(([l,v]) => (
+                ].map(([l, v]) => (
                   <div key={l}><p className="text-slate-400 text-xs">{l}</p><p className="font-semibold text-slate-800">{v || "N/A"}</p></div>
                 ))}
               </div>

@@ -234,7 +234,11 @@ public class InterviewRoundDecisionService {
 
         Long companyId = authService.getCurrentCompanyId();
 
-        permissionService.require("INTERVIEW_DECIDE");
+        if (!permissionService.isFullAccess() && !permissionService.hasRecruitmentAccess()) {
+            throw new AccessDeniedException(
+                    "Access denied: missing recruitment access to read interview decision"
+            );
+        }
 
         // Return the saved decision if it exists.
         // Return null if no manager decision has been submitted yet.

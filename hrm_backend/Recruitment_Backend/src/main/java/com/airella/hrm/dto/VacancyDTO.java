@@ -28,6 +28,12 @@ public record VacancyDTO(
         LocalDateTime closedAt,
         Long createdBy,
         LocalDateTime createdAt,
-        LocalDateTime updatedAt
+        LocalDateTime updatedAt,
+        Boolean removedFromApplications,
+        LocalDateTime removedFromApplicationsAt,
+        Boolean removedFromShortlist,
+        LocalDateTime removedFromShortlistAt,
+        Boolean removedFromReview,
+        LocalDateTime removedFromReviewAt
 ) {
 }

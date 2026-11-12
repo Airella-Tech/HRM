@@ -19,10 +19,7 @@ import java.util.List;
 public class JobVacancyController {
 
     private static final String CAN_SEE_VACANCIES =
-            "@perm.hasAny('VACANCY_CREATE', 'VACANCY_APPROVE', 'VACANCY_PUBLISH', " +
-            "'APPLICATION_VIEW', 'APPLICATION_SCREEN', 'APPLICATION_SHORTLIST', " +
-            "'INTERVIEW_SCHEDULE', 'INTERVIEW_ASSIGN', 'INTERVIEW_PROGRESS_VIEW', " +
-            "'INTERVIEW_DECIDE', 'INTERVIEW_EVALUATE', 'OFFER_MANAGE')";
+            "@perm.isFullAccess() or @perm.hasRecruitmentAccess()";
 
     private final JobVacancyService vacancyService;
 
@@ -98,5 +95,49 @@ public class JobVacancyController {
     @PreAuthorize("@perm.has('VACANCY_PUBLISH')")
     public ResponseEntity<ApiResponse<VacancyDTO>> close(@PathVariable Long id) {
         return ResponseEntity.ok(ApiResponse.success(vacancyService.close(id), "Vacancy closed"));
+    }
+
+    // ── Recruitment "After Process" Workflow Endpoints ──
+
+    @PostMapping("/{id}/remove-applications")
+    @PreAuthorize("@perm.hasAny('APPLICATION_VIEW', 'RESUME_DOWNLOAD', 'APPLICATION_SCREEN', 'APPLICATION_SHORTLIST', 'VACANCY_PUBLISH')")
+    public ResponseEntity<ApiResponse<VacancyDTO>> removeApplications(@PathVariable Long id) {
+        return ResponseEntity.ok(ApiResponse.success(vacancyService.removeFromApplications(id),
+                "Vacancy removed from active applications"));
+    }
+
+    @PostMapping("/{id}/restore-applications")
+    @PreAuthorize("@perm.hasAny('APPLICATION_VIEW', 'RESUME_DOWNLOAD', 'APPLICATION_SCREEN', 'APPLICATION_SHORTLIST', 'VACANCY_PUBLISH')")
+    public ResponseEntity<ApiResponse<VacancyDTO>> restoreApplications(@PathVariable Long id) {
+        return ResponseEntity.ok(ApiResponse.success(vacancyService.restoreToApplications(id),
+                "Vacancy restored to active applications"));
+    }
+
+    @PostMapping("/{id}/remove-shortlist")
+    @PreAuthorize("@perm.hasAny('APPLICATION_SHORTLIST', 'APPLICATION_VIEW', 'VACANCY_PUBLISH')")
+    public ResponseEntity<ApiResponse<VacancyDTO>> removeShortlist(@PathVariable Long id) {
+        return ResponseEntity.ok(ApiResponse.success(vacancyService.removeFromShortlist(id),
+                "Vacancy removed from active shortlist and unconfirmed candidates updated to rejected"));
+    }
+
+    @PostMapping("/{id}/restore-shortlist")
+    @PreAuthorize("@perm.hasAny('APPLICATION_SHORTLIST', 'APPLICATION_VIEW', 'VACANCY_PUBLISH')")
+    public ResponseEntity<ApiResponse<VacancyDTO>> restoreShortlist(@PathVariable Long id) {
+        return ResponseEntity.ok(ApiResponse.success(vacancyService.restoreToShortlist(id),
+                "Vacancy restored to active shortlist"));
+    }
+
+    @PostMapping("/{id}/remove-review")
+    @PreAuthorize("@perm.hasAny('APPLICATION_SCREEN', 'APPLICATION_VIEW', 'VACANCY_PUBLISH')")
+    public ResponseEntity<ApiResponse<VacancyDTO>> removeReview(@PathVariable Long id) {
+        return ResponseEntity.ok(ApiResponse.success(vacancyService.removeFromReview(id),
+                "Vacancy removed from active review"));
+    }
+
+    @PostMapping("/{id}/restore-review")
+    @PreAuthorize("@perm.hasAny('APPLICATION_SCREEN', 'APPLICATION_VIEW', 'VACANCY_PUBLISH')")
+    public ResponseEntity<ApiResponse<VacancyDTO>> restoreReview(@PathVariable Long id) {
+        return ResponseEntity.ok(ApiResponse.success(vacancyService.restoreToReview(id),
+                "Vacancy restored to active review"));
     }
 }

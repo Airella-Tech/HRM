@@ -220,7 +220,7 @@ public class RecruitmentNotificationService {
 
     // ── Candidate events ───────────────────────────────────
 
-    /** Public applicant applied: notify users who have APPLICATION_VIEW or APPLICATION_SCREEN permissions. */
+    /** Public applicant applied: notify users who have APPLICATION_VIEW or APPLICATION_SCREEN permissions, plus vacancy creator. */
     public void candidateApplied(CandidateApplication app, JobVacancy vacancy) {
         safely(() -> {
             String jobTitle = vacancy != null ? vacancy.getTitle() : "Vacancy";
@@ -232,6 +232,11 @@ public class RecruitmentNotificationService {
                     compRef
             );
 
+            // Notify vacancy creator
+            if (vacancy != null && vacancy.getCreatedBy() != null) {
+                recipients.add(vacancy.getCreatedBy());
+            }
+
             sendToUsers(recipients, compRef, app.getId(),
                     "CANDIDATE_APPLIED",
                     "New candidate application",
@@ -240,7 +245,7 @@ public class RecruitmentNotificationService {
         });
     }
 
-    /** Candidate shortlisted: notify schedulers and shortlisters. */
+    /** Candidate shortlisted manually: notify vacancy creator and schedulers/shortlisters. */
     public void candidateShortlisted(CandidateApplication app, JobVacancy vacancy) {
         safely(() -> {
             String jobTitle = vacancy != null ? vacancy.getTitle() : "Vacancy";
@@ -251,6 +256,18 @@ public class RecruitmentNotificationService {
                     app.getCompanyId(),
                     compRef
             );
+
+            // Notify vacancy creator
+            if (vacancy != null && vacancy.getCreatedBy() != null) {
+                schedulers.add(vacancy.getCreatedBy());
+            }
+
+            // Prevent user from receiving redundant notification for their own action
+            Long currentUserId = permissionService.currentUserId();
+            if (currentUserId != null) {
+                schedulers.remove(currentUserId);
+            }
+
             sendToUsers(schedulers, compRef, app.getId(),
                     "CANDIDATE_SHORTLISTED",
                     "Candidate shortlisted",
@@ -263,11 +280,49 @@ public class RecruitmentNotificationService {
                     compRef
             );
             if (schedulers != null) shortlisters.removeAll(schedulers);
+            if (currentUserId != null) shortlisters.remove(currentUserId);
+
             sendToUsers(shortlisters, compRef, app.getId(),
                     "CANDIDATE_SHORTLISTED",
                     "Candidate shortlisted",
                     app.getCandidateName() + " was shortlisted for '" + jobTitle + "'.",
                     "/recruitment/applications/shortlist");
+        });
+    }
+
+    /** Batched notification when automated candidate screening shortlists candidates. */
+    public void candidatesAutoShortlistedBatch(JobVacancy vacancy, int shortlistedCount, int totalEvaluated) {
+        if (shortlistedCount <= 0 || vacancy == null) return;
+        safely(() -> {
+            String jobTitle = vacancy.getTitle() != null ? vacancy.getTitle() : "Vacancy";
+            String compRef = vacancy.getCompanyRef();
+
+            Set<Long> recipients = findUsersWithPermissions(
+                    List.of("INTERVIEW_SCHEDULE", "APPLICATION_SHORTLIST"),
+                    null,
+                    compRef
+            );
+
+            // Notify vacancy creator
+            if (vacancy.getCreatedBy() != null) {
+                recipients.add(vacancy.getCreatedBy());
+            }
+
+            // Prevent user from receiving redundant notification for their own action
+            Long currentUserId = permissionService.currentUserId();
+            if (currentUserId != null) {
+                recipients.remove(currentUserId);
+            }
+
+            String countStr = shortlistedCount + " candidate" + (shortlistedCount > 1 ? "s" : "");
+            String title = "Automated Shortlisting: " + countStr;
+            String message = countStr + " automatically shortlisted for '" + jobTitle + "' (" + totalEvaluated + " evaluated). Ready for interview scheduling.";
+
+            sendToUsers(recipients, compRef, vacancy.getId(),
+                    "CANDIDATES_AUTO_SHORTLISTED",
+                    title,
+                    message,
+                    "/recruitment/shortlisted-candidates");
         });
     }
 
@@ -548,6 +603,10 @@ public class RecruitmentNotificationService {
 
             Set<Long> managers = findUsersWithRoleManagement(companyId, ref);
             managers.remove(targetUserId);
+            Long currentUserId = permissionService.currentUserId();
+            if (currentUserId != null) {
+                managers.remove(currentUserId);
+            }
             sendToUsers(managers, ref, null,
                     "ROLE_ASSIGNED",
                     "Recruitment role assigned",
@@ -574,6 +633,10 @@ public class RecruitmentNotificationService {
 
             Set<Long> managers = findUsersWithRoleManagement(companyId, ref);
             managers.remove(targetUserId);
+            Long currentUserId = permissionService.currentUserId();
+            if (currentUserId != null) {
+                managers.remove(currentUserId);
+            }
             sendToUsers(managers, ref, null,
                     "ROLES_UPDATED",
                     "User recruitment roles updated",
@@ -594,6 +657,10 @@ public class RecruitmentNotificationService {
 
             Set<Long> managers = findUsersWithRoleManagement(companyId, ref);
             managers.remove(targetUserId);
+            Long currentUserId = permissionService.currentUserId();
+            if (currentUserId != null) {
+                managers.remove(currentUserId);
+            }
             sendToUsers(managers, ref, null,
                     "ROLE_REMOVED",
                     "Recruitment role removed",

@@ -7,6 +7,10 @@ import RecruitmentCandidateShortlist from "./CandidateShortlist";
 import { DeadlineMeter } from "../careers/careersShared";
 import { formatSalary, formatDate } from "../../utils/careersFormat";
 import {
+  isRemovedFromApplications,
+  setRemovedFromApplications,
+} from "../../utils/vacancyRemovalStorage";
+import {
   FileText,
   Search,
   Filter,
@@ -45,15 +49,18 @@ import {
   ArrowUpRight,
   SlidersHorizontal,
   Banknote,
+  Archive,
+  RotateCcw,
+  History,
 } from "lucide-react";
 
 const STATUS_CONFIG = {
   NEW: {
     label: "New",
-    bg: "bg-blue-50",
-    text: "text-blue-700",
-    border: "border-blue-200",
-    dot: "bg-blue-500",
+    bg: "bg-primary-50",
+    text: "text-primary-700",
+    border: "border-primary-200",
+    dot: "bg-primary-500",
   },
   UNDER_REVIEW: {
     label: "Under Review",
@@ -83,13 +90,6 @@ const STATUS_CONFIG = {
     border: "border-teal-200",
     dot: "bg-teal-500",
   },
-  HIRED: {
-    label: "Hired",
-    bg: "bg-green-50",
-    text: "text-green-700",
-    border: "border-green-200",
-    dot: "bg-green-500",
-  },
   REJECTED: {
     label: "Rejected",
     bg: "bg-rose-50",
@@ -115,9 +115,15 @@ export default function RecruitmentApplications() {
 
   const [applications, setApplications] = useState([]);
   const [vacancies, setVacancies] = useState([]);
+  const [jobOffers, setJobOffers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState(null);
+  const [actionNotice, setActionNotice] = useState(null);
+
+  // Archive / Restore Modals
+  const [confirmArchiveModal, setConfirmArchiveModal] = useState(null);
+  const [actionInProgress, setActionInProgress] = useState(false);
 
   // Filters & Controls
   const [search, setSearch] = useState("");
@@ -145,7 +151,7 @@ export default function RecruitmentApplications() {
     }));
   };
 
-  // Load real applications & vacancies from backend
+  // Load real applications, vacancies & job offers from backend
   const loadData = async (isManualRefresh = false) => {
     if (isManualRefresh) {
       setRefreshing(true);
@@ -155,9 +161,10 @@ export default function RecruitmentApplications() {
     setError(null);
 
     try {
-      const [appsRes, vacsRes] = await Promise.allSettled([
+      const [appsRes, vacsRes, offersRes] = await Promise.allSettled([
         recruitmentApi.getApplications(),
         recruitmentApi.getVacancies(),
+        recruitmentApi.getJobOffers ? recruitmentApi.getJobOffers() : Promise.resolve({ data: [] }),
       ]);
 
       if (appsRes.status === "fulfilled" && appsRes.value?.success !== false) {
@@ -181,6 +188,12 @@ export default function RecruitmentApplications() {
       } else {
         setVacancies([]);
       }
+
+      if (offersRes.status === "fulfilled" && Array.isArray(offersRes.value?.data)) {
+        setJobOffers(offersRes.value.data);
+      } else {
+        setJobOffers([]);
+      }
     } catch (err) {
       console.error("Error loading candidate applications:", err);
       setApplications([]);
@@ -194,6 +207,51 @@ export default function RecruitmentApplications() {
   useEffect(() => {
     loadData();
   }, []);
+
+  // Compute job offer status for a vacancy group
+  const getVacancyOfferInfo = useMemo(() => {
+    return (group) => {
+      const appIds = new Set((group.allApplications || []).map((a) => a.id));
+      const groupTitle = (group.title || "").trim().toLowerCase();
+      const matched = jobOffers.filter((o) => {
+        const hasAppMatch = o.applicationId && appIds.has(o.applicationId);
+        const hasTitleMatch = groupTitle && o.jobTitle && o.jobTitle.trim().toLowerCase() === groupTitle;
+        return hasAppMatch || hasTitleMatch;
+      });
+      return {
+        hasOffer: matched.length > 0,
+        offerCount: matched.length,
+        offers: matched,
+      };
+    };
+  }, [jobOffers]);
+
+  // Handler to archive / remove vacancy
+  const handleArchiveVacancy = async () => {
+    if (!confirmArchiveModal) return;
+    const { vacancy } = confirmArchiveModal;
+    const vacId = vacancy?.id || vacancy?.key;
+    const vacTitle = vacancy?.title;
+    setActionInProgress(true);
+    // Persist removal in client state immediately
+    setRemovedFromApplications(vacId, true, { title: vacTitle });
+    if (confirmArchiveModal.groupKey) {
+      setRemovedFromApplications(confirmArchiveModal.groupKey, true, { title: vacTitle });
+    }
+    try {
+      if (vacancy?.id && typeof recruitmentApi?.removeVacancyFromApplications === "function") {
+        await recruitmentApi.removeVacancyFromApplications(vacancy.id);
+      }
+    } catch (err) {
+      console.warn("Backend removeVacancyFromApplications endpoint notice:", err?.message);
+    } finally {
+      setActionNotice(`Vacancy "${vacTitle || 'Selected opening'}" removed and moved to Applications History.`);
+      setConfirmArchiveModal(null);
+      setActionInProgress(false);
+      setTimeout(() => setActionNotice(null), 4000);
+      await loadData(true);
+    }
+  };
 
   const handleRefresh = () => {
     loadData(true);
@@ -407,17 +465,29 @@ export default function RecruitmentApplications() {
     return groups;
   }, [applications, vacancies, search, selectedVacancyId]);
 
+  // Separate into active vacancies and history/archived vacancies
+  const activeVacancyGroups = useMemo(() => {
+    return vacancyGroups.filter((g) => !isRemovedFromApplications(g.rawVacancy || g));
+  }, [vacancyGroups]);
+
+  const historyVacancyGroups = useMemo(() => {
+    return vacancyGroups.filter((g) => isRemovedFromApplications(g.rawVacancy || g));
+  }, [vacancyGroups]);
+
+  // Active vacancies displayed on page
+  const displayedVacancyGroups = activeVacancyGroups;
+
   // Master list filtered applications (for master list mode)
   const masterFilteredApplications = useMemo(() => {
-    const all = vacancyGroups.flatMap((g) => g.searchMatchedApplications);
+    const all = displayedVacancyGroups.flatMap((g) => g.searchMatchedApplications);
     if (masterStatusFilter === "ALL") return all;
     return all.filter((a) => a.status === masterStatusFilter);
-  }, [vacancyGroups, masterStatusFilter]);
+  }, [displayedVacancyGroups, masterStatusFilter]);
 
-  // Total count matching active search across all groups
+  // Total count matching active search across current display groups
   const totalSearchMatched = useMemo(() => {
-    return vacancyGroups.reduce((acc, g) => acc + g.searchMatchedApplications.length, 0);
-  }, [vacancyGroups]);
+    return displayedVacancyGroups.reduce((acc, g) => acc + g.searchMatchedApplications.length, 0);
+  }, [displayedVacancyGroups]);
 
   // Resume Download Handler
   const handleDownloadResume = async (app, e) => {
@@ -487,18 +557,15 @@ export default function RecruitmentApplications() {
       actions={
         <div className="flex items-center gap-2">
           <Link
-            to="/recruitment/vacancies"
+            to="/recruitment/applications/history"
             className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 text-sm font-semibold shadow-sm transition-all"
+            title="View closed and archived vacancy applications history"
           >
-            <Briefcase size={15} className="text-slate-500" />
-            <span className="hidden sm:inline">Vacancies</span>
-          </Link>
-          <Link
-            to="/recruitment/applications/review"
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 text-sm font-semibold shadow-sm transition-all"
-          >
-            <ClipboardCheck size={15} className="text-primary-600" />
-            <span className="hidden sm:inline">Screening</span>
+            <History size={15} className="text-primary-600" />
+            <span className="hidden sm:inline">Applications History</span>
+            <span className="px-1.5 py-0.2 rounded-full text-xs font-bold bg-slate-100 text-slate-600">
+              {historyVacancyGroups.length}
+            </span>
           </Link>
           <button
             onClick={handleRefresh}
@@ -542,6 +609,19 @@ export default function RecruitmentApplications() {
           </div>
         )}
 
+        {/* ── Action Notice ── */}
+        {actionNotice && (
+          <div className="p-3.5 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center justify-between text-xs text-emerald-800 font-medium shadow-xs">
+            <div className="flex items-center gap-2">
+              <CheckCircle2 size={16} className="text-emerald-600 shrink-0" />
+              <span>{actionNotice}</span>
+            </div>
+            <button onClick={() => setActionNotice(null)} className="text-emerald-600 hover:text-emerald-800 p-1">
+              <X size={14} />
+            </button>
+          </div>
+        )}
+
         {/* ── Metric Summary Cards ── */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm flex items-center justify-between">
@@ -575,10 +655,10 @@ export default function RecruitmentApplications() {
               <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
                 New Applicants
               </p>
-              <h3 className="text-2xl font-bold text-blue-600 mt-1">{metrics.newCount}</h3>
+              <h3 className="text-2xl font-bold text-primary-600 mt-1">{metrics.newCount}</h3>
               <p className="text-xs text-slate-400 mt-1">Awaiting initial review</p>
             </div>
-            <div className="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold">
+            <div className="w-12 h-12 rounded-xl bg-primary-50 text-primary-600 flex items-center justify-center font-bold">
               <Clock size={22} />
             </div>
           </div>
@@ -598,7 +678,7 @@ export default function RecruitmentApplications() {
         </div>
 
         {/* ── Search & Filter Controls Toolbar ── */}
-        <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm space-y-3">
+        <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm">
           <div className="flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between">
             {/* Search input */}
             <div className="relative flex-1 max-w-md">
@@ -639,6 +719,15 @@ export default function RecruitmentApplications() {
                     </option>
                   ))}
                 </select>
+                {selectedVacancyId !== "ALL" && (
+                  <button
+                    onClick={() => setSelectedVacancyId("ALL")}
+                    className="text-xs font-semibold text-primary-600 hover:text-primary-800 p-1.5 rounded-lg hover:bg-slate-100 transition-colors"
+                    title="Reset position filter to All"
+                  >
+                    <RefreshCw size={12} />
+                  </button>
+                )}
               </div>
 
               {/* View Mode Toggle: Separated vs Unified Table */}
@@ -670,7 +759,7 @@ export default function RecruitmentApplications() {
               </div>
 
               {/* Expand / Collapse All (in grouped mode) */}
-              {viewMode === "grouped" && vacancyGroups.length > 0 && (
+              {viewMode === "grouped" && displayedVacancyGroups.length > 0 && (
                 <div className="hidden sm:flex items-center gap-1 border-l border-slate-200 pl-2">
                   <button
                     onClick={() => toggleAllGroups(true)}
@@ -691,64 +780,6 @@ export default function RecruitmentApplications() {
               )}
             </div>
           </div>
-
-          {/* Quick Position Filter Pills & Reset Action */}
-          {vacancySelectorList.length > 1 && (
-            <div className="flex items-center justify-between gap-2 pt-2.5 border-t border-slate-100">
-              <div className="flex items-center gap-2 overflow-x-auto pb-1 pt-0.5 no-scrollbar flex-1">
-                <span className="text-[11px] font-bold text-primary-700 bg-primary-50 px-2.5 py-1 rounded-lg uppercase tracking-wider whitespace-nowrap flex items-center gap-1.5 border border-primary-200/80 shadow-2xs">
-                  <Briefcase size={12} className="text-primary-600" />
-                  Positions:
-                </span>
-                <button
-                  onClick={() => setSelectedVacancyId("ALL")}
-                  className={`px-3 py-1 rounded-lg text-xs font-medium whitespace-nowrap transition-all ${
-                    selectedVacancyId === "ALL"
-                      ? "bg-slate-900 text-white shadow-sm"
-                      : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-                  }`}
-                >
-                  All Positions ({applications.length})
-                </button>
-                {vacancySelectorList.map((vac) => {
-                  const active = selectedVacancyId === vac.key;
-                  return (
-                    <button
-                      key={vac.key}
-                      onClick={() => setSelectedVacancyId(vac.key)}
-                      className={`px-3 py-1 rounded-lg text-xs font-medium whitespace-nowrap transition-all flex items-center gap-1.5 ${
-                        active
-                          ? "bg-primary-600 text-white shadow-sm"
-                          : "bg-slate-100 text-slate-700 hover:bg-slate-200"
-                      }`}
-                    >
-                      <span>{vac.title}</span>
-                      <span
-                        className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${
-                          active ? "bg-white/20 text-white" : "bg-white text-slate-600"
-                        }`}
-                      >
-                        {vac.applicantCount}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-
-              {(search || selectedVacancyId !== "ALL") && (
-                <button
-                  onClick={() => {
-                    setSearch("");
-                    setSelectedVacancyId("ALL");
-                  }}
-                  className="text-xs font-semibold text-primary-600 hover:text-primary-800 flex items-center gap-1 shrink-0 py-1"
-                >
-                  <RefreshCw size={12} />
-                  <span>Reset Filters</span>
-                </button>
-              )}
-            </div>
-          )}
         </div>
 
         {/* ── Main Candidate Content Area ── */}
@@ -758,44 +789,24 @@ export default function RecruitmentApplications() {
             <p className="text-sm font-semibold text-slate-700">Loading candidate applications...</p>
             <p className="text-xs text-slate-400">Connecting to recruitment database</p>
           </div>
-        ) : applications.length === 0 ? (
-          /* Empty State: Zero Applications in Database */
-          <div className="bg-white rounded-3xl border border-slate-200/80 shadow-sm p-16 text-center max-w-xl mx-auto space-y-4">
-            <div className="w-16 h-16 rounded-2xl bg-primary-50 text-primary-600 flex items-center justify-center mx-auto shadow-inner">
-              <FolderKanban size={32} />
+        ) : displayedVacancyGroups.length === 0 ? (
+          <div className="bg-white rounded-3xl border border-slate-200/80 shadow-sm p-16 text-center max-w-md mx-auto space-y-3">
+            <div className="w-14 h-14 rounded-2xl bg-primary-50 text-primary-600 flex items-center justify-center mx-auto">
+              <FolderKanban size={26} />
             </div>
-            <div>
-              <h3 className="text-lg font-bold text-slate-800">No Candidate Applications Yet</h3>
-              <p className="text-xs text-slate-500 mt-2 max-w-md mx-auto leading-relaxed">
-                Candidate submissions from your published job vacancies will automatically appear
-                here, separated and organized by position. Once candidates submit their profiles via
-                the Careers Portal, you will be able to review, score, and screen them directly.
-              </p>
-            </div>
-            <div className="pt-2 flex flex-wrap items-center justify-center gap-3">
+            <h4 className="text-base font-bold text-slate-800">No Active Applications</h4>
+            <p className="text-xs text-slate-500 max-w-sm mx-auto leading-relaxed">
+              There are no active job openings receiving applications. Removed and closed vacancies can be viewed in the Applications History page.
+            </p>
+            {historyVacancyGroups.length > 0 && (
               <Link
-                to="/recruitment/vacancies"
-                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-primary-600 hover:bg-primary-700 text-white text-xs font-semibold shadow-sm transition-all"
+                to="/recruitment/applications/history"
+                className="mt-2 inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-primary-600 text-white hover:bg-primary-700 transition-colors shadow-xs"
               >
-                <Briefcase size={14} />
-                <span>View Job Vacancies</span>
+                <History size={14} />
+                <span>View Applications History ({historyVacancyGroups.length})</span>
               </Link>
-              <Link
-                to="/careers"
-                target="_blank"
-                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition-all"
-              >
-                <ExternalLink size={14} />
-                <span>Open Careers Portal</span>
-              </Link>
-              <button
-                onClick={handleRefresh}
-                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-semibold transition-all"
-              >
-                <RefreshCw size={14} />
-                <span>Refresh</span>
-              </button>
-            </div>
+            )}
           </div>
         ) : totalSearchMatched === 0 ? (
           /* Empty State: No Matches for Current Search Query */
@@ -822,7 +833,7 @@ export default function RecruitmentApplications() {
              MODE 1: SEPARATED TABLES WITH STATUS TABS UNDER EACH POSITION
              ══════════════════════════════════════════════════════════════ */
           <div className="space-y-6">
-            {vacancyGroups.map((group, groupIdx) => {
+            {displayedVacancyGroups.map((group, groupIdx) => {
               const isCollapsed = Boolean(collapsedGroups[group.key]);
               const groupApps = group.searchMatchedApplications;
               const totalForGroup = groupApps.length;
@@ -864,7 +875,29 @@ export default function RecruitmentApplications() {
                     </div>
 
                     {/* Right: Summary pill & Collapse toggle */}
-                    <div className="flex items-center gap-2.5 self-end md:self-auto" onClick={(e) => e.stopPropagation()}>
+                    <div className="flex flex-wrap items-center gap-2 self-end md:self-auto" onClick={(e) => e.stopPropagation()}>
+                      {/* Job Offer Status Badge */}
+                      {(() => {
+                        const offerInfo = getVacancyOfferInfo(group);
+                        return offerInfo.hasOffer ? (
+                          <span
+                            className="px-3 py-1.5 rounded-xl bg-emerald-500/25 text-emerald-300 border border-emerald-400/40 text-xs font-semibold backdrop-blur-sm shadow-xs flex items-center gap-1.5"
+                            title="Job offer created for this opening"
+                          >
+                            <CheckCircle2 size={13} className="text-emerald-400" />
+                            <span>Job Offer Created {offerInfo.offerCount > 1 ? `(${offerInfo.offerCount})` : ""}</span>
+                          </span>
+                        ) : (
+                          <span
+                            className="px-3 py-1.5 rounded-xl bg-amber-500/25 text-amber-300 border border-amber-400/40 text-xs font-semibold backdrop-blur-sm shadow-xs flex items-center gap-1.5"
+                            title="No job offer has been created yet"
+                          >
+                            <Clock size={13} className="text-amber-400" />
+                            <span>Job Offer Not Created Yet</span>
+                          </span>
+                        );
+                      })()}
+
                       {/* Job Vacancy Details action (before number of applicants) */}
                       <button
                         type="button"
@@ -894,6 +927,23 @@ export default function RecruitmentApplications() {
                         <Users size={14} className="text-primary-300" />
                         <span>{totalForGroup} {totalForGroup === 1 ? "Applicant" : "Applicants"}</span>
                       </span>
+
+                      {/* Remove Vacancy Button */}
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setConfirmArchiveModal({
+                            vacancy: group.rawVacancy || { id: group.id, title: group.title },
+                            groupKey: group.key,
+                          });
+                        }}
+                        className="px-3.5 py-1.5 rounded-xl bg-rose-500/20 hover:bg-rose-500/35 text-rose-200 border border-rose-400/40 text-xs font-semibold backdrop-blur-sm shadow-xs transition-all flex items-center gap-1.5 cursor-pointer hover:border-rose-300"
+                        title="Remove vacancy and move to Applications History"
+                      >
+                        <Archive size={13} className="text-rose-300" />
+                        <span>Remove Vacancy</span>
+                      </button>
 
                       {/* Collapse/Expand button */}
                       <button
@@ -1621,7 +1671,7 @@ export default function RecruitmentApplications() {
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto animate-fadeIn">
           <div className="bg-white rounded-3xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col border border-slate-100 animate-scaleUp">
             {/* Header: Dark Navy banner styled like Public Careers layout */}
-            <div className="p-6 bg-gradient-to-r from-[#0F1B3D] via-[#162752] to-[#0F1B3D] text-white flex items-start justify-between border-b border-primary-900/40 relative">
+            <div className="p-6 bg-gradient-to-r from-primary-900 via-primary-800 to-primary-900 text-white flex items-start justify-between border-b border-primary-900/40 relative">
               <div className="space-y-3 max-w-xl">
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="px-2.5 py-0.5 rounded-full bg-primary-500/30 border border-primary-400/40 text-primary-200 text-[10px] font-extrabold uppercase tracking-widest flex items-center gap-1 shadow-xs">
@@ -1822,6 +1872,46 @@ export default function RecruitmentApplications() {
                 className="px-5 py-2.5 rounded-xl bg-slate-200 hover:bg-slate-300 text-slate-800 text-xs font-semibold transition-colors"
               >
                 Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Confirmation Modal: Remove Vacancy to Applications History */}
+      {confirmArchiveModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+          <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-200 space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center shrink-0">
+                <Archive size={22} />
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-slate-900">Remove Vacancy</h3>
+                <p className="text-xs text-slate-500">Move opening to Applications History</p>
+              </div>
+            </div>
+            <p className="text-xs text-slate-600 leading-relaxed">
+              Are you sure you want to remove <span className="font-bold text-slate-900">{confirmArchiveModal.vacancy?.title}</span> from active applications?
+              This vacancy and all its submitted applications will be moved to the <span className="font-semibold text-primary-700">Applications History</span> view.
+            </p>
+            <div className="flex items-center justify-end gap-2.5 pt-2">
+              <button
+                type="button"
+                disabled={actionInProgress}
+                onClick={() => setConfirmArchiveModal(null)}
+                className="px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 transition-colors cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={actionInProgress}
+                onClick={handleArchiveVacancy}
+                className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-semibold text-white bg-rose-600 hover:bg-rose-700 transition-colors shadow-sm cursor-pointer disabled:opacity-50"
+              >
+                {actionInProgress ? <Loader2 size={14} className="animate-spin" /> : <Archive size={14} />}
+                <span>Confirm & Remove</span>
               </button>
             </div>
           </div>
