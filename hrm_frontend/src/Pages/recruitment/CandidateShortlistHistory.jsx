@@ -500,7 +500,6 @@ export default function CandidateShortlistHistory() {
                                     const gradient = AVATAR_GRADIENTS[idx % AVATAR_GRADIENTS.length];
                                     const isRejected = cand.status === "REJECTED";
                                     const isShortlisted = cand.status === "SHORTLISTED";
-                                    const isOfferMade = cand.status === "OFFER_MADE";
 
                                     return (
                                       <tr key={cand.id || idx} className="hover:bg-slate-50/70 transition-colors">
@@ -537,10 +536,6 @@ export default function CandidateShortlistHistory() {
                                             <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
                                               <CheckCircle2 size={10} />
                                               <span>SHORTLISTED</span>
-                                            </span>
-                                          ) : isOfferMade ? (
-                                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-teal-50 text-teal-700 border border-teal-200">
-                                              <span>OFFER MADE</span>
                                             </span>
                                           ) : (
                                             <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-700">

@@ -90,13 +90,6 @@ const STATUS_CONFIG = {
     border: "border-teal-200",
     dot: "bg-teal-500",
   },
-  HIRED: {
-    label: "Hired",
-    bg: "bg-green-50",
-    text: "text-green-700",
-    border: "border-green-200",
-    dot: "bg-green-500",
-  },
   REJECTED: {
     label: "Rejected",
     bg: "bg-rose-50",

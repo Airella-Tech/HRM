@@ -49,8 +49,6 @@ const STATUS_CONFIG = {
   SHORTLISTED: { label: "Shortlisted", color: "bg-emerald-50 text-emerald-700 border-emerald-200" },
   INTERVIEW_SCHEDULED: { label: "Interview Scheduled", color: "bg-purple-50 text-purple-700 border-purple-200" },
   INTERVIEW_COMPLETED: { label: "Interview Completed", color: "bg-indigo-50 text-indigo-700 border-indigo-200" },
-  OFFER_MADE: { label: "Offer Made", color: "bg-teal-50 text-teal-700 border-teal-200" },
-  HIRED: { label: "Hired", color: "bg-emerald-100 text-emerald-800 border-emerald-300" },
   REJECTED: { label: "Rejected", color: "bg-rose-50 text-rose-700 border-rose-200" },
   ON_HOLD: { label: "On Hold", color: "bg-slate-100 text-slate-700 border-slate-300" },
 };

@@ -419,7 +419,7 @@ export default function RecruitmentCandidateShortlist() {
           });
 
       const unconfirmedCandidates = vacCandidates.filter((c) => {
-        const isConfirmed = c.status === "SHORTLISTED" || c.status === "OFFER_MADE" || c.status === "HIRED";
+        const isConfirmed = c.status === "SHORTLISTED";
         return !isConfirmed && c.status !== "REJECTED";
       });
 
@@ -1252,7 +1252,7 @@ export default function RecruitmentCandidateShortlist() {
                               vacancy: group.rawVacancy || { id: group.vacancyId, title: group.title },
                               candidates: group.candidates,
                               unconfirmedCount: group.candidates.filter(
-                                (c) => c.status !== "SHORTLISTED" && c.status !== "REJECTED" && c.status !== "HIRED" && c.status !== "OFFER_MADE"
+                                (c) => c.status !== "SHORTLISTED" && c.status !== "REJECTED"
                               ).length,
                             })
                           }
