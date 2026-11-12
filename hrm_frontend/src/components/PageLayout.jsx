@@ -327,10 +327,10 @@ export const PageLayout = ({
           return recruitmentAccess.fullAccess;
         }
 
-        // Everyone with recruitment access can see Overview.
-        if (item.name === "Overview") {
-          return true;
-        }
+          // Everyone with recruitment access can see Overview.
+          if (item.name === "Overview") {
+            return true;
+          }
 
         // Full-access users can see all other Recruitment pages.
         if (recruitmentAccess.fullAccess) {
@@ -425,8 +425,8 @@ export const PageLayout = ({
               (activePage === "Evaluations" &&
                 (item.name === "Evaluate Interviews" ||
                   item.name === "Evaluations")) ||
-              (activePage === "Evaluation Review" &&
-                item.name === "Evaluation Review") ||
+              (activePage === "Interview Evaluation Review" &&
+                  item.name === "Interview Evaluation Review") ||
               (activePage === "Job Offers" &&
                 (item.name === "Manage Job Offers" ||
                   item.name === "Job Offers"));
