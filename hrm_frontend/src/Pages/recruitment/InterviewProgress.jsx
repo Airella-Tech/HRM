@@ -958,22 +958,6 @@ export default function InterviewProgress() {
       <div className="min-h-full bg-slate-50/70 px-4 py-6 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-7xl space-y-6">
           <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-            <div>
-              <div className="mb-2 flex items-center gap-2 text-sm text-slate-500">
-                <BriefcaseBusiness size={16} />
-                <span>Recruitment</span>
-                <ChevronRight size={14} />
-                <span className="text-slate-700">Interview Progress</span>
-              </div>
-              <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
-                Interview Progress
-              </h1>
-              <p className="mt-2 max-w-2xl text-sm text-slate-500 sm:text-base">
-                Monitor candidate journeys from technical interviews to final
-                interviews and review stage outcomes.
-              </p>
-            </div>
-
             <button
               type="button"
               onClick={() => loadProgress()}
