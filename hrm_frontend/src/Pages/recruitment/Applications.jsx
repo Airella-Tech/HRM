@@ -629,59 +629,20 @@ export default function RecruitmentApplications() {
           </div>
         )}
 
-        {/* ── Metric Summary Cards ── */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm flex items-center justify-between">
-            <div>
-              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                Total Applications
-              </p>
-              <h3 className="text-2xl font-bold text-slate-900 mt-1">{metrics.total}</h3>
-              <p className="text-xs text-slate-400 mt-1">Across all vacancies</p>
+        {/* ── Metric Summary (one joined card) ── */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 bg-white rounded-xl border border-slate-200 shadow-sm divide-slate-200 divide-y lg:divide-y-0 lg:divide-x">
+          {[
+            { label: "Total Applications", value: metrics.total, hint: "Across all vacancies", tone: "text-slate-900" },
+            { label: "Positions Applied", value: metrics.positionsWithApps, hint: "Active job openings", tone: "text-primary-600" },
+            { label: "New Applicants", value: metrics.newCount, hint: "Awaiting initial review", tone: "text-primary-600" },
+            { label: "Shortlisted", value: metrics.shortlistedCount, hint: "Qualified candidates", tone: "text-emerald-600" },
+          ].map((m) => (
+            <div key={m.label} className="px-5 py-4">
+              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{m.label}</p>
+              <h3 className={`text-2xl font-bold mt-1 ${m.tone}`}>{m.value}</h3>
+              <p className="text-xs text-slate-500 mt-0.5">{m.hint}</p>
             </div>
-            <div className="w-12 h-12 rounded-xl bg-primary-50 text-primary-600 flex items-center justify-center font-bold">
-              <FileText size={22} />
-            </div>
-          </div>
-
-          <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm flex items-center justify-between">
-            <div>
-              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                Positions Applied
-              </p>
-              <h3 className="text-2xl font-bold text-primary-600 mt-1">{metrics.positionsWithApps}</h3>
-              <p className="text-xs text-slate-400 mt-1">Active job openings</p>
-            </div>
-            <div className="w-12 h-12 rounded-xl bg-primary-50 text-primary-600 flex items-center justify-center font-bold">
-              <Briefcase size={22} />
-            </div>
-          </div>
-
-          <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm flex items-center justify-between">
-            <div>
-              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                New Applicants
-              </p>
-              <h3 className="text-2xl font-bold text-primary-600 mt-1">{metrics.newCount}</h3>
-              <p className="text-xs text-slate-400 mt-1">Awaiting initial review</p>
-            </div>
-            <div className="w-12 h-12 rounded-xl bg-primary-50 text-primary-600 flex items-center justify-center font-bold">
-              <Clock size={22} />
-            </div>
-          </div>
-
-          <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm flex items-center justify-between">
-            <div>
-              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                Shortlisted
-              </p>
-              <h3 className="text-2xl font-bold text-emerald-600 mt-1">{metrics.shortlistedCount}</h3>
-              <p className="text-xs text-slate-400 mt-1">Qualified candidates</p>
-            </div>
-            <div className="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold">
-              <CheckCircle2 size={22} />
-            </div>
-          </div>
+          ))}
         </div>
 
         {/* ── Search & Filter Controls Toolbar ── */}
@@ -861,51 +822,85 @@ export default function RecruitmentApplications() {
               return (
                 <div
                   key={group.key}
-                  className="bg-white rounded-3xl border-2 border-primary-100 shadow-md overflow-hidden transition-all duration-200 hover:shadow-lg"
+                  className="bg-white rounded-xl border border-slate-200 border-l-4 border-l-primary-600 shadow-sm overflow-hidden transition-shadow hover:shadow-md"
                 >
-                  {/* ── Vacancy Group Header (Prominently Highlighted Position Topic) ── */}
+                  {/* ── Vacancy Group Header ── */}
                   <div
                     onClick={() => toggleGroup(group.key)}
-                    className="p-5 sm:p-6 bg-gradient-to-r from-slate-900 via-primary-950 to-slate-900 text-white flex flex-col md:flex-row md:items-center justify-between gap-4 cursor-pointer hover:from-slate-800 hover:to-primary-900 transition-all border-b border-primary-900/60"
+                    className={`px-6 py-4 flex flex-col lg:flex-row lg:items-center justify-between gap-4 cursor-pointer hover:bg-slate-50/60 transition-colors ${
+                      isCollapsed ? "" : "border-b border-slate-200"
+                    }`}
                   >
-                    {/* Left: Highlighted Position Topic Field */}
-                    <div className="flex items-start sm:items-center gap-4">
-                      <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-gradient-to-br from-primary-500 to-primary-700 text-white flex items-center justify-center shrink-0 shadow-lg shadow-primary-500/30 border border-primary-400/40">
-                        <Briefcase size={24} />
+                    <div className="flex items-center gap-4 min-w-0">
+                      <div className="w-11 h-11 rounded-xl bg-primary-50 text-primary-600 flex items-center justify-center shrink-0">
+                        <Briefcase size={20} />
                       </div>
-                      <div>
-                        {/* Bold Prominent Position Title */}
-                        <h3 className="text-xl sm:text-2xl font-black text-white tracking-tight flex items-center gap-2">
-                          <span>{group.title}</span>
-                        </h3>
+                      <div className="min-w-0">
+                        <h3 className="text-lg font-bold text-slate-900 truncate">{group.title}</h3>
+                        <p className="text-xs text-slate-500 mt-0.5">
+                          {[
+                            group.department,
+                            group.jobType,
+                            group.deadline ? `Closes ${formatDate(group.deadline)}` : null,
+                          ]
+                            .filter(Boolean)
+                            .join(" · ")}
+                        </p>
                       </div>
                     </div>
 
-                    {/* Right: Summary pill & Collapse toggle */}
-                    <div className="flex flex-wrap items-center gap-2 self-end md:self-auto" onClick={(e) => e.stopPropagation()}>
+                    {totalForGroup > 0 && (
+                      <div className="hidden xl:block w-48 shrink-0">
+                        <div className="flex h-1.5 rounded-full overflow-hidden bg-slate-100">
+                          {[
+                            { n: newCount, c: "bg-primary-500" },
+                            { n: reviewCount, c: "bg-amber-500" },
+                            { n: shortlistedCount, c: "bg-emerald-500" },
+                            { n: rejectedCount, c: "bg-red-500" },
+                          ].map((seg) => (
+                            <div
+                              key={seg.c}
+                              className={seg.c}
+                              style={{ width: `${(seg.n / totalForGroup) * 100}%` }}
+                            />
+                          ))}
+                        </div>
+                        <p className="text-[11px] text-slate-500 mt-1.5">
+                          {[
+                            newCount > 0 ? `${newCount} new` : null,
+                            reviewCount > 0 ? `${reviewCount} under review` : null,
+                            shortlistedCount > 0 ? `${shortlistedCount} shortlisted` : null,
+                            rejectedCount > 0 ? `${rejectedCount} rejected` : null,
+                          ]
+                            .filter(Boolean)
+                            .join(" · ")}
+                        </p>
+                      </div>
+                    )}
+
+                    <div className="flex flex-wrap items-center gap-2 self-end lg:self-auto" onClick={(e) => e.stopPropagation()}>
                       {/* Job Offer Status Badge */}
                       {(() => {
                         const offerInfo = getVacancyOfferInfo(group);
                         return offerInfo.hasOffer ? (
                           <span
-                            className="px-3 py-1.5 rounded-xl bg-emerald-500/25 text-emerald-300 border border-emerald-400/40 text-xs font-semibold backdrop-blur-sm shadow-xs flex items-center gap-1.5"
+                            className="px-3 py-1.5 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-semibold flex items-center gap-1.5"
                             title="Job offer created for this opening"
                           >
-                            <CheckCircle2 size={13} className="text-emerald-400" />
-                            <span>Job Offer Created {offerInfo.offerCount > 1 ? `(${offerInfo.offerCount})` : ""}</span>
+                            <CheckCircle2 size={14} />
+                            <span>Offer Created {offerInfo.offerCount > 1 ? `(${offerInfo.offerCount})` : ""}</span>
                           </span>
                         ) : (
                           <span
-                            className="px-3 py-1.5 rounded-xl bg-amber-500/25 text-amber-300 border border-amber-400/40 text-xs font-semibold backdrop-blur-sm shadow-xs flex items-center gap-1.5"
+                            className="px-3 py-1.5 rounded-xl bg-amber-50 text-amber-700 border border-amber-200 text-xs font-semibold flex items-center gap-1.5"
                             title="No job offer has been created yet"
                           >
-                            <Clock size={13} className="text-amber-400" />
-                            <span>Job Offer Not Created Yet</span>
+                            <Clock size={14} />
+                            <span>No Offer Yet</span>
                           </span>
                         );
                       })()}
 
-                      {/* Job Vacancy Details action (before number of applicants) */}
                       <button
                         type="button"
                         onClick={(e) => {
@@ -923,19 +918,18 @@ export default function RecruitmentApplications() {
                             }
                           );
                         }}
-                        className="px-3.5 py-1.5 rounded-xl bg-white/15 hover:bg-white/25 text-white text-xs font-semibold border border-white/20 backdrop-blur-sm shadow-xs transition-all flex items-center gap-1.5 cursor-pointer hover:border-white/40"
+                        className="px-4 py-2 rounded-xl border border-slate-200 bg-white text-slate-700 text-sm font-semibold hover:bg-slate-50 flex items-center gap-2 cursor-pointer"
                         title="Display job vacancy details like public career page"
                       >
-                        <FileText size={14} className="text-primary-300" />
-                        <span>Job Vacancy Details</span>
+                        <FileText size={16} className="text-slate-500" />
+                        <span>Vacancy Details</span>
                       </button>
 
-                      <span className="px-3.5 py-1.5 rounded-xl bg-white/15 text-white text-xs font-bold border border-white/20 backdrop-blur-sm shadow-xs flex items-center gap-1.5">
-                        <Users size={14} className="text-primary-300" />
+                      <span className="px-3 py-1.5 rounded-xl bg-primary-50 text-primary-700 text-xs font-semibold flex items-center gap-1.5">
+                        <Users size={14} />
                         <span>{totalForGroup} {totalForGroup === 1 ? "Applicant" : "Applicants"}</span>
                       </span>
 
-                      {/* Remove Vacancy Button */}
                       <button
                         type="button"
                         onClick={(e) => {
@@ -945,17 +939,16 @@ export default function RecruitmentApplications() {
                             groupKey: group.key,
                           });
                         }}
-                        className="px-3.5 py-1.5 rounded-xl bg-rose-500/20 hover:bg-rose-500/35 text-rose-200 border border-rose-400/40 text-xs font-semibold backdrop-blur-sm shadow-xs transition-all flex items-center gap-1.5 cursor-pointer hover:border-rose-300"
+                        className="px-4 py-2 rounded-xl border border-red-200 bg-white text-red-700 text-sm font-semibold hover:bg-red-50 flex items-center gap-2 cursor-pointer"
                         title="Remove vacancy and move to Applications History"
                       >
-                        <Archive size={13} className="text-rose-300" />
-                        <span>Remove Vacancy</span>
+                        <Archive size={16} />
+                        <span>Remove</span>
                       </button>
 
-                      {/* Collapse/Expand button */}
                       <button
                         onClick={() => toggleGroup(group.key)}
-                        className="p-2 rounded-xl text-slate-300 hover:text-white hover:bg-white/10 transition-colors"
+                        className="p-2 rounded-xl text-slate-500 hover:bg-slate-100 transition-colors"
                         title={isCollapsed ? "Expand table" : "Collapse table"}
                       >
                         {isCollapsed ? <ChevronDown size={18} /> : <ChevronUp size={18} />}
@@ -1033,7 +1026,7 @@ export default function RecruitmentApplications() {
                           </div>
                         ) : (
                           <table className="w-full text-left text-sm text-slate-600">
-                            <thead className="bg-slate-50/80 border-b border-slate-200/80 text-[11px] uppercase font-semibold text-slate-400 tracking-wider">
+                            <thead className="bg-slate-50/80 border-b border-slate-200/80 text-[11px] uppercase font-semibold text-slate-500 tracking-wider">
                               <tr>
                                 <th className="px-6 py-3.5">Candidate Details</th>
                                 <th className="px-6 py-3.5">Experience & Education</th>
