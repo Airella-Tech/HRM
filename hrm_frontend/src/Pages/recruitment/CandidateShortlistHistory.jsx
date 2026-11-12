@@ -37,8 +37,8 @@ const AVATAR_GRADIENTS = [
   "from-primary-500 to-purple-600",
   "from-emerald-500 to-teal-600",
   "from-amber-500 to-orange-600",
-  "from-rose-500 to-pink-600",
-  "from-indigo-500 to-blue-600",
+  "from-red-500 to-pink-600",
+  "from-primary-600 to-primary-800",
 ];
 
 function getInitials(name) {
@@ -225,7 +225,7 @@ export default function CandidateShortlistHistory() {
         </div>
       }
     >
-      <div className="space-y-6 max-w-7xl mx-auto pb-12">
+      <div className="space-y-6">
         {/* Toast Alert */}
         {toastMessage && (
           <div
@@ -233,8 +233,8 @@ export default function CandidateShortlistHistory() {
               toastMessage.type === "success"
                 ? "bg-emerald-50 text-emerald-800 border-emerald-200"
                 : toastMessage.type === "error"
-                ? "bg-rose-50 text-rose-800 border-rose-200"
-                : "bg-blue-50 text-blue-800 border-blue-200"
+                ? "bg-red-50 text-red-800 border-red-200"
+                : "bg-primary-50 text-primary-800 border-primary-200"
             }`}
           >
             <div className="flex items-center gap-2.5">
@@ -248,36 +248,35 @@ export default function CandidateShortlistHistory() {
         )}
 
         {/* Top Info Banner */}
-        <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-indigo-950 rounded-3xl p-6 text-white shadow-lg relative overflow-hidden">
-          <div className="absolute right-0 top-0 translate-x-8 -translate-y-8 w-64 h-64 bg-primary-500/10 rounded-full blur-3xl pointer-events-none" />
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 relative z-10">
+        <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div className="space-y-1">
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 text-slate-200 text-xs font-semibold backdrop-blur-xs">
-                <History size={13} className="text-primary-300" />
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary-50 text-primary-700 text-xs font-semibold">
+                <History size={13} className="text-primary-600" />
                 <span>Shortlist Archive</span>
               </div>
-              <h2 className="text-xl font-bold tracking-tight text-white">Closed Vacancies & Shortlist Records</h2>
-              <p className="text-xs text-slate-300 max-w-2xl leading-relaxed">
-                When a vacancy is removed from Candidate Shortlist, candidates without confirmed shortlists are automatically marked as REJECTED and updated on the candidate tracking page (<code className="bg-white/10 px-1 py-0.5 rounded text-[11px]">/careers/track</code>).
+              <h2 className="text-xl font-bold text-slate-900">Closed Vacancies & Shortlist Records</h2>
+              <p className="text-xs text-slate-500 max-w-2xl leading-relaxed">
+                When a vacancy is removed from Candidate Shortlist, candidates without confirmed shortlists are automatically marked as REJECTED and updated on the candidate tracking page (<code className="bg-slate-100 text-slate-700 px-1 py-0.5 rounded text-[11px]">/careers/track</code>).
               </p>
             </div>
             <div className="flex items-center gap-3 shrink-0">
-              <div className="px-4 py-2.5 rounded-2xl bg-white/10 backdrop-blur-xs border border-white/10 text-center">
-                <p className="text-xl font-bold text-white">{vacancies.length}</p>
-                <p className="text-[11px] text-slate-300 font-medium">Archived Openings</p>
+              <div className="px-5 py-3 rounded-xl bg-slate-50 border border-slate-200 text-center">
+                <p className="text-xl font-bold text-slate-900">{vacancies.length}</p>
+                <p className="text-[11px] text-slate-500 font-medium">Archived Openings</p>
               </div>
-              <div className="px-4 py-2.5 rounded-2xl bg-white/10 backdrop-blur-xs border border-white/10 text-center">
-                <p className="text-xl font-bold text-white">
+              <div className="px-5 py-3 rounded-xl bg-slate-50 border border-slate-200 text-center">
+                <p className="text-xl font-bold text-slate-900">
                   {groupedVacancies.reduce((acc, g) => acc + g.candidates.length, 0)}
                 </p>
-                <p className="text-[11px] text-slate-300 font-medium">Candidates Recorded</p>
+                <p className="text-[11px] text-slate-500 font-medium">Candidates Recorded</p>
               </div>
             </div>
           </div>
         </div>
 
         {/* Search & Filter Bar */}
-        <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col md:flex-row justify-between items-center gap-4">
+        <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col md:flex-row justify-between items-center gap-4">
           <div className="relative w-full md:w-80">
             <Search className="absolute left-3.5 top-3 text-slate-400" size={17} />
             <input
@@ -325,13 +324,13 @@ export default function CandidateShortlistHistory() {
 
         {/* Vacancies History List */}
         {loading ? (
-          <div className="bg-white rounded-3xl p-16 text-center border border-slate-200/80 shadow-xs">
+          <div className="bg-white rounded-xl p-16 text-center border border-slate-200 shadow-sm">
             <Loader2 size={36} className="animate-spin text-primary-600 mx-auto mb-3" />
             <h4 className="font-bold text-slate-800 text-sm">Loading Shortlist History...</h4>
             <p className="text-xs text-slate-400 mt-1">Retrieving archived vacancies and candidate shortlist records</p>
           </div>
         ) : filteredGroupedVacancies.length === 0 ? (
-          <div className="bg-white rounded-3xl p-16 text-center border border-slate-200/80 shadow-xs max-w-md mx-auto space-y-3">
+          <div className="bg-white rounded-xl p-16 text-center border border-slate-200 shadow-sm max-w-md mx-auto space-y-3">
             <div className="w-14 h-14 bg-slate-100 text-slate-400 rounded-2xl flex items-center justify-center mx-auto mb-3">
               <History size={28} />
             </div>
@@ -357,7 +356,7 @@ export default function CandidateShortlistHistory() {
               return (
                 <div
                   key={vac.id}
-                  className="bg-white rounded-2xl border border-slate-200/80 shadow-xs hover:border-slate-300 transition-all overflow-hidden"
+                  className="bg-white rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow overflow-hidden"
                 >
                   {/* Vacancy Card Header: First displays vacancy name & dates */}
                   <div
@@ -366,7 +365,7 @@ export default function CandidateShortlistHistory() {
                   >
                     {/* Left: Vacancy Name & Dates */}
                     <div className="flex items-start gap-4 flex-1">
-                      <div className="w-12 h-12 rounded-2xl bg-slate-100 text-slate-600 flex items-center justify-center shrink-0 mt-0.5 border border-slate-200/80">
+                      <div className="w-11 h-11 rounded-xl bg-primary-50 text-primary-600 flex items-center justify-center shrink-0 mt-0.5">
                         <Briefcase size={22} />
                       </div>
                       <div className="space-y-1.5 flex-1">
@@ -380,7 +379,7 @@ export default function CandidateShortlistHistory() {
                               <span>{vac.department}</span>
                             </span>
                           )}
-                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-rose-50 text-rose-700 border border-rose-200">
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-red-50 text-red-700 border border-red-200">
                             Removed
                           </span>
                         </div>
@@ -529,7 +528,7 @@ export default function CandidateShortlistHistory() {
                                         </td>
                                         <td className="px-5 py-3.5">
                                           {isRejected ? (
-                                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200">
+                                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-red-50 text-red-700 border border-red-200">
                                               <XCircle size={10} />
                                               <span>REJECTED</span>
                                             </span>
@@ -550,11 +549,11 @@ export default function CandidateShortlistHistory() {
                                         </td>
                                         <td className="px-5 py-3.5 max-w-xs truncate text-[11px]">
                                           {cand.rejectionReason ? (
-                                            <span className="text-rose-700 font-medium" title={cand.rejectionReason}>
+                                            <span className="text-red-700 font-medium" title={cand.rejectionReason}>
                                               {cand.rejectionReason}
                                             </span>
                                           ) : isRejected ? (
-                                            <span className="text-rose-600">Auto-rejected upon vacancy archive</span>
+                                            <span className="text-red-600">Auto-rejected upon vacancy archive</span>
                                           ) : (
                                             <span className="text-slate-500">Shortlisted candidate</span>
                                           )}
@@ -590,7 +589,7 @@ export default function CandidateShortlistHistory() {
       {/* Confirmation Modal: Restore Vacancy */}
       {confirmRestoreModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
-          <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-200 space-y-4">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200 space-y-4">
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 rounded-2xl bg-primary-50 text-primary-600 flex items-center justify-center shrink-0">
                 <RotateCcw size={22} />
@@ -630,7 +629,7 @@ export default function CandidateShortlistHistory() {
       {/* Candidate Shortlist Details Modal */}
       {selectedCandidateModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
-          <div className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 space-y-4">
+          <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="text-base font-bold text-slate-900">Candidate Shortlist Record</h3>
               <button
@@ -662,14 +661,14 @@ export default function CandidateShortlistHistory() {
                   <span
                     className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold ${
                       selectedCandidateModal.status === "REJECTED"
-                        ? "bg-rose-100 text-rose-800"
+                        ? "bg-red-100 text-red-800"
                         : "bg-emerald-100 text-emerald-800"
                     }`}
                   >
                     {selectedCandidateModal.status}
                   </span>
                   {selectedCandidateModal.status === "REJECTED" && (
-                    <span className="text-[11px] text-rose-600">
+                    <span className="text-[11px] text-red-600">
                       Reflected as REJECTED on /careers/track
                     </span>
                   )}

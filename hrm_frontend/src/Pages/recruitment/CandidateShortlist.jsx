@@ -959,59 +959,20 @@ export default function RecruitmentCandidateShortlist() {
           </div>
         )}
 
-        {/* ── Top Summary & Metrics ── */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-sm flex items-center gap-3.5">
-            <div className="w-11 h-11 rounded-xl bg-primary-50 border border-primary-100 flex items-center justify-center text-primary-600 shrink-0">
-              <Briefcase size={22} />
+        {/* ── Top Summary & Metrics (one joined card) ── */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 bg-white rounded-xl border border-slate-200 shadow-sm divide-slate-200 divide-y lg:divide-y-0 lg:divide-x">
+          {[
+            { label: "Active Vacancies", value: displayedVacancyGroups.length, hint: "Separated configurations", tone: "text-slate-900" },
+            { label: "Total Applicants", value: totalApplicants, hint: "Across all vacancies", tone: "text-slate-900" },
+            { label: "Recommended / Staged", value: totalStaged > 0 ? totalStaged : totalRecommended, hint: "Qualifies for shortlist", tone: "text-amber-600" },
+            { label: "Confirmed Shortlist", value: totalShortlisted, hint: "Advanced candidates", tone: "text-emerald-600" },
+          ].map((m) => (
+            <div key={m.label} className="px-5 py-4">
+              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{m.label}</p>
+              <h3 className={`text-2xl font-bold mt-1 ${m.tone}`}>{m.value}</h3>
+              <p className="text-xs text-slate-500 mt-0.5">{m.hint}</p>
             </div>
-            <div>
-              <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">
-                Active Vacancies
-              </span>
-              <span className="text-xl font-bold text-slate-900">{displayedVacancyGroups.length}</span>
-              <span className="text-[11px] text-slate-500 block">Separated Configurations</span>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-sm flex items-center gap-3.5">
-            <div className="w-11 h-11 rounded-xl bg-primary-50 border border-primary-100 flex items-center justify-center text-primary-600 shrink-0">
-              <FileText size={22} />
-            </div>
-            <div>
-              <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">
-                Total Applicants
-              </span>
-              <span className="text-xl font-bold text-slate-900">{totalApplicants}</span>
-              <span className="text-[11px] text-slate-500 block">Across All Vacancies</span>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-sm flex items-center gap-3.5">
-            <div className="w-11 h-11 rounded-xl bg-amber-50 border border-amber-100 flex items-center justify-center text-amber-600 shrink-0">
-              <Sparkles size={22} />
-            </div>
-            <div>
-              <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">
-                Recommended / Staged
-              </span>
-              <span className="text-xl font-bold text-amber-700">{totalStaged > 0 ? totalStaged : totalRecommended}</span>
-              <span className="text-[11px] text-amber-600 font-medium block">Qualifies for Shortlist</span>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-sm flex items-center gap-3.5">
-            <div className="w-11 h-11 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600 shrink-0">
-              <CheckCircle2 size={22} />
-            </div>
-            <div>
-              <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">
-                Confirmed Shortlist
-              </span>
-              <span className="text-xl font-bold text-emerald-700">{totalShortlisted}</span>
-              <span className="text-[11px] text-emerald-600 font-medium block">Advanced Candidates</span>
-            </div>
-          </div>
+          ))}
         </div>
 
         {/* ── Global Search & Position Filter Bar ── */}
@@ -1148,18 +1109,18 @@ export default function RecruitmentCandidateShortlist() {
               return (
                 <div
                   key={vacKey}
-                  className="bg-white rounded-3xl border border-slate-200/90 shadow-sm overflow-hidden transition-all duration-200 hover:shadow-md"
+                  className="bg-white rounded-xl border border-slate-200 border-l-4 border-l-primary-600 shadow-sm overflow-hidden transition-shadow hover:shadow-md"
                 >
                   {/* ── Vacancy Header & Full-Width Controls Bar ── */}
-                  <div className="p-5 sm:p-6 bg-gradient-to-r from-slate-900 via-slate-800 to-primary-950 text-white relative">
+                  <div className={`px-6 py-5 relative ${isCollapsed ? "" : "border-b border-slate-200"}`}>
                     {/* Top Row: Title, Applicants Count, Last Screened Status & Collapse Button */}
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex flex-col gap-1.5 min-w-0">
                         <div className="flex items-center gap-2.5 flex-wrap">
-                          <h3 className="text-lg sm:text-xl font-bold tracking-tight text-white flex items-center gap-2">
+                          <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
                             {group.title}
                           </h3>
-                          <span className="text-xs px-2.5 py-0.5 rounded-full bg-slate-700/80 text-slate-300 font-medium border border-slate-600/40">
+                          <span className="text-xs px-2.5 py-0.5 rounded-full bg-primary-50 text-primary-700 font-semibold">
                             {vacTotal} Applicants
                           </span>
                           {/* Job Offer Status Badge */}
@@ -1167,18 +1128,18 @@ export default function RecruitmentCandidateShortlist() {
                             const offerInfo = getVacancyOfferInfo(vacKey, group.candidates, group.title);
                             return offerInfo.hasOffer ? (
                               <span
-                                className="text-xs px-3 py-1 rounded-full bg-emerald-500/25 text-emerald-300 font-semibold border border-emerald-400/40 flex items-center gap-1.5 shadow-xs"
+                                className="text-xs px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 font-semibold border border-emerald-200 flex items-center gap-1.5"
                                 title="Job offer created for this position"
                               >
-                                <CheckCircle2 size={13} className="text-emerald-400 shrink-0" />
+                                <CheckCircle2 size={13} className="text-emerald-600 shrink-0" />
                                 <span>Job Offer Created {offerInfo.offerCount > 1 ? `(${offerInfo.offerCount})` : ""}</span>
                               </span>
                             ) : (
                               <span
-                                className="text-xs px-3 py-1 rounded-full bg-amber-500/25 text-amber-300 font-semibold border border-amber-400/40 flex items-center gap-1.5 shadow-xs"
+                                className="text-xs px-3 py-1 rounded-full bg-amber-50 text-amber-700 font-semibold border border-amber-200 flex items-center gap-1.5"
                                 title="No job offer created yet for this position"
                               >
-                                <Clock size={13} className="text-amber-400 shrink-0" />
+                                <Clock size={13} className="text-amber-600 shrink-0" />
                                 <span>Job Offer Not Created Yet</span>
                               </span>
                             );
@@ -1186,21 +1147,21 @@ export default function RecruitmentCandidateShortlist() {
                         </div>
                         {/* Persisted Last Run Details from database */}
                         {vacConfig?.lastScreenedAt ? (
-                          <div className="flex flex-wrap items-center gap-1.5 text-xs text-primary-200">
-                            <Clock size={13} className="text-primary-400 shrink-0" />
-                            <span className="font-semibold text-slate-200">Last screened:</span>
-                            <span className="text-slate-300">
+                          <div className="flex flex-wrap items-center gap-1.5 text-xs text-slate-500">
+                            <Clock size={13} className="text-slate-400 shrink-0" />
+                            <span className="font-semibold text-slate-700">Last screened:</span>
+                            <span className="text-slate-600">
                               {new Date(vacConfig.lastScreenedAt).toLocaleString(undefined, {
                                 dateStyle: "medium",
                                 timeStyle: "short",
                               })}
                             </span>
                             {vacConfig.lastScreenedSummary && (
-                              <span className="text-primary-300">• {vacConfig.lastScreenedSummary}</span>
+                              <span className="text-slate-500">• {vacConfig.lastScreenedSummary}</span>
                             )}
                           </div>
                         ) : (
-                          <div className="flex items-center gap-1.5 text-xs text-slate-400">
+                          <div className="flex items-center gap-1.5 text-xs text-slate-500">
                             <Clock size={13} className="shrink-0 text-slate-400" />
                             <span>Auto-shortlist has not been run yet for this vacancy</span>
                           </div>
@@ -1211,7 +1172,7 @@ export default function RecruitmentCandidateShortlist() {
                       <button
                         type="button"
                         onClick={() => toggleCollapse(vacKey)}
-                        className="w-8 h-8 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700/60 flex items-center justify-center transition-colors cursor-pointer shrink-0"
+                        className="w-9 h-9 rounded-xl bg-white hover:bg-slate-50 text-slate-500 border border-slate-200 flex items-center justify-center transition-colors cursor-pointer shrink-0"
                         title={isCollapsed ? "Expand section" : "Collapse section"}
                       >
                         {isCollapsed ? <ChevronDown size={16} /> : <ChevronUp size={16} />}
@@ -1219,16 +1180,16 @@ export default function RecruitmentCandidateShortlist() {
                     </div>
 
                     {/* Bottom: Dedicated Full-Width Action Controls Bar Under Vacancy Information */}
-                    <div className="mt-4 p-2.5 bg-slate-950/50 rounded-2xl border border-white/10 backdrop-blur-xs flex flex-wrap items-center justify-between gap-2.5">
+                    <div className="mt-4 p-2.5 bg-slate-50 rounded-xl border border-slate-200 flex flex-wrap items-center justify-between gap-2.5">
                       <div className="flex flex-wrap items-center gap-2">
                         {/* 0. Job Vacancy Details Button */}
                         <button
                           type="button"
                           onClick={() => setSelectedVacancyModal(group.rawVacancy || { id: group.vacancyId, title: group.title, department: group.department })}
-                          className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold bg-white/10 hover:bg-white/20 text-white border border-white/15 shadow-xs transition-all cursor-pointer"
+                          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-slate-200 bg-white text-slate-700 text-sm font-semibold hover:bg-slate-50 transition-colors cursor-pointer"
                           title="Display job vacancy details like public career page"
                         >
-                          <FileText size={14} className="text-primary-300 shrink-0" />
+                          <FileText size={16} className="text-slate-500 shrink-0" />
                           <span>Job Vacancy Details</span>
                         </button>
 
@@ -1237,10 +1198,10 @@ export default function RecruitmentCandidateShortlist() {
                           type="button"
                           onClick={() => handleOpenConfigModal(group.rawVacancy || { id: group.vacancyId, title: group.title })}
                           disabled={loadingConfigFor === group.vacancyId}
-                          className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold bg-slate-800/90 hover:bg-slate-700 text-slate-200 hover:text-white border border-slate-700/70 shadow-xs transition-all cursor-pointer disabled:opacity-50"
+                          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-slate-200 bg-white text-slate-700 text-sm font-semibold hover:bg-slate-50 transition-colors cursor-pointer disabled:opacity-60"
                           title="Define screening criteria, weights, mandatory rules, and thresholds for this vacancy"
                         >
-                          <SlidersHorizontal size={14} className="text-primary-400 shrink-0" />
+                          <SlidersHorizontal size={16} className="text-slate-500 shrink-0" />
                           <span>{loadingConfigFor === group.vacancyId ? "Loading..." : "Define Screening Rules"}</span>
                         </button>
 
@@ -1256,10 +1217,10 @@ export default function RecruitmentCandidateShortlist() {
                               ).length,
                             })
                           }
-                          className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold bg-rose-500/20 hover:bg-rose-500/35 text-rose-200 border border-rose-400/30 transition-all cursor-pointer"
+                          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-red-200 bg-white text-red-700 text-sm font-semibold hover:bg-red-50 transition-colors cursor-pointer"
                           title="Remove vacancy, move to Shortlist History, and reject unconfirmed candidates"
                         >
-                          <Archive size={14} className="text-rose-300 shrink-0" />
+                          <Archive size={16} className="text-red-600 shrink-0" />
                           <span>Remove Vacancy</span>
                         </button>
                       </div>
@@ -1278,7 +1239,7 @@ export default function RecruitmentCandidateShortlist() {
                             })
                           }
                           disabled={isRunningAuto || vacTotal === 0}
-                          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 text-white font-bold text-xs shadow-md shadow-primary-950/40 border border-primary-400/30 transition-all disabled:opacity-50 cursor-pointer"
+                          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-primary-600 hover:bg-primary-700 text-white text-sm font-semibold shadow-sm transition-colors disabled:opacity-60 cursor-pointer"
                           title={`Evaluate applicants against vacancy rules ${autoShortlistActive ? "and auto-shortlist qualifying candidates" : ""}`}
                         >
                           {isRunningAuto ? (
@@ -1288,9 +1249,9 @@ export default function RecruitmentCandidateShortlist() {
                             </>
                           ) : (
                             <>
-                              <Sparkles size={14} className="text-amber-300" />
+                              <Sparkles size={16} className="text-primary-100" />
                               <span>{autoShortlistActive ? "Screen & Auto-Shortlist" : "Run Screening"}</span>
-                              <span className="px-1.5 py-0.5 rounded-md bg-primary-900/70 border border-primary-400/30 text-[10px] font-bold text-primary-100">
+                              <span className="px-1.5 py-0.5 rounded-md bg-white/20 text-[10px] font-bold text-white">
                                 ≥{minScore}%
                               </span>
                             </>
@@ -1309,10 +1270,10 @@ export default function RecruitmentCandidateShortlist() {
                             })
                           }
                           disabled={isConfirming || stagedCount === 0}
-                          className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+                          className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-colors ${
                             stagedCount > 0
-                              ? "bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white shadow-md shadow-emerald-950/40 border border-emerald-400/30 cursor-pointer"
-                              : "bg-slate-800/40 text-slate-500 border border-slate-800/80 cursor-not-allowed"
+                              ? "bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm"
+                              : "bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed"
                           }`}
                           title={
                             stagedCount > 0
@@ -1327,10 +1288,10 @@ export default function RecruitmentCandidateShortlist() {
                             </>
                           ) : (
                             <>
-                              <CheckCircle2 size={14} className={stagedCount > 0 ? "text-emerald-100" : "text-slate-600"} />
+                              <CheckCircle2 size={14} className={stagedCount > 0 ? "text-emerald-100" : "text-slate-400"} />
                               <span>Confirm Shortlist</span>
                               {stagedCount > 0 ? (
-                                <span className="px-1.5 py-0.5 bg-emerald-700/80 rounded-full text-[10px] font-extrabold text-white border border-emerald-400/30">
+                                <span className="px-1.5 py-0.5 bg-white/25 rounded-full text-[10px] font-bold text-white">
                                   {stagedCount}
                                 </span>
                               ) : (
@@ -1347,7 +1308,7 @@ export default function RecruitmentCandidateShortlist() {
                           <button
                             type="button"
                             onClick={() => handleClearStagingForVacancy(vacKey)}
-                            className="p-2 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700/60 text-xs transition-colors cursor-pointer"
+                            className="p-2 rounded-xl bg-white hover:bg-slate-50 text-slate-500 border border-slate-200 text-xs transition-colors cursor-pointer"
                             title="Clear staged candidates"
                           >
                             <X size={14} />
@@ -1361,25 +1322,25 @@ export default function RecruitmentCandidateShortlist() {
                       <div
                         className={`mt-4 p-3 rounded-xl text-xs flex items-center justify-between gap-3 border ${
                           alert.type === "success"
-                            ? "bg-emerald-500/20 border-emerald-400/40 text-emerald-200"
+                            ? "bg-emerald-50 border-emerald-200 text-emerald-800"
                             : alert.type === "error"
-                            ? "bg-rose-500/20 border-rose-400/40 text-rose-200"
-                            : "bg-primary-500/20 border-primary-400/40 text-primary-200"
+                            ? "bg-red-50 border-red-200 text-red-700"
+                            : "bg-primary-50 border-primary-200 text-primary-800"
                         }`}
                       >
                         <div className="flex items-center gap-2 flex-wrap">
                           {alert.type === "success" ? (
-                            <CheckCircle2 size={16} className="text-emerald-400 shrink-0" />
+                            <CheckCircle2 size={16} className="text-emerald-600 shrink-0" />
                           ) : alert.type === "error" ? (
-                            <AlertCircle size={16} className="text-rose-400 shrink-0" />
+                            <AlertCircle size={16} className="text-red-600 shrink-0" />
                           ) : (
-                            <Sparkles size={16} className="text-primary-400 shrink-0" />
+                            <Sparkles size={16} className="text-primary-600 shrink-0" />
                           )}
                           <span>{alert.message}</span>
                           {alert.actionUrl && (
                             <Link
                               to={alert.actionUrl}
-                              className="ml-1 inline-flex items-center gap-1 px-3 py-1 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs rounded-lg shadow-xs transition-all cursor-pointer"
+                              className="ml-1 inline-flex items-center gap-1 px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs rounded-lg shadow-sm transition-colors cursor-pointer"
                             >
                               <span>{alert.actionLabel || "View"}</span>
                               <ArrowRight size={13} />
@@ -1388,7 +1349,7 @@ export default function RecruitmentCandidateShortlist() {
                         </div>
                         <button
                           onClick={() => setVacancyAlerts((prev) => ({ ...prev, [vacKey]: null }))}
-                          className="text-white/60 hover:text-white cursor-pointer"
+                          className="text-slate-400 hover:text-slate-600 cursor-pointer"
                         >
                           <X size={14} />
                         </button>

@@ -113,7 +113,7 @@ const getCategoryLabel = (category) => {
 const systemRoleStyles = {
   EMPLOYEE: "bg-slate-100 text-slate-600",
   HR_MANAGER: "bg-amber-50 text-amber-700",
-  ADMIN: "bg-purple-50 text-purple-700",
+  ADMIN: "bg-primary-50 text-primary-700",
 };
 
 // Normalizes backend RecruitmentRoleDTO into a consistent object structure.
@@ -182,15 +182,15 @@ const ToastNotification = ({ toast, onClose }) => {
       symbol: <CheckCircle2 size={21} />,
     },
     error: {
-      container: "border-rose-200 bg-white",
-      icon: "bg-rose-50 text-rose-600",
-      title: "text-rose-800",
+      container: "border-red-200 bg-white",
+      icon: "bg-red-50 text-red-600",
+      title: "text-red-800",
       symbol: <AlertCircle size={21} />,
     },
     info: {
-      container: "border-indigo-200 bg-white",
-      icon: "bg-indigo-50 text-indigo-600",
-      title: "text-indigo-800",
+      container: "border-primary-200 bg-white",
+      icon: "bg-primary-50 text-primary-600",
+      title: "text-primary-800",
       symbol: <Info size={21} />,
     },
   };
@@ -258,9 +258,9 @@ const ConfirmationModal = ({ confirmation, loading, onCancel, onConfirm }) => {
             <div
               className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl ${
                 isDelete
-                  ? "bg-rose-50 text-rose-600"
+                  ? "bg-red-50 text-red-600"
                   : isSwitchTemplate
-                    ? "bg-indigo-50 text-indigo-600"
+                    ? "bg-primary-50 text-primary-600"
                     : "bg-amber-50 text-amber-600"
               }`}
             >
@@ -348,8 +348,8 @@ const ConfirmationModal = ({ confirmation, loading, onCancel, onConfirm }) => {
             disabled={loading}
             className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 ${
               isDelete || isRemoveEmployeeRole
-                ? "bg-rose-600 hover:bg-rose-700 focus:ring-rose-300"
-                : "bg-indigo-600 hover:bg-indigo-700 focus:ring-indigo-300"
+                ? "bg-red-600 hover:bg-red-700 focus:ring-red-300"
+                : "bg-primary-600 hover:bg-primary-700 focus:ring-primary-300"
             }`}
           >
             {loading ? (
@@ -1138,16 +1138,16 @@ const RecruitmentRolesPermissions = () => {
               : () => openAssignmentModal()
           }
           disabled={loading}
-          className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50"
+          className="inline-flex items-center gap-2 rounded-xl bg-primary-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-50"
         >
           {activeTab === "roles" ? (
             <>
-              <Plus size={17} />
+              <Plus size={16} />
               Create New Role
             </>
           ) : (
             <>
-              <UserPlus size={17} />
+              <UserPlus size={16} />
               Assign Role
             </>
           )}
@@ -1157,21 +1157,10 @@ const RecruitmentRolesPermissions = () => {
       <ToastNotification toast={toast} onClose={closeToast} />
 
       <div className="space-y-6">
-        {/* Page introduction */}
-        <section>
-          <h2 className="text-2xl font-bold text-slate-800">
-            Recruitment Roles &amp; Permissions
-          </h2>
-          <p className="mt-2 text-sm leading-6 text-slate-500">
-            Manage company recruitment roles, assign permissions, and delegate
-            hiring access to staff.
-          </p>
-        </section>
-
         {/* Loading state */}
         {loading ? (
-          <div className="flex min-h-[420px] flex-col items-center justify-center rounded-2xl border border-slate-100 bg-white p-12 text-center shadow-sm">
-            <Loader2 className="h-10 w-10 animate-spin text-indigo-600" />
+          <div className="flex min-h-[420px] flex-col items-center justify-center rounded-xl border border-slate-200 bg-white p-12 text-center shadow-sm">
+            <Loader2 className="h-10 w-10 animate-spin text-primary-600" />
             <h3 className="mt-4 text-base font-semibold text-slate-800">
               Loading Roles &amp; Permissions
             </h3>
@@ -1181,18 +1170,18 @@ const RecruitmentRolesPermissions = () => {
           </div>
         ) : fetchError ? (
           /* Error state with retry option */
-          <div className="rounded-2xl border border-rose-200 bg-rose-50/50 p-8 text-center shadow-sm">
-            <AlertCircle className="mx-auto h-12 w-12 text-rose-500" />
-            <h3 className="mt-3 text-lg font-bold text-rose-900">
+          <div className="rounded-2xl border border-red-200 bg-red-50/50 p-8 text-center shadow-sm">
+            <AlertCircle className="mx-auto h-12 w-12 text-red-500" />
+            <h3 className="mt-3 text-lg font-bold text-red-900">
               Failed to Load Recruitment Data
             </h3>
-            <p className="mx-auto mt-2 max-w-md text-sm text-rose-700">
+            <p className="mx-auto mt-2 max-w-md text-sm text-red-700">
               {fetchError}
             </p>
             <button
               type="button"
               onClick={loadAllData}
-              className="mt-5 inline-flex items-center gap-2 rounded-xl bg-rose-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-rose-700"
+              className="mt-5 inline-flex items-center gap-2 rounded-xl bg-red-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-red-700"
             >
               <RefreshCw size={16} />
               Retry Connection
@@ -1202,8 +1191,8 @@ const RecruitmentRolesPermissions = () => {
           <>
             {/* Summary cards */}
             <section className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <div className="flex items-center gap-4 rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
-                <div className="rounded-xl bg-indigo-50 p-3 text-indigo-600">
+              <div className="flex items-center gap-4 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+                <div className="rounded-xl bg-primary-50 p-3 text-primary-600">
                   <ShieldCheck size={23} />
                 </div>
                 <div>
@@ -1216,7 +1205,7 @@ const RecruitmentRolesPermissions = () => {
                 </div>
               </div>
 
-              <div className="flex items-center gap-4 rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
+              <div className="flex items-center gap-4 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
                 <div className="rounded-xl bg-emerald-50 p-3 text-emerald-600">
                   <Users size={23} />
                 </div>
@@ -1232,14 +1221,14 @@ const RecruitmentRolesPermissions = () => {
             </section>
 
             {/* Main tabs */}
-            <section className="overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm">
+            <section className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
               <div className="flex gap-6 overflow-x-auto border-b border-slate-100 px-5">
                 <button
                   type="button"
                   onClick={() => setActiveTab("roles")}
                   className={`shrink-0 border-b-2 py-4 text-sm font-semibold transition ${
                     activeTab === "roles"
-                      ? "border-indigo-600 text-indigo-600"
+                      ? "border-primary-600 text-primary-600"
                       : "border-transparent text-slate-500 hover:text-slate-800"
                   }`}
                 >
@@ -1251,7 +1240,7 @@ const RecruitmentRolesPermissions = () => {
                   onClick={() => setActiveTab("employees")}
                   className={`shrink-0 border-b-2 py-4 text-sm font-semibold transition ${
                     activeTab === "employees"
-                      ? "border-indigo-600 text-indigo-600"
+                      ? "border-primary-600 text-primary-600"
                       : "border-transparent text-slate-500 hover:text-slate-800"
                   }`}
                 >
@@ -1276,7 +1265,7 @@ const RecruitmentRolesPermissions = () => {
                         onChange={(event) => setSearch(event.target.value)}
                         placeholder="Search roles, descriptions, or permissions..."
                         aria-label="Search recruitment roles"
-                        className="w-full rounded-xl border border-slate-200 py-3 pl-10 pr-4 text-sm outline-none transition focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+                        className="w-full rounded-xl border border-slate-200 py-3 pl-10 pr-4 text-sm outline-none transition focus:border-primary-400 focus:ring-2 focus:ring-primary-100"
                       />
                     </div>
 
@@ -1284,11 +1273,11 @@ const RecruitmentRolesPermissions = () => {
                       {filteredRoles.map((role) => (
                         <article
                           key={role.id}
-                          className="rounded-xl border border-slate-200 p-5 transition hover:border-indigo-200 hover:shadow-sm"
+                          className="rounded-xl border border-slate-200 p-5 transition hover:border-primary-200 hover:shadow-sm"
                         >
                           <div className="flex items-start justify-between gap-3">
                             <div className="flex min-w-0 items-start gap-3">
-                              <div className="rounded-xl bg-indigo-50 p-3 text-indigo-600">
+                              <div className="rounded-xl bg-primary-50 p-3 text-primary-600">
                                 <BriefcaseBusiness size={21} />
                               </div>
 
@@ -1300,7 +1289,7 @@ const RecruitmentRolesPermissions = () => {
                                   className={`mt-2 inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium ${
                                     role.isSystemDefault
                                       ? "bg-slate-100 text-slate-600"
-                                      : "bg-violet-50 text-violet-700"
+                                      : "bg-primary-50 text-primary-700"
                                   }`}
                                 >
                                   {role.isSystemDefault && (
@@ -1322,7 +1311,7 @@ const RecruitmentRolesPermissions = () => {
                               }
                               aria-label={`Edit ${role.name}`}
                               onClick={() => openEditModal(role)}
-                              className="shrink-0 rounded-lg p-2 text-slate-500 transition hover:bg-indigo-50 hover:text-indigo-600"
+                              className="shrink-0 rounded-lg p-2 text-slate-500 transition hover:bg-primary-50 hover:text-primary-600"
                             >
                               <Pencil size={17} />
                             </button>
@@ -1347,7 +1336,7 @@ const RecruitmentRolesPermissions = () => {
                               <button
                                 type="button"
                                 onClick={() => setPreviewRole(role)}
-                                className="rounded-lg bg-indigo-50 px-2.5 py-1.5 text-xs font-semibold text-indigo-700 hover:bg-indigo-100"
+                                className="rounded-lg bg-primary-50 px-2.5 py-1.5 text-xs font-semibold text-primary-700 hover:bg-primary-100"
                               >
                                 +{role.permissionIds.length - 4} more
                               </button>
@@ -1359,7 +1348,7 @@ const RecruitmentRolesPermissions = () => {
                               <button
                                 type="button"
                                 onClick={() => setPreviewRole(role)}
-                                className="inline-flex items-center gap-1.5 font-medium transition hover:text-indigo-600"
+                                className="inline-flex items-center gap-1.5 font-medium transition hover:text-primary-600"
                               >
                                 <Settings2 size={14} />
                                 {role.permissionCount} permissions
@@ -1386,7 +1375,7 @@ const RecruitmentRolesPermissions = () => {
                               }
                               aria-label={`Delete ${role.name}`}
                               onClick={() => handleDeleteRole(role)}
-                              className="rounded-lg p-2 text-rose-500 transition hover:bg-rose-50 disabled:cursor-not-allowed disabled:text-slate-300 disabled:hover:bg-transparent"
+                              className="rounded-lg p-2 text-red-500 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:text-slate-300 disabled:hover:bg-transparent"
                             >
                               {role.isSystemDefault ? (
                                 <LockKeyhole size={17} />
@@ -1408,7 +1397,7 @@ const RecruitmentRolesPermissions = () => {
 
                       {filteredRoles.length === 0 && (
                         <div className="col-span-full rounded-2xl border border-dashed border-slate-200 bg-white p-12 text-center shadow-2xs">
-                          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-600">
+                          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-primary-50 text-primary-600">
                             <BriefcaseBusiness size={28} />
                           </div>
                           <h3 className="mt-4 text-base font-bold text-slate-800">
@@ -1425,7 +1414,7 @@ const RecruitmentRolesPermissions = () => {
                             <button
                               type="button"
                               onClick={openCreateModal}
-                              className="mt-6 inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700"
+                              className="mt-6 inline-flex items-center gap-2 rounded-xl bg-primary-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-primary-700"
                             >
                               <Plus size={16} />
                               Create Role
@@ -1467,7 +1456,7 @@ const RecruitmentRolesPermissions = () => {
                           }
                           placeholder="Search employee, email, department, or designation..."
                           aria-label="Search employees"
-                          className="w-full rounded-xl border border-slate-200 py-3 pl-10 pr-4 text-sm outline-none transition focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+                          className="w-full rounded-xl border border-slate-200 py-3 pl-10 pr-4 text-sm outline-none transition focus:border-primary-400 focus:ring-2 focus:ring-primary-100"
                         />
                       </div>
 
@@ -1482,7 +1471,7 @@ const RecruitmentRolesPermissions = () => {
                             setRoleFilter(event.target.value)
                           }
                           aria-label="Filter employees by recruitment role"
-                          className="w-full appearance-none rounded-xl border border-slate-200 bg-white py-3 pl-10 pr-4 text-sm outline-none transition focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+                          className="w-full appearance-none rounded-xl border border-slate-200 bg-white py-3 pl-10 pr-4 text-sm outline-none transition focus:border-primary-400 focus:ring-2 focus:ring-primary-100"
                         >
                           <option value="all">All Employees</option>
                           {rolesWithAssignments.map((role) => (
@@ -1533,7 +1522,7 @@ const RecruitmentRolesPermissions = () => {
                                 >
                                   <td className="px-5 py-4">
                                     <div className="flex items-start gap-3">
-                                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-indigo-50 text-sm font-semibold text-indigo-700">
+                                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary-50 text-sm font-semibold text-primary-700">
                                         {(employee.name || "U")
                                           .split(" ")
                                           .map((part) => part[0])
@@ -1583,7 +1572,7 @@ const RecruitmentRolesPermissions = () => {
                                         {employeeRoles.map((role) => (
                                           <span
                                             key={role.id}
-                                            className="inline-flex items-center gap-1 rounded-full border border-indigo-100 bg-indigo-50 py-1 pl-2.5 pr-1 text-xs font-semibold text-indigo-700"
+                                            className="inline-flex items-center gap-1 rounded-full border border-primary-100 bg-primary-50 py-1 pl-2.5 pr-1 text-xs font-semibold text-primary-700"
                                           >
                                             {role.name || role.roleName}
                                             <button
@@ -1596,7 +1585,7 @@ const RecruitmentRolesPermissions = () => {
                                                   role
                                                 )
                                               }
-                                              className="rounded-full p-0.5 transition hover:bg-indigo-200 hover:text-indigo-900"
+                                              className="rounded-full p-0.5 transition hover:bg-primary-200 hover:text-primary-900"
                                             >
                                               <X size={13} />
                                             </button>
@@ -1631,7 +1620,7 @@ const RecruitmentRolesPermissions = () => {
                                         openAssignmentModal(employee)
                                       }
                                       disabled={roles.length === 0}
-                                      className="inline-flex items-center justify-center gap-1.5 whitespace-nowrap rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700 transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700 disabled:cursor-not-allowed disabled:opacity-50"
+                                      className="inline-flex items-center justify-center gap-1.5 whitespace-nowrap rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700 transition hover:border-primary-200 hover:bg-primary-50 hover:text-primary-700 disabled:cursor-not-allowed disabled:opacity-50"
                                     >
                                       {employeeRoles.length > 0 ? (
                                         <>
@@ -1759,7 +1748,7 @@ const RecruitmentRolesPermissions = () => {
                       Start from a default role (Optional)
                     </label>
                     {selectedDefaultRoleId && (
-                      <span className="text-[11px] font-semibold text-indigo-700 bg-indigo-100/80 px-2.5 py-0.5 rounded-full">
+                      <span className="text-[11px] font-semibold text-primary-700 bg-primary-100/80 px-2.5 py-0.5 rounded-full">
                         Drafting from Template
                       </span>
                     )}
@@ -1770,7 +1759,7 @@ const RecruitmentRolesPermissions = () => {
                     onChange={(e) => handleSelectDefaultRole(e.target.value)}
                     disabled={savingRole}
                     aria-label="Start from a default role (Optional)"
-                    className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-800 outline-none transition focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+                    className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-800 outline-none transition focus:border-primary-400 focus:ring-2 focus:ring-primary-100"
                   >
                     <option value="">Create from scratch</option>
                     {defaultTemplates.map((template) => (
@@ -1785,15 +1774,15 @@ const RecruitmentRolesPermissions = () => {
 
                   {/* Banner when a default role template is selected */}
                   {selectedDefaultRole && (
-                    <div className="mt-3.5 rounded-xl border border-indigo-100 bg-indigo-50/70 p-3.5 shadow-2xs">
+                    <div className="mt-3.5 rounded-xl border border-primary-100 bg-primary-50/70 p-3.5 shadow-2xs">
                       <div className="flex items-start gap-2.5">
-                        <Sparkles size={17} className="text-indigo-600 shrink-0 mt-0.5" />
+                        <Sparkles size={17} className="text-primary-600 shrink-0 mt-0.5" />
                         <div>
                           <div className="flex items-center gap-2">
                             <span className="text-sm font-bold text-slate-800">
                               Template: {selectedDefaultRole.name}
                             </span>
-                            <span className="rounded-full bg-indigo-100 px-2 py-0.5 text-[10px] font-semibold text-indigo-700">
+                            <span className="rounded-full bg-primary-100 px-2 py-0.5 text-[10px] font-semibold text-primary-700">
                               Predefined Default Template
                             </span>
                           </div>
@@ -1826,7 +1815,7 @@ const RecruitmentRolesPermissions = () => {
                     setFormError("");
                   }}
                   placeholder="e.g. Senior Recruiter"
-                  className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+                  className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-primary-400 focus:ring-2 focus:ring-primary-100"
                 />
                 <p className="mt-1 text-right text-xs text-slate-400">
                   {roleName.length}/50
@@ -1850,7 +1839,7 @@ const RecruitmentRolesPermissions = () => {
                     setRoleDescription(event.target.value)
                   }
                   placeholder="Describe this role's responsibilities..."
-                  className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+                  className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-primary-400 focus:ring-2 focus:ring-primary-100"
                 />
               </div>
 
@@ -1906,7 +1895,7 @@ const RecruitmentRolesPermissions = () => {
                               onClick={() =>
                                 handleSelectAll(categoryPermCodes)
                               }
-                              className="shrink-0 text-xs font-semibold text-indigo-600 hover:text-indigo-800"
+                              className="shrink-0 text-xs font-semibold text-primary-600 hover:text-primary-800"
                             >
                               {allSelected ? "Deselect All" : "Select All"}
                             </button>
@@ -1930,7 +1919,7 @@ const RecruitmentRolesPermissions = () => {
                                       permCode
                                     )}
                                     onChange={() => togglePermission(permCode)}
-                                    className="mt-0.5 h-4 w-4 shrink-0 rounded border-slate-300 accent-indigo-600"
+                                    className="mt-0.5 h-4 w-4 shrink-0 rounded border-slate-300 accent-primary-600"
                                   />
                                   <div className="min-w-0">
                                     <span className="font-medium text-slate-800">
@@ -1957,7 +1946,7 @@ const RecruitmentRolesPermissions = () => {
               {formError && (
                 <p
                   role="alert"
-                  className="mt-4 rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-700"
+                  className="mt-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700"
                 >
                   {formError}
                 </p>
@@ -1979,7 +1968,7 @@ const RecruitmentRolesPermissions = () => {
                     !roleName.trim() ||
                     selectedPermissions.length === 0
                   }
-                  className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="inline-flex items-center gap-2 rounded-xl bg-primary-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {savingRole && (
                     <Loader2 size={16} className="animate-spin" />
@@ -2061,7 +2050,7 @@ const RecruitmentRolesPermissions = () => {
                     setAssignmentError("");
                   }}
                   required
-                  className="w-full rounded-xl border border-slate-200 bg-white px-3 py-3 text-sm outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+                  className="w-full rounded-xl border border-slate-200 bg-white px-3 py-3 text-sm outline-none focus:border-primary-400 focus:ring-2 focus:ring-primary-100"
                 >
                   <option value="">Select an employee</option>
                   {employees.map((employee) => (
@@ -2077,7 +2066,7 @@ const RecruitmentRolesPermissions = () => {
 
               {selectedEmployee && (
                 <div className="mt-4 flex items-center gap-3 rounded-xl border border-slate-100 bg-slate-50 p-4">
-                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-sm font-bold text-indigo-700">
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary-100 text-sm font-bold text-primary-700">
                     {(selectedEmployee.name || selectedEmployee.fullName || "U")
                       .split(" ")
                       .map((part) => part[0])
@@ -2122,7 +2111,7 @@ const RecruitmentRolesPermissions = () => {
                           key={role.id}
                           className={`flex cursor-pointer items-start gap-3 rounded-xl border p-3 transition ${
                             checked
-                              ? "border-indigo-300 bg-indigo-50/70"
+                              ? "border-primary-300 bg-primary-50/70"
                               : "border-slate-200 hover:border-slate-300"
                           }`}
                         >
@@ -2130,7 +2119,7 @@ const RecruitmentRolesPermissions = () => {
                             type="checkbox"
                             checked={checked}
                             onChange={() => toggleAssignmentRole(role.id)}
-                            className="mt-1 h-4 w-4 shrink-0 rounded border-slate-300 accent-indigo-600"
+                            className="mt-1 h-4 w-4 shrink-0 rounded border-slate-300 accent-primary-600"
                           />
                           <div className="min-w-0 flex-1">
                             <div className="flex flex-wrap items-center gap-2">
@@ -2142,7 +2131,7 @@ const RecruitmentRolesPermissions = () => {
                                   System Default
                                 </span>
                               ) : (
-                                <span className="rounded-full bg-indigo-50 px-2 py-0.5 text-[10px] font-medium text-indigo-700">
+                                <span className="rounded-full bg-primary-50 px-2 py-0.5 text-[10px] font-medium text-primary-700">
                                   Company Role
                                 </span>
                               )}
@@ -2150,7 +2139,7 @@ const RecruitmentRolesPermissions = () => {
                             <p className="mt-1 text-xs leading-5 text-slate-500">
                               {role.description}
                             </p>
-                            <p className="mt-1 text-xs text-indigo-600">
+                            <p className="mt-1 text-xs text-primary-600">
                               {role.permissionCount} permissions
                             </p>
                           </div>
@@ -2208,7 +2197,7 @@ const RecruitmentRolesPermissions = () => {
               {assignmentError && (
                 <p
                   role="alert"
-                  className="mt-4 rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-700"
+                  className="mt-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700"
                 >
                   {assignmentError}
                 </p>
@@ -2231,7 +2220,7 @@ const RecruitmentRolesPermissions = () => {
                     selectedAssignmentRoleIds.length === 0 ||
                     roles.length === 0
                   }
-                  className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="inline-flex items-center gap-2 rounded-xl bg-primary-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {savingAssignment ? (
                     <Loader2 size={15} className="animate-spin" />
@@ -2265,7 +2254,7 @@ const RecruitmentRolesPermissions = () => {
             >
               <div className="flex items-start justify-between gap-4">
                 <div className="flex items-start gap-3">
-                  <div className="rounded-xl bg-indigo-50 p-3 text-indigo-600">
+                  <div className="rounded-xl bg-primary-50 p-3 text-primary-600">
                     <ShieldCheck size={22} />
                   </div>
                   <div>
@@ -2366,7 +2355,7 @@ const RecruitmentRolesPermissions = () => {
                 <button
                   type="button"
                   onClick={() => setPreviewRole(null)}
-                  className="rounded-xl bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-indigo-700"
+                  className="rounded-xl bg-primary-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-primary-700"
                 >
                   Close
                 </button>

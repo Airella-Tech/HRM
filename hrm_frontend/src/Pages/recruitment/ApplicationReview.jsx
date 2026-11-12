@@ -662,59 +662,20 @@ export default function RecruitmentApplicationReview() {
           </div>
         )}
 
-        {/* ── KPI Summary Cards ── */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs flex items-center justify-between">
-            <div>
-              <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
-                Confirmed Shortlist
-              </p>
-              <h3 className="text-2xl font-bold text-emerald-600 mt-1">{totalConfirmed}</h3>
-              <p className="text-xs text-slate-500 mt-0.5">Approved for review</p>
+        {/* ── KPI Summary (one joined card) ── */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 bg-white rounded-xl border border-slate-200 shadow-sm divide-slate-200 divide-y lg:divide-y-0 lg:divide-x">
+          {[
+            { label: "Confirmed Shortlist", value: totalConfirmed, hint: "Approved for review", tone: "text-emerald-600" },
+            { label: "Ready for Interview", value: readyInterviewCount, hint: "Qualified for scheduling", tone: "text-primary-600" },
+            { label: "Reviewed with Notes", value: reviewedCount, hint: "Assessment documented", tone: "text-primary-600" },
+            { label: "Average Match Score", value: `${avgMatchScore}%`, hint: "Across confirmed candidates", tone: "text-amber-600" },
+          ].map((m) => (
+            <div key={m.label} className="px-5 py-4">
+              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{m.label}</p>
+              <h3 className={`text-2xl font-bold mt-1 ${m.tone}`}>{m.value}</h3>
+              <p className="text-xs text-slate-500 mt-0.5">{m.hint}</p>
             </div>
-            <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold">
-              <UserCheck size={22} />
-            </div>
-          </div>
-
-          <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs flex items-center justify-between">
-            <div>
-              <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
-                Ready for Interview
-              </p>
-              <h3 className="text-2xl font-bold text-primary-600 mt-1">{readyInterviewCount}</h3>
-              <p className="text-xs text-slate-500 mt-0.5">Qualified for scheduling</p>
-            </div>
-            <div className="w-12 h-12 rounded-2xl bg-primary-50 text-primary-600 flex items-center justify-center font-bold">
-              <CalendarClock size={22} />
-            </div>
-          </div>
-
-          <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs flex items-center justify-between">
-            <div>
-              <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
-                Reviewed with Notes
-              </p>
-              <h3 className="text-2xl font-bold text-primary-600 mt-1">{reviewedCount}</h3>
-              <p className="text-xs text-slate-500 mt-0.5">Assessment documented</p>
-            </div>
-            <div className="w-12 h-12 rounded-2xl bg-primary-50 text-primary-600 flex items-center justify-center font-bold">
-              <ClipboardCheck size={22} />
-            </div>
-          </div>
-
-          <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs flex items-center justify-between">
-            <div>
-              <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
-                Average Match Score
-              </p>
-              <h3 className="text-2xl font-bold text-amber-600 mt-1">{avgMatchScore}%</h3>
-              <p className="text-xs text-slate-500 mt-0.5">Across confirmed candidates</p>
-            </div>
-            <div className="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold">
-              <Sparkles size={22} />
-            </div>
-          </div>
+          ))}
         </div>
 
         {/* ── Search, Vacancy Filter & Status Tabs ── */}
@@ -880,65 +841,61 @@ export default function RecruitmentApplicationReview() {
               return (
                 <div
                   key={group.vacancyKey}
-                  className="bg-white rounded-3xl border border-slate-200/90 shadow-xs overflow-hidden transition-all duration-200 hover:shadow-sm"
+                  className="bg-white rounded-xl border border-slate-200 border-l-4 border-l-primary-600 shadow-sm overflow-hidden transition-shadow hover:shadow-md"
                 >
                   {/* ── Vacancy Header ── */}
-                  <div className="p-5 sm:p-6 bg-gradient-to-r from-slate-900 via-slate-800 to-primary-950 text-white flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                    <div className="flex items-start sm:items-center gap-3.5">
-                      <div className="w-11 h-11 rounded-2xl bg-primary-500/20 border border-primary-400/30 text-primary-300 flex items-center justify-center shrink-0 shadow-inner">
+                  <div
+                    className={`px-6 py-4 flex flex-col lg:flex-row lg:items-center justify-between gap-4 ${
+                      isCollapsed ? "" : "border-b border-slate-200"
+                    }`}
+                  >
+                    <div className="flex items-center gap-4 min-w-0">
+                      <div className="w-11 h-11 rounded-xl bg-primary-50 text-primary-600 flex items-center justify-center shrink-0">
                         <Briefcase size={20} />
                       </div>
-                      <div>
-                        <div className="flex flex-wrap items-center gap-2">
-                          <h3 className="text-lg font-bold text-white tracking-tight">
-                            {group.title}
-                          </h3>
-                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-primary-500/20 text-primary-200 border border-primary-400/30">
-                            <Building2 size={11} />
+                      <div className="min-w-0">
+                        <h3 className="text-lg font-bold text-slate-900 truncate">{group.title}</h3>
+                        <p className="text-xs text-slate-500 mt-0.5 flex flex-wrap items-center gap-x-2">
+                          <span className="inline-flex items-center gap-1">
+                            <Building2 size={12} />
                             <span>{group.department}</span>
                           </span>
-                        </div>
-                        <p className="text-xs text-slate-300 mt-1 flex flex-wrap items-center gap-2">
-                          <span className="inline-flex items-center gap-1 font-semibold text-emerald-400">
-                            <UserCheck size={13} />
-                            <span>
-                              {group.candidates.length} Confirmed{" "}
-                              {group.candidates.length === 1 ? "Candidate" : "Candidates"}
-                            </span>
+                          <span>·</span>
+                          <span className="font-semibold text-emerald-600">
+                            {group.candidates.length} Confirmed{" "}
+                            {group.candidates.length === 1 ? "Candidate" : "Candidates"}
                           </span>
-                          <span className="text-slate-500">•</span>
+                          <span>·</span>
                           <span>
-                            Avg Match Score:{" "}
-                            <strong className="text-amber-300 font-bold">{avgScore}%</strong>
+                            Avg Match Score <strong className="text-slate-700">{avgScore}%</strong>
                           </span>
                         </p>
                       </div>
                     </div>
 
-                    <div className="flex flex-wrap items-center gap-2 self-end sm:self-center">
+                    <div className="flex flex-wrap items-center gap-2 self-end lg:self-auto">
                       {/* Job Offer Status Badge */}
                       {(() => {
                         const offerInfo = getVacancyOfferInfo(group);
                         return offerInfo.hasOffer ? (
                           <span
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-500/25 text-emerald-300 border border-emerald-400/40 text-xs font-semibold backdrop-blur-xs shadow-xs"
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-semibold"
                             title="Job offer created for this position"
                           >
-                            <CheckCircle2 size={13} className="text-emerald-400 shrink-0" />
-                            <span>Job Offer Created {offerInfo.offerCount > 1 ? `(${offerInfo.offerCount})` : ""}</span>
+                            <CheckCircle2 size={14} className="shrink-0" />
+                            <span>Offer Created {offerInfo.offerCount > 1 ? `(${offerInfo.offerCount})` : ""}</span>
                           </span>
                         ) : (
                           <span
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500/25 text-amber-300 border border-amber-400/40 text-xs font-semibold backdrop-blur-xs shadow-xs"
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-50 text-amber-700 border border-amber-200 text-xs font-semibold"
                             title="No job offer created yet for this position"
                           >
-                            <Clock size={13} className="text-amber-400 shrink-0" />
-                            <span>Job Offer Not Created Yet</span>
+                            <Clock size={14} className="shrink-0" />
+                            <span>No Offer Yet</span>
                           </span>
                         );
                       })()}
 
-                      {/* Job Vacancy Details Button */}
                       <button
                         type="button"
                         onClick={(e) => {
@@ -949,14 +906,13 @@ export default function RecruitmentApplicationReview() {
                             department: group.department,
                           });
                         }}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-semibold border border-white/15 transition-all cursor-pointer backdrop-blur-xs"
+                        className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-slate-200 bg-white text-slate-700 text-sm font-semibold hover:bg-slate-50"
                         title="Display job vacancy details like public career page"
                       >
-                        <FileText size={13} className="text-primary-300 shrink-0" />
-                        <span>Job Vacancy Details</span>
+                        <FileText size={16} className="text-slate-500 shrink-0" />
+                        <span>Vacancy Details</span>
                       </button>
 
-                      {/* Remove Vacancy Button */}
                       <button
                         type="button"
                         onClick={(e) => {
@@ -966,26 +922,26 @@ export default function RecruitmentApplicationReview() {
                             groupKey: group.vacancyKey,
                           });
                         }}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-rose-500/20 hover:bg-rose-500/35 text-rose-200 text-xs font-semibold border border-rose-400/30 transition-all cursor-pointer backdrop-blur-xs"
+                        className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-red-200 bg-white text-red-700 text-sm font-semibold hover:bg-red-50"
                         title="Remove vacancy and move to Review History"
                       >
-                        <Archive size={13} className="text-rose-300 shrink-0" />
-                        <span>Remove Vacancy</span>
+                        <Archive size={16} className="shrink-0" />
+                        <span>Remove</span>
                       </button>
 
                       <button
                         type="button"
                         onClick={() => toggleCollapse(group.vacancyKey)}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-semibold border border-white/15 transition-all cursor-pointer backdrop-blur-xs"
+                        className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-slate-200 bg-white text-slate-700 text-sm font-semibold hover:bg-slate-50"
                       >
                         {isCollapsed ? (
                           <>
-                            <ChevronDown size={14} />
+                            <ChevronDown size={16} />
                             <span>Expand</span>
                           </>
                         ) : (
                           <>
-                            <ChevronUp size={14} />
+                            <ChevronUp size={16} />
                             <span>Collapse</span>
                           </>
                         )}
