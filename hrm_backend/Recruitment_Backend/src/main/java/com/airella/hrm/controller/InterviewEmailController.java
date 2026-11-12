@@ -12,7 +12,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/recruitment/interview-emails")
-@PreAuthorize("@perm.has('INTERVIEW_SCHEDULE')")
 public class InterviewEmailController {
 
     private final InterviewEmailService emailService;
@@ -22,12 +21,14 @@ public class InterviewEmailController {
     }
 
     @GetMapping
+    @PreAuthorize("@perm.isFullAccess() or @perm.hasRecruitmentAccess()")
     public ResponseEntity<ApiResponse<List<InterviewEmailDTO>>> list() {
         return ResponseEntity.ok(
                 ApiResponse.success(emailService.list()));
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("@perm.isFullAccess() or @perm.hasRecruitmentAccess()")
     public ResponseEntity<ApiResponse<InterviewEmailDTO>> get(
             @PathVariable Long id) {
 
@@ -36,6 +37,7 @@ public class InterviewEmailController {
     }
 
     @PostMapping("/{id}/retry")
+    @PreAuthorize("@perm.has('INTERVIEW_SCHEDULE')")
     public ResponseEntity<ApiResponse<InterviewEmailDTO>> retry(
             @PathVariable Long id) {
 

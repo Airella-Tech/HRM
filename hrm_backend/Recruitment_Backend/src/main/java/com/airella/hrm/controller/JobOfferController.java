@@ -41,7 +41,7 @@ public class JobOfferController {
 
     // Get all job offers, optionally filtered by status
     @GetMapping
-    @PreAuthorize("@perm.hasAny('OFFER_MANAGE', 'APPLICATION_VIEW', 'APPLICATION_SCREEN', 'APPLICATION_SHORTLIST', 'INTERVIEW_SCHEDULE', 'INTERVIEW_ASSIGN', 'INTERVIEW_PROGRESS_VIEW', 'INTERVIEW_DECIDE', 'INTERVIEW_EVALUATE')")
+    @PreAuthorize("@perm.isFullAccess() or @perm.hasRecruitmentAccess()")
     public ResponseEntity<ApiResponse<List<JobOfferDTO>>> list(
             @RequestParam(required = false) JobOfferStatus status) {
 
@@ -52,7 +52,7 @@ public class JobOfferController {
 
     // Get candidates eligible for job offers
     @GetMapping("/eligible-candidates")
-    @PreAuthorize("@perm.hasAny('OFFER_MANAGE', 'APPLICATION_VIEW', 'APPLICATION_SCREEN', 'APPLICATION_SHORTLIST', 'INTERVIEW_SCHEDULE')")
+    @PreAuthorize("@perm.isFullAccess() or @perm.hasRecruitmentAccess()")
     public ResponseEntity<ApiResponse<List<EligibleCandidateDTO>>>
     getEligibleCandidates() {
 
@@ -64,7 +64,7 @@ public class JobOfferController {
 
     // Get a job offer by ID
     @GetMapping("/{id}")
-    @PreAuthorize("@perm.hasAny('OFFER_MANAGE', 'APPLICATION_VIEW', 'APPLICATION_SCREEN', 'APPLICATION_SHORTLIST', 'INTERVIEW_SCHEDULE', 'INTERVIEW_ASSIGN', 'INTERVIEW_PROGRESS_VIEW', 'INTERVIEW_DECIDE', 'INTERVIEW_EVALUATE')")
+    @PreAuthorize("@perm.isFullAccess() or @perm.hasRecruitmentAccess()")
     public ResponseEntity<ApiResponse<JobOfferDTO>> get(
             @PathVariable Long id) {
 

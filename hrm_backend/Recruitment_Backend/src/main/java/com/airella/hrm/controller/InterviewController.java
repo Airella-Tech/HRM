@@ -27,7 +27,7 @@ import java.util.List;
 public class InterviewController {
 
     private static final String CAN_VIEW_INTERVIEWS =
-            "@perm.hasAny('INTERVIEW_SCHEDULE', 'INTERVIEW_ASSIGN', 'INTERVIEW_PROGRESS_VIEW', 'INTERVIEW_DECIDE')";
+            "@perm.isFullAccess() or @perm.hasRecruitmentAccess()";
 
     private final InterviewService interviewService;
     private final InterviewRoundDecisionService decisionService;
@@ -78,7 +78,7 @@ public class InterviewController {
     // ------------------------------------------------------------
 
     @GetMapping("/assigned-to-me")
-    @PreAuthorize("@perm.has('INTERVIEW_EVALUATE')")
+    @PreAuthorize("@perm.isFullAccess() or @perm.hasRecruitmentAccess()")
     public ResponseEntity<ApiResponse<List<InterviewDTO>>> getMyAssignedInterviews() {
 
         return ResponseEntity.ok(
@@ -94,11 +94,7 @@ public class InterviewController {
     // ------------------------------------------------------------
 
     @GetMapping("/{id}")
-    @PreAuthorize(
-            "@perm.hasAny('INTERVIEW_SCHEDULE', 'INTERVIEW_ASSIGN', 'INTERVIEW_PROGRESS_VIEW', 'INTERVIEW_DECIDE') or " +
-                    "(@perm.has('INTERVIEW_EVALUATE') and " +
-                    "@perm.isAssignedToInterview(#id))"
-    )
+    @PreAuthorize("@perm.isFullAccess() or @perm.hasRecruitmentAccess()")
     public ResponseEntity<ApiResponse<InterviewDTO>> get(
             @PathVariable Long id) {
 
@@ -175,7 +171,7 @@ public class InterviewController {
     // ------------------------------------------------------------
 
     @GetMapping("/{id}/decision")
-    @PreAuthorize("@perm.hasAny('INTERVIEW_DECIDE', 'INTERVIEW_SCHEDULE', 'INTERVIEW_PROGRESS_VIEW', 'APPLICATION_VIEW')")
+    @PreAuthorize("@perm.isFullAccess() or @perm.hasRecruitmentAccess()")
     public ResponseEntity<ApiResponse<InterviewRoundDecisionDTO>> getDecision(
             @PathVariable Long id) {
 

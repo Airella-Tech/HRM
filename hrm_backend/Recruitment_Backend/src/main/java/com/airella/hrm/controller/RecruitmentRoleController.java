@@ -106,13 +106,13 @@ public class RecruitmentRoleController {
     // ── Existing User Role Assignments ───────────────────────────
 
     @GetMapping("/users")
-    @PreAuthorize("@perm.canManageRoles()")
+    @PreAuthorize("@perm.canManageRoles() or @perm.isFullAccess() or @perm.hasRecruitmentAccess()")
     public ResponseEntity<ApiResponse<List<UserRecruitmentAssignmentDTO>>> getCompanyUsersWithRoles() {
         return ResponseEntity.ok(ApiResponse.success(roleService.getCompanyUsersWithRoles()));
     }
 
     @GetMapping("/users/{userId}")
-    @PreAuthorize("@perm.canManageRoles()")
+    @PreAuthorize("@perm.canManageRoles() or @perm.isFullAccess() or @perm.hasRecruitmentAccess()")
     public ResponseEntity<ApiResponse<UserRecruitmentAssignmentDTO>> getUserRoleAssignments(@PathVariable Long userId) {
         return ResponseEntity.ok(ApiResponse.success(roleService.getUserRoleAssignments(userId)));
     }
