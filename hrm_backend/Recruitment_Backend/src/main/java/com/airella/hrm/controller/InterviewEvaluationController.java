@@ -75,13 +75,7 @@ public class InterviewEvaluationController {
     // Interviewers/Evaluators can view evaluations only
     // for interviews assigned to them.
     @GetMapping("/interviews/{interviewId}/evaluations")
-    @PreAuthorize(
-            "@perm.has('INTERVIEW_SCHEDULE') or " +
-                    "@perm.has('INTERVIEW_DECIDE') or " +
-                    "@perm.has('INTERVIEW_PROGRESS_VIEW') or " +
-                    "(@perm.has('INTERVIEW_EVALUATE') and " +
-                    "@perm.isAssignedToInterview(#interviewId))"
-    )
+    @PreAuthorize("@perm.isFullAccess() or @perm.hasRecruitmentAccess()")
     public ResponseEntity<List<InterviewEvaluationDTO>> listForInterview(
             @PathVariable Long interviewId) {
 

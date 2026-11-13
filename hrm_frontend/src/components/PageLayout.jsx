@@ -118,19 +118,19 @@ const NAV = {
       name: "View Applications",
       icon: FileText,
       path: "/recruitment/applications",
-      requiresAny: ["APPLICATION_VIEW", "APPLICATION_SCREEN", "APPLICATION_SHORTLIST", "VIEW_APPLICATIONS"],
+      requiresAny: ["APPLICATION_VIEW", "VIEW_APPLICATIONS", "RESUME_DOWNLOAD", "DOWNLOAD_RESUMES"],
     },
     {
       name: "Review Applications",
       icon: ClipboardCheck,
       path: "/recruitment/applications/review",
-      requiresAny: ["APPLICATION_SCREEN", "REVIEW_APPLICATIONS", "APPLICATION_VIEW"],
+      requiresAny: ["APPLICATION_SCREEN", "REVIEW_APPLICATIONS"],
     },
     {
       name: "Shortlist Candidates",
       icon: UserCheck,
       path: "/recruitment/applications/shortlist",
-      requiresAny: ["APPLICATION_SHORTLIST", "SHORTLIST_CANDIDATES", "APPLICATION_VIEW"],
+      requiresAny: ["APPLICATION_SHORTLIST", "SHORTLIST_CANDIDATES"],
     },
 
     // Interviews & Evaluations
@@ -327,10 +327,10 @@ export const PageLayout = ({
           return recruitmentAccess.fullAccess;
         }
 
-          // Everyone with recruitment access can see Overview.
-          if (item.name === "Overview") {
-            return true;
-          }
+        // Everyone with recruitment access can see Overview.
+        if (item.name === "Overview") {
+          return true;
+        }
 
         // Full-access users can see all other Recruitment pages.
         if (recruitmentAccess.fullAccess) {

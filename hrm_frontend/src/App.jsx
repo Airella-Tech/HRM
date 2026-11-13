@@ -114,8 +114,8 @@ function App() {
 
       <Route path="/recruitment/dashboard" element={<RecruitmentRouteGuard><RecruitmentDashboard /></RecruitmentRouteGuard>} />
       <Route path="/recruitment/vacancies" element={<RecruitmentRouteGuard requiredAny={["VACANCY_CREATE", "VACANCY_APPROVE", "VACANCY_PUBLISH"]}><RecruitmentVacancies /></RecruitmentRouteGuard>} />
-      <Route path="/recruitment/applications" element={<RecruitmentRouteGuard requiredAny={["APPLICATION_VIEW", "APPLICATION_SCREEN", "APPLICATION_SHORTLIST", "INTERVIEW_SCHEDULE"]}><RecruitmentApplications /></RecruitmentRouteGuard>} />
-      <Route path="/recruitment/applications/history" element={<RecruitmentRouteGuard requiredAny={["APPLICATION_VIEW", "APPLICATION_SCREEN", "APPLICATION_SHORTLIST", "INTERVIEW_SCHEDULE"]}><RecruitmentApplicationsHistory /></RecruitmentRouteGuard>} />
+      <Route path="/recruitment/applications" element={<RecruitmentRouteGuard requiredAny={["APPLICATION_VIEW", "RESUME_DOWNLOAD", "DOWNLOAD_RESUMES", "APPLICATION_SCREEN", "APPLICATION_SHORTLIST", "INTERVIEW_SCHEDULE"]}><RecruitmentApplications /></RecruitmentRouteGuard>} />
+      <Route path="/recruitment/applications/history" element={<RecruitmentRouteGuard requiredAny={["APPLICATION_VIEW", "RESUME_DOWNLOAD", "DOWNLOAD_RESUMES", "APPLICATION_SCREEN", "APPLICATION_SHORTLIST", "INTERVIEW_SCHEDULE"]}><RecruitmentApplicationsHistory /></RecruitmentRouteGuard>} />
       <Route path="/recruitment/applications/review" element={<RecruitmentRouteGuard requiredAny={["APPLICATION_SCREEN", "APPLICATION_VIEW"]}><RecruitmentApplicationReview /></RecruitmentRouteGuard>} />
       <Route path="/recruitment/applications/review/history" element={<RecruitmentRouteGuard requiredAny={["APPLICATION_SCREEN", "APPLICATION_VIEW"]}><RecruitmentApplicationReviewHistory /></RecruitmentRouteGuard>} />
       <Route path="/recruitment/applications/shortlist" element={<RecruitmentRouteGuard requiredAny={["APPLICATION_SHORTLIST", "APPLICATION_VIEW", "INTERVIEW_SCHEDULE"]}><RecruitmentCandidateShortlist /></RecruitmentRouteGuard>} />

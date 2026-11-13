@@ -27,6 +27,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -1095,6 +1096,34 @@ class InterviewEvaluationServiceTest {
                 .findByCompanyIdAndInterviewIdOrderByCreatedAtAsc(
                         any(),
                         any()
+                );
+    }
+
+    @Test
+    void listForInterview_shouldAllowNonEvaluatorRecruitmentPermission() {
+
+        when(permissionService.hasAny(
+                "INTERVIEW_SCHEDULE",
+                "INTERVIEW_DECIDE"
+        )).thenReturn(false);
+
+        when(permissionService.currentPermissions())
+                .thenReturn(Set.of("APPLICATION_SHORTLIST"));
+
+        when(evaluationRepository.findByCompanyIdAndInterviewIdOrderByCreatedAtAsc(
+                COMPANY_ID,
+                INTERVIEW_ID
+        )).thenReturn(List.of());
+
+        List<InterviewEvaluationDTO> result =
+                evaluationService.listForInterview(INTERVIEW_ID);
+
+        assertTrue(result.isEmpty());
+
+        verify(evaluationRepository)
+                .findByCompanyIdAndInterviewIdOrderByCreatedAtAsc(
+                        COMPANY_ID,
+                        INTERVIEW_ID
                 );
     }
 }
