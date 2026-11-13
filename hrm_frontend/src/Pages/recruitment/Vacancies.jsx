@@ -9,8 +9,9 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { PageLayout } from "../../components/PageLayout";
 import StatCard, { StatCardGrid } from "../../components/StatCard";
 import { recruitmentApi, hrApi } from "../../services/api";
+import { formatSalary, formatDate } from "../../utils/careersFormat";
 import { useRecruitmentAccess, fetchRecruitmentAccess } from "../../utils/useRecruitmentAccess";
-import { Plus, Pencil, Trash2, BriefcaseBusiness, Loader2, X, Save, AlertTriangle, Send, CheckCircle2, XCircle, Megaphone, Ban, Search, Clock, FileText } from "lucide-react";
+import { Plus, Pencil, Trash2, BriefcaseBusiness, Loader2, X, Save, AlertTriangle, Send, CheckCircle2, XCircle, Megaphone, Ban, Search, Clock, FileText, Users, CalendarDays, Banknote, Award } from "lucide-react";
 
 
 const FILTERS = ["ALL", "DRAFT", "PENDING_APPROVAL", "APPROVED", "PUBLISHED", "CLOSED"];
@@ -278,6 +279,133 @@ const VacancyModal = ({ vacancy, onClose, onSaved }) => {
 };
 
 // ─── Delete confirmation pop-up ───────────────────────────────
+// ─── Vacancy details pop-up (opens when a row is clicked) ─────
+const VacancyDetailsModal = ({ vacancy: v, canEdit, onClose, onEdit }) => {
+  useEffect(() => {
+    const onKey = (e) => e.key === "Escape" && onClose();
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
+
+  const due = deadlineInfo(v.deadline, v.status);
+  const salary = formatSalary(v.salaryMin, v.salaryMax);
+  const skills = v.requiredSkills || [];
+  const facts = [
+    { icon: Users, label: "Openings", value: String(v.vacancyCount ?? 1) },
+    { icon: BriefcaseBusiness, label: "Job type", value: v.jobType || "—" },
+    { icon: Award, label: "Experience level", value: v.experienceLevel || "Not specified" },
+    { icon: Banknote, label: "Salary range", value: salary || "Not specified" },
+    {
+      icon: CalendarDays,
+      label: "Deadline",
+      value: v.deadline ? `${formatDate(v.deadline)}${due.hint ? ` · ${due.hint}` : ""}` : "—",
+    },
+  ];
+
+  return (
+    <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4" onClick={onClose}>
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="vacancy-details-title"
+        className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-start justify-between gap-4 px-6 py-4 border-b border-slate-200 sticky top-0 bg-white rounded-t-2xl">
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-2">
+              <h2 id="vacancy-details-title" className="text-lg font-bold text-slate-900">{v.title}</h2>
+              <span className={`inline-block px-2.5 py-1 rounded-full text-xs font-semibold ${STATUS_STYLE[v.status] || STATUS_STYLE.DRAFT}`}>
+                {statusLabel(v.status)}
+              </span>
+            </div>
+            <p className="text-sm text-slate-500 mt-0.5">{v.department}</p>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close"
+            className="p-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100"
+          >
+            <X size={18} />
+          </button>
+        </div>
+
+        <div className="p-6 space-y-6">
+          {v.status === "DRAFT" && v.rejectionReason && (
+            <div className="flex items-start gap-2 px-4 py-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm font-medium">
+              <AlertTriangle size={16} className="mt-0.5 shrink-0" />
+              <span>Sent back: {v.rejectionReason}</span>
+            </div>
+          )}
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {facts.map((f) => (
+              <div key={f.label} className="flex items-center gap-3 rounded-xl border border-slate-200 px-4 py-3">
+                <span className="w-9 h-9 rounded-xl bg-primary-50 text-primary-600 flex items-center justify-center shrink-0">
+                  <f.icon size={16} />
+                </span>
+                <div className="min-w-0">
+                  <p className="text-xs text-slate-500">{f.label}</p>
+                  <p className="text-sm font-semibold text-slate-900 truncate">{f.value}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <section>
+            <h3 className="text-sm font-semibold text-slate-900 mb-1.5">Description</h3>
+            <p className="text-sm text-slate-700 whitespace-pre-line">
+              {v.description || <span className="text-slate-500">No description provided.</span>}
+            </p>
+          </section>
+
+          <section>
+            <h3 className="text-sm font-semibold text-slate-900 mb-1.5">Qualifications</h3>
+            <p className="text-sm text-slate-700 whitespace-pre-line">
+              {v.qualifications || <span className="text-slate-500">No qualifications listed.</span>}
+            </p>
+          </section>
+
+          <section>
+            <h3 className="text-sm font-semibold text-slate-900 mb-2">Required skills</h3>
+            {skills.length > 0 ? (
+              <div className="flex flex-wrap gap-2">
+                {skills.map((skill) => (
+                  <span key={skill} className="rounded-lg bg-primary-50 text-primary-700 px-2.5 py-1 text-xs font-semibold">
+                    {skill}
+                  </span>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-slate-500">No skills listed.</p>
+            )}
+          </section>
+        </div>
+
+        <div className="flex justify-end gap-3 px-6 py-4 border-t border-slate-200">
+          <button
+            type="button"
+            onClick={onClose}
+            className="px-5 py-2.5 rounded-xl border border-slate-200 text-slate-700 text-sm font-semibold hover:bg-slate-50"
+          >
+            Close
+          </button>
+          {canEdit && (
+            <button
+              type="button"
+              onClick={() => onEdit(v)}
+              className="px-5 py-2.5 rounded-xl bg-primary-600 hover:bg-primary-700 text-white text-sm font-semibold shadow-sm"
+            >
+              Edit vacancy
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const DeleteConfirmModal = ({ vacancy, busy, onCancel, onConfirm }) => (
   <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
     <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
@@ -419,6 +547,7 @@ export default function RecruitmentVacancies() {
   const [deleting, setDeleting] = useState(null); // vacancy waiting for delete confirmation
   const [rejecting, setRejecting] = useState(null); // vacancy waiting for a rejection reason
   const [closing, setClosing] = useState(null); // vacancy waiting for close confirmation
+  const [viewing, setViewing] = useState(null); // vacancy whose details pop-up is open
 
   // What this user may do (HR managers / admins have full access)
   const access = useRecruitmentAccess();
@@ -665,12 +794,13 @@ export default function RecruitmentVacancies() {
               return (
                 <div
                   key={v.id}
-                  className={`flex flex-wrap items-center gap-x-5 gap-y-3 bg-white rounded-xl border border-slate-200 border-l-4 ${STRIPE[v.status] || STRIPE.DRAFT} px-5 py-4 shadow-sm hover:shadow-md transition-shadow`}
+                  onClick={() => setViewing(v)}
+                  className={`flex flex-wrap items-center gap-x-5 gap-y-3 bg-white rounded-xl border border-slate-200 border-l-4 ${STRIPE[v.status] || STRIPE.DRAFT} px-5 py-4 shadow-sm hover:shadow-md cursor-pointer transition-shadow`}
                 >
                   {/* Title + details */}
                   <div className="flex-1 min-w-[200px]">
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="font-bold text-slate-900">{v.title}</span>
+                      <button type="button" className="font-bold text-slate-900 hover:text-primary-700 text-left">{v.title}</button>
                       {v.status === "DRAFT" && v.rejectionReason && (
                         <span className="inline-flex items-center gap-1 rounded-md bg-red-50 px-2 py-0.5 text-xs font-medium text-red-600">
                           <AlertTriangle size={12} /> Sent back: {v.rejectionReason}
@@ -699,7 +829,7 @@ export default function RecruitmentVacancies() {
                   </span>
 
                   {/* Actions */}
-                  <div className="flex items-center justify-end gap-1.5 min-w-[130px]">
+                  <div className="flex items-center justify-end gap-1.5 min-w-[130px]" onClick={(e) => e.stopPropagation()}>
                     {v.status === "DRAFT" && canCreate && (
                       <>
                         <button
@@ -772,6 +902,17 @@ export default function RecruitmentVacancies() {
         )}
       </div>
 
+      {viewing && (
+        <VacancyDetailsModal
+          vacancy={viewing}
+          canEdit={viewing.status === "DRAFT" && canCreate}
+          onClose={() => setViewing(null)}
+          onEdit={(v) => {
+            setViewing(null);
+            setModal({ vacancy: v });
+          }}
+        />
+      )}
       {modal && (
         <VacancyModal vacancy={modal.vacancy} onClose={() => setModal(null)} onSaved={handleSaved} />
       )}
