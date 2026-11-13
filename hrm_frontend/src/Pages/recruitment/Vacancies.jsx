@@ -7,9 +7,10 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { PageLayout } from "../../components/PageLayout";
+import StatCard, { StatCardGrid } from "../../components/StatCard";
 import { recruitmentApi, hrApi } from "../../services/api";
 import { useRecruitmentAccess, fetchRecruitmentAccess } from "../../utils/useRecruitmentAccess";
-import { Plus, Pencil, Trash2, BriefcaseBusiness, Loader2, X, Save, AlertTriangle, Send, CheckCircle2, XCircle, Megaphone, Ban, Search } from "lucide-react";
+import { Plus, Pencil, Trash2, BriefcaseBusiness, Loader2, X, Save, AlertTriangle, Send, CheckCircle2, XCircle, Megaphone, Ban, Search, Clock, FileText } from "lucide-react";
 
 
 const FILTERS = ["ALL", "DRAFT", "PENDING_APPROVAL", "APPROVED", "PUBLISHED", "CLOSED"];
@@ -564,6 +565,45 @@ export default function RecruitmentVacancies() {
       }
     >
             <div className="p-6 space-y-5">
+                      {/* Summary cards: click one to filter the list */}
+        <StatCardGrid>
+          <StatCard
+            label="Total vacancies"
+            value={loading ? "-" : vacancies.length}
+            caption="All vacancies"
+            icon={BriefcaseBusiness}
+            tone="primary"
+            onClick={() => setFilter("ALL")}
+            active={filter === "ALL"}
+          />
+          <StatCard
+            label="Pending approval"
+            value={loading ? "-" : counts.PENDING_APPROVAL || 0}
+            caption="Waiting for an approver"
+            icon={Clock}
+            tone="amber"
+            onClick={() => setFilter("PENDING_APPROVAL")}
+            active={filter === "PENDING_APPROVAL"}
+          />
+          <StatCard
+            label="Published"
+            value={loading ? "-" : counts.PUBLISHED || 0}
+            caption="Open for applications"
+            icon={Megaphone}
+            tone="green"
+            onClick={() => setFilter("PUBLISHED")}
+            active={filter === "PUBLISHED"}
+          />
+          <StatCard
+            label="Drafts"
+            value={loading ? "-" : counts.DRAFT || 0}
+            caption="Not submitted yet"
+            icon={FileText}
+            tone="slate"
+            onClick={() => setFilter("DRAFT")}
+            active={filter === "DRAFT"}
+          />
+        </StatCardGrid>
         {/* Filters + search */}
         <div className="flex flex-wrap items-center gap-2">
           {FILTERS.map((f) => (
