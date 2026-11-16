@@ -37,33 +37,33 @@ export const useAreaOptions = () => {
   return [
     ...(isHRManager
       ? [
-          {
-            key: "hr",
-            label: "HR",
-            icon: Briefcase,
-            path: "/hr/dashboard",
-            active: "bg-teal-500 text-white shadow",
-          },
-        ]
+        {
+          key: "hr",
+          label: "HR",
+          icon: Briefcase,
+          path: "/hr/dashboard",
+          active: "bg-teal-500 text-white shadow",
+        },
+      ]
       : []),
     {
       key: "employee",
       label: "Employee",
       icon: UserRound,
       path: "/employee/dashboard",
-      active: "bg-gradient-to-br from-sky-500 to-cyan-500 text-white shadow",
+      active: "bg-teal-600 text-white shadow",
     },
     // Recruitment area only shown when the user actually has recruitment access
     ...(canRecruit
       ? [
-          {
-            key: "recruitment",
-            label: "Recruitment",
-            icon: UsersRound,
-            path: "/recruitment/dashboard",
-            active: "bg-primary-600 text-white shadow",
-          },
-        ]
+        {
+          key: "recruitment",
+          label: "Recruitment",
+          icon: UsersRound,
+          path: "/recruitment/dashboard",
+          active: "bg-primary-600 text-white shadow",
+        },
+      ]
       : []),
   ];
 };

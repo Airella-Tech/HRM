@@ -150,13 +150,13 @@ const Leave = () => {
     >
       <div className="space-y-6">
         {message && (
-          <div className={`p-4 rounded-lg text-white ${message.startsWith("✓") ? "bg-green-500" : "bg-red-500"}`}>
+          <div className={`px-4 py-3 rounded-xl border text-sm font-medium ${message.startsWith("✓") ? "bg-emerald-50 border-emerald-200 text-emerald-800" : "bg-rose-50 border-rose-200 text-rose-800"}`}>
             {message}
           </div>
         )}
 
         {/* Balance cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 xl:grid-cols-4 gap-5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
           {[
             ...balances.map((b, i) => ({
               label: b.leaveTypeName,
@@ -252,7 +252,7 @@ const Leave = () => {
                     }
                   >
                     <div className="flex items-center gap-3 min-w-0">
-                      <div className={`h-10 w-10 flex-shrink-0 rounded-xl ${EMP_GRADIENT} text-white font-bold text-sm flex items-center justify-center shadow-sm`}>
+                      <div className="h-10 w-10 flex-shrink-0 rounded-xl bg-teal-50 text-teal-700 border border-teal-100 font-bold text-sm flex items-center justify-center shadow-xs">
                         {(leave.leaveTypeName || "L").charAt(0).toUpperCase()}
                       </div>
                       <p className="text-sm font-semibold text-slate-800 truncate">{leave.leaveTypeName}</p>
@@ -280,19 +280,22 @@ const Leave = () => {
 
       {/* Apply Form Modal */}
       {showApplyForm && (
-        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl border border-slate-200 shadow-2xl w-full max-w-lg">
-            <div className={`flex items-center justify-between p-6 ${EMP_GRADIENT} text-white rounded-t-xl`}>
-              <h2 className="text-lg font-semibold">Apply for Leave</h2>
-              <button onClick={() => setShowApplyForm(false)} className="h-8 w-8 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors">
+        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl w-full max-w-lg overflow-hidden">
+            <div className="flex items-center justify-between p-6 border-b border-slate-100">
+              <div>
+                <h2 className="text-lg font-bold text-slate-900">Apply for Leave</h2>
+                <p className="text-xs text-slate-500 mt-0.5">Submit your leave request for manager approval</p>
+              </div>
+              <button onClick={() => setShowApplyForm(false)} className="h-8 w-8 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-800 flex items-center justify-center transition-colors">
                 <X size={17} />
               </button>
             </div>
             <form onSubmit={handleSubmit} className="p-6 space-y-4">
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Leave Type *</label>
+                <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wide mb-1.5">Leave Type *</label>
                 <select value={formData.leaveTypeId} onChange={e => setFormData({...formData, leaveTypeId: e.target.value})}
-                  className="w-full border border-slate-300 rounded-lg px-4 py-3 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-employee-500 focus:border-employee-500 bg-white" required>
+                  className="w-full border border-slate-300 rounded-xl px-3.5 py-2.5 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 bg-white transition-all cursor-pointer" required>
                   <option value="">Select leave type</option>
                   {leaveTypes.map(t => (
                     <option key={t.id} value={t.id}>{t.name}</option>
@@ -301,28 +304,28 @@ const Leave = () => {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">Start Date *</label>
+                  <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wide mb-1.5">Start Date *</label>
                   <input type="date" value={formData.startDate} onChange={e => setFormData({...formData, startDate: e.target.value})}
-                    className="w-full border border-slate-300 rounded-lg px-4 py-3 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-employee-500 focus:border-employee-500 bg-white" required />
+                    className="w-full border border-slate-300 rounded-xl px-3.5 py-2.5 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 bg-white transition-all" required />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">End Date *</label>
+                  <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wide mb-1.5">End Date *</label>
                   <input type="date" value={formData.endDate} min={formData.startDate || undefined} onChange={e => setFormData({...formData, endDate: e.target.value})}
-                    className="w-full border border-slate-300 rounded-lg px-4 py-3 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-employee-500 focus:border-employee-500 bg-white" required />
+                    className="w-full border border-slate-300 rounded-xl px-3.5 py-2.5 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 bg-white transition-all" required />
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Reason *</label>
+                <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wide mb-1.5">Reason *</label>
                 <textarea value={formData.reason} onChange={e => setFormData({...formData, reason: e.target.value})} rows="3"
-                  className="w-full border border-slate-300 rounded-lg px-4 py-3 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-employee-500 focus:border-employee-500 bg-white resize-none"
-                  placeholder="Please provide a reason..." required />
+                  className="w-full border border-slate-300 rounded-xl px-3.5 py-2.5 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 bg-white transition-all resize-none"
+                  placeholder="Please provide a brief reason for your leave..." required />
               </div>
               {formError && (
-                <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg px-4 py-3">{formError}</div>
+                <div className="bg-rose-50 border border-rose-200 text-rose-700 text-xs font-medium rounded-xl px-4 py-3">{formError}</div>
               )}
               <div className="flex gap-3 pt-2">
-                <EmpButton type="submit" disabled={submitting} className="flex-1">{submitting ? "Submitting..." : "Submit Application"}</EmpButton>
-                <EmpButton type="button" variant="secondary" onClick={() => setShowApplyForm(false)} className="flex-1">Cancel</EmpButton>
+                <EmpButton type="submit" disabled={submitting} className="flex-1 py-2.5">{submitting ? "Submitting..." : "Submit Application"}</EmpButton>
+                <EmpButton type="button" variant="secondary" onClick={() => setShowApplyForm(false)} className="flex-1 py-2.5">Cancel</EmpButton>
               </div>
             </form>
           </div>

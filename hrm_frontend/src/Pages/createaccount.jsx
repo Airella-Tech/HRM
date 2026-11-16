@@ -1,32 +1,45 @@
 import React, { useState, useEffect } from "react";
-import heroImg from "../assets/hrm-hero-illustration.png";
-import { 
-  Eye, EyeOff, Mail, Lock, User, Check, X, Building, 
-  IdCard, Calendar, MapPin, ChevronLeft, ChevronRight, Shield,
-  Briefcase, Users
+import logo from "../assets/logo.jpg";
+import {
+  Eye,
+  EyeOff,
+  Mail,
+  Lock,
+  User,
+  Check,
+  X,
+  Building,
+  IdCard,
+  Calendar,
+  MapPin,
+  ChevronLeft,
+  ChevronRight,
+  Shield,
+  Briefcase,
+  Users,
+  CheckCircle2,
+  AlertCircle,
+  Loader2,
+  Phone,
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { authApi, hrApi } from "../services/api";
 
-// Employee ID prefix is fixed by role — only the number is editable.
-// Each role keeps its own separate numbering sequence (EMP-001, HR-001, SA-001 are distinct).
 const ROLE_EMPLOYEE_ID_PREFIX = { employee: "EMP", hr: "HR", admin: "SA" };
 const ROLE_TO_BACKEND = { employee: "EMPLOYEE", hr: "HR_MANAGER", admin: "ADMIN" };
 
 const CreateAccount = () => {
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(1);
-  const [employeeIdNumber, setEmployeeIdNumber] = useState(""); // editable part only, e.g. "004"
+  const [employeeIdNumber, setEmployeeIdNumber] = useState("");
   const [employeeIdLoading, setEmployeeIdLoading] = useState(false);
   const [formData, setFormData] = useState({
-    // Personal Information
     firstName: "",
     lastName: "",
     email: "",
     phone: "",
     dateOfBirth: "",
-    
-    // Professional Information
+
     employeeId: "",
     jobTitle: "",
     department: "",
@@ -34,32 +47,28 @@ const CreateAccount = () => {
     workLocation: "",
     hireDate: "",
     reportingManager: "",
-    userRole: "", // New role field
-    
-    // Account Security
+    userRole: "",
+
     password: "",
     confirmPassword: "",
-    
-    // Agreements
+
     agreeToTerms: false,
     agreeToPrivacy: false,
-    agreeToDataProcessing: false
+    agreeToDataProcessing: false,
   });
-  
+
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Step configurations
   const steps = [
-    { id: 1, title: "Personal Info", icon: User },
+    { id: 1, title: "Personal", icon: User },
     { id: 2, title: "Professional", icon: Building },
     { id: 3, title: "Security", icon: Lock },
-    { id: 4, title: "Agreements", icon: IdCard }
+    { id: 4, title: "Agreements", icon: IdCard },
   ];
 
-  // Departments and job titles for demo
   const departments = [
     "Human Resources",
     "Engineering",
@@ -67,68 +76,46 @@ const CreateAccount = () => {
     "Sales",
     "Finance",
     "Operations",
-    "Customer Support"
+    "Customer Support",
   ];
 
-  // Employment types HR has defined (hrm_db_hr.employment_types)
   const [employmentTypes, setEmploymentTypes] = useState([]);
-  const [employmentTypesError, setEmploymentTypesError] = useState("");
   useEffect(() => {
-    hrApi.getEmploymentTypes()
-      .then(res => setEmploymentTypes((res.data || []).map(t => t.name)))
-      .catch(() => setEmploymentTypesError("Could not load employment types"));
+    hrApi
+      .getEmploymentTypes()
+      .then((res) => setEmploymentTypes((res.data || []).map((t) => t.name)))
+      .catch(() => {});
   }, []);
 
-  // Work locations HR has defined (hrm_db_hr.work_locations)
   const [workLocations, setWorkLocations] = useState([]);
-  const [workLocationsError, setWorkLocationsError] = useState("");
   useEffect(() => {
-    hrApi.getWorkLocations()
-      .then(res => setWorkLocations((res.data || []).map(t => t.name)))
-      .catch(() => setWorkLocationsError("Could not load work locations"));
+    hrApi
+      .getWorkLocations()
+      .then((res) => setWorkLocations((res.data || []).map((t) => t.name)))
+      .catch(() => {});
   }, []);
 
-  // New: User roles with descriptions and permissions
   const userRoles = [
     {
       value: "employee",
       label: "Employee",
-      description: "Standard employee access with self-service features",
+      description: "Standard self-service workspace for attendance, leave, and payslips",
       icon: Users,
-      permissions: [
-        "View personal profile",
-        "Submit leave requests",
-        "Access personal documents",
-        "View team calendar"
-      ]
     },
     {
       value: "hr",
       label: "HR Manager",
-      description: "Human Resources management access",
+      description: "Department management, workforce records, leave approvals, payroll, and recruitment",
       icon: Briefcase,
-      permissions: [
-        "Manage employee records",
-        "Approve leave requests",
-        "Generate HR reports",
-        "Manage recruitment"
-      ]
     },
     {
       value: "admin",
-      label: "System Administrator",
-      description: "Full system administration access",
+      label: "Administrator",
+      description: "System configuration, company settings, and company-wide access",
       icon: Shield,
-      permissions: [
-        "Manage all user accounts",
-        "System configuration",
-        "Access all modules",
-        "Database management"
-      ]
-    }
+    },
   ];
 
-  // Validation functions for each step
   const validateStep = (step) => {
     const newErrors = {};
 
@@ -139,19 +126,20 @@ const CreateAccount = () => {
         if (!formData.email) {
           newErrors.email = "Email is required";
         } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-          newErrors.email = "Email is invalid";
+          newErrors.email = "Please enter a valid email address";
         }
         if (!formData.phone) newErrors.phone = "Phone number is required";
         if (!formData.dateOfBirth) newErrors.dateOfBirth = "Date of birth is required";
         break;
 
       case 2:
+        if (!formData.userRole) newErrors.userRole = "User role is required";
+        if (!formData.userRole) newErrors.userRole = "Please select a user role";
         if (!formData.employeeId) newErrors.employeeId = "Employee ID is required";
         if (!formData.jobTitle) newErrors.jobTitle = "Job title is required";
         if (!formData.department) newErrors.department = "Department is required";
         if (!formData.employmentType) newErrors.employmentType = "Employment type is required";
         if (!formData.workLocation) newErrors.workLocation = "Work location is required";
-        if (!formData.userRole) newErrors.userRole = "User role is required"; // New validation
         break;
 
       case 3:
@@ -166,9 +154,13 @@ const CreateAccount = () => {
         break;
 
       case 4:
-        if (!formData.agreeToTerms) newErrors.agreeToTerms = "You must agree to the terms and conditions";
-        if (!formData.agreeToPrivacy) newErrors.agreeToPrivacy = "You must agree to the privacy policy";
-        if (!formData.agreeToDataProcessing) newErrors.agreeToDataProcessing = "You must agree to data processing";
+        if (!formData.agreeToTerms) newErrors.agreeToTerms = "You must agree to terms and conditions";
+        if (!formData.agreeToPrivacy) newErrors.agreeToPrivacy = "You must agree to privacy policy";
+        if (!formData.agreeToDataProcessing)
+          newErrors.agreeToDataProcessing = "You must agree to data processing";
+        break;
+
+      default:
         break;
     }
 
@@ -178,181 +170,122 @@ const CreateAccount = () => {
 
   const handleNext = () => {
     if (validateStep(currentStep)) {
-      setCurrentStep(prev => Math.min(prev + 1, steps.length));
+      setCurrentStep((prev) => Math.min(prev + 1, steps.length));
     }
   };
 
   const handlePrev = () => {
-    setCurrentStep(prev => Math.max(prev - 1, 1));
+    setCurrentStep((prev) => Math.max(prev - 1, 1));
   };
 
   const handleSubmit = async (e) => {
-  e.preventDefault();
+    e.preventDefault();
 
-  if (validateStep(currentStep)) {
-    setIsSubmitting(true);
-    try {
-      const normalizedRole = ROLE_TO_BACKEND[formData.userRole?.toLowerCase()] || "EMPLOYEE";
+    if (validateStep(currentStep)) {
+      setIsSubmitting(true);
+      try {
+        const normalizedRole = ROLE_TO_BACKEND[formData.userRole?.toLowerCase()] || "EMPLOYEE";
 
-      const userPayload = {
-        fullName: `${formData.firstName} ${formData.lastName}`,
-        email: formData.email,
-        password: formData.password,
-        employeeId: formData.employeeId,
-        nic: formData.phone,
-        dob: formData.dateOfBirth,
-        address: formData.workLocation,
-        phone: formData.phone,
-        gender: "OTHER",
-        department: formData.department,
-        role: normalizedRole,
-        designation: formData.jobTitle,
-        joiningDate: formData.hireDate
-      };
+        const userPayload = {
+          fullName: `${formData.firstName} ${formData.lastName}`.trim(),
+          email: formData.email,
+          password: formData.password,
+          employeeId: formData.employeeId,
+          nic: formData.phone,
+          dob: formData.dateOfBirth,
+          address: formData.workLocation,
+          phone: formData.phone,
+          gender: "OTHER",
+          department: formData.department,
+          role: normalizedRole,
+          designation: formData.jobTitle,
+          joiningDate: formData.hireDate,
+        };
 
-      const response = await authApi.register(userPayload);
-
-      console.log("✅ User created successfully:", response);
-      alert("Account created successfully!");
-
-      // Return to the HR dashboard after successful registration
-      navigate("/hr/dashboard");
-
-      setFormData({ ...formData, password: "", confirmPassword: "" });
-    } catch (error) {
-      const message =
-        error?.response?.data?.message ||
-        error?.response?.data?.error ||
-        error?.message ||
-        "Error creating user.";
-      console.error("❌ Error creating user:", error);
-      alert(message);
-    } finally {
-      setIsSubmitting(false);
-    }
-  }
-};
-
-
-  const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: type === "checkbox" ? checked : value
-    }));
-
-    // Clear error when user starts typing
-    if (errors[name]) {
-      setErrors(prev => ({
-        ...prev,
-        [name]: ""
-      }));
+        await authApi.register(userPayload);
+        alert("Account created successfully!");
+        navigate("/hr/dashboard");
+        setFormData({ ...formData, password: "", confirmPassword: "" });
+      } catch (error) {
+        const message =
+          error?.response?.data?.message ||
+          error?.response?.data?.error ||
+          error?.message ||
+          "Error creating user.";
+        console.error("Error creating user:", error);
+        alert(message);
+      } finally {
+        setIsSubmitting(false);
+      }
     }
   };
 
-  // Handle role selection with additional logic
+  const handleChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: type === "checkbox" ? checked : value,
+    }));
+
+    if (errors[name]) {
+      setErrors((prev) => ({ ...prev, [name]: "" }));
+    }
+  };
+
   const handleRoleChange = async (roleValue) => {
     const prefix = ROLE_EMPLOYEE_ID_PREFIX[roleValue] || "EMP";
 
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      userRole: roleValue
+      userRole: roleValue,
     }));
 
-    // Auto-fill job title based on role for convenience
-    const selectedRole = userRoles.find(role => role.value === roleValue);
+    const selectedRole = userRoles.find((role) => role.value === roleValue);
     if (selectedRole && !formData.jobTitle) {
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
-        jobTitle: selectedRole.label
+        jobTitle: selectedRole.label,
       }));
     }
 
-    // Clear role error if any
     if (errors.userRole) {
-      setErrors(prev => ({
-        ...prev,
-        userRole: ""
-      }));
+      setErrors((prev) => ({ ...prev, userRole: "" }));
     }
 
-    // Fetch the next available number for this role's Employee ID sequence
-    // (EMP/HR/SA each keep their own separate count).
     setEmployeeIdLoading(true);
     try {
       const backendRole = ROLE_TO_BACKEND[roleValue] || "EMPLOYEE";
       const resp = await authApi.nextEmployeeId(backendRole);
       const formattedNumber = resp?.data?.formattedNumber || "001";
       setEmployeeIdNumber(formattedNumber);
-      setFormData(prev => ({ ...prev, employeeId: `${prefix}-${formattedNumber}` }));
+      setFormData((prev) => ({ ...prev, employeeId: `${prefix}-${formattedNumber}` }));
     } catch (err) {
       console.error("Failed to fetch next Employee ID:", err);
       setEmployeeIdNumber("001");
-      setFormData(prev => ({ ...prev, employeeId: `${prefix}-001` }));
+      setFormData((prev) => ({ ...prev, employeeId: `${prefix}-001` }));
     } finally {
       setEmployeeIdLoading(false);
     }
   };
 
-  // Only the number portion of the Employee ID can be edited by hand — the
-  // prefix stays locked to whatever role is selected.
   const handleEmployeeNumberChange = (e) => {
     const digitsOnly = e.target.value.replace(/\D/g, "").slice(0, 4);
-    const prefix = ROLE_EMPLOYEE_ID_PREFIX[formData.userRole] || "EMP";
     setEmployeeIdNumber(digitsOnly);
-    setFormData(prev => ({
-      ...prev,
-      employeeId: digitsOnly ? `${prefix}-${digitsOnly}` : ""
-    }));
-    if (errors.employeeId) {
-      setErrors(prev => ({ ...prev, employeeId: "" }));
-    }
-  };
-
-  // Zero-pad the number to 3 digits once the user is done editing.
-  const handleEmployeeNumberBlur = () => {
-    if (!employeeIdNumber) return;
-    const padded = employeeIdNumber.padStart(3, "0");
     const prefix = ROLE_EMPLOYEE_ID_PREFIX[formData.userRole] || "EMP";
-    setEmployeeIdNumber(padded);
-    setFormData(prev => ({ ...prev, employeeId: `${prefix}-${padded}` }));
+    setFormData((prev) => ({ ...prev, employeeId: digitsOnly ? `${prefix}-${digitsOnly}` : "" }));
   };
 
-  const getPasswordStrength = (password) => {
-    if (!password) return 0;
-    let strength = 0;
-    if (password.length >= 8) strength++;
-    if (/[A-Z]/.test(password)) strength++;
-    if (/[a-z]/.test(password)) strength++;
-    if (/[0-9]/.test(password)) strength++;
-    if (/[^A-Za-z0-9]/.test(password)) strength++;
-    return strength;
-  };
+  const selectedRole = userRoles.find((role) => role.value === formData.userRole);
 
-  const passwordStrength = getPasswordStrength(formData.password);
-  const strengthLabels = ["Very Weak", "Weak", "Fair", "Good", "Strong", "Very Strong"];
-  const strengthColors = [
-    "bg-red-500",
-    "bg-orange-500",
-    "bg-yellow-500",
-    "bg-blue-500",
-    "bg-green-500",
-    "bg-emerald-600"
-  ];
-
-  // Get selected role details for display
-  const selectedRole = userRoles.find(role => role.value === formData.userRole);
-
-  // Render step content
   const renderStepContent = () => {
     switch (currentStep) {
       case 1:
         return (
-          <div className="space-y-5">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <label className="block text-sm font-semibold text-gray-700">
-                  First Name *
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+                  First Name <span className="text-rose-500">*</span>
                 </label>
                 <input
                   type="text"
@@ -360,21 +293,17 @@ const CreateAccount = () => {
                   value={formData.firstName}
                   onChange={handleChange}
                   placeholder="John"
-                  className={`w-full px-4 py-3 rounded-xl border transition-all duration-200 focus:ring-2 focus:ring-blue-500 outline-none bg-white/80 ${
-                    errors.firstName ? "border-red-500" : "border-gray-300"
-                  }`}
+                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:bg-white focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20 transition-all"
                 />
                 {errors.firstName && (
-                  <p className="text-red-500 text-sm flex items-center gap-1">
-                    <X className="w-4 h-4" />
-                    {errors.firstName}
+                  <p className="text-rose-600 text-xs mt-1 flex items-center gap-1">
+                    <X size={12} /> {errors.firstName}
                   </p>
                 )}
               </div>
-
-              <div className="space-y-2">
-                <label className="block text-sm font-semibold text-gray-700">
-                  Last Name *
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+                  Last Name <span className="text-rose-500">*</span>
                 </label>
                 <input
                   type="text"
@@ -382,87 +311,77 @@ const CreateAccount = () => {
                   value={formData.lastName}
                   onChange={handleChange}
                   placeholder="Doe"
-                  className={`w-full px-4 py-3 rounded-xl border transition-all duration-200 focus:ring-2 focus:ring-blue-500 outline-none bg-white/80 ${
-                    errors.lastName ? "border-red-500" : "border-gray-300"
-                  }`}
+                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:bg-white focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20 transition-all"
                 />
                 {errors.lastName && (
-                  <p className="text-red-500 text-sm flex items-center gap-1">
-                    <X className="w-4 h-4" />
-                    {errors.lastName}
+                  <p className="text-rose-600 text-xs mt-1 flex items-center gap-1">
+                    <X size={12} /> {errors.lastName}
                   </p>
                 )}
               </div>
             </div>
 
-            <div className="space-y-2">
-              <label className="block text-sm font-semibold text-gray-700">
-                Email Address *
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+                Email Address <span className="text-rose-500">*</span>
               </label>
               <div className="relative">
-                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <Mail size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
                 <input
                   type="email"
                   name="email"
                   value={formData.email}
                   onChange={handleChange}
                   placeholder="john.doe@company.com"
-                  className={`w-full pl-10 pr-4 py-3 rounded-xl border transition-all duration-200 focus:ring-2 focus:ring-blue-500 outline-none bg-white/80 ${
-                    errors.email ? "border-red-500" : "border-gray-300"
-                  }`}
+                  className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:bg-white focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20 transition-all"
                 />
               </div>
               {errors.email && (
-                <p className="text-red-500 text-sm flex items-center gap-1">
-                  <X className="w-4 h-4" />
-                  {errors.email}
+                <p className="text-rose-600 text-xs mt-1 flex items-center gap-1">
+                  <X size={12} /> {errors.email}
                 </p>
               )}
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <label className="block text-sm font-semibold text-gray-700">
-                  Phone Number *
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+                  Phone Number <span className="text-rose-500">*</span>
                 </label>
-                <input
-                  type="tel"
-                  name="phone"
-                  value={formData.phone}
-                  onChange={handleChange}
-                  placeholder="+1 (555) 000-0000"
-                  className={`w-full px-4 py-3 rounded-xl border transition-all duration-200 focus:ring-2 focus:ring-blue-500 outline-none bg-white/80 ${
-                    errors.phone ? "border-red-500" : "border-gray-300"
-                  }`}
-                />
+                <div className="relative">
+                  <Phone size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                  <input
+                    type="tel"
+                    name="phone"
+                    value={formData.phone}
+                    onChange={handleChange}
+                    placeholder="+94 77 123 4567"
+                    className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:bg-white focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20 transition-all"
+                  />
+                </div>
                 {errors.phone && (
-                  <p className="text-red-500 text-sm flex items-center gap-1">
-                    <X className="w-4 h-4" />
-                    {errors.phone}
+                  <p className="text-rose-600 text-xs mt-1 flex items-center gap-1">
+                    <X size={12} /> {errors.phone}
                   </p>
                 )}
               </div>
-
-              <div className="space-y-2">
-                <label className="block text-sm font-semibold text-gray-700">
-                  Date of Birth *
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+                  Date of Birth <span className="text-rose-500">*</span>
                 </label>
                 <div className="relative">
-                  <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <Calendar size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
                   <input
                     type="date"
                     name="dateOfBirth"
                     value={formData.dateOfBirth}
                     onChange={handleChange}
-                    className={`w-full pl-10 pr-4 py-3 rounded-xl border transition-all duration-200 focus:ring-2 focus:ring-blue-500 outline-none bg-white/80 ${
-                      errors.dateOfBirth ? "border-red-500" : "border-gray-300"
-                    }`}
+                    className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm text-slate-900 focus:outline-none focus:bg-white focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20 transition-all"
                   />
                 </div>
                 {errors.dateOfBirth && (
-                  <p className="text-red-500 text-sm flex items-center gap-1">
-                    <X className="w-4 h-4" />
-                    {errors.dateOfBirth}
+                  <p className="text-rose-600 text-xs mt-1 flex items-center gap-1">
+                    <X size={12} /> {errors.dateOfBirth}
                   </p>
                 )}
               </div>
@@ -472,249 +391,195 @@ const CreateAccount = () => {
 
       case 2:
         return (
-          <div className="space-y-6">
-            {/* User Role Selection */}
-            <div className="space-y-4">
-              <label className="block text-sm font-semibold text-gray-700">
-                User Role *
+          <div className="space-y-4">
+            <div>
+              <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-2">
+                Select Platform Role <span className="text-rose-500">*</span>
               </label>
-              <div className="grid gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 {userRoles.map((role) => {
                   const RoleIcon = role.icon;
                   const isSelected = formData.userRole === role.value;
-                  
                   return (
                     <div
                       key={role.value}
                       onClick={() => handleRoleChange(role.value)}
-                      className={`p-4 border-2 rounded-xl cursor-pointer transition-all duration-200 ${
+                      className={`cursor-pointer p-4 rounded-xl border transition-all ${
                         isSelected
-                          ? "border-blue-500 bg-blue-50 shadow-md"
-                          : "border-gray-300 hover:border-gray-400 hover:bg-gray-50"
+                          ? "bg-sky-50/70 border-sky-500 ring-2 ring-sky-500/20"
+                          : "bg-slate-50 border-slate-200 hover:bg-white"
                       }`}
                     >
-                      <div className="flex items-start gap-3">
-                        <div className={`p-2 rounded-lg ${
-                          isSelected ? "bg-blue-100 text-blue-600" : "bg-gray-100 text-gray-600"
-                        }`}>
-                          <RoleIcon className="w-5 h-5" />
+                      <div className="flex items-center gap-2.5 mb-1.5">
+                        <div
+                          className={`h-8 w-8 rounded-lg flex items-center justify-center ${
+                            isSelected ? "bg-sky-600 text-white" : "bg-white text-slate-600 border border-slate-200"
+                          }`}
+                        >
+                          <RoleIcon size={16} />
                         </div>
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2">
-                            <h3 className="font-semibold text-gray-800">{role.label}</h3>
-                            {isSelected && (
-                              <Check className="w-4 h-4 text-blue-600" />
-                            )}
-                          </div>
-                          <p className="text-sm text-gray-600 mt-1">{role.description}</p>
-                          <div className="mt-2">
-                            <p className="text-xs font-medium text-gray-500 mb-1">Permissions include:</p>
-                            <ul className="text-xs text-gray-600 space-y-1">
-                              {role.permissions.map((permission, index) => (
-                                <li key={index} className="flex items-center gap-1">
-                                  <div className="w-1 h-1 bg-gray-400 rounded-full"></div>
-                                  {permission}
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
-                        </div>
+                        <p className="font-bold text-sm text-slate-900">{role.label}</p>
                       </div>
+                      <p className="text-[11px] text-slate-500 leading-tight">{role.description}</p>
                     </div>
                   );
                 })}
               </div>
               {errors.userRole && (
-                <p className="text-red-500 text-sm flex items-center gap-1">
-                  <X className="w-4 h-4" />
-                  {errors.userRole}
+                <p className="text-rose-600 text-xs mt-1.5 flex items-center gap-1">
+                  <X size={12} /> {errors.userRole}
                 </p>
               )}
             </div>
 
-            {/* Selected Role Summary */}
-            {selectedRole && (
-              <div className="bg-green-50 border border-green-200 rounded-xl p-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <div className="p-1 bg-green-100 rounded-lg">
-                    <Check className="w-4 h-4 text-green-600" />
-                  </div>
-                  <h3 className="font-semibold text-green-800">Role Selected: {selectedRole.label}</h3>
-                </div>
-                <p className="text-green-700 text-sm">
-                  You will have access to {selectedRole.permissions.length} key permissions including {selectedRole.permissions[0].toLowerCase()} and more.
-                </p>
-              </div>
-            )}
-
-            <div className="space-y-2">
-              <label className="block text-sm font-semibold text-gray-700">
-                Employee ID *
+            {/* Employee ID */}
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+                Employee ID <span className="text-rose-500">*</span>
               </label>
-              {formData.userRole ? (
-                <div className={`flex items-stretch rounded-xl border transition-all duration-200 bg-white/80 overflow-hidden focus-within:ring-2 focus-within:ring-blue-500 ${
-                  errors.employeeId ? "border-red-500" : "border-gray-300"
-                }`}>
-                  <div className="flex items-center gap-2 px-4 bg-gray-100 border-r border-gray-300 text-gray-700 font-semibold select-none">
-                    <IdCard className="w-4 h-4 text-gray-400" />
-                    {ROLE_EMPLOYEE_ID_PREFIX[formData.userRole]}-
-                  </div>
-                  <input
-                    type="text"
-                    inputMode="numeric"
-                    value={employeeIdNumber}
-                    onChange={handleEmployeeNumberChange}
-                    onBlur={handleEmployeeNumberBlur}
-                    disabled={employeeIdLoading}
-                    placeholder="001"
-                    className="flex-1 min-w-0 px-4 py-3 outline-none bg-transparent disabled:opacity-60"
-                  />
-                  {employeeIdLoading && (
-                    <span className="flex items-center pr-4 text-xs text-gray-400">Loading…</span>
-                  )}
-                </div>
-              ) : (
-                <div className="w-full px-4 py-3 rounded-xl border border-dashed border-gray-300 bg-gray-50 text-gray-400 text-sm">
-                  Select a user role above to generate an Employee ID
-                </div>
-              )}
-              <p className="text-xs text-gray-500">
-                The prefix ({ROLE_EMPLOYEE_ID_PREFIX[formData.userRole] || "EMP/HR/SA"}) is fixed by the selected role — only the number can be changed. Each role keeps its own separate count.
-              </p>
+              <div className="flex items-center gap-2">
+                <span className="px-3 py-2.5 rounded-xl bg-slate-100 border border-slate-300 font-mono text-sm font-bold text-slate-700">
+                  {ROLE_EMPLOYEE_ID_PREFIX[formData.userRole] || "EMP"}-
+                </span>
+                <input
+                  type="text"
+                  value={employeeIdNumber}
+                  onChange={handleEmployeeNumberChange}
+                  placeholder="001"
+                  className="flex-1 px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm text-slate-900 font-mono focus:outline-none focus:bg-white focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20 transition-all"
+                />
+                {employeeIdLoading && <Loader2 size={16} className="animate-spin text-sky-600" />}
+              </div>
               {errors.employeeId && (
-                <p className="text-red-500 text-sm flex items-center gap-1">
-                  <X className="w-4 h-4" />
-                  {errors.employeeId}
+                <p className="text-rose-600 text-xs mt-1 flex items-center gap-1">
+                  <X size={12} /> {errors.employeeId}
                 </p>
               )}
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <label className="block text-sm font-semibold text-gray-700">
-                  Job Title *
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+                  Job Title <span className="text-rose-500">*</span>
                 </label>
                 <input
                   type="text"
                   name="jobTitle"
                   value={formData.jobTitle}
                   onChange={handleChange}
-                  placeholder="Software Engineer"
-                  className={`w-full px-4 py-3 rounded-xl border transition-all duration-200 focus:ring-2 focus:ring-blue-500 outline-none bg-white/80 ${
-                    errors.jobTitle ? "border-red-500" : "border-gray-300"
-                  }`}
+                  placeholder="e.g. Software Engineer"
+                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm text-slate-900 focus:outline-none focus:bg-white focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20 transition-all"
                 />
                 {errors.jobTitle && (
-                  <p className="text-red-500 text-sm flex items-center gap-1">
-                    <X className="w-4 h-4" />
-                    {errors.jobTitle}
+                  <p className="text-rose-600 text-xs mt-1 flex items-center gap-1">
+                    <X size={12} /> {errors.jobTitle}
                   </p>
                 )}
               </div>
-
-              <div className="space-y-2">
-                <label className="block text-sm font-semibold text-gray-700">
-                  Department *
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+                  Department <span className="text-rose-500">*</span>
                 </label>
                 <select
                   name="department"
                   value={formData.department}
                   onChange={handleChange}
-                  className={`w-full px-4 py-3 rounded-xl border transition-all duration-200 focus:ring-2 focus:ring-blue-500 outline-none bg-white/80 ${
-                    errors.department ? "border-red-500" : "border-gray-300"
-                  }`}
+                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm text-slate-900 focus:outline-none focus:bg-white focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20 transition-all"
                 >
-                  <option value="">Select Department</option>
-                  {departments.map(dept => (
-                    <option key={dept} value={dept}>{dept}</option>
+                  <option value="">Select department</option>
+                  {departments.map((dept) => (
+                    <option key={dept} value={dept}>
+                      {dept}
+                    </option>
                   ))}
                 </select>
                 {errors.department && (
-                  <p className="text-red-500 text-sm flex items-center gap-1">
-                    <X className="w-4 h-4" />
-                    {errors.department}
+                  <p className="text-rose-600 text-xs mt-1 flex items-center gap-1">
+                    <X size={12} /> {errors.department}
                   </p>
                 )}
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <label className="block text-sm font-semibold text-gray-700">
-                  Employment Type *
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+                  Employment Type <span className="text-rose-500">*</span>
                 </label>
                 <select
                   name="employmentType"
                   value={formData.employmentType}
                   onChange={handleChange}
-                  className={`w-full px-4 py-3 rounded-xl border transition-all duration-200 focus:ring-2 focus:ring-blue-500 outline-none bg-white/80 ${
-                    errors.employmentType ? "border-red-500" : "border-gray-300"
-                  }`}
+                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm text-slate-900 focus:outline-none focus:bg-white focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20 transition-all"
                 >
-                  <option value="">Select Type</option>
-                  {employmentTypes.map(type => (
-                    <option key={type} value={type}>{type}</option>
+                  <option value="">Select employment type</option>
+                  {(employmentTypes.length > 0
+                    ? employmentTypes
+                    : ["Full-time", "Part-time", "Contract", "Internship"]
+                  ).map((type) => (
+                    <option key={type} value={type}>
+                      {type}
+                    </option>
                   ))}
                 </select>
                 {errors.employmentType && (
-                  <p className="text-red-500 text-sm flex items-center gap-1">
-                    <X className="w-4 h-4" />
-                    {errors.employmentType}
+                  <p className="text-rose-600 text-xs mt-1 flex items-center gap-1">
+                    <X size={12} /> {errors.employmentType}
                   </p>
-                )}
-                {employmentTypesError && (
-                  <p className="text-red-500 text-sm">{employmentTypesError}</p>
-                )}
-                {!employmentTypesError && employmentTypes.length === 0 && (
-                  <p className="text-amber-600 text-xs">No employment types yet. HR can add them in Leave Management → Add Employment Type.</p>
                 )}
               </div>
-
-              <div className="space-y-2">
-                <label className="block text-sm font-semibold text-gray-700">
-                  Work Location *
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+                  Work Location <span className="text-rose-500">*</span>
                 </label>
-                <div className="relative">
-                  <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                  <select
-                    name="workLocation"
-                    value={formData.workLocation}
-                    onChange={handleChange}
-                    className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-300 transition-all duration-200 focus:ring-2 focus:ring-blue-500 outline-none bg-white/80"
-                  >
-                    <option value="">Select work location</option>
-                    {workLocations.map(loc => (
-                      <option key={loc} value={loc}>{loc}</option>
-                    ))}
-                  </select>
-                </div>
+                <select
+                  name="workLocation"
+                  value={formData.workLocation}
+                  onChange={handleChange}
+                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm text-slate-900 focus:outline-none focus:bg-white focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20 transition-all"
+                >
+                  <option value="">Select work location</option>
+                  {(workLocations.length > 0
+                    ? workLocations
+                    : ["Headquarters (Colombo)", "Branch Office", "Remote / Hybrid"]
+                  ).map((loc) => (
+                    <option key={loc} value={loc}>
+                      {loc}
+                    </option>
+                  ))}
+                </select>
                 {errors.workLocation && (
-                  <p className="text-red-500 text-sm flex items-center gap-1">
-                    <X className="w-4 h-4" />
-                    {errors.workLocation}
+                  <p className="text-rose-600 text-xs mt-1 flex items-center gap-1">
+                    <X size={12} /> {errors.workLocation}
                   </p>
-                )}
-                {workLocationsError && (
-                  <p className="text-red-500 text-sm">{workLocationsError}</p>
-                )}
-                {!workLocationsError && workLocations.length === 0 && (
-                  <p className="text-amber-600 text-xs">No work locations yet. HR can add them from the Employees page → Add Work Location.</p>
                 )}
               </div>
             </div>
 
-            <div className="space-y-2">
-              <label className="block text-sm font-semibold text-gray-700">
-                Hire Date
-              </label>
-              <div className="relative">
-                <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+                  Hire / Joining Date
+                </label>
                 <input
                   type="date"
                   name="hireDate"
                   value={formData.hireDate}
                   onChange={handleChange}
-                  className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 outline-none bg-white/80"
+                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm text-slate-900 focus:outline-none focus:bg-white focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20 transition-all"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+                  Reporting Manager
+                </label>
+                <input
+                  type="text"
+                  name="reportingManager"
+                  value={formData.reportingManager}
+                  onChange={handleChange}
+                  placeholder="Manager's name"
+                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm text-slate-900 focus:outline-none focus:bg-white focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20 transition-all"
                 />
               </div>
             </div>
@@ -723,188 +588,152 @@ const CreateAccount = () => {
 
       case 3:
         return (
-          <div className="space-y-5">
-            <div className="space-y-3">
-              <label className="block text-sm font-semibold text-gray-700">
-                Password *
+          <div className="space-y-4">
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+                Password <span className="text-rose-500">*</span>
               </label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <Lock size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
                 <input
                   type={showPassword ? "text" : "password"}
                   name="password"
                   value={formData.password}
                   onChange={handleChange}
-                  placeholder="••••••••"
-                  className={`w-full pl-10 pr-12 py-3 rounded-xl border transition-all duration-200 focus:ring-2 focus:ring-blue-500 outline-none bg-white/80 ${
-                    errors.password ? "border-red-500" : "border-gray-300"
-                  }`}
+                  placeholder="At least 8 characters"
+                  className="w-full pl-10 pr-11 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm text-slate-900 focus:outline-none focus:bg-white focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20 transition-all"
                 />
                 <button
                   type="button"
+                  tabIndex={-1}
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1"
                 >
-                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
               </div>
-
-              {/* Password Strength Meter */}
-              {formData.password && (
-                <div className="space-y-2">
-                  <div className="flex justify-between items-center text-sm">
-                    <span className="text-gray-600">Password strength</span>
-                    <span className={`font-medium ${
-                      passwordStrength <= 2 ? "text-red-500" :
-                      passwordStrength <= 3 ? "text-yellow-500" :
-                      "text-green-500"
-                    }`}>
-                      {strengthLabels[passwordStrength]}
-                    </span>
-                  </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div
-                      className={`h-2 rounded-full transition-all duration-500 ${
-                        strengthColors[passwordStrength]
-                      }`}
-                      style={{ width: `${(passwordStrength / 5) * 100}%` }}
-                    ></div>
-                  </div>
-                </div>
-              )}
-
               {errors.password && (
-                <p className="text-red-500 text-sm flex items-center gap-1">
-                  <X className="w-4 h-4" />
-                  {errors.password}
+                <p className="text-rose-600 text-xs mt-1 flex items-center gap-1">
+                  <X size={12} /> {errors.password}
                 </p>
               )}
             </div>
 
-            <div className="space-y-2">
-              <label className="block text-sm font-semibold text-gray-700">
-                Confirm Password *
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+                Confirm Password <span className="text-rose-500">*</span>
               </label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <Lock size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
                 <input
                   type={showConfirmPassword ? "text" : "password"}
                   name="confirmPassword"
                   value={formData.confirmPassword}
                   onChange={handleChange}
-                  placeholder="••••••••"
-                  className={`w-full pl-10 pr-12 py-3 rounded-xl border transition-all duration-200 focus:ring-2 focus:ring-blue-500 outline-none bg-white/80 ${
-                    errors.confirmPassword ? "border-red-500" : "border-gray-300"
-                  }`}
+                  placeholder="Re-enter password"
+                  className="w-full pl-10 pr-11 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm text-slate-900 focus:outline-none focus:bg-white focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20 transition-all"
                 />
                 <button
                   type="button"
+                  tabIndex={-1}
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1"
                 >
-                  {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
               </div>
               {errors.confirmPassword && (
-                <p className="text-red-500 text-sm flex items-center gap-1">
-                  <X className="w-4 h-4" />
-                  {errors.confirmPassword}
+                <p className="text-rose-600 text-xs mt-1 flex items-center gap-1">
+                  <X size={12} /> {errors.confirmPassword}
                 </p>
               )}
+            </div>
+
+            <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/80 text-xs text-slate-600 space-y-1.5">
+              <p className="font-semibold text-slate-800">Password requirements:</p>
+              <ul className="list-disc pl-4 space-y-0.5 text-slate-500">
+                <li>At least 8 characters in length</li>
+                <li>At least one uppercase and one lowercase letter</li>
+                <li>At least one numeric digit and special character</li>
+              </ul>
             </div>
           </div>
         );
 
       case 4:
         return (
-          <div className="space-y-5">
-            <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
-              <h3 className="font-semibold text-blue-800 mb-2">Almost There!</h3>
-              <p className="text-blue-700 text-sm">
-                Please review and accept the following agreements to complete your account setup.
+          <div className="space-y-4">
+            <div className="bg-sky-50/70 border border-sky-100 rounded-xl p-4">
+              <h4 className="font-semibold text-sm text-sky-900 mb-1">Almost Done!</h4>
+              <p className="text-xs text-sky-700 leading-relaxed">
+                Please review and accept our platform usage policies to finalize account setup.
               </p>
             </div>
 
-            {/* Role Confirmation */}
             {selectedRole && (
-              <div className="bg-gray-50 border border-gray-200 rounded-xl p-4">
-                <h4 className="font-semibold text-gray-800 mb-2">Role Assignment</h4>
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-blue-100 rounded-lg">
-                    {React.createElement(selectedRole.icon, { className: "w-5 h-5 text-blue-600" })}
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-800">{selectedRole.label}</p>
-                    <p className="text-xs text-gray-600">{selectedRole.description}</p>
-                  </div>
+              <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 flex items-center gap-3">
+                <div className="h-9 w-9 rounded-lg bg-sky-50 text-sky-600 border border-sky-100 flex items-center justify-center shrink-0">
+                  {React.createElement(selectedRole.icon, { size: 18 })}
+                </div>
+                <div>
+                  <p className="text-xs text-slate-500">Assigned Platform Role</p>
+                  <p className="text-sm font-bold text-slate-900">{selectedRole.label}</p>
                 </div>
               </div>
             )}
 
-            <div className="space-y-4">
-              <label className="flex items-start space-x-3 cursor-pointer">
+            <div className="space-y-3 pt-2">
+              <label className="flex items-start gap-3 cursor-pointer select-none">
                 <input
                   type="checkbox"
                   name="agreeToTerms"
                   checked={formData.agreeToTerms}
                   onChange={handleChange}
-                  className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500 mt-1"
+                  className="w-4 h-4 mt-0.5 rounded text-sky-600 border-slate-300 focus:ring-sky-500 cursor-pointer"
                 />
-                <span className="text-sm text-gray-700">
-                  I agree to the{" "}
-                  <span className="text-blue-600 hover:underline font-medium">
-                    Terms and Conditions
-                  </span>{" "}
-                  governing the use of Global HRM platform
+                <span className="text-xs text-slate-600 leading-normal">
+                  I agree to the <span className="text-sky-600 font-semibold hover:underline">Terms & Conditions</span> governing the HRM System platform.
                 </span>
               </label>
               {errors.agreeToTerms && (
-                <p className="text-red-500 text-sm flex items-center gap-1">
-                  <X className="w-4 h-4" />
-                  {errors.agreeToTerms}
+                <p className="text-rose-600 text-xs pl-7 flex items-center gap-1">
+                  <X size={12} /> {errors.agreeToTerms}
                 </p>
               )}
 
-              <label className="flex items-start space-x-3 cursor-pointer">
+              <label className="flex items-start gap-3 cursor-pointer select-none">
                 <input
                   type="checkbox"
                   name="agreeToPrivacy"
                   checked={formData.agreeToPrivacy}
                   onChange={handleChange}
-                  className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500 mt-1"
+                  className="w-4 h-4 mt-0.5 rounded text-sky-600 border-slate-300 focus:ring-sky-500 cursor-pointer"
                 />
-                <span className="text-sm text-gray-700">
-                  I agree to the{" "}
-                  <span className="text-blue-600 hover:underline font-medium">
-                    Privacy Policy
-                  </span>{" "}
-                  and understand how my personal data will be processed
+                <span className="text-xs text-slate-600 leading-normal">
+                  I agree to the <span className="text-sky-600 font-semibold hover:underline">Privacy Policy</span> regarding data storage and confidentiality.
                 </span>
               </label>
               {errors.agreeToPrivacy && (
-                <p className="text-red-500 text-sm flex items-center gap-1">
-                  <X className="w-4 h-4" />
-                  {errors.agreeToPrivacy}
+                <p className="text-rose-600 text-xs pl-7 flex items-center gap-1">
+                  <X size={12} /> {errors.agreeToPrivacy}
                 </p>
               )}
 
-              <label className="flex items-start space-x-3 cursor-pointer">
+              <label className="flex items-start gap-3 cursor-pointer select-none">
                 <input
                   type="checkbox"
                   name="agreeToDataProcessing"
                   checked={formData.agreeToDataProcessing}
                   onChange={handleChange}
-                  className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500 mt-1"
+                  className="w-4 h-4 mt-0.5 rounded text-sky-600 border-slate-300 focus:ring-sky-500 cursor-pointer"
                 />
-                <span className="text-sm text-gray-700">
-                  I consent to the processing of my personal data for HR management purposes
-                  in accordance with applicable data protection laws
+                <span className="text-xs text-slate-600 leading-normal">
+                  I consent to the processing of my employee data for workforce operations and payroll in accordance with data regulations.
                 </span>
               </label>
               {errors.agreeToDataProcessing && (
-                <p className="text-red-500 text-sm flex items-center gap-1">
-                  <X className="w-4 h-4" />
-                  {errors.agreeToDataProcessing}
+                <p className="text-rose-600 text-xs pl-7 flex items-center gap-1">
+                  <X size={12} /> {errors.agreeToDataProcessing}
                 </p>
               )}
             </div>
@@ -917,124 +746,102 @@ const CreateAccount = () => {
   };
 
   return (
-    <section className="relative min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 overflow-hidden">
-      {/* Animated Background */}
-      <div className="absolute inset-0">
-        <img
-          src={heroImg}
-          alt="Background"
-          className="w-full h-full object-cover transform scale-105"
-        />
-        <div className="absolute inset-0 bg-white/10 backdrop-blur-[1px]"></div>
-        
-        {/* Animated floating elements */}
-        <div className="absolute top-1/4 left-1/4 w-4 h-4 bg-blue-400 rounded-full opacity-20 animate-float"></div>
-        <div className="absolute top-1/3 right-1/4 w-6 h-6 bg-indigo-400 rounded-full opacity-30 animate-float animation-delay-1000"></div>
-        <div className="absolute bottom-1/4 left-1/3 w-3 h-3 bg-purple-400 rounded-full opacity-25 animate-float animation-delay-2000"></div>
-      </div>
-
-      {/* Main Card */}
-      <div className="relative z-10 bg-white/90 backdrop-blur-xl p-8 rounded-3xl shadow-2xl w-[90%] max-w-2xl border border-white/20">
+    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4 sm:p-6 lg:p-10 text-slate-900 font-sans">
+      <div className="w-full max-w-2xl bg-white rounded-2xl border border-slate-200/90 shadow-xl p-6 sm:p-10">
         {/* Header */}
         <div className="text-center mb-8">
-          <div className="w-16 h-16 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
-            <User className="w-8 h-8 text-white" />
+          <div className="w-12 h-12 rounded-xl overflow-hidden ring-1 ring-slate-200 shadow-sm mx-auto mb-3">
+            <img src={logo} alt="HRM System" className="w-full h-full object-cover" />
           </div>
-          <h2 className="text-3xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent mb-2">
+          <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
             Create Your HRM Account
           </h2>
-          <p className="text-gray-600 text-sm">
-            Step {currentStep} of {steps.length} - {steps.find(s => s.id === currentStep)?.title}
+          <p className="text-xs text-slate-500 mt-1">
+            Step {currentStep} of {steps.length} — {steps.find((s) => s.id === currentStep)?.title}
           </p>
         </div>
 
-        {/* Progress Steps */}
-        <div className="flex justify-between items-center mb-8">
+        {/* Stepper Progress */}
+        <div className="flex items-center justify-between mb-8 px-2 sm:px-6">
           {steps.map((step, index) => {
             const StepIcon = step.icon;
             const isCompleted = currentStep > step.id;
             const isCurrent = currentStep === step.id;
-            
+
             return (
               <React.Fragment key={step.id}>
                 <div className="flex flex-col items-center">
-                  <div className={`w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300 ${
-                    isCompleted 
-                      ? "bg-green-500 text-white" 
-                      : isCurrent
-                      ? "bg-blue-600 text-white shadow-lg transform scale-110"
-                      : "bg-gray-200 text-gray-500"
-                  }`}>
-                    {isCompleted ? (
-                      <Check className="w-6 h-6" />
-                    ) : (
-                      <StepIcon className="w-6 h-6" />
-                    )}
+                  <div
+                    className={`w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center font-bold text-xs transition-all ${
+                      isCompleted
+                        ? "bg-emerald-500 text-white"
+                        : isCurrent
+                        ? "bg-slate-900 text-white ring-4 ring-slate-900/10 shadow-sm"
+                        : "bg-slate-100 text-slate-400"
+                    }`}
+                  >
+                    {isCompleted ? <Check size={16} /> : <StepIcon size={16} />}
                   </div>
-                  <span className={`text-xs mt-2 font-medium ${
-                    isCurrent ? "text-blue-600" : "text-gray-500"
-                  }`}>
+                  <span
+                    className={`text-[11px] mt-1.5 font-semibold ${
+                      isCurrent ? "text-slate-900" : "text-slate-400"
+                    }`}
+                  >
                     {step.title}
                   </span>
                 </div>
                 {index < steps.length - 1 && (
-                  <div className={`flex-1 h-1 mx-4 transition-all duration-300 ${
-                    currentStep > step.id ? "bg-green-500" : "bg-gray-200"
-                  }`} />
+                  <div
+                    className={`flex-1 h-0.5 mx-2 sm:mx-3 transition-colors ${
+                      currentStep > step.id ? "bg-emerald-500" : "bg-slate-200"
+                    }`}
+                  />
                 )}
               </React.Fragment>
             );
           })}
         </div>
 
-        {/* Form */}
+        {/* Form Body */}
         <form onSubmit={handleSubmit}>
           {renderStepContent()}
 
-          {/* Navigation Buttons */}
-          <div className="flex justify-between mt-8">
+          {/* Stepper Navigation Buttons */}
+          <div className="flex items-center justify-between mt-8 pt-6 border-t border-slate-100">
             <button
               type="button"
               onClick={handlePrev}
               disabled={currentStep === 1}
-              className={`flex items-center gap-2 px-6 py-3 rounded-xl font-medium transition-all ${
+              className={`inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-semibold transition-colors ${
                 currentStep === 1
-                  ? "text-gray-400 cursor-not-allowed"
-                  : "text-gray-600 hover:text-gray-800 hover:bg-gray-100"
+                  ? "text-slate-300 cursor-not-allowed"
+                  : "text-slate-700 hover:bg-slate-100"
               }`}
             >
-              <ChevronLeft className="w-5 h-5" />
-              Previous
+              <ChevronLeft size={16} /> Previous
             </button>
 
             {currentStep < steps.length ? (
               <button
                 type="button"
                 onClick={handleNext}
-                className="flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-xl transition-all shadow-lg hover:shadow-xl"
+                className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-sm font-semibold shadow-sm transition-all active:scale-[0.99]"
               >
-                Next
-                <ChevronRight className="w-5 h-5" />
+                Next <ChevronRight size={16} />
               </button>
             ) : (
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className={`flex items-center gap-2 px-8 py-3 rounded-xl font-semibold text-white transition-all duration-300 shadow-lg ${
-                  isSubmitting
-                    ? "bg-gray-400 cursor-not-allowed"
-                    : "bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 transform hover:-translate-y-0.5"
-                }`}
+                className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-sky-600 hover:bg-sky-700 text-white text-sm font-semibold shadow-sm shadow-sky-600/20 disabled:opacity-50 transition-all active:scale-[0.99]"
               >
                 {isSubmitting ? (
                   <>
-                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                    Creating Account...
+                    <Loader2 size={16} className="animate-spin" /> Registering...
                   </>
                 ) : (
                   <>
-                    <Check className="w-5 h-5" />
-                    Complete Registration
+                    <CheckCircle2 size={16} /> Complete Registration
                   </>
                 )}
               </button>
@@ -1042,33 +849,16 @@ const CreateAccount = () => {
           </div>
         </form>
 
-        {/* Login Link */}
-        <p className="text-center text-sm text-gray-600 mt-6 pt-6 border-t border-gray-200">
-          Already have an account?{" "}
-          <Link to="/login" className="text-blue-600 hover:underline font-medium cursor-pointer">
-            Sign In
-          </Link>
-        </p>
+          {/* Link to Login */}
+          <p className="text-center text-xs text-slate-500 mt-6 pt-4 border-t border-slate-100">
+            Already have an account?{" "}
+            <Link to="/login" className="font-bold text-sky-600 hover:text-sky-700 hover:underline">
+              Sign In
+            </Link>
+          </p>
+        </div>
       </div>
+    );
+  };
 
-      {/* Add custom animations */}
-      <style jsx>{`
-        @keyframes float {
-          0%, 100% { transform: translateY(0px); }
-          50% { transform: translateY(-20px); }
-        }
-        .animate-float {
-          animation: float 6s ease-in-out infinite;
-        }
-        .animation-delay-1000 {
-          animation-delay: 1s;
-        }
-        .animation-delay-2000 {
-          animation-delay: 2s;
-        }
-      `}</style>
-    </section>
-  );
-};
-
-export default CreateAccount;
+  export default CreateAccount;

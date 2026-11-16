@@ -1,306 +1,352 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import {
+  BookOpen,
+  Search,
+  Calendar,
+  User,
+  ArrowRight,
+  Sparkles,
+  Tag,
+  Clock,
+  X,
+} from "lucide-react";
+import PublicNavbar from "../components/PublicNavbar";
+import PublicFooter from "../components/PublicFooter";
+import CompanyRequestModal from "../components/CompanyRequestModal";
 
 const Blog = () => {
   const navigate = useNavigate();
   const [selectedCategory, setSelectedCategory] = useState("all");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [readingPost, setReadingPost] = useState(null);
+  const [isRequestModalOpen, setIsRequestModalOpen] = useState(false);
+
+  const categories = [
+    { id: "all", label: "All Insights" },
+    { id: "HR Tech", label: "HR Technology" },
+    { id: "Leadership", label: "Leadership" },
+    { id: "Compliance", label: "Compliance" },
+    { id: "Culture", label: "Workplace Culture" },
+  ];
 
   const blogPosts = [
     {
       id: 1,
-      title: "The Future of HR Technology",
-      category: "technology",
-      date: "January 15, 2026",
-      author: "Sarah Johnson",
-      image: "📱",
-      excerpt: "Discover how AI and machine learning are transforming the HR landscape and what it means for your organization.",
-      content: "HR technology is evolving at an unprecedented pace. From AI-powered recruitment to predictive analytics for employee retention, the future of HR is here. Organizations that embrace these technologies are seeing significant improvements in efficiency, employee engagement, and business outcomes."
+      title: "The Future of Hybrid Work: Managing Distributed Teams with Precision",
+      excerpt:
+        "How intelligent attendance tracking, GPS-verified check-ins, and asynchronous leave approval systems empower distributed workforces.",
+      author: "Samantha Perera",
+      role: "Head of People",
+      date: "Oct 12, 2026",
+      category: "HR Tech",
+      readTime: "5 min read",
+      content:
+        "As organizations shift towards hybrid models, traditional timecards and physical registries become obsolete. Modern HRM platforms solve this by offering location-verified check-ins, real-time hours tracking, and automated calculation of overtime and weekend differentials. By decentralizing workforce administration and centralizing transparency, companies achieve higher employee satisfaction while retaining ironclad audit integrity.",
     },
     {
       id: 2,
-      title: "5 Tips for Effective Remote Team Management",
-      category: "management",
-      date: "January 12, 2026",
-      author: "Michael Chen",
-      image: "👥",
-      excerpt: "Learn proven strategies to lead and motivate your remote team effectively in today's distributed workforce.",
-      content: "Managing remote teams requires a different approach. Clear communication, trust-building, and proper tools are essential. This guide covers five practical tips to help you lead your remote team successfully while maintaining productivity and morale."
+      title: "Streamlining Leave Approvals: Reducing Administrative Bottlenecks",
+      excerpt:
+        "Why self-service leave counters and automated manager approval chains reduce payroll discrepancies and boost team morale.",
+      author: "Kasun Silva",
+      role: "Operations Director",
+      date: "Sep 28, 2026",
+      category: "Compliance",
+      readTime: "4 min read",
+      content:
+        "Manual leave tracking through paperwork and ad-hoc chat messages creates dangerous compliance loopholes. With an automated leave management engine, employees see real-time balance calculations across statutory leave types, while managers receive instant notifications for pending requests. The result is zero dispute over remaining days and a clear paper trail for statutory audits.",
     },
     {
       id: 3,
-      title: "Understanding Employee Engagement",
-      category: "engagement",
-      date: "January 10, 2026",
-      author: "Emma Williams",
-      image: "😊",
-      excerpt: "Explore the key drivers of employee engagement and how to create a workplace culture that motivates your team.",
-      content: "Employee engagement goes beyond job satisfaction. It's about creating an environment where employees feel valued, heard, and motivated. This comprehensive guide explores the key drivers of engagement and practical strategies to implement them."
+      title: "Fair & Transparent Compensation: The Power of Automated Pay Sheets",
+      excerpt:
+        "Building employee trust through transparent salary slips, itemized allowances, and accessible historical compensation records.",
+      author: "Dilani Fernando",
+      role: "Compensation Lead",
+      date: "Sep 15, 2026",
+      category: "Leadership",
+      readTime: "6 min read",
+      content:
+        "Nothing impacts employee retention more directly than payroll transparency. Giving team members instant digital access to downloadable, official salary slips that clearly separate basic pay, statutory deductions (EPF/ETF), and reimbursable claims builds trust and completely eliminates monthly payroll inquiry backlogs for HR teams.",
     },
     {
       id: 4,
-      title: "Streamlining Payroll Operations",
-      category: "payroll",
-      date: "January 8, 2026",
-      author: "David Martinez",
-      image: "💳",
-      excerpt: "Automate your payroll process and eliminate costly errors with modern HR systems.",
-      content: "Payroll processing can be complex and error-prone. Modern HR systems offer automation capabilities that can streamline the entire process, reduce errors, ensure compliance, and free up your team to focus on strategic initiatives."
+      title: "Modernizing ATS: From Applicant Screening to Seamless Onboarding",
+      excerpt:
+        "Connecting candidate tracking directly into employee records to eliminate duplicate data entry and administrative overhead.",
+      author: "Rohan Jayawardena",
+      role: "Talent Acquisition",
+      date: "Aug 30, 2026",
+      category: "HR Tech",
+      readTime: "4 min read",
+      content:
+        "Recruitment cannot live in a silo separate from Core HR. When candidate applications, interview evaluations, and offer letters feed directly into an employee record, new hires can be provisioned in minutes rather than days. This unified journey ensures that hiring managers and HR teams share a single source of truth.",
     },
     {
       id: 5,
-      title: "Improving Workplace Diversity and Inclusion",
-      category: "culture",
-      date: "January 5, 2026",
-      author: "Lisa Anderson",
-      image: "🌍",
-      excerpt: "Best practices for building a diverse and inclusive workplace that benefits your organization and employees.",
-      content: "Diversity and inclusion are not just ethical imperatives—they're business imperatives. Organizations with diverse teams are more innovative, resilient, and successful. Learn actionable strategies to build a truly inclusive workplace."
+      title: "Building High-Trust Culture Through Digital Employee Self-Service",
+      excerpt:
+        "Empowering workers to update their personal credentials, manage bank details, and track performance milestones independently.",
+      author: "Nirosha Wickramasinghe",
+      role: "Culture Strategist",
+      date: "Aug 18, 2026",
+      category: "Culture",
+      readTime: "5 min read",
+      content:
+        "Self-service is more than administrative efficiency; it is an organizational signal of trust and respect. When employees have a dedicated portal to view their company record, check their monthly attendance statistics, and request allowances with proof attachments, they feel ownership over their workplace standing.",
     },
     {
       id: 6,
-      title: "Performance Management Best Practices",
-      category: "management",
-      date: "January 1, 2026",
-      author: "Robert Wilson",
-      image: "📈",
-      excerpt: "Transform your performance management process to drive employee growth and organizational success.",
-      content: "Traditional performance reviews are evolving. Modern performance management focuses on continuous feedback, development, and alignment with organizational goals. Discover how to implement a performance management system that works."
+      title: "Statutory Compliance & Security in Cloud-Based HR Architecture",
+      excerpt:
+        "Key security safeguards, role-based access boundaries, and audit trail strategies for managing sensitive personnel records.",
+      author: "Pradeep Mendis",
+      role: "Security Architect",
+      date: "Aug 02, 2026",
+      category: "Compliance",
+      readTime: "7 min read",
+      content:
+        "Personnel data carries strict regulatory and moral privacy requirements. Implementing fine-grained Role-Based Access Control (RBAC), multi-tenant tenant isolation, and detailed immutable audit logs ensures that only authorized officers can inspect candidate resumes, review salary figures, or adjust leave balances.",
     },
-    {
-      id: 7,
-      title: "Leave Management Strategy Guide",
-      category: "payroll",
-      date: "December 28, 2025",
-      author: "Jessica Brown",
-      image: "🏖️",
-      excerpt: "Optimize your leave management process while ensuring compliance and employee satisfaction.",
-      content: "Effective leave management balances employee well-being with organizational needs. This guide covers policy design, compliance requirements, and technology solutions to streamline your leave management process."
-    },
-    {
-      id: 8,
-      title: "Building Your HR Analytics Dashboard",
-      category: "technology",
-      date: "December 25, 2025",
-      author: "Thomas Garcia",
-      image: "📊",
-      excerpt: "Harness the power of data to make informed HR decisions and drive business results.",
-      content: "HR analytics transforms raw data into actionable insights. Learn how to build an effective HR analytics dashboard that provides visibility into key metrics like turnover, hiring efficiency, and employee satisfaction."
-    }
   ];
 
-  const categories = [
-    { id: "all", label: "All Posts" },
-    { id: "technology", label: "Technology" },
-    { id: "management", label: "Management" },
-    { id: "engagement", label: "Engagement" },
-    { id: "payroll", label: "Payroll" },
-    { id: "culture", label: "Culture" }
-  ];
-
-  const filteredPosts = selectedCategory === "all" 
-    ? blogPosts 
-    : blogPosts.filter(post => post.category === selectedCategory);
+  const filteredPosts = blogPosts.filter((post) => {
+    const matchesCategory =
+      selectedCategory === "all" || post.category === selectedCategory;
+    const matchesSearch =
+      post.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      post.excerpt.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      post.author.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesCategory && matchesSearch;
+  });
 
   return (
-    <section className="bg-gray-50 min-h-screen">
-      {/* Navbar */}
-      <nav className="flex justify-between items-center px-10 py-6 bg-white shadow-md">
-        <h1 className="text-lg font-semibold text-blue-600">HumanResources</h1>
-        <ul className="flex gap-8 text-sm font-medium">
-          <li 
-            onClick={() => navigate("/")} 
-            className="hover:text-blue-400 cursor-pointer text-gray-700"
-          >
-            Home
-          </li>
-          <li 
-            onClick={() => navigate("/about")} 
-            className="hover:text-blue-400 cursor-pointer text-gray-700"
-          >
-            About
-          </li>
-          <li 
-            onClick={() => navigate("/services")} 
-            className="hover:text-blue-400 cursor-pointer text-gray-700"
-          >
-            Services
-          </li>
-          <li 
-            onClick={() => navigate("/blog")} 
-            className="text-blue-600 font-semibold"
-          >
-            Blog
-          </li>
-          <li 
-            onClick={() => navigate("/contact")} 
-            className="hover:text-blue-400 cursor-pointer text-gray-700"
-          >
-            Contact
-          </li>
-        </ul>
-      </nav>
+    <div className="min-h-screen flex flex-col bg-slate-50 font-sans text-slate-900">
+      {/* ── Public Navbar ── */}
+      <PublicNavbar onRequestApplication={() => setIsRequestModalOpen(true)} />
 
-      {/* Blog Header */}
-      <div className="bg-gradient-to-r from-blue-600 to-blue-800 text-white py-16 px-6">
-        <div className="max-w-4xl mx-auto">
-          <h1 className="text-5xl font-bold mb-4">Our Blog</h1>
-          <p className="text-lg text-blue-100">
-            Insights, tips, and best practices for modern HR management
-          </p>
+      {/* ── Header Banner ── */}
+      <section className="bg-[#0b1126] text-white py-16 sm:py-20 relative overflow-hidden">
+        <div
+          className="absolute inset-0 pointer-events-none opacity-20"
+          style={{
+            backgroundImage:
+              "radial-gradient(circle at 80% 20%, rgba(56, 189, 248, 0.4) 0%, transparent 60%)",
+          }}
+        />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          <div className="max-w-3xl">
+            <span className="text-xs font-bold uppercase tracking-widest text-sky-400 block mb-2">
+              HR Insights & News
+            </span>
+            <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-white leading-tight">
+              Perspectives on People Operations, Technology & Compliance
+            </h1>
+            <p className="mt-4 text-base sm:text-lg text-slate-300 leading-relaxed">
+              Actionable guides, industry trends, and strategic perspectives curated by human resource and operations practitioners.
+            </p>
+          </div>
         </div>
-      </div>
+      </section>
 
-      {/* Main Content */}
-      <div className="max-w-6xl mx-auto px-6 py-16">
-        {/* Category Filter */}
-        <div className="mb-12">
-          <h2 className="text-2xl font-bold text-gray-800 mb-6">Filter by Category</h2>
-          <div className="flex flex-wrap gap-4">
-            {categories.map((category) => (
+      {/* ── Filter Bar & Search ── */}
+      <section className="bg-white border-b border-slate-200/90 py-4 sticky top-16 z-30 shadow-xs">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
+          {/* Category Chips */}
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 md:pb-0 scrollbar-none">
+            {categories.map((cat) => (
               <button
-                key={category.id}
-                onClick={() => setSelectedCategory(category.id)}
-                className={`px-6 py-2 rounded-full font-medium transition-all duration-300 ${
-                  selectedCategory === category.id
-                    ? "bg-blue-600 text-white shadow-lg"
-                    : "bg-white text-gray-700 border-2 border-gray-300 hover:border-blue-600"
+                key={cat.id}
+                type="button"
+                onClick={() => setSelectedCategory(cat.id)}
+                className={`px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all duration-150 ${
+                  selectedCategory === cat.id
+                    ? "bg-sky-600 text-white shadow-xs"
+                    : "bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-slate-900"
                 }`}
               >
-                {category.label}
+                {cat.label}
               </button>
             ))}
           </div>
+
+          {/* Search Input */}
+          <div className="relative w-full md:w-72 shrink-0">
+            <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search articles..."
+              className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:bg-white focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20 transition-all"
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery("")}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1"
+              >
+                <X size={13} />
+              </button>
+            )}
+          </div>
         </div>
+      </section>
 
-        {/* Blog Posts Grid */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-2 gap-8 mb-16">
-          {filteredPosts.map((post) => (
-            <div 
-              key={post.id}
-              className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-all duration-300 hover:scale-105"
-            >
-              {/* Post Image/Icon */}
-              <div className="bg-gradient-to-r from-blue-500 to-blue-600 h-48 flex items-center justify-center text-8xl">
-                {post.image}
-              </div>
+      {/* ── Articles Grid ── */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 flex-1">
+        {filteredPosts.length === 0 ? (
+          <div className="bg-white rounded-2xl border border-slate-200/90 py-16 px-6 text-center max-w-md mx-auto">
+            <BookOpen size={36} className="text-slate-400 mx-auto mb-3" />
+            <h3 className="text-base font-bold text-slate-900">No matching articles found</h3>
+            <p className="text-xs text-slate-500 mt-1">Try selecting a different category or clearing your search filter.</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+            {filteredPosts.map((post) => (
+              <article
+                key={post.id}
+                className="bg-white rounded-2xl border border-slate-200/90 shadow-sm hover:shadow-lg transition-all duration-200 flex flex-col justify-between overflow-hidden group"
+              >
+                <div className="p-6 sm:p-7">
+                  <div className="flex items-center justify-between gap-2 mb-3.5">
+                    <span className="text-[11px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-sky-50 border border-sky-100 text-sky-700">
+                      {post.category}
+                    </span>
+                    <span className="text-xs text-slate-400">{post.readTime}</span>
+                  </div>
 
-              {/* Post Content */}
-              <div className="p-8">
-                <div className="flex items-center justify-between mb-3">
-                  <span className="bg-blue-100 text-blue-600 text-xs font-semibold px-3 py-1 rounded-full">
-                    {post.category.charAt(0).toUpperCase() + post.category.slice(1)}
-                  </span>
-                  <span className="text-gray-500 text-sm">{post.date}</span>
+                  <h3 className="text-lg font-bold text-slate-900 group-hover:text-sky-600 transition-colors line-clamp-2 mb-2.5">
+                    {post.title}
+                  </h3>
+
+                  <p className="text-xs text-slate-600 leading-relaxed line-clamp-3 mb-5">
+                    {post.excerpt}
+                  </p>
                 </div>
 
-                <h3 className="text-2xl font-bold text-gray-800 mb-3 line-clamp-2">
-                  {post.title}
-                </h3>
-
-                <p className="text-gray-600 mb-4">
-                  {post.excerpt}
-                </p>
-
-                <div className="flex items-center justify-between pt-4 border-t border-gray-200">
-                  <span className="text-sm text-gray-500">By {post.author}</span>
-                  <button 
-                    onClick={() => window.scrollTo(0, 0)}
-                    className="text-blue-600 hover:text-blue-800 font-semibold text-sm hover:underline"
+                <div className="px-6 sm:px-7 py-4 bg-slate-50/70 border-t border-slate-100 flex items-center justify-between text-xs">
+                  <div className="flex items-center gap-1.5 text-slate-600">
+                    <User size={13} className="text-slate-400" />
+                    <span>{post.author}</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setReadingPost(post)}
+                    className="inline-flex items-center gap-1 font-bold text-sky-600 hover:text-sky-700 transition-colors"
                   >
-                    Read More →
+                    <span>Read Article</span>
+                    <ArrowRight size={13} />
                   </button>
                 </div>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {/* No Posts Message */}
-        {filteredPosts.length === 0 && (
-          <div className="text-center py-12">
-            <p className="text-gray-600 text-lg">No posts found in this category.</p>
+              </article>
+            ))}
           </div>
         )}
+      </section>
 
-        {/* Featured Section */}
-        <div className="bg-gradient-to-r from-blue-50 to-blue-100 rounded-lg p-12 border border-blue-200 mb-16">
-          <h2 className="text-3xl font-bold text-gray-800 mb-4">Stay Updated</h2>
-          <p className="text-gray-700 mb-6">
-            Subscribe to our newsletter to receive the latest HR insights, tips, and industry trends directly in your inbox.
-          </p>
-          <div className="flex gap-4 max-w-md">
-            <input
-              type="email"
-              placeholder="Enter your email"
-              className="flex-1 px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:border-blue-600"
-            />
-            <button className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-6 py-3 rounded-lg transition-colors duration-300">
-              Subscribe
-            </button>
+      {/* ── Community Testimonial Insights ── */}
+      <section className="bg-white border-y border-slate-200/90 py-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center max-w-2xl mx-auto mb-10">
+            <span className="text-xs font-bold uppercase tracking-widest text-sky-600 block mb-1">
+              Community Voices
+            </span>
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+              What People Are Saying
+            </h2>
           </div>
-        </div>
 
-        {/* Recent Comments Section */}
-        <div className="bg-white rounded-lg shadow-md p-8 mb-16">
-          <h2 className="text-3xl font-bold text-gray-800 mb-8">Reader Insights</h2>
-          <div className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {[
               {
+                quote:
+                  "The HR technology insights helped our leadership team migrate away from spreadsheets into a streamlined cloud workflow.",
                 author: "John Smith",
-                comment: "Great insights on HR technology! We've implemented several of these recommendations and already seeing results.",
-                post: "The Future of HR Technology"
+                role: "Director of HR",
               },
               {
+                quote:
+                  "Practical, no-fluff tips on remote timekeeping and GPS attendance verification. A great resource for operations leads.",
                 author: "Maria Garcia",
-                comment: "The remote team management tips were exactly what we needed. Very practical and actionable.",
-                post: "5 Tips for Effective Remote Team Management"
+                role: "People Operations",
               },
               {
+                quote:
+                  "Clear analysis of automated allowances and payroll compliance. Saved us dozens of hours on our monthly audit prep.",
                 author: "Alex Chen",
-                comment: "This article on employee engagement has completely changed how we approach team management.",
-                post: "Understanding Employee Engagement"
-              }
-            ].map((item, index) => (
-              <div key={index} className="border-l-4 border-blue-600 pl-6">
-                <p className="text-gray-700 italic mb-2">"{item.comment}"</p>
-                <p className="text-sm text-gray-600">
-                  <strong>{item.author}</strong> on "<span className="text-blue-600">{item.post}</span>"
+                role: "Operations VP",
+              },
+            ].map((c) => (
+              <div
+                key={c.author}
+                className="p-6 rounded-2xl bg-slate-50/80 border border-slate-200/80 flex flex-col justify-between"
+              >
+                <p className="text-xs text-slate-700 leading-relaxed italic mb-4">
+                  "{c.quote}"
                 </p>
+                <div>
+                  <p className="text-xs font-bold text-slate-900">{c.author}</p>
+                  <p className="text-[11px] text-slate-500">{c.role}</p>
+                </div>
               </div>
             ))}
           </div>
         </div>
+      </section>
 
-        {/* CTA Section */}
-        <div className="bg-gradient-to-r from-blue-600 to-blue-800 text-white rounded-lg p-12 text-center">
-          <h2 className="text-3xl font-bold mb-4">Have Questions or Need Help?</h2>
-          <p className="text-lg text-blue-100 mb-8">
-            Explore our comprehensive HR solution or contact our support team for personalized guidance.
-          </p>
-          <div className="flex gap-4 justify-center">
-            <button 
-              onClick={() => navigate("/services")}
-              className="bg-white text-blue-600 hover:bg-blue-50 font-bold px-8 py-3 rounded-lg shadow-lg transition-colors duration-300"
-            >
-              Explore Services
-            </button>
-            <button 
-              onClick={() => navigate("/")}
-              className="bg-blue-500 hover:bg-blue-400 text-white font-bold px-8 py-3 rounded-lg shadow-lg transition-colors duration-300"
-            >
-              Back to Home
-            </button>
+      {/* ── Public Footer ── */}
+      <PublicFooter />
+
+      {/* Article Detail Reading Modal */}
+      {readingPost && (
+        <div
+          className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+          onClick={() => setReadingPost(null)}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            className="bg-white rounded-2xl border border-slate-200/90 shadow-2xl w-full max-w-2xl p-6 sm:p-8 max-h-[90vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between pb-4 mb-4 border-b border-slate-100">
+              <span className="text-xs font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-sky-50 text-sky-700">
+                {readingPost.category}
+              </span>
+              <button
+                type="button"
+                onClick={() => setReadingPost(null)}
+                className="text-slate-400 hover:text-slate-700 text-xs font-semibold px-2.5 py-1 rounded-lg hover:bg-slate-100"
+              >
+                Close ✕
+              </button>
+            </div>
+            <h2 className="text-xl sm:text-2xl font-extrabold text-slate-900 mb-2">
+              {readingPost.title}
+            </h2>
+            <div className="flex items-center gap-4 text-xs text-slate-500 mb-6">
+              <span>By {readingPost.author}</span>
+              <span>·</span>
+              <span>{readingPost.date}</span>
+              <span>·</span>
+              <span>{readingPost.readTime}</span>
+            </div>
+            <div className="text-sm text-slate-700 leading-relaxed space-y-4">
+              <p>{readingPost.content}</p>
+              <p className="text-xs text-slate-500 italic pt-4 border-t border-slate-100">
+                Published by HRM System Editorial. All rights reserved.
+              </p>
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
-      {/* Footer */}
-      <footer className="bg-gray-800 text-gray-300 py-8 mt-16">
-        <div className="max-w-4xl mx-auto px-6 text-center">
-          <p>&copy; 2026 HumanResources. All rights reserved.</p>
-        </div>
-      </footer>
-    </section>
+      {isRequestModalOpen && (
+        <CompanyRequestModal onClose={() => setIsRequestModalOpen(false)} />
+      )}
+    </div>
   );
 };
 

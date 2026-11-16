@@ -1,5 +1,19 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import {
+  Phone,
+  Mail,
+  MapPin,
+  Clock,
+  Send,
+  CheckCircle2,
+  HelpCircle,
+  ExternalLink,
+  ChevronDown,
+} from "lucide-react";
+import PublicNavbar from "../components/PublicNavbar";
+import PublicFooter from "../components/PublicFooter";
+import CompanyRequestModal from "../components/CompanyRequestModal";
 
 const Contact = () => {
   const navigate = useNavigate();
@@ -8,401 +22,335 @@ const Contact = () => {
     email: "",
     phone: "",
     subject: "",
-    message: ""
+    message: "",
   });
   const [submitted, setSubmitted] = useState(false);
+  const [isRequestModalOpen, setIsRequestModalOpen] = useState(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    // Simulate form submission
     setSubmitted(true);
     setTimeout(() => {
       setFormData({ name: "", email: "", phone: "", subject: "", message: "" });
       setSubmitted(false);
-    }, 3000);
+    }, 3500);
   };
 
+  const contactCards = [
+    {
+      icon: Phone,
+      title: "Call Our Support",
+      content: "0552223456",
+      href: "tel:0552223456",
+      description: "Monday to Friday, 9:00 AM – 6:00 PM",
+    },
+    {
+      icon: Mail,
+      title: "Email Support",
+      content: "info@ruhunahr.com",
+      href: "mailto:info@ruhunahr.com",
+      description: "We typically reply within 24 business hours",
+    },
+    {
+      icon: MapPin,
+      title: "Head Office",
+      content: "Galle, Sri Lanka",
+      href: "https://maps.app.goo.gl/MSdw16Bxp8TSUfG76",
+      description: "25/A Unawatuna, Mihiripenna, Galle",
+    },
+  ];
+
+  const faqs = [
+    {
+      question: "What is your standard inquiry response time?",
+      answer: "We typically respond to inquiries within 24 hours. For urgent workplace escalations, our hotline is open during office hours.",
+    },
+    {
+      question: "Do you offer tailored demos for HR departments?",
+      answer: "Yes. You can request a personalized walkthrough for your organization by clicking 'Request Access' or contacting us directly.",
+    },
+    {
+      question: "How is employee attendance and location secured?",
+      answer: "Employee clock-ins capture encrypted GPS coordinates only at the moment of clock-in and clock-out to guarantee privacy and accuracy.",
+    },
+    {
+      question: "Can our company configure custom allowance rules and deduction types?",
+      answer: "Yes. HR managers can configure role-wide allowances, job-grade salary assignments, and individual employee claims with proof attachments.",
+    },
+  ];
+
   return (
-    <section className="bg-gray-50 min-h-screen">
-      {/* Navbar */}
-      <nav className="flex justify-between items-center px-10 py-6 bg-white shadow-md">
-        <h1 className="text-lg font-semibold text-blue-600">HumanResources</h1>
-        <ul className="flex gap-8 text-sm font-medium">
-          <li 
-            onClick={() => navigate("/")} 
-            className="hover:text-blue-400 cursor-pointer text-gray-700"
-          >
-            Home
-          </li>
-          <li 
-            onClick={() => navigate("/about")} 
-            className="hover:text-blue-400 cursor-pointer text-gray-700"
-          >
-            About
-          </li>
-          <li 
-            onClick={() => navigate("/services")} 
-            className="hover:text-blue-400 cursor-pointer text-gray-700"
-          >
-            Services
-          </li>
-          <li 
-            onClick={() => navigate("/blog")} 
-            className="hover:text-blue-400 cursor-pointer text-gray-700"
-          >
-            Blog
-          </li>
-          <li className="text-blue-600 font-semibold">Contact</li>
-        </ul>
-      </nav>
+    <div className="min-h-screen flex flex-col bg-slate-50 font-sans text-slate-900">
+      {/* ── Public Navbar ── */}
+      <PublicNavbar onRequestApplication={() => setIsRequestModalOpen(true)} />
 
-      {/* Contact Header */}
-      <div className="bg-gradient-to-r from-blue-600 to-blue-800 text-white py-16 px-6">
-        <div className="max-w-4xl mx-auto text-center">
-          <h1 className="text-5xl font-bold mb-4">Get In Touch</h1>
-          <p className="text-lg text-blue-100">
-            We're here to help! Reach out to us with any questions or inquiries.
-          </p>
+      {/* ── Header Banner ── */}
+      <section className="bg-[#0b1126] text-white py-16 sm:py-20 relative overflow-hidden">
+        <div
+          className="absolute inset-0 pointer-events-none opacity-20"
+          style={{
+            backgroundImage:
+              "radial-gradient(circle at 80% 20%, rgba(56, 189, 248, 0.4) 0%, transparent 60%)",
+          }}
+        />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center">
+          <div className="max-w-3xl mx-auto">
+            <span className="text-xs font-bold uppercase tracking-widest text-sky-400 block mb-2">
+              Get in Touch
+            </span>
+            <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-white leading-tight">
+              We're Here to Help Your Team Succeed
+            </h1>
+            <p className="mt-4 text-base sm:text-lg text-slate-300 leading-relaxed">
+              Reach out to our customer success and onboarding specialists for any questions, partnership inquiries, or platform assistance.
+            </p>
+          </div>
         </div>
-      </div>
+      </section>
 
-      {/* Main Content */}
-      <div className="max-w-6xl mx-auto px-6 py-16">
-        <div className="grid md:grid-cols-3 gap-8 mb-16">
-          {/* Contact Information Cards */}
-          {[
-            {
-              icon: "📞",
-              title: "Call Us",
-              content: "0552223456",
-              description: "Monday to Friday, 9AM - 6PM"
-            },
-            {
-              icon: "✉️",
-              title: "Email Us",
-              content: "info@ruhunahr.com",
-              description: "We'll respond within 24 hours"
-            },
-            {
-              icon: "📍",
-              title: "Visit Us",
-              content: "GALLE, SRI LANKA",
-              description: "By appointment"
-            }
-          ].map((info, index) => (
-            <div 
-              key={index}
-              className="bg-white rounded-lg shadow-md p-8 text-center hover:shadow-lg transition-shadow duration-300"
-            >
-              <div className="text-5xl mb-4">{info.icon}</div>
-              <h3 className="text-xl font-semibold text-gray-800 mb-2">
-                {info.title}
-              </h3>
-              <p className="text-lg font-bold text-blue-600 mb-2">
-                {info.content}
-              </p>
-              <p className="text-gray-600 text-sm">
-                {info.description}
-              </p>
-            </div>
-          ))}
+      {/* ── Contact Info Cards ── */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-8 relative z-20">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {contactCards.map((info) => {
+            const Icon = info.icon;
+            return (
+              <div
+                key={info.title}
+                className="bg-white rounded-2xl border border-slate-200/90 shadow-md p-6 text-center hover:shadow-lg transition-shadow"
+              >
+                <div className="h-12 w-12 rounded-xl bg-sky-50 border border-sky-100 text-sky-600 flex items-center justify-center mx-auto mb-4">
+                  <Icon size={22} />
+                </div>
+                <h3 className="text-base font-bold text-slate-900 mb-1">{info.title}</h3>
+                <a
+                  href={info.href}
+                  target={info.icon === MapPin ? "_blank" : undefined}
+                  rel="noopener noreferrer"
+                  className="text-sm font-bold text-sky-600 hover:text-sky-700 hover:underline block mb-1.5"
+                >
+                  {info.content}
+                </a>
+                <p className="text-xs text-slate-500">{info.description}</p>
+              </div>
+            );
+          })}
         </div>
+      </section>
 
-        <div className="grid md:grid-cols-2 gap-12 mb-16">
-          {/* Contact Form */}
-          <div>
-            <h2 className="text-3xl font-bold text-gray-800 mb-8">Send us a Message</h2>
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div>
-                <label className="block text-gray-700 font-semibold mb-2">
-                  Full Name
-                </label>
-                <input
-                  type="text"
-                  name="name"
-                  value={formData.name}
-                  onChange={handleChange}
-                  required
-                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-600 transition-colors duration-300"
-                  placeholder="Your Name"
-                />
+      {/* ── Contact Form & Office Hours ── */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-20">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12">
+          {/* Form container */}
+          <div className="lg:col-span-7 bg-white rounded-2xl border border-slate-200/90 shadow-sm p-6 sm:p-10">
+            <h2 className="text-2xl font-bold text-slate-900 mb-2">Send Us a Message</h2>
+            <p className="text-xs text-slate-500 mb-6">
+              Fill in the form below and our team will get back to you shortly.
+            </p>
+
+            {submitted && (
+              <div className="mb-6 p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold flex items-center gap-2">
+                <CheckCircle2 size={16} className="text-emerald-600 shrink-0" />
+                <span>Thank you! Your message has been sent successfully. We'll be in touch soon.</span>
+              </div>
+            )}
+
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700 mb-1.5">
+                    Full Name <span className="text-rose-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    name="name"
+                    value={formData.name}
+                    onChange={handleChange}
+                    required
+                    placeholder="Your name"
+                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:bg-white focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20 transition-all"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700 mb-1.5">
+                    Email Address <span className="text-rose-500">*</span>
+                  </label>
+                  <input
+                    type="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    required
+                    placeholder="name@company.com"
+                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:bg-white focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20 transition-all"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700 mb-1.5">
+                    Phone Number
+                  </label>
+                  <input
+                    type="tel"
+                    name="phone"
+                    value={formData.phone}
+                    onChange={handleChange}
+                    placeholder="+94 77 123 4567"
+                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:bg-white focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20 transition-all"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700 mb-1.5">
+                    Subject <span className="text-rose-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    name="subject"
+                    value={formData.subject}
+                    onChange={handleChange}
+                    required
+                    placeholder="Inquiry topic"
+                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:bg-white focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20 transition-all"
+                  />
+                </div>
               </div>
 
               <div>
-                <label className="block text-gray-700 font-semibold mb-2">
-                  Email Address
-                </label>
-                <input
-                  type="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  required
-                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-600 transition-colors duration-300"
-                  placeholder="your@email.com"
-                />
-              </div>
-
-              <div>
-                <label className="block text-gray-700 font-semibold mb-2">
-                  Phone Number
-                </label>
-                <input
-                  type="tel"
-                  name="phone"
-                  value={formData.phone}
-                  onChange={handleChange}
-                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-600 transition-colors duration-300"
-                  placeholder="Your Phone"
-                />
-              </div>
-
-              <div>
-                <label className="block text-gray-700 font-semibold mb-2">
-                  Subject
-                </label>
-                <input
-                  type="text"
-                  name="subject"
-                  value={formData.subject}
-                  onChange={handleChange}
-                  required
-                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-600 transition-colors duration-300"
-                  placeholder="What is this about?"
-                />
-              </div>
-
-              <div>
-                <label className="block text-gray-700 font-semibold mb-2">
-                  Message
+                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700 mb-1.5">
+                  Message <span className="text-rose-500">*</span>
                 </label>
                 <textarea
                   name="message"
                   value={formData.message}
                   onChange={handleChange}
                   required
-                  rows="5"
-                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-600 transition-colors duration-300 resize-none"
-                  placeholder="Your message here..."
-                ></textarea>
+                  rows="4"
+                  placeholder="How can our HRM team help you?..."
+                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:bg-white focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20 transition-all resize-none"
+                />
               </div>
 
               <button
                 type="submit"
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg transition-colors duration-300 shadow-md hover:shadow-lg"
+                className="w-full py-3 px-6 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-semibold text-sm shadow-sm transition-all duration-200 flex items-center justify-center gap-2 active:scale-[0.99]"
               >
-                Send Message
+                <Send size={15} />
+                <span>Send Message</span>
               </button>
-
-              {submitted && (
-                <div className="bg-green-100 border-l-4 border-green-600 text-green-700 p-4 rounded">
-                  ✓ Message sent successfully! We'll get back to you soon.
-                </div>
-              )}
             </form>
           </div>
 
-          {/* Contact Details & Office Hours */}
-          <div>
-            {/* Office Hours */}
-            <div className="bg-white rounded-lg shadow-md p-8 mb-8">
-              <h3 className="text-2xl font-bold text-gray-800 mb-6">Office Hours</h3>
-              <div className="space-y-4">
+          {/* Office hours & Response times */}
+          <div className="lg:col-span-5 space-y-6">
+            <div className="bg-white rounded-2xl border border-slate-200/90 shadow-sm p-6 sm:p-8">
+              <h3 className="text-base font-bold text-slate-900 flex items-center gap-2 mb-4">
+                <Clock size={18} className="text-sky-600" />
+                Office Working Hours
+              </h3>
+              <div className="space-y-3 text-xs">
                 {[
-                  { day: "Monday - Friday", hours: "9:00 AM - 6:00 PM" },
-                  { day: "Saturday", hours: "10:00 AM - 4:00 PM" },
-                  { day: "Sunday", hours: "Closed" }
-                ].map((schedule, index) => (
-                  <div key={index} className="flex justify-between pb-4 border-b border-gray-200 last:border-b-0">
-                    <span className="font-semibold text-gray-700">{schedule.day}</span>
-                    <span className="text-gray-600">{schedule.hours}</span>
+                  { day: "Monday – Friday", hours: "9:00 AM – 6:00 PM" },
+                  { day: "Saturday", hours: "10:00 AM – 4:00 PM" },
+                  { day: "Sunday & Public Holidays", hours: "Closed (Emergency Support Only)" },
+                ].map((s) => (
+                  <div key={s.day} className="flex justify-between py-2 border-b border-slate-100 last:border-b-0">
+                    <span className="font-semibold text-slate-700">{s.day}</span>
+                    <span className="text-slate-500">{s.hours}</span>
                   </div>
                 ))}
               </div>
             </div>
 
-            {/* Response Time */}
-            <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg shadow-md p-8 border-l-4 border-blue-600">
-              <h3 className="text-xl font-bold text-gray-800 mb-4">Response Time</h3>
-              <p className="text-gray-700 mb-4">
-                We value your time and aim to respond to all inquiries promptly:
+            <div className="bg-sky-50/70 border border-sky-100 rounded-2xl p-6 sm:p-8">
+              <h3 className="text-base font-bold text-sky-950 mb-3">Prompt Response Guarantee</h3>
+              <p className="text-xs text-sky-800 leading-relaxed mb-4">
+                We value your time and prioritize all communications:
               </p>
-              <ul className="space-y-3">
-                <li className="flex items-start">
-                  <span className="text-blue-600 font-bold mr-3">✓</span>
-                  <span className="text-gray-700"><strong>Email:</strong> Within 24 hours</span>
+              <ul className="space-y-2 text-xs text-sky-900 font-medium">
+                <li className="flex items-center gap-2">
+                  <CheckCircle2 size={14} className="text-sky-600 shrink-0" />
+                  <span>Email inquiries answered within 24 business hours.</span>
                 </li>
-                <li className="flex items-start">
-                  <span className="text-blue-600 font-bold mr-3">✓</span>
-                  <span className="text-gray-700"><strong>Phone:</strong> Immediate assistance</span>
-                </li>
-                <li className="flex items-start">
-                  <span className="text-blue-600 font-bold mr-3">✓</span>
-                  <span className="text-gray-700"><strong>Live Chat:</strong> Available during office hours</span>
+                <li className="flex items-center gap-2">
+                  <CheckCircle2 size={14} className="text-sky-600 shrink-0" />
+                  <span>Telephone assistance during active office hours.</span>
                 </li>
               </ul>
             </div>
           </div>
         </div>
+      </section>
 
-        {/* Office Location Section */}
-        <div className="mb-16">
-          <h2 className="text-3xl font-bold text-gray-800 mb-8 text-center">Our Location</h2>
-          <div className="grid md:grid-cols-2 gap-8">
-            {/* Map */}
-            <div className="rounded-lg shadow-md h-96 overflow-hidden">
-              <iframe
-                width="100%"
-                height="100%"
-                frameBorder="0"
-                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3961.3286088452306!2d80.76497!3d6.14674!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3ae38c1d5d5d5d5d%3A0x1234567890!2s25%2FA%20unawatuna%2C%20mihiripenna%2C%20Galle!5e0!3m2!1sen!2slk!4v1642768800000&zoom=15"
-                allowFullScreen=""
-                loading="lazy"
-                referrerPolicy="no-referrer-when-downgrade"
-                title="Our Office Location"
-              ></iframe>
+      {/* ── Location Map Section ── */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-16">
+        <div className="bg-white rounded-2xl border border-slate-200/90 shadow-sm p-6 sm:p-8">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
+            <div>
+              <h3 className="text-lg font-bold text-slate-900">Headquarters Location</h3>
+              <p className="text-xs text-slate-500 mt-0.5">25/A Unawatuna, Mihiripenna, Galle, Sri Lanka</p>
             </div>
-
-            {/* Location Details */}
-            <div className="bg-white rounded-lg shadow-md p-8">
-              <h3 className="text-2xl font-bold text-gray-800 mb-6">Visit Our Office</h3>
-              <div className="space-y-6">
-                <div>
-                  <h4 className="text-lg font-semibold text-blue-600 mb-2">📍 Headquarters</h4>
-                  <p className="text-gray-700">
-                    25/A unawatuna,<br/>
-                    mihiripenna,<br/>
-                    Galle,<br/> 
-                  </p>
-                </div>
-
-                <div>
-                  <h4 className="text-lg font-semibold text-blue-600 mb-2">🕐 Hours</h4>
-                  <p className="text-gray-700">
-                    Monday - Friday: 9 AM - 6 PM<br/>
-                    Saturday: 10 AM - 4 PM<br/>
-                    Sunday: Closed
-                  </p>
-                </div>
-
-                <div>
-                  <h4 className="text-lg font-semibold text-blue-600 mb-2">📞 Hotline</h4>
-                  <p className="text-gray-700">
-                    <a href="tel:0552223456" className="text-blue-600 hover:underline font-bold">
-                      0552223456
-                    </a>
-                  </p>
-                </div>
-
-                <div>
-                  <h4 className="text-lg font-semibold text-blue-600 mb-2">✉️ Email</h4>
-                  <p className="text-gray-700">
-                    <a href="mailto:info@ruhunahr.com" className="text-blue-600 hover:underline font-bold">
-                      info@ruhunahr.com
-                    </a>
-                  </p>
-                </div>
-
-                <div className="pt-4 border-t border-gray-200">
-                  <a 
-                    href="https://maps.app.goo.gl/MSdw16Bxp8TSUfG76" 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="inline-block bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg transition-colors duration-300 shadow-md hover:shadow-lg"
-                  >
-                    📍 View on Google Maps
-                  </a>
-                </div>
-              </div>
-            </div>
+            <a
+              href="https://maps.app.goo.gl/MSdw16Bxp8TSUfG76"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-xs font-semibold text-slate-700 transition-colors"
+            >
+              <ExternalLink size={14} /> Open in Google Maps
+            </a>
+          </div>
+          <div className="rounded-xl overflow-hidden border border-slate-200 h-80 sm:h-96">
+            <iframe
+              width="100%"
+              height="100%"
+              frameBorder="0"
+              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3961.3286088452306!2d80.76497!3d6.14674!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3ae38c1d5d5d5d5d%3A0x1234567890!2s25%2FA%20unawatuna%2C%20mihiripenna%2C%20Galle!5e0!3m2!1sen!2slk!4v1642768800000&zoom=15"
+              allowFullScreen=""
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
+              title="HRM Office Location"
+            />
           </div>
         </div>
+      </section>
 
-        {/* FAQ Section */}
-        <div className="mb-16">
-          <h2 className="text-3xl font-bold text-gray-800 mb-8 text-center">Frequently Asked Questions</h2>
+      {/* ── FAQ Section ── */}
+      <section className="bg-white border-t border-slate-200/90 py-16">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6">
+          <div className="text-center mb-10">
+            <h2 className="text-2xl font-bold text-slate-900">Frequently Asked Questions</h2>
+            <p className="text-xs text-slate-500 mt-1">Quick answers to common questions about our platform</p>
+          </div>
+
           <div className="space-y-4">
-            {[
-              {
-                question: "What is your response time for inquiries?",
-                answer: "We typically respond to all inquiries within 24 hours. For urgent matters, please call our hotline during business hours."
-              },
-              {
-                question: "Do you offer free consultations?",
-                answer: "Yes! We offer free initial consultations to discuss your HR needs and how our solutions can help your organization."
-              },
-              {
-                question: "What are your payment methods?",
-                answer: "We accept all major credit cards, bank transfers, and wire transfers. Flexible payment plans are also available for enterprise clients."
-              },
-              {
-                question: "Can we schedule a demo of your system?",
-                answer: "Absolutely! You can request a demo by contacting us via phone or email. We'll arrange a time that works best for you."
-              },
-              {
-                question: "Do you provide training for new users?",
-                answer: "Yes, we offer comprehensive training programs for all our clients. Training can be conducted online or on-site depending on your preference."
-              },
-              {
-                question: "What support options are available?",
-                answer: "We provide 24/7 technical support via email, phone, and live chat. We also have detailed documentation and video tutorials available."
-              }
-            ].map((faq, index) => (
-              <div key={index} className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow duration-300">
-                <h3 className="text-lg font-semibold text-gray-800 mb-3">
-                  Q: {faq.question}
-                </h3>
-                <p className="text-gray-700 ml-4 pl-4 border-l-4 border-blue-600">
-                  A: {faq.answer}
-                </p>
+            {faqs.map((f) => (
+              <div key={f.question} className="p-5 rounded-xl bg-slate-50 border border-slate-200/80">
+                <h4 className="text-sm font-bold text-slate-900 mb-1.5 flex items-center gap-2">
+                  <HelpCircle size={15} className="text-sky-600 shrink-0" />
+                  {f.question}
+                </h4>
+                <p className="text-xs text-slate-600 leading-relaxed pl-6">{f.answer}</p>
               </div>
             ))}
           </div>
         </div>
+      </section>
 
-        {/* CTA Section */}
-        <div className="bg-gradient-to-r from-blue-600 to-blue-800 text-white rounded-lg p-12 text-center">
-          <h2 className="text-3xl font-bold mb-4">Ready to Transform Your HR?</h2>
-          <p className="text-lg text-blue-100 mb-8">
-            Contact us today to learn how HumanResources can streamline your operations.
-          </p>
-          <div className="flex gap-4 justify-center">
-            <button 
-              onClick={() => navigate("/services")}
-              className="bg-white text-blue-600 hover:bg-blue-50 font-bold px-8 py-3 rounded-lg shadow-lg transition-colors duration-300"
-            >
-              Explore Services
-            </button>
-            <button 
-              onClick={() => navigate("/")}
-              className="bg-blue-500 hover:bg-blue-400 text-white font-bold px-8 py-3 rounded-lg shadow-lg transition-colors duration-300"
-            >
-              Back to Home
-            </button>
-          </div>
-        </div>
-      </div>
+      {/* ── Public Footer ── */}
+      <PublicFooter />
 
-      {/* Footer */}
-      <footer className="bg-gray-800 text-gray-300 py-8 mt-16">
-        <div className="max-w-4xl mx-auto px-6 text-center">
-          <p>&copy; 2026 HumanResources. All rights reserved.</p>
-          <div className="mt-4 flex gap-4 justify-center text-sm">
-            <a href="tel:0552223456" className="hover:text-blue-400">Call: 0552223456</a>
-            <span className="text-gray-600">|</span>
-            <a href="mailto:info@ruhunahr.com" className="hover:text-blue-400">Email: info@ruhunahr.com</a>
-          </div>
-        </div>
-      </footer>
-    </section>
+      {isRequestModalOpen && (
+        <CompanyRequestModal onClose={() => setIsRequestModalOpen(false)} />
+      )}
+    </div>
   );
 };
 

@@ -105,8 +105,8 @@ const EmployeeDashboard = () => {
   }, [user]);
 
   if (!user) return (
-    <div className="flex items-center justify-center h-screen">
-      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-employee-500" />
+    <div className="flex items-center justify-center h-screen bg-slate-50">
+      <div className="animate-spin rounded-full h-10 w-10 border-2 border-teal-600 border-t-transparent" />
     </div>
   );
 
@@ -119,11 +119,11 @@ const EmployeeDashboard = () => {
     >
       <div className="space-y-6">
 
-        {/* ── Stats Cards ── */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {/* ── Stats Cards (StatCard pattern matching Recruitment) ── */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
           {[
-            { tone: CARD_TONES.blue,   icon: <ClockIcon size={20} />,    label: "Present Days",   value: stats.presentDays,         sub: "This month"        },
-            { tone: CARD_TONES.green,  icon: <Calendar size={20} />,     label: "Leave Balance",  value: stats.leaveBalance,        sub: "Days available"    },
+            { tone: CARD_TONES.green,  icon: <ClockIcon size={20} />,    label: "Present Days",   value: stats.presentDays,         sub: "This month"        },
+            { tone: CARD_TONES.blue,   icon: <Calendar size={20} />,     label: "Leave Balance",  value: stats.leaveBalance,        sub: "Days available"    },
             { tone: CARD_TONES.yellow, icon: <CalendarDays size={20} />, label: "Pending Leaves", value: stats.pendingLeaves,       sub: "Awaiting approval" },
             { tone: CARD_TONES.purple, icon: <DollarSign size={20} />,   label: "Last Salary",    value: stats.lastSalary != null ? `Rs. ${stats.lastSalary}` : "—", sub: stats.lastSalaryPeriod },
           ].map(c => (
@@ -131,14 +131,14 @@ const EmployeeDashboard = () => {
           ))}
         </div>
 
-        {/* ── My Month + Upcoming Leave (real data) ── */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="bg-gradient-to-br from-white to-employee-50 p-6 rounded-xl border border-employee-100 shadow-sm">
-            <h3 className="text-lg font-semibold mb-6 flex items-center text-slate-800">
-              <div className="bg-orange-50 p-2 rounded-lg mr-3">
-                <Target className="text-orange-600" size={20} />
-              </div>
-              My Month
+        {/* ── My Month + Upcoming Leave ── */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+          <div className="bg-white rounded-xl border border-slate-200/90 shadow-sm p-6">
+            <h3 className="text-base font-bold text-slate-900 mb-6 flex items-center gap-3">
+              <span className="h-9 w-9 rounded-xl bg-teal-50 text-teal-600 border border-teal-100 flex items-center justify-center">
+                <Target size={18} />
+              </span>
+              My Month Performance
             </h3>
             <div className="space-y-4">
               {[
@@ -147,53 +147,55 @@ const EmployeeDashboard = () => {
                 { label: "Leave Used", pct: monthStats.leaveUsedPct, note: `${monthStats.leaveUsed} of ${monthStats.leaveTotal} days this year` },
               ].map(m => (
                 <div key={m.label}>
-                  <div className="flex justify-between mb-2">
-                    <span className="text-sm text-slate-600">{m.label} <span className="text-xs text-slate-400">· {m.note}</span></span>
-                    <span className="text-sm font-semibold text-slate-800">{m.pct != null ? `${m.pct}%` : "—"}</span>
+                  <div className="flex justify-between items-center mb-1.5">
+                    <span className="text-sm font-medium text-slate-700">{m.label} <span className="text-xs font-normal text-slate-400">· {m.note}</span></span>
+                    <span className="text-sm font-bold text-slate-900">{m.pct != null ? `${m.pct}%` : "—"}</span>
                   </div>
-                  <div className="w-full bg-slate-100 rounded-full h-2">
-                    <div className="bg-employee-500 h-2 rounded-full" style={{ width: `${m.pct || 0}%` }} />
+                  <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+                    <div className="bg-teal-600 h-2 rounded-full transition-all duration-500" style={{ width: `${m.pct || 0}%` }} />
                   </div>
                 </div>
               ))}
             </div>
           </div>
 
-          <div className="bg-gradient-to-br from-white to-employee-50 p-6 rounded-xl border border-employee-100 shadow-sm">
-            <h3 className="text-lg font-semibold mb-6 flex items-center text-slate-800">
-              <div className="bg-violet-50 p-2 rounded-lg mr-3">
-                <Calendar className="text-violet-600" size={20} />
-              </div>
+          <div className="bg-white rounded-xl border border-slate-200/90 shadow-sm p-6">
+            <h3 className="text-base font-bold text-slate-900 mb-6 flex items-center gap-3">
+              <span className="h-9 w-9 rounded-xl bg-teal-50 text-teal-600 border border-teal-100 flex items-center justify-center">
+                <Calendar size={18} />
+              </span>
               Upcoming Leave
             </h3>
             <div className="space-y-3">
               {upcomingLeaves.map(l => (
-                <div key={l.id} className="flex items-start gap-3 p-3 border border-employee-100 bg-white/70 hover:bg-white rounded-lg transition">
-                  <div className="bg-sky-50 text-blue-600 p-2 rounded-lg"><CalendarDays size={18} /></div>
-                  <div className="flex-1">
-                    <p className="font-medium text-slate-800">{l.leaveTypeName || "Leave"}</p>
-                    <p className="text-sm text-slate-500">
+                <div key={l.id} className="flex items-start gap-3.5 p-3.5 border border-slate-100 bg-slate-50/60 hover:bg-slate-50 rounded-xl transition-colors">
+                  <div className="h-9 w-9 rounded-lg bg-teal-50 text-teal-600 border border-teal-100 flex items-center justify-center shrink-0">
+                    <CalendarDays size={16} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-sm text-slate-900 truncate">{l.leaveTypeName || "Leave"}</p>
+                    <p className="text-xs text-slate-500 mt-0.5">
                       {l.startDate}{l.endDate && l.endDate !== l.startDate ? ` → ${l.endDate}` : ""} · {l.numberOfDays} day{l.numberOfDays === 1 ? "" : "s"}
                     </p>
                   </div>
-                  <span className={`text-xs font-semibold px-2 py-1 rounded-full ${String(l.status).toUpperCase() === "APPROVED" ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"}`}>
+                  <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${String(l.status).toUpperCase() === "APPROVED" ? "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200" : "bg-amber-50 text-amber-700 ring-1 ring-amber-200"}`}>
                     {String(l.status).charAt(0) + String(l.status).slice(1).toLowerCase()}
                   </span>
                 </div>
               ))}
               {upcomingLeaves.length === 0 && (
-                <div className="text-center py-5 text-gray-400 text-sm">No upcoming leave.</div>
+                <div className="text-center py-8 text-slate-400 text-sm">No upcoming leave scheduled.</div>
               )}
             </div>
           </div>
         </div>
 
         {/* ── Recent Notifications ── */}
-        <div className="bg-gradient-to-br from-white to-employee-50 p-6 rounded-xl border border-employee-100 shadow-sm">
-          <h3 className="text-lg font-semibold mb-6 flex items-center text-slate-800">
-            <div className="bg-rose-50 p-2 rounded-lg mr-3">
-              <Bell className="text-rose-500" size={20} />
-            </div>
+        <div className="bg-white rounded-xl border border-slate-200/90 shadow-sm p-6">
+          <h3 className="text-base font-bold text-slate-900 mb-6 flex items-center gap-3">
+            <span className="h-9 w-9 rounded-xl bg-rose-50 text-rose-600 border border-rose-100 flex items-center justify-center">
+              <Bell size={18} />
+            </span>
             Recent Notifications
           </h3>
           <div className="space-y-3">
@@ -201,16 +203,16 @@ const EmployeeDashboard = () => {
               <div
                 key={n.id || i}
                 onClick={() => n.link && navigate(n.link)}
-                className={`flex items-start gap-3 p-3 hover:bg-white/70 rounded-lg transition ${n.link ? "cursor-pointer hover:shadow-xs" : ""}`}
+                className={`flex items-start gap-3.5 p-3.5 border border-slate-100 bg-slate-50/60 hover:bg-slate-50 rounded-xl transition-all ${n.link ? "cursor-pointer hover:border-slate-200 hover:shadow-xs" : ""}`}
               >
-                <CheckCircle2 className={`${(n.isRead ?? n.seen ?? n.read) ? "text-gray-300" : "text-rose-500"} mt-1 flex-shrink-0`} size={20} />
+                <CheckCircle2 className={`${(n.isRead ?? n.seen ?? n.read) ? "text-slate-300" : "text-teal-600"} mt-0.5 shrink-0`} size={18} />
                 <div className="flex-1 min-w-0">
-                  <p className="font-medium text-slate-800">{n.title}</p>
-                  <p className="text-sm text-gray-500">{n.message}</p>
-                  <div className="flex items-center gap-2 mt-1">
-                    <p className="text-xs text-gray-400">{n.createdAt ? n.createdAt.replace("T", " ").substring(0, 16) : ""}</p>
+                  <p className="font-semibold text-sm text-slate-900">{n.title}</p>
+                  <p className="text-xs text-slate-500 mt-0.5 leading-relaxed">{n.message}</p>
+                  <div className="flex items-center gap-2 mt-1.5">
+                    <p className="text-[11px] text-slate-400">{n.createdAt ? n.createdAt.replace("T", " ").substring(0, 16) : ""}</p>
                     {n.link && (
-                      <span className="text-xs font-semibold text-sky-600 hover:underline">
+                      <span className="text-xs font-semibold text-teal-600 hover:underline">
                         Open →
                       </span>
                     )}
@@ -219,7 +221,7 @@ const EmployeeDashboard = () => {
               </div>
             ))}
             {notifications.length === 0 && (
-              <div className="text-center py-5 text-gray-400 text-sm">
+              <div className="text-center py-8 text-slate-400 text-sm">
                 No recent notifications.
               </div>
             )}

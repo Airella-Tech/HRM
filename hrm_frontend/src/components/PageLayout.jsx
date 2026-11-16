@@ -195,16 +195,23 @@ const NAV = {
 // ─── Role accent colours ──────────────────────────────────────────────────────
 const ACCENT = {
   employee: {
-    from: "rgba(14,165,233,0.7)",
-    to: "rgba(6,182,212,0.5)",
-    shadow: "rgba(14,165,233,0.3)",
-    avatarFrom: "from-sky-400",
-    avatarTo: "to-blue-500",
+    from: "rgba(13,148,136,0.9)",
+    to: "rgba(15,118,110,0.8)",
+    shadow: "rgba(13,148,136,0.25)",
+    avatarFrom: "from-teal-500",
+    avatarTo: "to-teal-700",
     label: "Employee",
     surface: "bg-slate-50",
+    sidebarBg: "linear-gradient(180deg, #102a2a 0%, #163b38 100%)",
+    activeBg: "rgba(13, 148, 136, 0.28)",
+    activeBorder: "border-teal-400",
+    activeIcon: "text-teal-300",
+    menuBg: "bg-[#102a2a]",
+    ringClass: "ring-teal-900",
+    sidebarBottomFade: "linear-gradient(to top, #163b38, transparent)",
     topbar: "border-slate-200",
     title: "text-slate-900",
-    hover: "hover:bg-employee-50",
+    hover: "hover:bg-teal-50",
   },
   hr: {
     from: "rgba(20,184,166,0.75)",
@@ -469,14 +476,14 @@ export const PageLayout = ({
                   }
                   title={collapsed ? item.name : undefined}
                 >
-                  <item.icon size={18} className="flex-shrink-0" />
+                  <item.icon size={18} className={`flex-shrink-0 ${isActive && accent.activeIcon ? accent.activeIcon : ""}`} />
                   {!collapsed && <span>{item.name}</span>}
                 </button>
               </li>
             );
           })}
         </ul>
-        <div className="pointer-events-none h-6 -mt-6 shrink-0" style={{ background: "linear-gradient(to top, #1b2142, transparent)" }} />
+        <div className="pointer-events-none h-6 -mt-6 shrink-0" style={{ background: accent.sidebarBottomFade || "linear-gradient(to top, #1b2142, transparent)" }} />
 
 
         {/* User + logout */}
