@@ -172,16 +172,26 @@ function StatusBadge({ status }) {
 }
 
 function StatCard({ title, value, icon: Icon, color, description }) {
+  const gradient = color === "red"
+    ? "from-primary-600 to-primary-700"
+    : color === "green"
+      ? "from-primary-700 to-primary-800"
+      : color === "amber"
+        ? "from-primary-500 to-primary-600"
+        : color === "slate"
+          ? "from-primary-800 to-primary-900"
+          : "from-primary-600 to-primary-700";
+
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+    <div className={`rounded-2xl bg-gradient-to-br ${gradient} p-5 text-white shadow-md`}>
       <div className="flex items-start justify-between gap-3">
         <div>
-          <p className="text-sm text-slate-500">{title}</p>
-          <h3 className="mt-2 text-2xl font-bold text-slate-900">{value}</h3>
-          <p className="mt-1 text-xs text-slate-500">{description}</p>
+          <p className="text-sm font-medium text-white/85">{title}</p>
+          <h3 className="mt-2 text-3xl font-bold text-white">{value}</h3>
+          <p className="mt-1 text-xs text-white/75">{description}</p>
         </div>
 
-        <div className={`rounded-xl p-3 ${color}`}>
+        <div className="rounded-xl bg-white/20 p-3 text-white">
           <Icon size={21} />
         </div>
       </div>
@@ -797,7 +807,7 @@ export default function JobOffers() {
             title="Total Offers"
             value={stats.total}
             icon={FileText}
-            color="bg-primary-50 text-primary-600"
+            color="primary"
             description="All offer records"
           />
 
@@ -805,7 +815,7 @@ export default function JobOffers() {
             title="Drafts"
             value={stats.drafts}
             icon={Pencil}
-            color="bg-slate-100 text-slate-600"
+            color="slate"
             description="Not yet sent"
           />
 
@@ -813,7 +823,7 @@ export default function JobOffers() {
             title="Awaiting Response"
             value={stats.pending}
             icon={Clock}
-            color="bg-amber-50 text-amber-600"
+            color="amber"
             description="Sent or pending"
           />
 
@@ -821,7 +831,7 @@ export default function JobOffers() {
             title="Accepted"
             value={stats.accepted}
             icon={CheckCircle2}
-            color="bg-emerald-50 text-emerald-600"
+            color="green"
             description="Accepted offers"
           />
 
@@ -829,7 +839,7 @@ export default function JobOffers() {
             title="Rejected"
             value={stats.rejected}
             icon={XCircle}
-            color="bg-rose-50 text-rose-600"
+            color="red"
             description="Declined offers"
           />
         </div>

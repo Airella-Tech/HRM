@@ -36,6 +36,7 @@ import {
   Save,
 } from "lucide-react";
 import { PageLayout } from "../../components/PageLayout";
+import StatCard, { StatCardGrid } from "../../components/StatCard";
 import { recruitmentApi } from "../../services/api";
 
 const ROUNDS = [
@@ -1420,28 +1421,17 @@ export default function RecruitmentInterviews() {
           </div>
         )}
 
-        <div className="mb-7 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <StatCardGrid>
           {statCards.map(([label, value, Icon, style]) => (
-            <div
+            <StatCard
               key={label}
-              className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
-            >
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-slate-500">{label}</p>
-                  <p className="mt-2 text-3xl font-bold text-slate-800">
-                    {value}
-                  </p>
-                </div>
-                <div
-                  className={`flex h-12 w-12 items-center justify-center rounded-xl ${style}`}
-                >
-                  <Icon size={23} />
-                </div>
-              </div>
-            </div>
+              label={label}
+              value={value}
+              icon={Icon}
+              tone={style.includes("amber") ? "amber" : style.includes("green") || style.includes("emerald") ? "green" : style.includes("red") ? "red" : "primary"}
+            />
           ))}
-        </div>
+        </StatCardGrid>
 
         <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
           <div className="flex flex-col justify-between gap-4 border-b border-slate-200 p-5 sm:flex-row sm:items-center sm:p-6">

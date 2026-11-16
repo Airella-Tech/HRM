@@ -36,10 +36,10 @@ import {
 } from "lucide-react";
 
 const AVATAR_GRADIENTS = [
-  "from-primary-500 to-purple-600",
-  "from-emerald-500 to-teal-600",
-  "from-amber-500 to-orange-600",
-  "from-red-500 to-pink-600",
+  "from-primary-600 to-primary-700",
+  "from-green-600 to-green-700",
+  "from-amber-600 to-amber-700",
+  "from-red-600 to-red-700",
   "from-primary-600 to-primary-800",
 ];
 

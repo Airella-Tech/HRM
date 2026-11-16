@@ -967,13 +967,13 @@ export default function AssignInterviewers() {
               label="Total Interviews"
               value={loading ? "—" : interviews.length}
               icon={<CalendarDays size={21} />}
-              color="indigo"
+              color="primary"
             />
             <StatCard
               label="Assigned Interviews"
               value={loading ? "—" : assignedCount}
               icon={<CheckCircle2 size={21} />}
-              color="emerald"
+              color="green"
             />
             <StatCard
               label="Awaiting Assignment"
@@ -1476,21 +1476,21 @@ export default function AssignInterviewers() {
 
 function StatCard({ label, value, icon, color }) {
   const colors = {
-    indigo: "bg-primary-50 text-primary-600",
-    emerald: "bg-emerald-50 text-emerald-600",
-    amber: "bg-amber-50 text-amber-600",
-    slate: "bg-slate-100 text-slate-600",
+    primary: "from-primary-600 to-primary-700",
+    green: "from-primary-700 to-primary-800",
+    amber: "from-primary-500 to-primary-600",
+    slate: "from-primary-800 to-primary-900",
   };
 
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+    <div className={`rounded-2xl bg-gradient-to-br p-5 text-white shadow-md ${colors[color] || colors.primary}`}>
       <div className="flex items-center justify-between gap-3">
-        <div className={`rounded-xl p-3 ${colors[color]}`}>{icon}</div>
-        <span className="text-3xl font-bold tabular-nums text-slate-900">
+        <div className="rounded-xl bg-white/20 p-3 text-white">{icon}</div>
+        <span className="text-3xl font-bold tabular-nums text-white">
           {value}
         </span>
       </div>
-      <p className="mt-4 text-sm font-medium text-slate-500">{label}</p>
+      <p className="mt-4 text-sm font-medium text-white/85">{label}</p>
     </div>
   );
 }
