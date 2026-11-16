@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { PageLayout } from "../../components/PageLayout";
+import StatCard, { StatCardGrid } from "../../components/StatCard";
 import { recruitmentApi } from "../../services/api";
 import { DeadlineMeter } from "../careers/careersShared";
 import { formatSalary, formatDate } from "../../utils/careersFormat";
@@ -51,12 +52,12 @@ import {
 } from "lucide-react";
 
 const AVATAR_GRADIENTS = [
-  "from-primary-500 to-purple-600",
-  "from-sky-400 to-blue-600",
-  "from-emerald-400 to-teal-600",
+  "from-primary-600 to-primary-700",
+  "from-primary-500 to-primary-700",
+  "from-green-600 to-green-700",
   "from-amber-400 to-orange-500",
-  "from-pink-500 to-rose-600",
-  "from-primary-500 to-primary-600",
+  "from-red-600 to-red-700",
+  "from-primary-600 to-primary-700",
 ];
 
 const REJECTION_REASONS = [
@@ -663,20 +664,16 @@ export default function RecruitmentApplicationReview() {
         )}
 
         {/* ── KPI Summary (one joined card) ── */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 bg-white rounded-xl border border-slate-200 shadow-sm divide-slate-200 divide-y lg:divide-y-0 lg:divide-x">
+        <StatCardGrid>
           {[
-            { label: "Confirmed Shortlist", value: totalConfirmed, hint: "Approved for review", tone: "text-emerald-600" },
-            { label: "Ready for Interview", value: readyInterviewCount, hint: "Qualified for scheduling", tone: "text-primary-600" },
-            { label: "Reviewed with Notes", value: reviewedCount, hint: "Assessment documented", tone: "text-primary-600" },
-            { label: "Average Match Score", value: `${avgMatchScore}%`, hint: "Across confirmed candidates", tone: "text-amber-600" },
+            { label: "Confirmed Shortlist", value: totalConfirmed, caption: "Approved for review", tone: "green", icon: CheckCircle2 },
+            { label: "Ready for Interview", value: readyInterviewCount, caption: "Qualified for scheduling", tone: "primary", icon: CalendarClock },
+            { label: "Reviewed with Notes", value: reviewedCount, caption: "Assessment documented", tone: "primary", icon: FileText },
+            { label: "Average Match Score", value: `${avgMatchScore}%`, caption: "Across confirmed candidates", tone: "amber", icon: Star },
           ].map((m) => (
-            <div key={m.label} className="px-5 py-4">
-              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{m.label}</p>
-              <h3 className={`text-2xl font-bold mt-1 ${m.tone}`}>{m.value}</h3>
-              <p className="text-xs text-slate-500 mt-0.5">{m.hint}</p>
-            </div>
+            <StatCard key={m.label} label={m.label} value={m.value} caption={m.caption} tone={m.tone} icon={m.icon} />
           ))}
-        </div>
+        </StatCardGrid>
 
         {/* ── Search, Vacancy Filter & Status Tabs ── */}
         <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs space-y-3">
@@ -1038,7 +1035,7 @@ export default function RecruitmentApplicationReview() {
                                           ✓ Ready for Interview
                                         </span>
                                       ) : cand.readinessStatus === "SECOND_OPINION" ? (
-                                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg text-[10px] font-bold bg-purple-50 text-purple-700 border border-purple-200">
+                                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg text-[10px] font-bold bg-primary-50 text-primary-700 border border-primary-200">
                                           👥 2nd Reviewer Needed
                                         </span>
                                       ) : cand.readinessStatus === "HOLD" ? (
@@ -1245,7 +1242,7 @@ export default function RecruitmentApplicationReview() {
                   {[
                     { id: "READY_FOR_INTERVIEW", label: "✓ Ready for Interview", activeClass: "bg-emerald-50 border-emerald-600 text-emerald-900 ring-2 ring-emerald-500/30" },
                     { id: "UNDER_REVIEW", label: "⏳ Needs Further Evaluation", activeClass: "bg-amber-50 border-amber-600 text-amber-900 ring-2 ring-amber-500/30" },
-                    { id: "SECOND_OPINION", label: "👥 2nd Reviewer Needed", activeClass: "bg-purple-50 border-purple-600 text-purple-900 ring-2 ring-purple-500/30" },
+                    { id: "SECOND_OPINION", label: "👥 2nd Reviewer Needed", activeClass: "bg-primary-50 border-primary-600 text-primary-900 ring-2 ring-primary-500/30" },
                     { id: "HOLD", label: "⏸️ Put on Hold", activeClass: "bg-slate-100 border-slate-600 text-slate-900 ring-2 ring-slate-400/30" },
                   ].map((opt) => (
                     <button

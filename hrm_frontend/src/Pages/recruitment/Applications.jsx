@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useMemo } from "react";
 import { useLocation, Link } from "react-router-dom";
 import { PageLayout } from "../../components/PageLayout";
+import StatCard, { StatCardGrid } from "../../components/StatCard";
 import { recruitmentApi } from "../../services/api";
 import RecruitmentApplicationReview from "./ApplicationReview";
 import RecruitmentCandidateShortlist from "./CandidateShortlist";
@@ -78,34 +79,34 @@ const STATUS_CONFIG = {
   },
   INTERVIEWING: {
     label: "Interviewing",
-    bg: "bg-purple-50",
-    text: "text-purple-700",
-    border: "border-purple-200",
-    dot: "bg-purple-500",
+    bg: "bg-primary-50",
+    text: "text-primary-700",
+    border: "border-primary-200",
+    dot: "bg-primary-500",
   },
   OFFERED: {
     label: "Offered",
-    bg: "bg-teal-50",
-    text: "text-teal-700",
-    border: "border-teal-200",
-    dot: "bg-teal-500",
+    bg: "bg-green-50",
+    text: "text-green-700",
+    border: "border-green-200",
+    dot: "bg-green-500",
   },
   REJECTED: {
     label: "Rejected",
-    bg: "bg-rose-50",
-    text: "text-rose-700",
-    border: "border-rose-200",
-    dot: "bg-rose-500",
+    bg: "bg-red-50",
+    text: "text-red-700",
+    border: "border-red-200",
+    dot: "bg-red-500",
   },
 };
 
 const AVATAR_GRADIENTS = [
-  "from-primary-500 to-purple-600",
-  "from-sky-400 to-blue-600",
-  "from-emerald-400 to-teal-600",
+  "from-primary-600 to-primary-700",
+  "from-primary-500 to-primary-700",
+  "from-green-600 to-green-700",
   "from-amber-400 to-orange-500",
-  "from-pink-500 to-rose-600",
-  "from-primary-500 to-primary-600",
+  "from-red-600 to-red-700",
+  "from-primary-600 to-primary-700",
 ];
 
 export default function RecruitmentApplications() {
@@ -623,20 +624,16 @@ export default function RecruitmentApplications() {
         )}
 
         {/* ── Metric Summary (one joined card) ── */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 bg-white rounded-xl border border-slate-200 shadow-sm divide-slate-200 divide-y lg:divide-y-0 lg:divide-x">
+        <StatCardGrid>
           {[
-            { label: "Total Applications", value: metrics.total, hint: "Across all vacancies", tone: "text-slate-900" },
-            { label: "Positions Applied", value: metrics.positionsWithApps, hint: "Active job openings", tone: "text-primary-600" },
-            { label: "New Applicants", value: metrics.newCount, hint: "Awaiting initial review", tone: "text-primary-600" },
-            { label: "Shortlisted", value: metrics.shortlistedCount, hint: "Qualified candidates", tone: "text-emerald-600" },
+            { label: "Total Applications", value: metrics.total, caption: "Across all vacancies", tone: "primary", icon: FileText },
+            { label: "Positions Applied", value: metrics.positionsWithApps, caption: "Active job openings", tone: "primary", icon: Briefcase },
+            { label: "New Applicants", value: metrics.newCount, caption: "Awaiting initial review", tone: "primary", icon: Clock },
+            { label: "Shortlisted", value: metrics.shortlistedCount, caption: "Qualified candidates", tone: "green", icon: Users },
           ].map((m) => (
-            <div key={m.label} className="px-5 py-4">
-              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{m.label}</p>
-              <h3 className={`text-2xl font-bold mt-1 ${m.tone}`}>{m.value}</h3>
-              <p className="text-xs text-slate-500 mt-0.5">{m.hint}</p>
-            </div>
+            <StatCard key={m.label} label={m.label} value={m.value} caption={m.caption} tone={m.tone} icon={m.icon} />
           ))}
-        </div>
+        </StatCardGrid>
 
         {/* ── Search & Filter Controls Toolbar ── */}
         <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm">
@@ -1426,7 +1423,7 @@ export default function RecruitmentApplications() {
             {/* Modal Header */}
             <div className="p-6 border-b border-slate-100 flex items-start justify-between bg-slate-50/50">
               <div className="flex items-center gap-4">
-                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary-500 to-purple-600 text-white font-bold text-lg flex items-center justify-center shadow-md">
+                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary-600 to-primary-700 text-white font-bold text-lg flex items-center justify-center shadow-md">
                   {getInitials(selectedApp.candidateName)}
                 </div>
                 <div>

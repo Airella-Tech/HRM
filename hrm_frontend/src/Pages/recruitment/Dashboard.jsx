@@ -115,20 +115,20 @@ const VACANCY_STATUS = [
   { key: "CLOSED", label: "Closed", color: "#cbd5e1" },
 ];
 const CHIP = {
-  PUBLISHED: "bg-indigo-50 text-indigo-700",
+  PUBLISHED: "bg-primary-50 text-primary-700",
   PENDING_APPROVAL: "bg-amber-50 text-amber-700",
   APPROVED: "bg-emerald-50 text-emerald-700",
-  DRAFT: "bg-sky-50 text-sky-700",
+  DRAFT: "bg-slate-100 text-slate-600",
   CLOSED: "bg-slate-100 text-slate-600",
   SHORTLISTED: "bg-emerald-50 text-emerald-700",
   REJECTED: "bg-red-50 text-red-600",
-  SCHEDULED: "bg-indigo-50 text-indigo-700",
+  SCHEDULED: "bg-primary-50 text-primary-700",
   COMPLETED: "bg-emerald-50 text-emerald-700",
   CANCELLED: "bg-slate-100 text-slate-600",
   ACCEPTED: "bg-emerald-50 text-emerald-700",
-  SENT: "bg-sky-50 text-sky-700",
+  SENT: "bg-primary-50 text-primary-700",
 };
-const AVATAR = ["bg-indigo-100 text-indigo-700", "bg-emerald-100 text-emerald-700", "bg-amber-100 text-amber-700", "bg-sky-100 text-sky-700", "bg-violet-100 text-violet-700", "bg-rose-100 text-rose-700"];
+const AVATAR = ["bg-primary-100 text-primary-700", "bg-emerald-100 text-emerald-700", "bg-amber-100 text-amber-700", "bg-slate-100 text-slate-700", "bg-primary-100 text-primary-700", "bg-red-100 text-red-700"];
 const avatarTone = (name) => AVATAR[(name || "?").charCodeAt(0) % AVATAR.length];
 
 /* ===========================================================================
@@ -172,44 +172,44 @@ const Avatar = ({ name }) => (
   </span>
 );
 
-const Sparkline = ({ data, color }) => {
+const Sparkline = ({ data }) => {
   const max = Math.max(1, ...data);
   const W = 80, H = 28;
   const pts = data.map((v, i) => `${(i * W) / Math.max(1, data.length - 1)},${H - 3 - (v / max) * (H - 6)}`).join(" ");
   return (
     <svg viewBox={`0 0 ${W} ${H}`} className="h-7 w-20" aria-hidden="true">
-      <polyline points={pts} fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      <polyline points={pts} fill="none" stroke="white" opacity="0.7" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 };
 
 const Delta = ({ metric, label }) => {
   if (metric.delta == null) {
-    return <span className="text-xs text-slate-400">{metric.current ? "No previous period" : label}</span>;
+    return <span className="text-xs text-white/90">{metric.current ? "No previous period" : label}</span>;
   }
   const up = metric.delta >= 0;
   const Icon = up ? TrendingUp : TrendingDown;
   return (
-    <span className={`inline-flex items-center gap-1 text-xs font-semibold ${up ? "text-emerald-600" : "text-red-500"}`}>
+    <span className="inline-flex items-center gap-1 text-xs font-semibold text-white/90">
       <Icon size={13} />
       {up ? "+" : ""}
-      {metric.delta}%<span className="font-normal text-slate-400">vs previous</span>
+      {metric.delta}%<span className="font-normal text-white/90">vs previous</span>
     </span>
   );
 };
 
 const KpiCard = ({ icon: Icon, label, value, metric, color, tone, footnote }) => (
-  <Card className="p-5">
+  <Card className={`bg-gradient-to-br p-5 text-white shadow-md ${tone}`}>
     <div className="flex items-center justify-between">
-      <span className={`flex h-9 w-9 items-center justify-center rounded-xl ${tone}`}>
+      <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/20 text-white">
         <Icon size={18} />
       </span>
       {metric && <Sparkline data={metric.spark} color={color} />}
     </div>
-    <p className="mt-4 text-3xl font-bold tracking-tight text-slate-900">{value ?? "-"}</p>
-    <p className="mt-0.5 text-sm text-slate-500">{label}</p>
-    <div className="mt-3 border-t border-slate-100 pt-3">
-      {metric ? <Delta metric={metric} label="No data in range" /> : <span className="text-xs text-slate-400">{footnote}</span>}
+    <p className="mt-4 text-3xl font-bold tracking-tight text-white">{value ?? "-"}</p>
+    <p className="mt-0.5 text-sm text-white/85">{label}</p>
+    <div className="mt-3 border-t border-white/20 pt-3">
+      {metric ? <Delta metric={metric} label="No data in range" /> : <span className="text-xs text-white/90">{footnote}</span>}
     </div>
   </Card>
 );
@@ -338,7 +338,7 @@ const BarList = ({ data }) => {
             <span className="font-semibold text-slate-900">{d.value}</span>
           </div>
           <div className="h-1.5 overflow-hidden rounded-full bg-slate-100">
-            <div className="h-full rounded-full bg-indigo-500" style={{ width: `${(d.value / max) * 100}%` }} />
+            <div className="h-full rounded-full bg-primary-600" style={{ width: `${(d.value / max) * 100}%` }} />
           </div>
         </li>
       ))}
@@ -549,24 +549,24 @@ const Dashboard = () => {
         {anything && (
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
             {canVacancies && (
-              <KpiCard icon={BriefcaseBusiness} tone="bg-indigo-50 text-indigo-600" color="#4f46e5" label="Open vacancies"
+              <KpiCard icon={BriefcaseBusiness} tone="from-primary-600 to-primary-700" color="#4f46e5" label="Open vacancies"
                 value={vacancies.loading ? "-" : vacancyCounts.PUBLISHED || 0}
                 footnote={`${vacancyCounts.PENDING_APPROVAL || 0} pending approval`} />
             )}
             {canApplications && (
-              <KpiCard icon={FileText} tone="bg-sky-50 text-sky-600" color="#0ea5e9" label="Applications"
+              <KpiCard icon={FileText} tone="from-primary-700 to-primary-800" color="#4f46e5" label="Applications"
                 value={applications.loading ? "-" : m.apps.current} metric={m.apps} />
             )}
             {canApplications && (
-              <KpiCard icon={Users} tone="bg-emerald-50 text-emerald-600" color="#10b981" label="Shortlisted"
+              <KpiCard icon={Users} tone="from-primary-500 to-primary-600" color="#10b981" label="Shortlisted"
                 value={applications.loading ? "-" : m.shortlisted.current} metric={m.shortlisted} />
             )}
             {canInterviews && (
-              <KpiCard icon={CalendarDays} tone="bg-violet-50 text-violet-600" color="#8b5cf6" label={canInterviewsMine ? "My interviews" : "Interviews"}
+              <KpiCard icon={CalendarDays} tone="from-primary-800 to-primary-900" color="#4f46e5" label={canInterviewsMine ? "My interviews" : "Interviews"}
                 value={interviews.loading ? "-" : m.interviews.current} metric={m.interviews} />
             )}
             {canOffers && (
-              <KpiCard icon={Handshake} tone="bg-amber-50 text-amber-600" color="#f59e0b" label="Offers"
+              <KpiCard icon={Handshake} tone="from-primary-600 to-primary-700" color="#f59e0b" label="Offers"
                 value={offers.loading ? "-" : m.offers.current} metric={m.offers} />
             )}
           </div>
@@ -600,7 +600,7 @@ const Dashboard = () => {
                       return (
                         <li key={i.id} className="flex items-center gap-3 py-3">
                           <div className="w-[72px] shrink-0">
-                            <p className={`text-xs font-semibold ${dayLabel(t) === "Today" ? "text-indigo-600" : "text-slate-500"}`}>{dayLabel(t)}</p>
+                            <p className={`text-xs font-semibold ${dayLabel(t) === "Today" ? "text-primary-600" : "text-slate-500"}`}>{dayLabel(t)}</p>
                             <p className="text-xs text-slate-400">{time || "-"}</p>
                           </div>
                           <div className="min-w-0 flex-1">
@@ -684,7 +684,7 @@ const Dashboard = () => {
                 <ol className="mt-4 space-y-4 px-5 pb-5">
                   {[...activity.data].sort((a, b) => (actTime(b) || 0) - (actTime(a) || 0)).slice(0, 7).map((a, idx) => (
                     <li key={a.id ?? idx} className="flex gap-3">
-                      <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-indigo-400" />
+                      <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-primary-400" />
                       <div className="min-w-0">
                         <p className="line-clamp-2 text-sm text-slate-700">
                           {a.description || a.details || a.message || a.title || [a.action, a.entityType].filter(Boolean).join(" ") || "Activity"}
