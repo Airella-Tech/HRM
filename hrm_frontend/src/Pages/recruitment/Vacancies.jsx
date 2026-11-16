@@ -702,8 +702,6 @@ export default function RecruitmentVacancies() {
             caption="All vacancies"
             icon={BriefcaseBusiness}
             tone="primary"
-            onClick={() => setFilter("ALL")}
-            active={filter === "ALL"}
           />
           <StatCard
             label="Pending approval"
@@ -711,8 +709,6 @@ export default function RecruitmentVacancies() {
             caption="Waiting for an approver"
             icon={Clock}
             tone="amber"
-            onClick={() => setFilter("PENDING_APPROVAL")}
-            active={filter === "PENDING_APPROVAL"}
           />
           <StatCard
             label="Published"
@@ -720,8 +716,6 @@ export default function RecruitmentVacancies() {
             caption="Open for applications"
             icon={Megaphone}
             tone="green"
-            onClick={() => setFilter("PUBLISHED")}
-            active={filter === "PUBLISHED"}
           />
           <StatCard
             label="Drafts"
@@ -729,8 +723,6 @@ export default function RecruitmentVacancies() {
             caption="Not submitted yet"
             icon={FileText}
             tone="slate"
-            onClick={() => setFilter("DRAFT")}
-            active={filter === "DRAFT"}
           />
         </StatCardGrid>
         {/* Filters + search */}

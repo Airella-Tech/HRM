@@ -19,7 +19,7 @@ import {
   CalendarDays,
   BriefcaseBusiness,
   ArrowRight,
-  RotateCcw,
+  RefreshCw,
   Users,
   TrendingUp,
   AlertCircle,
@@ -520,15 +520,23 @@ function normalizeInterviews(rows) {
 }
 
 function StatCard({ title, value, description, icon: Icon, iconStyle }) {
+  const gradient = iconStyle.includes("primary-500")
+    ? "from-primary-500 to-primary-600"
+    : iconStyle.includes("primary-700")
+      ? "from-primary-700 to-primary-800"
+      : iconStyle.includes("primary-800")
+        ? "from-primary-800 to-primary-900"
+        : "from-primary-600 to-primary-700";
+
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+    <div className={`rounded-2xl bg-gradient-to-br ${gradient} p-5 text-white shadow-md`}>
       <div className="flex items-start justify-between gap-3">
         <div>
-          <p className="text-sm font-medium text-slate-500">{title}</p>
-          <p className="mt-2 text-3xl font-bold text-slate-900">{value}</p>
-          <p className="mt-1 text-xs text-slate-500">{description}</p>
+          <p className="text-sm font-medium text-white/85">{title}</p>
+          <p className="mt-2 text-3xl font-bold text-white">{value}</p>
+          <p className="mt-1 text-xs text-white/75">{description}</p>
         </div>
-        <div className={`rounded-xl p-3 ${iconStyle}`}>
+        <div className="rounded-xl bg-white/20 p-3 text-white">
           <Icon size={22} />
         </div>
       </div>
@@ -954,28 +962,23 @@ export default function InterviewProgress() {
       activePage="Interview Progress"
       title="Interview Progress"
       subtitle="Track candidate progress through every interview stage"
+      actions={
+        <button
+          type="button"
+          onClick={() => loadProgress()}
+          disabled={loading || refreshing}
+          className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-60"
+        >
+          <RefreshCw
+            size={16}
+            className={loading || refreshing ? "animate-spin" : ""}
+          />
+          {loading ? "Loading..." : refreshing ? "Refreshing..." : "Refresh"}
+        </button>
+      }
     >
       <div className="min-h-full bg-slate-50/70 px-4 py-6 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-7xl space-y-6">
-          <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-            <button
-              type="button"
-              onClick={() => loadProgress()}
-              disabled={loading || refreshing}
-              className="inline-flex items-center justify-center gap-2 self-start rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50 disabled:opacity-60"
-            >
-              <RotateCcw
-                size={16}
-                className={refreshing ? "animate-spin" : ""}
-              />
-              {loading
-                ? "Loading..."
-                : refreshing
-                  ? "Refreshing..."
-                  : "Refresh"}
-            </button>
-          </div>
-
           {error && (
             <div
               role="alert"
@@ -1001,28 +1004,28 @@ export default function InterviewProgress() {
               value={stats.total}
               description="Applications with interview records"
               icon={Users}
-              iconStyle="bg-primary-50 text-primary-600"
+              iconStyle="bg-primary-600 text-primary-600"
             />
             <StatCard
               title="In Progress"
               value={stats.inProgress}
               description="Candidates in active interview stages"
               icon={Clock}
-              iconStyle="bg-primary-50 text-primary-600"
+              iconStyle="bg-primary-700 text-primary-600"
             />
             <StatCard
               title="Completed"
               value={stats.completed}
               description="Candidates completing all four rounds"
               icon={CheckCircle2}
-              iconStyle="bg-green-50 text-green-600"
+              iconStyle="bg-primary-500 text-primary-600"
             />
             <StatCard
               title="Completed Stages"
               value={stats.stageCompletions}
               description="Total interview stages completed"
               icon={TrendingUp}
-              iconStyle="bg-primary-50 text-primary-600"
+              iconStyle="bg-primary-800 text-primary-600"
             />
           </div>
 

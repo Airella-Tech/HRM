@@ -17,6 +17,7 @@ import {
   ChevronUp,
 } from "lucide-react";
 import PageLayout from "../../components/PageLayout";
+import StatCard, { StatCardGrid } from "../../components/StatCard";
 import { recruitmentApi } from "../../services/api";
 
 // Interview rounds must follow this order.
@@ -938,68 +939,30 @@ export default function InterviewEvaluationReview() {
           )}
 
           {/* Summary cards */}
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-            <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium text-slate-500">
-                  Completed Interviews
-                </span>
-
-                <CalendarDays
-                  className="text-primary-500"
-                  size={21}
-                />
-              </div>
-
-              <p className="mt-3 text-3xl font-bold text-slate-900">
-                {reviewableInterviews.length}
-              </p>
-            </div>
-
-            <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium text-slate-500">
-                  Awaiting Manager Review
-                </span>
-
-                <Clock
-                  className="text-amber-500"
-                  size={21}
-                />
-              </div>
-
-              <p className="mt-3 text-3xl font-bold text-slate-900">
-                {
-                  reviewableInterviews.filter(
-                    (interview) =>
-                      getDecisionLabel(interview) === "Pending Review",
-                  ).length
-                }
-              </p>
-            </div>
-
-            <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium text-slate-500">
-                  Approved Rounds
-                </span>
-
-                <CheckCircle2
-                  className="text-green-500"
-                  size={21}
-                />
-              </div>
-
-              <p className="mt-3 text-3xl font-bold text-slate-900">
-                {
-                  reviewableInterviews.filter(
-                    (interview) =>
-                      getDecisionLabel(interview) === "Approved",
-                  ).length
-                }
-              </p>
-            </div>
-          </div>
+          <StatCardGrid cols={3}>
+            <StatCard
+              label="Completed Interviews"
+              value={reviewableInterviews.length}
+              icon={CalendarDays}
+              tone="primary"
+            />
+            <StatCard
+              label="Awaiting Manager Review"
+              value={reviewableInterviews.filter(
+                (interview) => getDecisionLabel(interview) === "Pending Review",
+              ).length}
+              icon={Clock}
+              tone="amber"
+            />
+            <StatCard
+              label="Approved Rounds"
+              value={reviewableInterviews.filter(
+                (interview) => getDecisionLabel(interview) === "Approved",
+              ).length}
+              icon={CheckCircle2}
+              tone="green"
+            />
+          </StatCardGrid>
 
           {/* Filters */}
           <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">

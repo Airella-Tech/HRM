@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { PageLayout } from "../../components/PageLayout";
+import StatCard, { StatCardGrid } from "../../components/StatCard";
 import { recruitmentApi } from "../../services/api";
 
 const statusStyles = {
@@ -648,35 +649,24 @@ export default function InterviewEmails() {
           </div>
         )}
 
-        <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <StatCardGrid>
           {[
-            { label: "Email records", value: stats.total, icon: Mail },
-            { label: "Pending", value: stats.pending, icon: Clock3 },
-            { label: "Sent", value: stats.sent, icon: CheckCircle2 },
-            { label: "Failed", value: stats.failed, icon: CircleAlert },
+            { label: "Email records", value: stats.total, icon: Mail, tone: "primary" },
+            { label: "Pending", value: stats.pending, icon: Clock3, tone: "amber" },
+            { label: "Sent", value: stats.sent, icon: CheckCircle2, tone: "green" },
+            { label: "Failed", value: stats.failed, icon: CircleAlert, tone: "red" },
           ].map((card) => {
-            const Icon = card.icon;
-
             return (
-              <div
+              <StatCard
                 key={card.label}
-                className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
-              >
-                <div className="flex items-center justify-between gap-3">
-                  <div>
-                    <p className="text-sm text-slate-500">{card.label}</p>
-                    <p className="mt-2 text-3xl font-bold text-slate-800">
-                      {card.value}
-                    </p>
-                  </div>
-                  <div className="rounded-xl bg-primary-50 p-3 text-primary-600">
-                    <Icon size={22} />
-                  </div>
-                </div>
-              </div>
+                label={card.label}
+                value={card.value}
+                icon={card.icon}
+                tone={card.tone}
+              />
             );
           })}
-        </div>
+        </StatCardGrid>
 
         <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
           <div className="border-b border-slate-200 p-5 sm:p-6">

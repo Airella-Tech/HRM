@@ -428,20 +428,20 @@ const formatRecommendation = (value) =>
 
 function SummaryCard({ label, value, icon: Icon, color }) {
   const styles = {
-    indigo: "bg-primary-50 text-primary-600",
-    amber: "bg-amber-50 text-amber-600",
-    emerald: "bg-emerald-50 text-emerald-600",
+    primary: "from-primary-600 to-primary-700",
+    amber: "from-primary-500 to-primary-600",
+    green: "from-primary-700 to-primary-800",
   };
 
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+    <div className={`rounded-2xl bg-gradient-to-br p-5 text-white shadow-md ${styles[color] || styles.primary}`}>
       <div className="flex items-center justify-between gap-3">
-        <p className="text-sm text-slate-500">{label}</p>
-        <div className={`rounded-xl p-2.5 ${styles[color]}`}>
+        <p className="text-sm font-medium text-white/85">{label}</p>
+        <div className="rounded-xl bg-white/20 p-2.5 text-white">
           <Icon size={20} />
         </div>
       </div>
-      <p className="mt-4 text-3xl font-bold text-slate-900">{value}</p>
+      <p className="mt-4 text-3xl font-bold text-white">{value}</p>
     </div>
   );
 }
@@ -1053,7 +1053,7 @@ export default function RecruitmentEvaluations() {
             label="Assigned Interviews"
             value={interviews.length}
             icon={ClipboardCheck}
-            color="indigo"
+            color="primary"
           />
 
           <SummaryCard
@@ -1067,7 +1067,7 @@ export default function RecruitmentEvaluations() {
             label="Submitted Evaluations"
             value={submittedCount}
             icon={CheckCircle2}
-            color="emerald"
+            color="green"
           />
         </div>
 
