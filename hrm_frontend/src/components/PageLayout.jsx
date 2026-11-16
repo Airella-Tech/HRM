@@ -11,7 +11,10 @@
  *   children    : ReactNode — page content
  */
 import { useState, useEffect, useRef, useLayoutEffect, useMemo } from "react";
-import { useRecruitmentAccess, fetchRecruitmentAccess } from "../utils/useRecruitmentAccess";
+import {
+  useRecruitmentAccess,
+  fetchRecruitmentAccess,
+} from "../utils/useRecruitmentAccess";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
   ChevronLeft,
@@ -118,19 +121,32 @@ const NAV = {
       name: "View Applications",
       icon: FileText,
       path: "/recruitment/applications",
-      requiresAny: ["APPLICATION_VIEW", "APPLICATION_SCREEN", "APPLICATION_SHORTLIST", "VIEW_APPLICATIONS"],
+      requiresAny: [
+        "APPLICATION_VIEW",
+        "APPLICATION_SCREEN",
+        "APPLICATION_SHORTLIST",
+        "VIEW_APPLICATIONS",
+      ],
     },
     {
       name: "Review Applications",
       icon: ClipboardCheck,
       path: "/recruitment/applications/review",
-      requiresAny: ["APPLICATION_SCREEN", "REVIEW_APPLICATIONS", "APPLICATION_VIEW"],
+      requiresAny: [
+        "APPLICATION_SCREEN",
+        "REVIEW_APPLICATIONS",
+        "APPLICATION_VIEW",
+      ],
     },
     {
       name: "Shortlist Candidates",
       icon: UserCheck,
       path: "/recruitment/applications/shortlist",
-      requiresAny: ["APPLICATION_SHORTLIST", "SHORTLIST_CANDIDATES", "APPLICATION_VIEW"],
+      requiresAny: [
+        "APPLICATION_SHORTLIST",
+        "SHORTLIST_CANDIDATES",
+        "APPLICATION_VIEW",
+      ],
     },
 
     // Interviews & Evaluations
@@ -165,6 +181,7 @@ const NAV = {
       name: "Evaluation Review",
       icon: CheckCircle2,
       path: "/recruitment/evaluation-review",
+      requiresAny: ["INTERVIEW_DECIDE"],
       requiresAny: ["INTERVIEW_DECIDE", "INTERVIEW_SCHEDULE"],
 =======
      name: "Evaluation Review",
@@ -219,16 +236,18 @@ const ACCENT = {
     hover: "hover:bg-employee-50",
   },
   hr: {
-    from: "rgba(20,184,166,0.75)",
-    to: "rgba(13,148,136,0.55)",
-    shadow: "rgba(20,184,166,0.3)",
-    avatarFrom: "from-teal-400",
-    avatarTo: "to-emerald-500",
+    from: "rgba(3,105,161,1)",
+    to: "rgba(7,89,133,1)",
+    shadow: "rgba(3,105,161,0.35)",
+    avatarFrom: "from-sky-600",
+    avatarTo: "to-sky-800",
     label: "HR Manager",
     surface: "bg-gray-50",
     topbar: "border-gray-100",
     title: "text-gray-900",
     hover: "hover:bg-gray-100",
+    activeBg: "#1B347D",
+    activeBorder: "border-blue-400",
   },
   admin: {
     from: "rgba(99,102,241,0.8)",
@@ -272,7 +291,6 @@ export const PageLayout = ({
   actions,
   children,
 }) => {
-
   // Remember the collapsed/expanded sidebar between pages
   const [collapsed, setCollapsed] = useState(() => {
     try {
@@ -329,38 +347,44 @@ export const PageLayout = ({
     role !== "recruiter"
       ? NAV[role] || []
       : (NAV.recruiter || []).filter((item) => {
-        // Do not show Recruitment pages until access is confirmed.
-        if (!recruitmentAccess?.hasRecruitmentAccess) {
-          return false;
-        }
+          // Do not show Recruitment pages until access is confirmed.
+          if (!recruitmentAccess?.hasRecruitmentAccess) {
+            return false;
+          }
 
-        // Some pages require full access.
-        if (item.requiresFullAccess) {
-          return recruitmentAccess.fullAccess;
-        }
+          // Some pages require full access.
+          if (item.requiresFullAccess) {
+            return recruitmentAccess.fullAccess;
+          }
 
           // Everyone with recruitment access can see Overview.
           if (item.name === "Overview") {
             return true;
           }
 
-        // Full-access users can see all other Recruitment pages.
-        if (recruitmentAccess.fullAccess) {
-          return true;
-        }
+          // Full-access users can see all other Recruitment pages.
+          if (recruitmentAccess.fullAccess) {
+            return true;
+          }
 
-        // Show the page if no specific permission is required,
-        // or if the user has at least one required permission.
-        return (
-          !item.requiresAny?.length ||
-          item.requiresAny.some((permission) =>
-            recruitmentAccess.permissions.includes(permission),
-          )
-        );
-      });
+          // Show the page if no specific permission is required,
+          // or if the user has at least one required permission.
+          return (
+            !item.requiresAny?.length ||
+            item.requiresAny.some((permission) =>
+              recruitmentAccess.permissions.includes(permission),
+            )
+          );
+        });
 
   const storedUser = localStorage.getItem("user");
-  const user = storedUser ? JSON.parse(storedUser) : {};
+
+  let user = {};
+  try {
+    user = storedUser ? JSON.parse(storedUser) : {};
+  } catch {
+    user = {};
+  }
   const initials =
     user?.fullName
       ?.split(" ")
@@ -381,7 +405,9 @@ export const PageLayout = ({
       <nav
         className={`flex flex-col flex-shrink-0 shadow-2xl transition-all duration-300 ${collapsed ? "w-20" : "w-64"}`}
         style={{
-          background: accent.sidebarBg || "linear-gradient(180deg, #0a1120 0%, #0f172a 100%)",
+          background:
+            accent.sidebarBg ||
+            "linear-gradient(180deg, #0a1120 0%, #0f172a 100%)",
         }}
       >
         {/* Logo row */}
@@ -405,12 +431,20 @@ export const PageLayout = ({
         </div>
 
         {/* Nav items */}
-        <ul ref={navListRef}
-          onScroll={(e) => { savedNavScroll = e.currentTarget.scrollTop; }} className="flex-1 min-h-0 py-4 pb-8 space-y-1 px-3 overflow-y-auto overflow-x-hidden [scrollbar-width:thin] [scrollbar-color:rgba(255,255,255,0.18)_transparent] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-white/20 [&::-webkit-scrollbar-track]:bg-transparent">
+        <ul
+          ref={navListRef}
+          onScroll={(e) => {
+            savedNavScroll = e.currentTarget.scrollTop;
+          }}
+          className="flex-1 min-h-0 py-4 pb-8 space-y-1 px-3 overflow-y-auto overflow-x-hidden [scrollbar-width:thin] [scrollbar-color:rgba(255,255,255,0.18)_transparent] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-white/20 [&::-webkit-scrollbar-track]:bg-transparent"
+        >
           {role === "recruiter" &&
             !recruitmentAccess &&
             [0, 1, 2, 3, 4].map((i) => (
-              <li key={i} className="h-11 rounded-xl bg-white/5 animate-pulse" />
+              <li
+                key={i}
+                className="h-11 rounded-xl bg-white/5 animate-pulse"
+              />
             ))}
           {navItems.map((item) => {
             const currentFullPath = location.pathname + location.search;
@@ -439,6 +473,9 @@ export const PageLayout = ({
                   item.name === "Evaluations")) ||
               (activePage === "Evaluation Review" &&
                   item.name === "Evaluation Review") ||
+              ((activePage === "Evaluation Review" ||
+                activePage === "Interview Evaluation Review") &&
+                item.name === "Evaluation Review") ||
               (activePage === "Job Offers" &&
                 (item.name === "Manage Job Offers" ||
                   item.name === "Job Offers"));
@@ -463,20 +500,27 @@ export const PageLayout = ({
                 <button
                   onClick={() => (item.path ? navigate(item.path) : null)}
                   className={`relative flex items-center gap-3 w-full px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200
-                    ${accent.activeBorder
-                      ? `border-l-[3px] ${isActive ? accent.activeBorder : "border-transparent"}`
-                      : ""
+                    ${
+                      accent.activeBorder
+                        ? `border-l-[3px] ${isActive ? accent.activeBorder : "border-transparent"}`
+                        : ""
                     }
-                    ${isActive ? "text-white" : "text-gray-400 hover:text-white hover:bg-white/10"}
+                    ${
+                      isActive
+                        ? "text-white"
+                        : role === "hr"
+                          ? "text-slate-400 hover:text-white hover:bg-primary-800/40"
+                          : "text-gray-400 hover:text-white hover:bg-white/10"
+                    }
                     ${collapsed ? "justify-center px-0" : ""}`}
                   style={
                     isActive
                       ? accent.activeBg
                         ? { backgroundColor: accent.activeBg }
                         : {
-                          background: `linear-gradient(135deg, ${accent.from}, ${accent.to})`,
-                          boxShadow: `0 2px 12px ${accent.shadow}`,
-                        }
+                            background: `linear-gradient(135deg, ${accent.from}, ${accent.to})`,
+                            boxShadow: `0 2px 12px ${accent.shadow}`,
+                          }
                       : {}
                   }
                   title={collapsed ? item.name : undefined}
@@ -488,8 +532,12 @@ export const PageLayout = ({
             );
           })}
         </ul>
-        <div className="pointer-events-none h-6 -mt-6 shrink-0" style={{ background: "linear-gradient(to top, #1b2142, transparent)" }} />
-
+        <div
+          className="pointer-events-none h-6 -mt-6 shrink-0"
+          style={{
+            background: "linear-gradient(to top, #1b2142, transparent)",
+          }}
+        />
 
         {/* User + logout */}
         <div className="border-t border-white/10 p-3 space-y-2 flex-shrink-0">
