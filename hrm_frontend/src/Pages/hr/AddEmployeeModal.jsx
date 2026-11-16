@@ -25,7 +25,11 @@ import { authApi, userHrApi, hrApi } from "../../services/api";
 
 // Employee ID prefix is fixed by role — only the number is editable.
 const ROLE_EMPLOYEE_ID_PREFIX = { employee: "EMP", hr: "HR", admin: "SA" };
-const ROLE_TO_BACKEND = { employee: "EMPLOYEE", hr: "HR_MANAGER", admin: "ADMIN" };
+const ROLE_TO_BACKEND = {
+  employee: "EMPLOYEE",
+  hr: "HR_MANAGER",
+  admin: "ADMIN",
+};
 
 const STEPS = [
   { id: 1, title: "Personal", icon: User },
@@ -107,7 +111,11 @@ const GENDER_OPTIONS = [
   { value: "OTHER", label: "Other" },
 ];
 
-const BACKEND_TO_ROLE = { EMPLOYEE: "employee", HR_MANAGER: "hr", ADMIN: "admin" };
+const BACKEND_TO_ROLE = {
+  EMPLOYEE: "employee",
+  HR_MANAGER: "hr",
+  ADMIN: "admin",
+};
 const toDateInput = (v) => (v ? String(v).slice(0, 10) : "");
 
 // ---------------------------------------------------------------
@@ -130,7 +138,9 @@ const loadEmployeeDraft = () => {
     const raw = localStorage.getItem(ADD_EMPLOYEE_DRAFT_KEY);
     if (!raw) return null;
     const parsed = JSON.parse(raw);
-    return parsed && typeof parsed === "object" && parsed.formData ? parsed : null;
+    return parsed && typeof parsed === "object" && parsed.formData
+      ? parsed
+      : null;
   } catch {
     return null;
   }
@@ -138,13 +148,22 @@ const loadEmployeeDraft = () => {
 
 const saveEmployeeDraft = (formData, currentStep) => {
   try {
-    const { password: _password, confirmPassword: _confirmPassword, ...rest } = formData;
-    const hasContent = Object.values(rest).some((v) => String(v || "").trim() !== "");
+    const {
+      password: _password,
+      confirmPassword: _confirmPassword,
+      ...rest
+    } = formData;
+    const hasContent = Object.values(rest).some(
+      (v) => String(v || "").trim() !== "",
+    );
     if (!hasContent) {
       localStorage.removeItem(ADD_EMPLOYEE_DRAFT_KEY);
       return;
     }
-    localStorage.setItem(ADD_EMPLOYEE_DRAFT_KEY, JSON.stringify({ formData: rest, currentStep }));
+    localStorage.setItem(
+      ADD_EMPLOYEE_DRAFT_KEY,
+      JSON.stringify({ formData: rest, currentStep }),
+    );
   } catch {
     // Storage can fail (private browsing, full quota) — losing the draft convenience
     // is fine, it must never block HR from filling in the form.
@@ -161,19 +180,33 @@ const clearEmployeeDraft = () => {
 
 // Builds the wizard's form state from an existing employee record (edit mode).
 const buildFormFromEmployee = (emp, departments) => {
-  const [firstName = "", ...rest] = String(emp.fullName || "").trim().split(/\s+/);
+  const [firstName = "", ...rest] = String(emp.fullName || "")
+    .trim()
+    .split(/\s+/);
 
-  const deptText = String(emp.departmentName || emp.department || "").toLowerCase();
+  const deptText = String(
+    emp.departmentName || emp.department || "",
+  ).toLowerCase();
   const matchedDept =
-    departments.find((d) => emp.departmentId && String(d.id) === String(emp.departmentId)) ||
     departments.find(
-      (d) => deptText && (d.name.toLowerCase() === deptText || String(d.id) === String(emp.department))
+      (d) => emp.departmentId && String(d.id) === String(emp.departmentId),
+    ) ||
+    departments.find(
+      (d) =>
+        deptText &&
+        (d.name.toLowerCase() === deptText ||
+          String(d.id) === String(emp.department)),
     ) ||
     null;
 
   const id = String(emp.employeeId || "");
-  const roleFromId = id.startsWith("HR-") ? "hr" : id.startsWith("SA-") ? "admin" : "employee";
-  const userRole = BACKEND_TO_ROLE[String(emp.role || "").toUpperCase()] || roleFromId;
+  const roleFromId = id.startsWith("HR-")
+    ? "hr"
+    : id.startsWith("SA-")
+      ? "admin"
+      : "employee";
+  const userRole =
+    BACKEND_TO_ROLE[String(emp.role || "").toUpperCase()] || roleFromId;
 
   return {
     ...EMPTY_FORM,
@@ -186,7 +219,9 @@ const buildFormFromEmployee = (emp, departments) => {
     userRole,
     employeeId: id,
     departmentId: matchedDept ? matchedDept.id : "",
-    departmentName: matchedDept ? matchedDept.name : emp.departmentName || emp.department || "",
+    departmentName: matchedDept
+      ? matchedDept.name
+      : emp.departmentName || emp.department || "",
     jobTitle: emp.designation || "",
     employmentType: emp.employmentType || "",
     // "address" doubles as the stored work location (see submit payload below),
@@ -196,7 +231,13 @@ const buildFormFromEmployee = (emp, departments) => {
   };
 };
 
-const AddEmployeeModal = ({ open, onClose, departments = [], onSuccess, employee = null }) => {
+const AddEmployeeModal = ({
+  open,
+  onClose,
+  departments = [],
+  onSuccess,
+  employee = null,
+}) => {
   const isEdit = Boolean(employee);
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState(EMPTY_FORM);
@@ -218,7 +259,8 @@ const AddEmployeeModal = ({ open, onClose, departments = [], onSuccess, employee
 
   useEffect(() => {
     if (!open) return;
-    hrApi.getEmploymentTypes()
+    hrApi
+      .getEmploymentTypes()
       .then((res) => {
         setEmploymentTypes((res.data || []).map((t) => t.name));
         setEmploymentTypesError("");
@@ -229,7 +271,8 @@ const AddEmployeeModal = ({ open, onClose, departments = [], onSuccess, employee
   // Keep an edited employee's saved type selectable even if it isn't in HR's list
   const employmentTypeOptions = useMemo(() => {
     const current = formData.employmentType;
-    return current && !employmentTypes.some((t) => t.toLowerCase() === current.toLowerCase())
+    return current &&
+      !employmentTypes.some((t) => t.toLowerCase() === current.toLowerCase())
       ? [...employmentTypes, current]
       : employmentTypes;
   }, [employmentTypes, formData.employmentType]);
@@ -240,7 +283,8 @@ const AddEmployeeModal = ({ open, onClose, departments = [], onSuccess, employee
 
   useEffect(() => {
     if (!open) return;
-    hrApi.getWorkLocations()
+    hrApi
+      .getWorkLocations()
       .then((res) => {
         setWorkLocations((res.data || []).map((t) => t.name));
         setWorkLocationsError("");
@@ -251,7 +295,8 @@ const AddEmployeeModal = ({ open, onClose, departments = [], onSuccess, employee
   // Keep an edited employee's saved location selectable even if it isn't in HR's list
   const workLocationOptions = useMemo(() => {
     const current = formData.workLocation;
-    return current && !workLocations.some((t) => t.toLowerCase() === current.toLowerCase())
+    return current &&
+      !workLocations.some((t) => t.toLowerCase() === current.toLowerCase())
       ? [...workLocations, current]
       : workLocations;
   }, [workLocations, formData.workLocation]);
@@ -274,8 +319,14 @@ const AddEmployeeModal = ({ open, onClose, departments = [], onSuccess, employee
         if (draft) {
           const restored = { ...EMPTY_FORM, ...draft.formData };
           setFormData(restored);
-          setEmployeeIdNumber(restored.employeeId ? restored.employeeId.split("-").slice(1).join("-") : "");
-          setCurrentStep(Math.min(Math.max(Number(draft.currentStep) || 1, 1), STEPS.length));
+          setEmployeeIdNumber(
+            restored.employeeId
+              ? restored.employeeId.split("-").slice(1).join("-")
+              : "",
+          );
+          setCurrentStep(
+            Math.min(Math.max(Number(draft.currentStep) || 1, 1), STEPS.length),
+          );
           setDraftRestored(true);
         } else {
           setFormData(EMPTY_FORM);
@@ -315,12 +366,18 @@ const AddEmployeeModal = ({ open, onClose, departments = [], onSuccess, employee
   // If the department list finishes loading after the edit form opened,
   // match the employee's saved department name to a real department.
   useEffect(() => {
-    if (!open || !employee || formData.departmentId || !formData.departmentName) return;
+    if (!open || !employee || formData.departmentId || !formData.departmentName)
+      return;
     const match = departments.find(
-      (d) => d.name.toLowerCase() === String(formData.departmentName).toLowerCase()
+      (d) =>
+        d.name.toLowerCase() === String(formData.departmentName).toLowerCase(),
     );
     if (match) {
-      setFormData((prev) => ({ ...prev, departmentId: match.id, departmentName: match.name }));
+      setFormData((prev) => ({
+        ...prev,
+        departmentId: match.id,
+        departmentName: match.name,
+      }));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [departments]);
@@ -330,13 +387,17 @@ const AddEmployeeModal = ({ open, onClose, departments = [], onSuccess, employee
   // ---------------------------------------------------------
   const currentDeptObj = useMemo(() => {
     if (!formData.departmentId) return null;
-    return departments.find((d) => String(d.id) === String(formData.departmentId));
+    return departments.find(
+      (d) => String(d.id) === String(formData.departmentId),
+    );
   }, [departments, formData.departmentId]);
 
   const availableJobRoles = useMemo(() => {
     if (!currentDeptObj || !currentDeptObj.jobRoles) return [];
     return currentDeptObj.jobRoles
-      .map((role) => (typeof role === "string" ? role : role.jobTitle || role.title || ""))
+      .map((role) =>
+        typeof role === "string" ? role : role.jobTitle || role.title || "",
+      )
       .filter(Boolean);
   }, [currentDeptObj]);
 
@@ -345,7 +406,7 @@ const AddEmployeeModal = ({ open, onClose, departments = [], onSuccess, employee
       formData.jobTitle && !availableJobRoles.includes(formData.jobTitle)
         ? [...availableJobRoles, formData.jobTitle]
         : availableJobRoles,
-    [availableJobRoles, formData.jobTitle]
+    [availableJobRoles, formData.jobTitle],
   );
 
   // Only active departments can be picked; when editing, keep the employee's
@@ -353,13 +414,16 @@ const AddEmployeeModal = ({ open, onClose, departments = [], onSuccess, employee
   const departmentOptions = useMemo(
     () =>
       departments.filter(
-        (d) => d.active !== false || String(d.id) === String(formData.departmentId)
+        (d) =>
+          d.active !== false || String(d.id) === String(formData.departmentId),
       ),
-    [departments, formData.departmentId]
+    [departments, formData.departmentId],
   );
 
   const handleDepartmentSelect = (deptId) => {
-    const selectedDept = departments.find((d) => String(d.id) === String(deptId));
+    const selectedDept = departments.find(
+      (d) => String(d.id) === String(deptId),
+    );
 
     if (!selectedDept) {
       setFormData((prev) => ({
@@ -407,7 +471,10 @@ const AddEmployeeModal = ({ open, onClose, departments = [], onSuccess, employee
       const resp = await authApi.nextEmployeeId(backendRole);
       const formattedNumber = resp?.data?.formattedNumber || "001";
       setEmployeeIdNumber(formattedNumber);
-      setFormData((prev) => ({ ...prev, employeeId: `${prefix}-${formattedNumber}` }));
+      setFormData((prev) => ({
+        ...prev,
+        employeeId: `${prefix}-${formattedNumber}`,
+      }));
     } catch (err) {
       console.error("Failed to fetch next Employee ID:", err);
       setEmployeeIdNumber("001");
@@ -452,25 +519,32 @@ const AddEmployeeModal = ({ open, onClose, departments = [], onSuccess, employee
     const newErrors = {};
 
     if (step === 1) {
-      if (!formData.firstName.trim()) newErrors.firstName = "First name is required";
-      if (!formData.lastName.trim()) newErrors.lastName = "Last name is required";
+      if (!formData.firstName.trim())
+        newErrors.firstName = "First name is required";
+      if (!formData.lastName.trim())
+        newErrors.lastName = "Last name is required";
       if (!formData.email) {
         newErrors.email = "Email is required";
       } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
         newErrors.email = "Email is invalid";
       }
       if (!formData.phone) newErrors.phone = "Phone number is required";
-      if (!formData.dateOfBirth) newErrors.dateOfBirth = "Date of birth is required";
+      if (!formData.dateOfBirth)
+        newErrors.dateOfBirth = "Date of birth is required";
       if (!formData.gender) newErrors.gender = "Gender is required";
     }
 
     if (step === 2) {
       if (!formData.userRole) newErrors.userRole = "User role is required";
-      if (!formData.employeeId) newErrors.employeeId = "Employee ID is required";
-      if (!formData.departmentId) newErrors.departmentId = "Department is required";
+      if (!formData.employeeId)
+        newErrors.employeeId = "Employee ID is required";
+      if (!formData.departmentId)
+        newErrors.departmentId = "Department is required";
       if (!formData.jobTitle) newErrors.jobTitle = "Job title is required";
-      if (!formData.employmentType) newErrors.employmentType = "Employment type is required";
-      if (!formData.workLocation) newErrors.workLocation = "Work location is required";
+      if (!formData.employmentType)
+        newErrors.employmentType = "Employment type is required";
+      if (!formData.workLocation)
+        newErrors.workLocation = "Work location is required";
       if (!formData.hireDate) newErrors.hireDate = "Hire date is required";
     }
 
@@ -524,7 +598,8 @@ const AddEmployeeModal = ({ open, onClose, departments = [], onSuccess, employee
 
     setIsSubmitting(true);
     try {
-      const normalizedRole = ROLE_TO_BACKEND[formData.userRole?.toLowerCase()] || "EMPLOYEE";
+      const normalizedRole =
+        ROLE_TO_BACKEND[formData.userRole?.toLowerCase()] || "EMPLOYEE";
 
       const userPayload = {
         fullName: `${formData.firstName} ${formData.lastName}`.trim(),
@@ -584,10 +659,16 @@ const AddEmployeeModal = ({ open, onClose, departments = [], onSuccess, employee
 
       const msgLower = (message || "").toLowerCase();
       if (msgLower.includes("email already exists")) {
-        setErrors((prev) => ({ ...prev, email: "An employee with this email already exists." }));
+        setErrors((prev) => ({
+          ...prev,
+          email: "An employee with this email already exists.",
+        }));
         setCurrentStep(1);
       } else if (msgLower.includes("employee id already exists")) {
-        setErrors((prev) => ({ ...prev, employeeId: "This Employee ID is already in use." }));
+        setErrors((prev) => ({
+          ...prev,
+          employeeId: "This Employee ID is already in use.",
+        }));
         setCurrentStep(2);
       }
 
@@ -614,15 +695,22 @@ const AddEmployeeModal = ({ open, onClose, departments = [], onSuccess, employee
   };
 
   const passwordStrength = getPasswordStrength(formData.password);
-  const strengthLabels = ["Very Weak", "Weak", "Fair", "Good", "Strong", "Very Strong"];
-  const strengthColors = [
-    "bg-red-500",
-    "bg-orange-500",
-    "bg-yellow-500",
-    "bg-teal-500",
-    "bg-emerald-500",
-    "bg-emerald-600",
+  const strengthLabels = [
+    "Very Weak",
+    "Weak",
+    "Fair",
+    "Good",
+    "Strong",
+    "Very Strong",
   ];
+ const strengthColors = [
+  "bg-red-500",
+  "bg-orange-500",
+  "bg-yellow-500",
+  "bg-primary-400",
+  "bg-primary-500",
+  "bg-primary-600",
+];
 
   const selectedRole = USER_ROLES.find((r) => r.value === formData.userRole);
 
@@ -656,15 +744,18 @@ const AddEmployeeModal = ({ open, onClose, departments = [], onSuccess, employee
         <div
           className="
             px-6 py-5
-            bg-gradient-to-r from-teal-500 to-emerald-600
+            bg-primary-600
             flex items-center
             justify-between
           "
         >
           <div>
-            <h2 className="text-lg font-bold text-white">{isEdit ? "Edit Employee" : "Add New Employee"}</h2>
+            <h2 className="text-lg font-bold text-white">
+              {isEdit ? "Edit Employee" : "Add New Employee"}
+            </h2>
             <p className="text-xs text-white/80 mt-0.5">
-              Step {currentStep} of {STEPS.length} — {STEPS.find((s) => s.id === currentStep)?.title}
+              Step {currentStep} of {STEPS.length} —{" "}
+              {STEPS.find((s) => s.id === currentStep)?.title}
             </p>
           </div>
 
@@ -700,26 +791,35 @@ const AddEmployeeModal = ({ open, onClose, departments = [], onSuccess, employee
                 <React.Fragment key={step.id}>
                   <div className="flex flex-col items-center">
                     <div
-                      className={`h-9 w-9 rounded-full flex items-center justify-center transition-all duration-300 ${isCompleted
-                        ? "bg-emerald-500 text-white"
-                        : isCurrent
-                          ? "bg-teal-500 text-white shadow-md scale-110"
-                          : "bg-slate-200 text-slate-500"
-                        }`}
+                      className={`h-9 w-9 rounded-full flex items-center justify-center transition-all duration-300 ${
+                        isCompleted
+                          ? "bg-primary-500 text-white"
+                          : isCurrent
+                            ? "bg-primary-600 text-white shadow-md scale-110"
+                            : "bg-slate-100 text-slate-400"
+                      }`}
                     >
-                      {isCompleted ? <Check className="w-4 h-4" /> : <StepIcon className="w-4 h-4" />}
+                      {isCompleted ? (
+                        <Check className="w-4 h-4" />
+                      ) : (
+                        <StepIcon className="w-4 h-4" />
+                      )}
                     </div>
                     <span
-                      className={`text-[11px] mt-1.5 font-semibold ${isCurrent ? "text-teal-600" : "text-slate-400"
-                        }`}
+                      className={`text-[11px] mt-1.5 font-semibold ${
+                        isCurrent ? "text-primary-600" : "text-slate-400"
+                      }`}
                     >
                       {step.title}
                     </span>
                   </div>
                   {index < STEPS.length - 1 && (
                     <div
-                      className={`flex-1 h-1 mx-2 rounded-full transition-all duration-300 ${currentStep > step.id ? "bg-emerald-500" : "bg-slate-200"
-                        }`}
+                      className={`flex-1 h-1 mx-2 rounded-full transition-all duration-300 ${
+                        currentStep > step.id
+                          ? "bg-primary-500"
+                          : "bg-slate-200"
+                      }`}
                     />
                   )}
                 </React.Fragment>
@@ -730,14 +830,16 @@ const AddEmployeeModal = ({ open, onClose, departments = [], onSuccess, employee
 
         {/* Body / Form */}
         <form onSubmit={handleFormSubmit} className="flex flex-col min-h-0">
-          <div className="green-scrollbar overflow-y-auto p-6 space-y-5">
+          <div className="overflow-y-auto p-6 space-y-5">
             {draftRestored && !isEdit && (
-              <div className="flex items-center justify-between gap-3 bg-teal-50 border border-teal-100 text-teal-700 text-xs rounded-xl px-4 py-3">
-                <span>Continuing your unfinished form — nothing you typed was lost.</span>
+              <div className="flex items-center justify-between gap-3 bg-primary-50 border border-primary-100 text-primary-700 text-xs rounded-xl px-4 py-3">
+                <span>
+                  Continuing your unfinished form — nothing you typed was lost.
+                </span>
                 <button
                   type="button"
                   onClick={discardDraft}
-                  className="font-semibold underline decoration-teal-300 hover:decoration-teal-500 flex-shrink-0"
+                  className="font-semibold underline decoration-primary-300 hover:decoration-primary-500 flex-shrink-0"
                 >
                   Discard &amp; start fresh
                 </button>
@@ -748,36 +850,44 @@ const AddEmployeeModal = ({ open, onClose, departments = [], onSuccess, employee
               <div className="space-y-5">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <label className="block text-sm font-semibold text-slate-700">First Name *</label>
+                    <label className="block text-sm font-semibold text-slate-700">
+                      First Name *
+                    </label>
                     <input
                       type="text"
                       name="firstName"
                       value={formData.firstName}
                       onChange={handleChange}
                       placeholder="John"
-                      className={`w-full px-4 py-2.5 rounded-xl border transition-all duration-200 focus:ring-2 focus:ring-teal-500 outline-none bg-slate-50 ${errors.firstName ? "border-red-500" : "border-slate-300"
-                        }`}
+                      className={`w-full px-4 py-2.5 rounded-xl border transition-all duration-200 focus:ring-2 focus:ring-primary-500 outline-none bg-slate-50 ${
+                        errors.firstName ? "border-red-500" : "border-slate-300"
+                      }`}
                     />
                     {errors.firstName && <FieldError msg={errors.firstName} />}
                   </div>
 
                   <div className="space-y-2">
-                    <label className="block text-sm font-semibold text-slate-700">Last Name *</label>
+                    <label className="block text-sm font-semibold text-slate-700">
+                      Last Name *
+                    </label>
                     <input
                       type="text"
                       name="lastName"
                       value={formData.lastName}
                       onChange={handleChange}
                       placeholder="Doe"
-                      className={`w-full px-4 py-2.5 rounded-xl border transition-all duration-200 focus:ring-2 focus:ring-teal-500 outline-none bg-slate-50 ${errors.lastName ? "border-red-500" : "border-slate-300"
-                        }`}
+                      className={`w-full px-4 py-2.5 rounded-xl border transition-all duration-200 focus:ring-2 focus:ring-primary-500 outline-none bg-slate-50 ${
+                        errors.lastName ? "border-red-500" : "border-slate-300"
+                      }`}
                     />
                     {errors.lastName && <FieldError msg={errors.lastName} />}
                   </div>
                 </div>
 
                 <div className="space-y-2">
-                  <label className="block text-sm font-semibold text-slate-700">Email Address *</label>
+                  <label className="block text-sm font-semibold text-slate-700">
+                    Email Address *
+                  </label>
                   <div className="relative">
                     <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-slate-400" />
                     <input
@@ -786,8 +896,9 @@ const AddEmployeeModal = ({ open, onClose, departments = [], onSuccess, employee
                       value={formData.email}
                       onChange={handleChange}
                       placeholder="john.doe@company.com"
-                      className={`w-full pl-10 pr-4 py-2.5 rounded-xl border transition-all duration-200 focus:ring-2 focus:ring-teal-500 outline-none bg-slate-50 ${errors.email ? "border-red-500" : "border-slate-300"
-                        }`}
+                      className={`w-full pl-10 pr-4 py-2.5 rounded-xl border transition-all duration-200 focus:ring-2 focus:ring-primary-500 outline-none bg-slate-50 ${
+                        errors.email ? "border-red-500" : "border-slate-300"
+                      }`}
                     />
                   </div>
                   {errors.email && <FieldError msg={errors.email} />}
@@ -795,7 +906,9 @@ const AddEmployeeModal = ({ open, onClose, departments = [], onSuccess, employee
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <label className="block text-sm font-semibold text-slate-700">Phone Number *</label>
+                    <label className="block text-sm font-semibold text-slate-700">
+                      Phone Number *
+                    </label>
                     <div className="relative">
                       <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-slate-400" />
                       <input
@@ -804,15 +917,18 @@ const AddEmployeeModal = ({ open, onClose, departments = [], onSuccess, employee
                         value={formData.phone}
                         onChange={handleChange}
                         placeholder="+1 (555) 000-0000"
-                        className={`w-full pl-10 pr-4 py-2.5 rounded-xl border transition-all duration-200 focus:ring-2 focus:ring-teal-500 outline-none bg-slate-50 ${errors.phone ? "border-red-500" : "border-slate-300"
-                          }`}
+                        className={`w-full pl-10 pr-4 py-2.5 rounded-xl border transition-all duration-200 focus:ring-2 focus:ring-primary-500 outline-none bg-slate-50 ${
+                          errors.phone ? "border-red-500" : "border-slate-300"
+                        }`}
                       />
                     </div>
                     {errors.phone && <FieldError msg={errors.phone} />}
                   </div>
 
                   <div className="space-y-2">
-                    <label className="block text-sm font-semibold text-slate-700">Date of Birth *</label>
+                    <label className="block text-sm font-semibold text-slate-700">
+                      Date of Birth *
+                    </label>
                     <div className="relative">
                       <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-slate-400" />
                       <input
@@ -820,24 +936,32 @@ const AddEmployeeModal = ({ open, onClose, departments = [], onSuccess, employee
                         name="dateOfBirth"
                         value={formData.dateOfBirth}
                         onChange={handleChange}
-                        className={`w-full pl-10 pr-4 py-2.5 rounded-xl border transition-all duration-200 focus:ring-2 focus:ring-teal-500 outline-none bg-slate-50 ${errors.dateOfBirth ? "border-red-500" : "border-slate-300"
-                          }`}
+                        className={`w-full pl-10 pr-4 py-2.5 rounded-xl border transition-all duration-200 focus:ring-2 focus:ring-primary-500 outline-none bg-slate-50 ${
+                          errors.dateOfBirth
+                            ? "border-red-500"
+                            : "border-slate-300"
+                        }`}
                       />
                     </div>
-                    {errors.dateOfBirth && <FieldError msg={errors.dateOfBirth} />}
+                    {errors.dateOfBirth && (
+                      <FieldError msg={errors.dateOfBirth} />
+                    )}
                   </div>
                 </div>
 
                 <div className="space-y-2">
-                  <label className="block text-sm font-semibold text-slate-700">Gender *</label>
+                  <label className="block text-sm font-semibold text-slate-700">
+                    Gender *
+                  </label>
                   <div className="relative">
                     <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-slate-400 pointer-events-none" />
                     <select
                       name="gender"
                       value={formData.gender}
                       onChange={handleChange}
-                      className={`w-full pl-10 pr-4 py-2.5 rounded-xl border transition-all duration-200 focus:ring-2 focus:ring-teal-500 outline-none bg-slate-50 appearance-none ${errors.gender ? "border-red-500" : "border-slate-300"
-                        }`}
+                      className={`w-full pl-10 pr-4 py-2.5 rounded-xl border transition-all duration-200 focus:ring-2 focus:ring-primary-500 outline-none bg-slate-50 appearance-none ${
+                        errors.gender ? "border-red-500" : "border-slate-300"
+                      }`}
                     >
                       <option value="">Select gender</option>
                       {GENDER_OPTIONS.map((g) => (
@@ -857,49 +981,66 @@ const AddEmployeeModal = ({ open, onClose, departments = [], onSuccess, employee
               <div className="space-y-6">
                 {/* Role selection */}
                 <div className="space-y-3">
-                  <label className="block text-sm font-semibold text-slate-700">User Role *</label>
+                  <label className="block text-sm font-semibold text-slate-700">
+                    User Role *
+                  </label>
                   <div className="grid gap-2.5">
                     {USER_ROLES.map((role) => {
                       const RoleIcon = role.icon;
                       const isSelected = formData.userRole === role.value;
-                      const isDisabled = role.disabled || (isEdit && !isSelected);
+                      const isDisabled =
+                        role.disabled || (isEdit && !isSelected);
 
                       return (
                         <div
                           key={role.value}
-                          onClick={() => !isDisabled && handleRoleChange(role.value)}
+                          onClick={() =>
+                            !isDisabled && handleRoleChange(role.value)
+                          }
                           title={isDisabled ? role.disabledReason : undefined}
-                          className={`p-3.5 border-2 rounded-xl transition-all duration-200 ${isDisabled
-                            ? "border-slate-200 bg-slate-50 opacity-60 cursor-not-allowed"
-                            : isSelected
-                              ? "border-teal-500 bg-teal-50 shadow-sm cursor-pointer"
-                              : "border-slate-200 hover:border-slate-300 hover:bg-slate-50 cursor-pointer"
-                            }`}
+                          className={`p-3.5 border-2 rounded-xl transition-all duration-200 ${
+                            isDisabled
+                              ? "border-slate-200 bg-slate-50 opacity-60 cursor-not-allowed"
+                              : isSelected
+                                ? "border-primary-500 bg-primary-50 shadow-sm cursor-pointer"
+                                : "border-slate-200 hover:border-slate-300 hover:bg-slate-50 cursor-pointer"
+                          }`}
                         >
                           <div className="flex items-start gap-3">
                             <div
-                              className={`p-2 rounded-lg ${isDisabled
-                                ? "bg-slate-200 text-slate-400"
-                                : isSelected
-                                  ? "bg-teal-100 text-teal-600"
-                                  : "bg-slate-100 text-slate-600"
-                                }`}
+                              className={`p-2 rounded-lg ${
+                                isDisabled
+                                  ? "bg-slate-200 text-slate-400"
+                                  : isSelected
+                                    ? "bg-primary-100 text-primary-700"
+                                    : "bg-slate-100 text-slate-600"
+                              }`}
                             >
-                              {isDisabled ? <LockIcon className="w-4.5 h-4.5" /> : <RoleIcon className="w-4.5 h-4.5" />}
+                              {isDisabled ? (
+                                <LockIcon className="w-4.5 h-4.5" />
+                              ) : (
+                                <RoleIcon className="w-4.5 h-4.5" />
+                              )}
                             </div>
                             <div className="flex-1">
                               <div className="flex items-center gap-2">
-                                <h3 className={`font-semibold text-sm ${isDisabled ? "text-slate-500" : "text-slate-800"}`}>
+                                <h3
+                                  className={`font-semibold text-sm ${isDisabled ? "text-slate-500" : "text-slate-800"}`}
+                                >
                                   {role.label}
                                 </h3>
-                                {isSelected && !isDisabled && <Check className="w-4 h-4 text-teal-600" />}
+                                {isSelected && !isDisabled && (
+                                  <Check className="w-4 h-4 text-primary-600" />
+                                )}
                                 {isDisabled && (
                                   <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 bg-slate-200 px-1.5 py-0.5 rounded">
                                     Disabled for HR
                                   </span>
                                 )}
                               </div>
-                              <p className="text-xs text-slate-500 mt-0.5">{role.description}</p>
+                              <p className="text-xs text-slate-500 mt-0.5">
+                                {role.description}
+                              </p>
                             </div>
                           </div>
                         </div>
@@ -916,10 +1057,13 @@ const AddEmployeeModal = ({ open, onClose, departments = [], onSuccess, employee
 
                 {/* Employee ID */}
                 <div className="space-y-2">
-                  <label className="block text-sm font-semibold text-slate-700">Employee ID *</label>
+                  <label className="block text-sm font-semibold text-slate-700">
+                    Employee ID *
+                  </label>
                   <div
-                    className={`flex items-stretch rounded-xl border transition-all duration-200 bg-slate-50 overflow-hidden focus-within:ring-2 focus-within:ring-teal-500 ${errors.employeeId ? "border-red-500" : "border-slate-300"
-                      }`}
+                    className={`flex items-stretch rounded-xl border transition-all duration-200 bg-slate-50 overflow-hidden focus-within:ring-2 focus-within:ring-primary-500 ${
+                      errors.employeeId ? "border-red-500" : "border-slate-300"
+                    }`}
                   >
                     <div className="flex items-center gap-2 px-3.5 bg-slate-100 border-r border-slate-300 text-slate-700 font-semibold text-sm select-none">
                       <IdCard className="w-4 h-4 text-slate-400" />
@@ -947,14 +1091,19 @@ const AddEmployeeModal = ({ open, onClose, departments = [], onSuccess, employee
                 {/* Department -> Job Title (dependent dropdowns) */}
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <label className="block text-sm font-semibold text-slate-700">Department *</label>
+                    <label className="block text-sm font-semibold text-slate-700">
+                      Department *
+                    </label>
                     <div className="relative">
                       <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-slate-400 pointer-events-none" />
                       <select
                         value={formData.departmentId}
                         onChange={(e) => handleDepartmentSelect(e.target.value)}
-                        className={`w-full pl-10 pr-4 py-2.5 rounded-xl border transition-all duration-200 focus:ring-2 focus:ring-teal-500 outline-none bg-slate-50 appearance-none ${errors.departmentId ? "border-red-500" : "border-slate-300"
-                          }`}
+                        className={`w-full pl-10 pr-4 py-2.5 rounded-xl border transition-all duration-200 focus:ring-2 focus:ring-primary-500 outline-none bg-slate-50 appearance-none ${
+                          errors.departmentId
+                            ? "border-red-500"
+                            : "border-slate-300"
+                        }`}
                       >
                         <option value="">Select Department</option>
                         {departmentOptions.map((dept) => (
@@ -965,24 +1114,35 @@ const AddEmployeeModal = ({ open, onClose, departments = [], onSuccess, employee
                       </select>
                     </div>
                     {departmentOptions.length === 0 && (
-                      <p className="text-xs text-slate-400">No departments added yet — add one in Departments first.</p>
+                      <p className="text-xs text-slate-400">
+                        No departments added yet — add one in Departments first.
+                      </p>
                     )}
-                    {errors.departmentId && <FieldError msg={errors.departmentId} />}
+                    {errors.departmentId && (
+                      <FieldError msg={errors.departmentId} />
+                    )}
                   </div>
 
                   <div className="space-y-2">
-                    <label className="block text-sm font-semibold text-slate-700">Job Title *</label>
+                    <label className="block text-sm font-semibold text-slate-700">
+                      Job Title *
+                    </label>
                     <div className="relative">
                       <Briefcase className="absolute left-3 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-slate-400 pointer-events-none" />
                       <select
                         value={formData.jobTitle}
                         onChange={(e) => handleJobTitleSelect(e.target.value)}
                         disabled={!formData.departmentId}
-                        className={`w-full pl-10 pr-4 py-2.5 rounded-xl border transition-all duration-200 focus:ring-2 focus:ring-teal-500 outline-none bg-slate-50 appearance-none disabled:opacity-60 disabled:cursor-not-allowed ${errors.jobTitle ? "border-red-500" : "border-slate-300"
-                          }`}
+                        className={`w-full pl-10 pr-4 py-2.5 rounded-xl border transition-all duration-200 focus:ring-2 focus:ring-primary-500 outline-none bg-slate-50 appearance-none disabled:opacity-60 disabled:cursor-not-allowed ${
+                          errors.jobTitle
+                            ? "border-red-500"
+                            : "border-slate-300"
+                        }`}
                       >
                         <option value="">
-                          {formData.departmentId ? "Select Job Title" : "Select a department first"}
+                          {formData.departmentId
+                            ? "Select Job Title"
+                            : "Select a department first"}
                         </option>
                         {jobTitleOptions.map((title) => (
                           <option key={title} value={title}>
@@ -991,22 +1151,31 @@ const AddEmployeeModal = ({ open, onClose, departments = [], onSuccess, employee
                         ))}
                       </select>
                     </div>
-                    {formData.departmentId && availableJobRoles.length === 0 && (
-                      <p className="text-xs text-slate-400">This department has no job roles yet — add them in Departments first.</p>
-                    )}
+                    {formData.departmentId &&
+                      availableJobRoles.length === 0 && (
+                        <p className="text-xs text-slate-400">
+                          This department has no job roles yet — add them in
+                          Departments first.
+                        </p>
+                      )}
                     {errors.jobTitle && <FieldError msg={errors.jobTitle} />}
                   </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <label className="block text-sm font-semibold text-slate-700">Employment Type *</label>
+                    <label className="block text-sm font-semibold text-slate-700">
+                      Employment Type *
+                    </label>
                     <select
                       name="employmentType"
                       value={formData.employmentType}
                       onChange={handleChange}
-                      className={`w-full px-4 py-2.5 rounded-xl border transition-all duration-200 focus:ring-2 focus:ring-teal-500 outline-none bg-slate-50 ${errors.employmentType ? "border-red-500" : "border-slate-300"
-                        }`}
+                      className={`w-full px-4 py-2.5 rounded-xl border transition-all duration-200 focus:ring-2 focus:ring-primary-500 outline-none bg-slate-50 ${
+                        errors.employmentType
+                          ? "border-red-500"
+                          : "border-slate-300"
+                      }`}
                     >
                       <option value="">Select Type</option>
                       {employmentTypeOptions.map((type) => (
@@ -1015,25 +1184,35 @@ const AddEmployeeModal = ({ open, onClose, departments = [], onSuccess, employee
                         </option>
                       ))}
                     </select>
-                    {errors.employmentType && <FieldError msg={errors.employmentType} />}
-                    {employmentTypesError && <FieldError msg={employmentTypesError} />}
+                    {errors.employmentType && (
+                      <FieldError msg={errors.employmentType} />
+                    )}
+                    {employmentTypesError && (
+                      <FieldError msg={employmentTypesError} />
+                    )}
                     {!employmentTypesError && employmentTypes.length === 0 && (
                       <p className="text-xs text-amber-600">
-                        No employment types yet. Add them in Leave Management → Add Employment Type.
+                        No employment types yet. Add them in Leave Management →
+                        Add Employment Type.
                       </p>
                     )}
                   </div>
 
                   <div className="space-y-2">
-                    <label className="block text-sm font-semibold text-slate-700">Work Location *</label>
+                    <label className="block text-sm font-semibold text-slate-700">
+                      Work Location *
+                    </label>
                     <div className="relative">
                       <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-slate-400 pointer-events-none" />
                       <select
                         name="workLocation"
                         value={formData.workLocation}
                         onChange={handleChange}
-                        className={`w-full pl-10 pr-4 py-2.5 rounded-xl border transition-all duration-200 focus:ring-2 focus:ring-teal-500 outline-none bg-slate-50 appearance-none ${errors.workLocation ? "border-red-500" : "border-slate-300"
-                          }`}
+                        className={`w-full pl-10 pr-4 py-2.5 rounded-xl border transition-all duration-200 focus:ring-2 focus:ring-primary-500 outline-none bg-slate-50 appearance-none ${
+                          errors.workLocation
+                            ? "border-red-500"
+                            : "border-slate-300"
+                        }`}
                       >
                         <option value="">Select work location</option>
                         {workLocationOptions.map((loc) => (
@@ -1043,18 +1222,25 @@ const AddEmployeeModal = ({ open, onClose, departments = [], onSuccess, employee
                         ))}
                       </select>
                     </div>
-                    {errors.workLocation && <FieldError msg={errors.workLocation} />}
-                    {workLocationsError && <FieldError msg={workLocationsError} />}
+                    {errors.workLocation && (
+                      <FieldError msg={errors.workLocation} />
+                    )}
+                    {workLocationsError && (
+                      <FieldError msg={workLocationsError} />
+                    )}
                     {!workLocationsError && workLocations.length === 0 && (
                       <p className="text-xs text-amber-600">
-                        No work locations yet. Add them from the Employees page → Add Work Location.
+                        No work locations yet. Add them from the Employees page
+                        → Add Work Location.
                       </p>
                     )}
                   </div>
                 </div>
 
                 <div className="space-y-2">
-                  <label className="block text-sm font-semibold text-slate-700">Hire Date *</label>
+                  <label className="block text-sm font-semibold text-slate-700">
+                    Hire Date *
+                  </label>
                   <div className="relative">
                     <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-slate-400" />
                     <input
@@ -1062,8 +1248,9 @@ const AddEmployeeModal = ({ open, onClose, departments = [], onSuccess, employee
                       name="hireDate"
                       value={formData.hireDate}
                       onChange={handleChange}
-                      className={`w-full pl-10 pr-4 py-2.5 rounded-xl border transition-all duration-200 focus:ring-2 focus:ring-teal-500 outline-none bg-slate-50 ${errors.hireDate ? "border-red-500" : "border-slate-300"
-                        }`}
+                      className={`w-full pl-10 pr-4 py-2.5 rounded-xl border transition-all duration-200 focus:ring-2 focus:ring-primary-500 outline-none bg-slate-50 ${
+                        errors.hireDate ? "border-red-500" : "border-slate-300"
+                      }`}
                     />
                   </div>
                   {errors.hireDate && <FieldError msg={errors.hireDate} />}
@@ -1079,7 +1266,9 @@ const AddEmployeeModal = ({ open, onClose, departments = [], onSuccess, employee
                     {isEdit ? "New Password (optional)" : "Password *"}
                   </label>
                   {isEdit && (
-                    <p className="text-xs text-slate-500 -mt-1">Leave blank to keep the current password.</p>
+                    <p className="text-xs text-slate-500 -mt-1">
+                      Leave blank to keep the current password.
+                    </p>
                   )}
                   <div className="relative">
                     <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-slate-400" />
@@ -1089,29 +1278,37 @@ const AddEmployeeModal = ({ open, onClose, departments = [], onSuccess, employee
                       value={formData.password}
                       onChange={handleChange}
                       placeholder="••••••••"
-                      className={`w-full pl-10 pr-12 py-2.5 rounded-xl border transition-all duration-200 focus:ring-2 focus:ring-teal-500 outline-none bg-slate-50 ${errors.password ? "border-red-500" : "border-slate-300"
-                        }`}
+                      className={`w-full pl-10 pr-12 py-2.5 rounded-xl border transition-all duration-200 focus:ring-2 focus:ring-primary-500 outline-none bg-slate-50 ${
+                        errors.password ? "border-red-500" : "border-slate-300"
+                      }`}
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
                       className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
                     >
-                      {showPassword ? <EyeOff className="w-4.5 h-4.5" /> : <Eye className="w-4.5 h-4.5" />}
+                      {showPassword ? (
+                        <EyeOff className="w-4.5 h-4.5" />
+                      ) : (
+                        <Eye className="w-4.5 h-4.5" />
+                      )}
                     </button>
                   </div>
 
                   {formData.password && (
                     <div className="space-y-1.5">
                       <div className="flex justify-between items-center text-xs">
-                        <span className="text-slate-500">Password strength</span>
+                        <span className="text-slate-500">
+                          Password strength
+                        </span>
                         <span
-                          className={`font-medium ${passwordStrength <= 2
-                            ? "text-red-500"
-                            : passwordStrength <= 3
-                              ? "text-yellow-600"
-                              : "text-emerald-600"
-                            }`}
+                          className={`font-medium ${
+                            passwordStrength <= 2
+                              ? "text-red-500"
+                              : passwordStrength <= 3
+                                ? "text-yellow-600"
+                                : "text-primary-700"
+                          }`}
                         >
                           {strengthLabels[passwordStrength]}
                         </span>
@@ -1140,18 +1337,29 @@ const AddEmployeeModal = ({ open, onClose, departments = [], onSuccess, employee
                       value={formData.confirmPassword}
                       onChange={handleChange}
                       placeholder="••••••••"
-                      className={`w-full pl-10 pr-12 py-2.5 rounded-xl border transition-all duration-200 focus:ring-2 focus:ring-teal-500 outline-none bg-slate-50 ${errors.confirmPassword ? "border-red-500" : "border-slate-300"
-                        }`}
+                      className={`w-full pl-10 pr-12 py-2.5 rounded-xl border transition-all duration-200 focus:ring-2 focus:ring-primary-500 outline-none bg-slate-50 ${
+                        errors.confirmPassword
+                          ? "border-red-500"
+                          : "border-slate-300"
+                      }`}
                     />
                     <button
                       type="button"
-                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      onClick={() =>
+                        setShowConfirmPassword(!showConfirmPassword)
+                      }
                       className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
                     >
-                      {showConfirmPassword ? <EyeOff className="w-4.5 h-4.5" /> : <Eye className="w-4.5 h-4.5" />}
+                      {showConfirmPassword ? (
+                        <EyeOff className="w-4.5 h-4.5" />
+                      ) : (
+                        <Eye className="w-4.5 h-4.5" />
+                      )}
                     </button>
                   </div>
-                  {errors.confirmPassword && <FieldError msg={errors.confirmPassword} />}
+                  {errors.confirmPassword && (
+                    <FieldError msg={errors.confirmPassword} />
+                  )}
                 </div>
               </div>
             )}
@@ -1159,9 +1367,11 @@ const AddEmployeeModal = ({ open, onClose, departments = [], onSuccess, employee
             {/* ============ STEP 4 — REVIEW ============ */}
             {currentStep === 4 && (
               <div className="space-y-5">
-                <div className="bg-teal-50 border border-teal-200 rounded-xl p-4">
-                  <h3 className="font-semibold text-teal-800 mb-1 text-sm">Almost there!</h3>
-                  <p className="text-teal-700 text-xs">
+                <div className="bg-primary-50 border border-primary-200 rounded-xl p-4">
+                  <h3 className="font-semibold text-primary-800 mb-1 text-sm">
+                    Almost there!
+                  </h3>
+                  <p className="text-primary-700 text-xs">
                     {isEdit
                       ? "Review the changes below, then press Update to save them."
                       : "Review the details below, then press Submit to create this employee's account."}
@@ -1170,31 +1380,63 @@ const AddEmployeeModal = ({ open, onClose, departments = [], onSuccess, employee
 
                 {selectedRole && (
                   <div className="bg-slate-50 border border-slate-200 rounded-xl p-4">
-                    <h4 className="font-semibold text-slate-800 mb-2 text-sm">Role Assignment</h4>
+                    <h4 className="font-semibold text-slate-800 mb-2 text-sm">
+                      Role Assignment
+                    </h4>
                     <div className="flex items-center gap-3">
-                      <div className="p-2 bg-teal-100 rounded-lg">
-                        {React.createElement(selectedRole.icon, { className: "w-4.5 h-4.5 text-teal-600" })}
+                      <div className="p-2 bg-primary-100 rounded-lg">
+                        {React.createElement(selectedRole.icon, {
+                          className: "w-4.5 h-4.5 text-primary-700",
+                        })}
                       </div>
                       <div>
-                        <p className="text-sm font-medium text-slate-800">{selectedRole.label}</p>
-                        <p className="text-xs text-slate-500">{selectedRole.description}</p>
+                        <p className="text-sm font-medium text-slate-800">
+                          {selectedRole.label}
+                        </p>
+                        <p className="text-xs text-slate-500">
+                          {selectedRole.description}
+                        </p>
                       </div>
                     </div>
                   </div>
                 )}
 
                 <div className="grid grid-cols-2 gap-3">
-                  <ReviewItem label="Full Name" value={`${formData.firstName} ${formData.lastName}`.trim()} />
+                  <ReviewItem
+                    label="Full Name"
+                    value={`${formData.firstName} ${formData.lastName}`.trim()}
+                  />
                   <ReviewItem label="Email" value={formData.email} />
                   <ReviewItem label="Phone" value={formData.phone} />
                   <ReviewItem label="Employee ID" value={formData.employeeId} />
-                  <ReviewItem label="Department" value={formData.departmentName} />
+                  <ReviewItem
+                    label="Department"
+                    value={formData.departmentName}
+                  />
                   <ReviewItem label="Job Title" value={formData.jobTitle} />
-                  <ReviewItem label="Employment Type" value={formData.employmentType} />
-                  <ReviewItem label="Work Location" value={formData.workLocation} />
-                  <ReviewItem label="Date of Birth" value={formatDate(formData.dateOfBirth)} />
-                  <ReviewItem label="Gender" value={GENDER_OPTIONS.find((g) => g.value === formData.gender)?.label} />
-                  <ReviewItem label="Hire Date" value={formatDate(formData.hireDate)} />
+                  <ReviewItem
+                    label="Employment Type"
+                    value={formData.employmentType}
+                  />
+                  <ReviewItem
+                    label="Work Location"
+                    value={formData.workLocation}
+                  />
+                  <ReviewItem
+                    label="Date of Birth"
+                    value={formatDate(formData.dateOfBirth)}
+                  />
+                  <ReviewItem
+                    label="Gender"
+                    value={
+                      GENDER_OPTIONS.find((g) => g.value === formData.gender)
+                        ?.label
+                    }
+                  />
+                  <ReviewItem
+                    label="Hire Date"
+                    value={formatDate(formData.hireDate)}
+                  />
                 </div>
               </div>
             )}
@@ -1206,10 +1448,11 @@ const AddEmployeeModal = ({ open, onClose, departments = [], onSuccess, employee
               type="button"
               onClick={handlePrev}
               disabled={currentStep === 1}
-              className={`flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all ${currentStep === 1
-                ? "text-slate-300 cursor-not-allowed"
-                : "text-slate-600 hover:text-slate-800 hover:bg-slate-100"
-                }`}
+              className={`flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all ${
+                currentStep === 1
+                  ? "text-slate-300 cursor-not-allowed"
+                  : "text-slate-600 hover:text-slate-800 hover:bg-slate-100"
+              }`}
             >
               <ChevronLeft className="w-4 h-4" />
               Previous
@@ -1220,7 +1463,7 @@ const AddEmployeeModal = ({ open, onClose, departments = [], onSuccess, employee
                 key="next-btn"
                 type="button"
                 onClick={handleNext}
-                className="flex items-center gap-1.5 px-5 py-2.5 bg-gradient-to-br from-teal-400 to-emerald-500 hover:from-teal-500 hover:to-emerald-600 text-white text-sm font-semibold rounded-xl transition-all shadow-sm"
+                className="flex items-center gap-1.5 px-5 py-2.5 bg-primary-600 hover:bg-primary-700 text-white text-sm font-semibold rounded-xl transition-all shadow-sm"
               >
                 Next
                 <ChevronRight className="w-4 h-4" />
@@ -1231,10 +1474,11 @@ const AddEmployeeModal = ({ open, onClose, departments = [], onSuccess, employee
                 type="button"
                 onClick={handleSubmit}
                 disabled={isSubmitting}
-                className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-white text-sm transition-all shadow-sm ${isSubmitting
-                  ? "bg-slate-400 cursor-not-allowed"
-                  : "bg-gradient-to-br from-teal-400 to-emerald-500 hover:from-teal-500 hover:to-emerald-600"
-                  }`}
+                className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-white text-sm transition-all shadow-sm ${
+                  isSubmitting
+                    ? "bg-slate-400 cursor-not-allowed"
+                    : "bg-primary-600 hover:bg-primary-700"
+                }`}
               >
                 {isSubmitting ? (
                   <>
@@ -1261,7 +1505,11 @@ const formatDate = (iso) => {
   const d = new Date(`${iso}T00:00:00`);
   return Number.isNaN(d.getTime())
     ? iso
-    : d.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
+    : d.toLocaleDateString(undefined, {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+      });
 };
 
 const FieldError = ({ msg }) => (
@@ -1274,7 +1522,9 @@ const FieldError = ({ msg }) => (
 const ReviewItem = ({ label, value }) => (
   <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">
     <p className="text-[11px] text-slate-400">{label}</p>
-    <p className="text-sm font-semibold text-slate-800 truncate">{value || "—"}</p>
+    <p className="text-sm font-semibold text-slate-800 truncate">
+      {value || "—"}
+    </p>
   </div>
 );
 

@@ -18,13 +18,15 @@ import {
   AlertCircle,
   CheckCircle2,
   Filter,
+  ArrowUpRight,
+  Layers3,
 } from "lucide-react";
 
 import { PageLayout } from "../../components/PageLayout";
 import NotificationPopup from "../../components/NotificationPopup.jsx";
 import { hrApi, userHrApi } from "../../services/api";
 
-// Strips the "400: " style status prefix that the API helper adds to messages.
+// Removes the status prefix added by the API helper.
 const cleanError = (error) =>
   String(error?.message || "").replace(/^\d{3}:\s*/, "").trim();
 
@@ -36,10 +38,6 @@ const Department = () => {
 
   const [departments, setDepartments] = useState([]);
   const [loading, setLoading] = useState(true);
-
-  // Real employee list (same source Employee.jsx uses) — used to compute
-  // accurate, always-current per-department employee counts instead of
-  // trusting the department record's own (often stale/unsynced) count.
   const [employees, setEmployees] = useState([]);
 
   const [searchTerm, setSearchTerm] = useState("");
@@ -49,9 +47,7 @@ const Department = () => {
 
   const [editingDepartment, setEditingDepartment] = useState(null);
   const [selectedDepartment, setSelectedDepartment] = useState(null);
-
   const [deleteDepartment, setDeleteDepartment] = useState(null);
-
   const [openMenu, setOpenMenu] = useState(null);
 
   const [saving, setSaving] = useState(false);
@@ -61,11 +57,7 @@ const Department = () => {
     name: "",
     shortCode: "",
     description: "",
-    jobRoles: [
-      {
-        jobTitle: "",
-      },
-    ],
+    jobRoles: [{ jobTitle: "" }],
   });
 
   // ---------------------------------------------------------
@@ -106,7 +98,6 @@ const Department = () => {
 
     try {
       const response = await hrApi.getDepartments();
-
       setDepartments(response.data || []);
     } catch (error) {
       console.error("Failed to load departments:", error);
@@ -115,9 +106,6 @@ const Department = () => {
     }
   };
 
-  // Real, current employee list — this is what Employee.jsx's Add/Edit
-  // Employee form actually writes to, so it is the source of truth for
-  // "how many employees does this department have right now".
   const fetchEmployees = async () => {
     try {
       const response = await userHrApi.getEmployees();
@@ -131,6 +119,7 @@ const Department = () => {
 
   useEffect(() => {
     if (!user) return;
+
     fetchDepartments();
     fetchEmployees();
   }, [user]);
@@ -138,9 +127,7 @@ const Department = () => {
   // ---------------------------------------------------------
   // LIVE EMPLOYEE COUNTS PER DEPARTMENT
   // ---------------------------------------------------------
-  // Built from the real employee list so that adding, editing, or
-  // reassigning an employee's department on the Employee page is
-  // instantly reflected here the next time this page loads/refreshes.
+
   const employeeCountByDept = useMemo(() => {
     const map = {};
 
@@ -175,11 +162,7 @@ const Department = () => {
       name: "",
       shortCode: "",
       description: "",
-      jobRoles: [
-        {
-          jobTitle: "",
-        },
-      ],
+      jobRoles: [{ jobTitle: "" }],
     });
 
     setEditingDepartment(null);
@@ -200,6 +183,7 @@ const Department = () => {
 
   const handleDepartmentChange = (field, value) => {
     setFormError("");
+
     setFormData((prev) => ({
       ...prev,
       [field]: value,
@@ -213,12 +197,7 @@ const Department = () => {
   const addJobRole = () => {
     setFormData((prev) => ({
       ...prev,
-      jobRoles: [
-        ...prev.jobRoles,
-        {
-          jobTitle: "",
-        },
-      ],
+      jobRoles: [...prev.jobRoles, { jobTitle: "" }],
     }));
   };
 
@@ -233,15 +212,11 @@ const Department = () => {
 
   const updateJobRole = (index, field, value) => {
     setFormError("");
+
     setFormData((prev) => ({
       ...prev,
       jobRoles: prev.jobRoles.map((role, i) =>
-        i === index
-          ? {
-            ...role,
-            [field]: value,
-          }
-          : role
+        i === index ? { ...role, [field]: value } : role
       ),
     }));
   };
@@ -264,8 +239,6 @@ const Department = () => {
       return;
     }
 
-    // Job roles: a completely empty row is ignored, while a row with a title
-    // is saved for salary configuration in the dedicated payroll flow.
     const jobRolesToSave = [];
     const seenTitles = new Set();
 
@@ -276,12 +249,15 @@ const Department = () => {
       if (!title) continue;
 
       const key = title.toLowerCase();
+
       if (seenTitles.has(key)) {
-        setFormError(`Job title "${title}" is listed more than once for this department.`);
+        setFormError(
+          `Job title "${title}" is listed more than once for this department.`
+        );
         return;
       }
-      seenTitles.add(key);
 
+      seenTitles.add(key);
       jobRolesToSave.push({ jobTitle: title });
     }
 
@@ -309,24 +285,29 @@ const Department = () => {
         savedDepartment = response?.data || null;
       }
 
-      // Re-load from the database so the list shows exactly what was stored.
       await fetchDepartments();
 
-      // Double-check the job roles really reached the database.
       const storedCount = savedDepartment?.jobRoles?.length;
-      if (savedDepartment && storedCount !== undefined && storedCount !== jobRolesToSave.length) {
+
+      if (
+        savedDepartment &&
+        storedCount !== undefined &&
+        storedCount !== jobRolesToSave.length
+      ) {
         alert(
           `Department saved, but only ${storedCount} of ${jobRolesToSave.length} job role(s) were stored. ` +
-          "Please open the department and check its job roles."
+            "Please open the department and check its job roles."
         );
       }
 
-      closeForm();
+      resetForm();
+      setShowAddForm(false);
     } catch (error) {
       console.error("Failed to save department:", error);
+
       setFormError(
         cleanError(error) ||
-        "Failed to save department to database. Please check your backend connection."
+          "Failed to save department to database. Please check your backend connection."
       );
     } finally {
       setSaving(false);
@@ -339,29 +320,18 @@ const Department = () => {
 
   const handleEdit = (department) => {
     setOpenMenu(null);
-
     setEditingDepartment(department);
 
     setFormData({
       name: department.name || "",
-      shortCode:
-        department.shortCode ||
-        department.code ||
-        "",
+      shortCode: department.shortCode || department.code || "",
       description: department.description || "",
       jobRoles:
         department.jobRoles?.length > 0
           ? department.jobRoles.map((role) => ({
-            jobTitle:
-              role.jobTitle ||
-              role.title ||
-              "",
-          }))
-          : [
-            {
-              jobTitle: "",
-            },
-          ],
+              jobTitle: role.jobTitle || role.title || "",
+            }))
+          : [{ jobTitle: "" }],
     });
 
     setShowAddForm(true);
@@ -379,8 +349,7 @@ const Department = () => {
 
       setDepartments((prev) =>
         prev.filter(
-          (department) =>
-            department.id !== deleteDepartment.id
+          (department) => department.id !== deleteDepartment.id
         )
       );
 
@@ -388,14 +357,16 @@ const Department = () => {
       setDeleteDepartment(null);
     } catch (error) {
       console.error("Failed to delete department:", error);
+
       alert(cleanError(error) || "Failed to delete department.");
+
       setDeleteDepartment(null);
       fetchDepartments();
     }
   };
 
   // ---------------------------------------------------------
-  // SEARCH
+  // SEARCH AND FILTER
   // ---------------------------------------------------------
 
   const filteredDepartments = useMemo(() => {
@@ -411,18 +382,15 @@ const Department = () => {
 
       if (!search) return true;
 
-      const name =
-        department.name?.toLowerCase() || "";
+      const name = department.name?.toLowerCase() || "";
 
-      const code =
-        (
-          department.shortCode ||
-          department.code ||
-          ""
-        ).toLowerCase();
+      const code = (
+        department.shortCode ||
+        department.code ||
+        ""
+      ).toLowerCase();
 
-      const description =
-        department.description?.toLowerCase() || "";
+      const description = department.description?.toLowerCase() || "";
 
       return (
         name.includes(search) ||
@@ -433,9 +401,9 @@ const Department = () => {
   }, [departments, searchTerm, selectedDeptFilter]);
 
   // ---------------------------------------------------------
-  // PAGINATION — show a fixed number of rows per page, with
-  // page navigation controls below the table.
+  // PAGINATION
   // ---------------------------------------------------------
+
   const ROWS_PER_PAGE = 6;
 
   const totalPages = Math.max(
@@ -455,7 +423,11 @@ const Department = () => {
 
   const paginatedDepartments = useMemo(() => {
     const start = (currentPage - 1) * ROWS_PER_PAGE;
-    return filteredDepartments.slice(start, start + ROWS_PER_PAGE);
+
+    return filteredDepartments.slice(
+      start,
+      start + ROWS_PER_PAGE
+    );
   }, [filteredDepartments, currentPage]);
 
   // ---------------------------------------------------------
@@ -463,9 +435,6 @@ const Department = () => {
   // ---------------------------------------------------------
 
   const totalDepartments = departments.length;
-
-  // Real total — count of actual employees, not the (potentially stale)
-  // sum of each department's own employeeCount field.
   const totalEmployees = employees.length;
 
   const totalJobRoles = departments.reduce(
@@ -480,11 +449,6 @@ const Department = () => {
     0
   );
 
-
-  // ---------------------------------------------------------
-  // LOADING
-  // ---------------------------------------------------------
-
   if (!user) return null;
 
   return (
@@ -497,16 +461,14 @@ const Department = () => {
         <button
           onClick={openCreateForm}
           className="
-            inline-flex items-center gap-2
-            bg-teal-500 hover:bg-teal-600
-            text-white
-            px-4 py-2.5
+            inline-flex items-center justify-center gap-2
+            px-5 py-2.5
             rounded-xl
-            text-sm font-semibold
-            shadow-sm
-            shadow-teal-600/20
-            transition-all
-            duration-200
+            bg-primary-700 hover:bg-primary-800
+            text-white text-sm font-semibold
+            shadow-md shadow-primary-700/20
+            hover:shadow-lg hover:shadow-primary-700/25
+            transition-all duration-200
           "
         >
           <Plus size={17} strokeWidth={2.5} />
@@ -514,111 +476,261 @@ const Department = () => {
         </button>
       }
     >
-      <div className="space-y-6">
+      <div className="space-y-7">
 
         {/* =====================================================
-            SUMMARY CARDS
+            SUMMARY CARDS - UNCHANGED
         ====================================================== */}
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
 
-          {/* Total Departments */}
           <SummaryCard
-            icon={<Building2 size={20} />}
+            icon={<Building2 size={21} />}
             title="Total Departments"
             value={totalDepartments}
             description="Active in organization"
-            className="bg-gradient-to-br from-green-400 to-emerald-500 text-white" />
+          />
 
-          {/* Total Job Roles */}
           <SummaryCard
-            icon={<BriefcaseBusiness size={20} />}
+            icon={<BriefcaseBusiness size={21} />}
             title="Total Job Roles"
             value={totalJobRoles}
             description="Defined across departments"
-            className="bg-gradient-to-br from-orange-400 to-amber-500 text-white" />
+          />
 
-          {/* Total Employees */}
           <SummaryCard
-            icon={<Users size={20} />}
+            icon={<Users size={21} />}
             title="Total Employees"
             value={totalEmployees}
             description="Assigned to departments"
-            className="bg-gradient-to-br from-purple-500 to-indigo-600 text-white" />
+          />
 
+        </div>
+
+        {/* =====================================================
+            DEPARTMENT DIRECTORY INTRO
+        ====================================================== */}
+
+        <div className="
+          relative overflow-hidden
+          rounded-2xl
+          border border-primary-200
+          bg-gradient-to-r
+          from-primary-100
+          via-primary-50
+          to-white
+          shadow-sm
+        ">
+          <div className="
+            absolute inset-y-0 left-0
+            w-1.5
+            bg-primary-700
+          " />
+
+          <div className="
+            absolute -right-12 -top-16
+            h-48 w-48
+            rounded-full
+            bg-primary-200/50
+          " />
+
+          <div className="
+            absolute right-24 -bottom-20
+            h-36 w-36
+            rounded-full
+            bg-primary-100/70
+          " />
+
+          <div className="
+            relative
+            flex flex-col
+            gap-4
+            px-5 py-5 sm:px-6
+            sm:flex-row sm:items-center sm:justify-between
+          ">
+            <div className="flex items-center gap-4">
+              <div className="
+                h-14 w-14
+                flex-shrink-0
+                rounded-2xl
+                bg-primary-700
+                text-white
+                shadow-lg shadow-primary-700/20
+                flex items-center justify-center
+              ">
+                <Layers3 size={25} />
+              </div>
+
+              <div>
+                <p className="
+                  text-[10px]
+                  font-bold
+                  uppercase
+                  tracking-[0.18em]
+                  text-primary-700
+                ">
+                  Organization Structure
+                </p>
+
+                <h2 className="text-base font-bold text-primary-950 mt-1">
+                  Department Directory
+                </h2>
+
+                <p className="text-xs sm:text-sm text-slate-600 mt-1">
+                  View and organize your company's departments, teams, and roles.
+                </p>
+              </div>
+            </div>
+
+            <div className="
+              inline-flex items-center gap-2
+              w-fit
+              px-4 py-2.5
+              rounded-xl
+              bg-white/80
+              border border-primary-200
+              shadow-sm
+              text-xs font-semibold text-primary-800
+            ">
+              <span className="
+                h-2.5 w-2.5 rounded-full
+                bg-primary-600
+                ring-4 ring-primary-100
+              " />
+              {departments.length} departments registered
+            </div>
+          </div>
         </div>
 
         {/* =====================================================
             SEARCH / FILTER BAR
         ====================================================== */}
 
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm">
+        <div className="
+          rounded-2xl
+          border border-primary-100
+          bg-gradient-to-br from-primary-50/70 via-white to-primary-50/40
+          shadow-sm
+          overflow-hidden
+        ">
+          <div className="
+            px-5 py-4 sm:px-6
+            border-b border-primary-100
+            bg-primary-100/50
+            flex items-center justify-between gap-3
+          ">
+            <div className="flex items-center gap-3">
+              <div className="
+                h-10 w-10
+                rounded-xl
+                bg-white
+                border border-primary-200
+                text-primary-700
+                shadow-sm
+                flex items-center justify-center
+              ">
+                <Search size={18} />
+              </div>
+
+              <div>
+                <h3 className="text-sm font-bold text-primary-950">
+                  Find a department
+                </h3>
+                <p className="text-xs text-slate-600 mt-1">
+                  Search or filter your department records
+                </p>
+              </div>
+            </div>
+
+            <div className="
+              hidden sm:flex
+              h-10 w-10
+              rounded-xl
+              bg-white
+              border border-primary-200
+              items-center justify-center
+              text-primary-700
+              shadow-sm
+            ">
+              <Filter size={17} />
+            </div>
+          </div>
 
           <div className="p-4 sm:p-5">
-
-            <div className="flex flex-col lg:flex-row gap-3 lg:items-center lg:justify-between">
-
-              <div className="relative flex-1 max-w-xl">
-
+            <div className="
+              flex flex-col
+              lg:flex-row
+              gap-4
+              lg:items-center
+              lg:justify-between
+            ">
+              <div className="relative flex-1 max-w-2xl">
                 <Search
                   size={18}
                   className="
-                    absolute left-3.5
+                    absolute left-4
                     top-1/2
                     -translate-y-1/2
-                    text-slate-400
+                    text-primary-600
                   "
                 />
 
                 <input
                   type="text"
                   value={searchTerm}
-                  onChange={(e) =>
-                    setSearchTerm(e.target.value)
-                  }
-                  placeholder="Search by department name or code..."
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  placeholder="Search by department name, code or description..."
                   className="
                     w-full
-                    pl-10 pr-10
-                    py-2.5
-                    bg-slate-50
-                    border border-slate-200
+                    pl-11 pr-11
+                    py-3
                     rounded-xl
-                    text-sm
-                    text-slate-800
+                    border border-primary-200
+                    bg-white
+                    text-sm text-slate-800
                     placeholder:text-slate-400
+                    shadow-sm
                     focus:outline-none
-                    focus:bg-white
-                    focus:border-blue-500
+                    focus:border-primary-500
                     focus:ring-4
-                    focus:ring-blue-500/10
-                    transition-all
+                    focus:ring-primary-100
+                    transition-all duration-200
                   "
                 />
 
                 {searchTerm && (
                   <button
+                    type="button"
                     onClick={() => setSearchTerm("")}
                     className="
-                      absolute right-3
+                      absolute right-3.5
                       top-1/2
                       -translate-y-1/2
+                      h-7 w-7
+                      rounded-lg
+                      flex items-center justify-center
                       text-slate-400
-                      hover:text-slate-600
+                      hover:text-primary-700
+                      hover:bg-primary-50
+                      transition-colors
                     "
+                    aria-label="Clear search"
                   >
                     <X size={16} />
                   </button>
                 )}
-
               </div>
 
-              {/* Department Filter + Showing count (grouped together, like the Employee page) */}
-              <div className="flex items-center gap-3">
-                <div className="flex items-center gap-2">
+              <div className="
+                flex flex-col
+                sm:flex-row
+                sm:items-center
+                gap-3
+              ">
+                <div className="relative flex items-center gap-2">
                   <Filter
-                    size={15}
-                    className="text-slate-400"
+                    size={16}
+                    className="flex-shrink-0 text-primary-700"
                   />
 
                   <select
@@ -627,50 +739,55 @@ const Department = () => {
                       setSelectedDeptFilter(e.target.value)
                     }
                     className="
-                      px-3 py-2
-                      bg-slate-50
-                      border border-slate-200
+                      w-full sm:w-auto
+                      min-w-[180px]
+                      px-3.5 py-3
                       rounded-xl
+                      border border-primary-200
+                      bg-white
                       text-xs font-semibold
                       text-slate-700
+                      shadow-sm
                       focus:outline-none
-                      focus:bg-white
-                      focus:border-teal-500
+                      focus:border-primary-500
+                      focus:ring-4
+                      focus:ring-primary-100
+                      transition-all
                     "
                   >
-                    <option value="ALL">
-                      All Departments
-                    </option>
+                    <option value="ALL">All Departments</option>
 
-                    {departments.map((d) => (
+                    {departments.map((department) => (
                       <option
-                        key={d.id}
-                        value={d.name}
+                        key={department.id}
+                        value={department.name}
                       >
-                        {d.name}{" "}
-                        {d.shortCode
-                          ? `(${d.shortCode})`
+                        {department.name}{" "}
+                        {department.shortCode
+                          ? `(${department.shortCode})`
                           : ""}
                       </option>
                     ))}
                   </select>
                 </div>
 
-                <div className="text-sm text-slate-500">
-                  Showing{" "}
-                  <span className="font-semibold text-slate-700">
+                <div className="
+                  px-4 py-2.5
+                  rounded-xl
+                  bg-primary-700
+                  border border-primary-700
+                  text-xs
+                  whitespace-nowrap
+                  shadow-sm
+                ">
+                  <span className="text-primary-100">Results: </span>
+                  <span className="font-bold text-white">
                     {filteredDepartments.length}
-                  </span>{" "}
-                  of{" "}
-                  <span className="font-semibold text-slate-700">
-                    {departments.length}
-                  </span>{" "}
-                  departments
+                  </span>
+                  <span className="text-primary-100"> / {departments.length}</span>
                 </div>
               </div>
-
             </div>
-
           </div>
         </div>
 
@@ -678,13 +795,72 @@ const Department = () => {
             DEPARTMENT TABLE
         ====================================================== */}
 
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm">
+        <div className="
+          bg-white
+          rounded-2xl
+          border border-primary-100
+          shadow-sm
+          overflow-hidden
+        ">
 
-          {/* Desktop Header */}
-          <div className="hidden md:grid grid-cols-[2.2fr_1fr_1fr_1fr_140px] gap-4 px-6 py-3.5 bg-gradient-to-r from-teal-500 to-emerald-600 text-white border-b border-slate-200 rounded-t-2xl">
+          {/* Table Heading */}
+          <div className="
+            px-5 sm:px-6
+            py-4
+            bg-gradient-to-r from-primary-50 via-white to-primary-50/70
+            border-b border-primary-100
+            flex flex-col sm:flex-row
+            sm:items-center sm:justify-between
+            gap-2
+          ">
+            <div className="flex items-center gap-3">
+              <div className="
+                h-10 w-10
+                rounded-xl
+                bg-primary-700
+                text-white
+                shadow-sm
+                flex items-center justify-center
+              ">
+                <Building2 size={18} />
+              </div>
 
+              <div>
+                <h3 className="text-sm font-bold text-primary-950">
+                  All Departments
+                </h3>
+                <p className="text-xs text-slate-500 mt-1">
+                  Department information and workforce overview
+                </p>
+              </div>
+            </div>
+
+            <span className="
+              inline-flex items-center gap-2
+              w-fit
+              px-3 py-2
+              rounded-lg
+              bg-white
+              border border-primary-100
+              text-xs font-semibold text-primary-800
+            ">
+              <Building2 size={14} />
+              {filteredDepartments.length} records
+            </span>
+          </div>
+
+          {/* Table Header */}
+          <div className="
+            hidden md:grid
+            grid-cols-[2.2fr_1fr_1fr_1fr_140px]
+            gap-4
+            items-center
+            px-6 py-4
+            bg-primary-100/70
+            border-b border-primary-200
+          ">
             <TableHeader>Department</TableHeader>
-            <TableHeader>Code</TableHeader>
+            <TableHeader>Department Code</TableHeader>
             <TableHeader>Job Roles</TableHeader>
             <TableHeader>Employees</TableHeader>
             <TableHeader className="text-right">Actions</TableHeader>
@@ -692,77 +868,104 @@ const Department = () => {
 
           {/* Loading */}
           {loading ? (
-            <div className="py-20 flex flex-col items-center justify-center">
-
-              <div className="h-11 w-11 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center mb-4">
-                <Loader2
-                  size={22}
-                  className="animate-spin"
-                />
+            <div className="
+              py-24
+              flex flex-col
+              items-center justify-center
+              text-center
+              bg-gradient-to-b from-primary-50/50 to-white
+            ">
+              <div className="
+                h-16 w-16
+                rounded-2xl
+                bg-primary-100
+                border border-primary-200
+                text-primary-700
+                shadow-sm
+                flex items-center justify-center
+                mb-4
+              ">
+                <Loader2 size={27} className="animate-spin" />
               </div>
 
-              <p className="text-sm font-medium text-slate-700">
+              <p className="text-sm font-bold text-primary-900">
                 Loading departments...
               </p>
 
-              <p className="text-xs text-slate-400 mt-1">
-                Please wait a moment
+              <p className="text-xs text-slate-500 mt-1.5">
+                Please wait while we retrieve your records
               </p>
-
             </div>
           ) : filteredDepartments.length === 0 ? (
 
             /* Empty State */
-            <div className="py-20 px-6 flex flex-col items-center justify-center text-center">
-
-              <div className="h-16 w-16 rounded-2xl bg-blue-50 text-blue-500 flex items-center justify-center mb-5">
+            <div className="
+              py-24 px-6
+              flex flex-col
+              items-center justify-center
+              text-center
+              bg-gradient-to-b from-primary-50/40 to-white
+            ">
+              <div className="
+                h-20 w-20
+                rounded-3xl
+                bg-primary-100
+                border border-primary-200
+                text-primary-700
+                shadow-sm
+                flex items-center justify-center
+                mb-5
+              ">
                 {searchTerm ? (
-                  <Search size={28} />
+                  <Search size={29} />
                 ) : (
-                  <Building2 size={28} />
+                  <Building2 size={29} />
                 )}
               </div>
 
-              <h3 className="text-base font-bold text-slate-800">
-                {searchTerm
+              <h3 className="text-base font-bold text-primary-950">
+                {searchTerm || selectedDeptFilter !== "ALL"
                   ? "No departments found"
                   : "No departments yet"}
               </h3>
 
-              <p className="text-sm text-slate-500 mt-1 max-w-sm">
-                {searchTerm
-                  ? "Try changing your search term and search again."
+              <p className="
+                text-sm text-slate-500
+                mt-2 max-w-sm leading-relaxed
+              ">
+                {searchTerm || selectedDeptFilter !== "ALL"
+                  ? "Try changing your search term or selected filter to find a department."
                   : "Create your first department to start organizing your company."}
               </p>
 
-              {!searchTerm && (
+              {!searchTerm && selectedDeptFilter === "ALL" && (
                 <button
                   onClick={openCreateForm}
                   className="
-                    mt-5
+                    mt-6
                     inline-flex items-center gap-2
-                    bg-blue-600
-                    hover:bg-blue-700
-                    text-white
-                    px-4 py-2.5
+                    px-5 py-2.5
                     rounded-xl
+                    bg-primary-700
+                    hover:bg-primary-800
+                    text-white
                     text-sm font-semibold
-                    transition-colors
+                    shadow-md shadow-primary-700/20
+                    transition-all
                   "
                 >
                   <Plus size={16} />
                   Add Department
                 </button>
               )}
-
             </div>
+
           ) : (
 
             /* Department Rows */
-            <div className="divide-y divide-slate-100">
+            <div className="divide-y divide-primary-100">
 
               {paginatedDepartments.map((department) => {
-
                 const code =
                   department.shortCode ||
                   department.code ||
@@ -773,8 +976,7 @@ const Department = () => {
                   department.jobRoles?.length ??
                   0;
 
-                const employeeCount =
-                  getEmployeeCount(department);
+                const employeeCount = getEmployeeCount(department);
 
                 return (
                   <div
@@ -782,40 +984,52 @@ const Department = () => {
                     className={`
                       group relative
                       px-4 sm:px-6
-                      py-4
-                      hover:bg-blue-50/40
-                      transition-colors
+                      py-5
+                      bg-white
+                      hover:bg-gradient-to-r
+                      hover:from-primary-50
+                      hover:via-white
+                      hover:to-primary-50/70
+                      transition-all duration-200
                       ${openMenu === department.id ? "z-30" : "z-10"}
                     `}
                   >
 
-                    {/* Desktop */}
-                    <div className="hidden md:grid grid-cols-[2.2fr_1fr_1fr_1fr_140px] gap-4 items-center">
+                    {/* Desktop Row */}
+                    <div className="
+                      hidden md:grid
+                      grid-cols-[2.2fr_1fr_1fr_1fr_140px]
+                      gap-4
+                      items-center
+                    ">
 
                       {/* Department */}
-                      <div className="flex items-center gap-3 min-w-0">
-
+                      <div className="flex items-center gap-3.5 min-w-0">
                         <div className="
-                          h-10 w-10
+                          h-12 w-12
                           flex-shrink-0
                           rounded-xl
-                          bg-blue-50
-                          text-blue-600
+                          bg-gradient-to-br from-primary-100 to-primary-50
+                          border border-primary-200
+                          text-primary-800
+                          shadow-sm
                           flex items-center justify-center
+                          transition-all duration-200
+                          group-hover:scale-105
+                          group-hover:bg-primary-200
                         ">
-                          <Building2 size={19} />
+                          <Building2 size={21} />
                         </div>
 
                         <div className="min-w-0">
-
                           <button
                             onClick={() =>
                               setSelectedDepartment(department)
                             }
                             className="
-                              text-sm font-semibold
+                              text-sm font-bold
                               text-slate-800
-                              hover:text-blue-600
+                              hover:text-primary-700
                               truncate
                               text-left
                               transition-colors
@@ -824,78 +1038,85 @@ const Department = () => {
                             {department.name}
                           </button>
 
-                          {department.description && (
-                            <p className="
-                              text-xs text-slate-400
-                              mt-0.5
-                              truncate
-                              max-w-md
-                            ">
-                              {department.description}
-                            </p>
-                          )}
-
+                          <p className="
+                            text-xs text-slate-500
+                            mt-1
+                            truncate
+                            max-w-md
+                          ">
+                            {department.description || "No description added"}
+                          </p>
                         </div>
-
                       </div>
 
-                      {/* Code */}
+                      {/* Department Code */}
                       <div>
                         <span className="
-                          inline-flex
-                          px-2.5 py-1
+                          inline-flex items-center
+                          px-3 py-2
                           rounded-lg
-                          bg-slate-100
-                          text-slate-600
+                          bg-primary-50
+                          border border-primary-200
+                          text-primary-800
                           text-xs
-                          font-semibold
+                          font-bold
+                          tracking-wide
                         ">
                           {code}
                         </span>
                       </div>
 
                       {/* Job Roles */}
-                      <div className="flex items-center gap-2">
-
+                      <div className="flex items-center gap-3">
                         <div className="
-                          h-8 w-8
-                          rounded-lg
-                          bg-blue-50
-                          text-blue-600
+                          h-10 w-10
+                          rounded-xl
+                          bg-primary-100
+                          border border-primary-200
+                          text-primary-800
                           flex items-center justify-center
                         ">
-                          <BriefcaseBusiness size={15} />
+                          <BriefcaseBusiness size={16} />
                         </div>
 
-                        <span className="text-sm font-semibold text-slate-700">
-                          {roleCount}
-                        </span>
-
+                        <div>
+                          <p className="text-sm font-bold text-primary-900">
+                            {roleCount}
+                          </p>
+                          <p className="text-[10px] text-slate-500 mt-0.5">
+                            {roleCount === 1 ? "Role" : "Roles"}
+                          </p>
+                        </div>
                       </div>
 
                       {/* Employees */}
-                      <div className="flex items-center gap-2">
-
+                      <div className="flex items-center gap-3">
                         <div className="
-                          h-8 w-8
-                          rounded-lg
+                          h-10 w-10
+                          rounded-xl
                           bg-slate-100
-                          text-slate-500
+                          border border-slate-200
+                          text-slate-600
                           flex items-center justify-center
                         ">
-                          <Users size={15} />
+                          <Users size={16} />
                         </div>
 
-                        <span className="text-sm font-semibold text-slate-700">
-                          {employeeCount}
-                        </span>
-
+                        <div>
+                          <p className="text-sm font-bold text-slate-800">
+                            {employeeCount}
+                          </p>
+                          <p className="text-[10px] text-slate-500 mt-0.5">
+                            {employeeCount === 1 ? "Employee" : "Employees"}
+                          </p>
+                        </div>
                       </div>
 
                       {/* Actions */}
-                      <div className="flex items-center justify-end gap-1 relative">
-
-                        {/* View Button */}
+                      <div className="
+                        flex items-center
+                        justify-end gap-1.5
+                      ">
                         <button
                           type="button"
                           onClick={() =>
@@ -904,92 +1125,94 @@ const Department = () => {
                           title="View Details"
                           aria-label="View Details"
                           className="
-                            h-8 w-8
+                            h-9 w-9
                             rounded-lg
+                            border border-primary-100
+                            bg-primary-50
                             flex items-center justify-center
-                            text-slate-400
-                            hover:text-blue-600
-                            hover:bg-blue-50
-                            transition-colors
+                            text-primary-700
+                            hover:text-white
+                            hover:bg-primary-700
+                            hover:border-primary-700
+                            transition-all
                           "
                         >
-                          <Eye size={16} />
+                          <Eye size={17} />
                         </button>
 
-                        {/* Edit Button */}
                         <button
                           type="button"
-                          onClick={() =>
-                            handleEdit(department)
-                          }
+                          onClick={() => handleEdit(department)}
                           title="Edit Department"
                           aria-label="Edit Department"
                           className="
-                            h-8 w-8
+                            h-9 w-9
                             rounded-lg
+                            border border-primary-100
+                            bg-primary-50
                             flex items-center justify-center
-                            text-slate-400
-                            hover:text-amber-600
-                            hover:bg-amber-50
-                            transition-colors
+                            text-primary-700
+                            hover:text-white
+                            hover:bg-primary-700
+                            hover:border-primary-700
+                            transition-all
                           "
                         >
                           <Edit3 size={16} />
                         </button>
 
-                        {/* Delete Button */}
                         <button
                           type="button"
-                          onClick={() =>
-                            setDeleteDepartment(department)
-                          }
+                          onClick={() => setDeleteDepartment(department)}
                           title="Delete Department"
                           aria-label="Delete Department"
                           className="
-                            h-8 w-8
+                            h-9 w-9
                             rounded-lg
+                            border border-red-100
+                            bg-red-50
                             flex items-center justify-center
-                            text-slate-400
-                            hover:text-red-600
-                            hover:bg-red-50
-                            transition-colors
+                            text-red-500
+                            hover:text-white
+                            hover:bg-red-600
+                            hover:border-red-600
+                            transition-all
                           "
                         >
                           <Trash2 size={16} />
                         </button>
-
                       </div>
-
                     </div>
 
-                    {/* Mobile */}
+                    {/* Mobile Row */}
                     <div className="md:hidden">
-
-                      <div className="flex items-start justify-between gap-3">
-
-                        <div className="flex items-center gap-3 min-w-0">
-
+                      <div className="
+                        flex items-start
+                        justify-between gap-3
+                      ">
+                        <div className="
+                          flex items-center
+                          gap-3 min-w-0
+                        ">
                           <div className="
-                            h-11 w-11
+                            h-12 w-12
                             flex-shrink-0
                             rounded-xl
-                            bg-blue-50
-                            text-blue-600
+                            bg-gradient-to-br from-primary-100 to-primary-50
+                            border border-primary-200
+                            text-primary-800
                             flex items-center justify-center
                           ">
                             <Building2 size={20} />
                           </div>
 
                           <div className="min-w-0">
-
                             <button
                               onClick={() =>
-                                setSelectedDepartment(
-                                  department
-                                )
+                                setSelectedDepartment(department)
                               }
                               className="
-                                font-semibold
+                                font-bold
                                 text-slate-800
                                 text-sm
                                 truncate
@@ -999,12 +1222,17 @@ const Department = () => {
                               {department.name}
                             </button>
 
-                            <p className="text-xs text-slate-400 mt-0.5">
+                            <p className="
+                              inline-flex items-center
+                              mt-1 px-2 py-0.5
+                              rounded-md
+                              bg-primary-50
+                              border border-primary-100
+                              text-xs font-semibold text-primary-800
+                            ">
                               {code}
                             </p>
-
                           </div>
-
                         </div>
 
                         {/* Mobile Side Menu */}
@@ -1024,11 +1252,13 @@ const Department = () => {
                               rounded-lg
                               flex items-center justify-center
                               transition-colors
-                              ${openMenu === department.id
-                                ? "text-blue-600 bg-blue-50"
-                                : "text-slate-400 hover:bg-slate-100"
+                              ${
+                                openMenu === department.id
+                                  ? "text-primary-800 bg-primary-100"
+                                  : "text-slate-500 hover:bg-primary-50"
                               }
                             `}
+                            aria-label="Department actions"
                           >
                             <MoreVertical size={18} />
                           </button>
@@ -1039,12 +1269,11 @@ const Department = () => {
                                 className="fixed inset-0 z-40"
                                 onClick={() => setOpenMenu(null)}
                               />
+
                               <DepartmentMenu
                                 mobile
                                 onView={() => {
-                                  setSelectedDepartment(
-                                    department
-                                  );
+                                  setSelectedDepartment(department);
                                   setOpenMenu(null);
                                 }}
                                 onEdit={() => {
@@ -1052,54 +1281,93 @@ const Department = () => {
                                   setOpenMenu(null);
                                 }}
                                 onDelete={() => {
-                                  setDeleteDepartment(
-                                    department
-                                  );
+                                  setDeleteDepartment(department);
                                   setOpenMenu(null);
                                 }}
                               />
                             </>
                           )}
                         </div>
-
                       </div>
 
-                      <div className="grid grid-cols-2 gap-3 mt-4">
+                      {department.description && (
+                        <p className="
+                          text-xs text-slate-600
+                          mt-3 ml-15
+                          leading-relaxed
+                        ">
+                          {department.description}
+                        </p>
+                      )}
 
-                        <div className="bg-slate-50 rounded-xl p-3">
-                          <p className="text-xs text-slate-400">
-                            Job Roles
-                          </p>
-                          <p className="text-base font-bold text-slate-800 mt-1">
+                      <div className="grid grid-cols-2 gap-3 mt-4">
+                        <div className="
+                          bg-gradient-to-br from-primary-100 to-primary-50
+                          border border-primary-200
+                          rounded-xl p-3.5
+                        ">
+                          <div className="
+                            flex items-center gap-2
+                            text-primary-800
+                          ">
+                            <BriefcaseBusiness size={14} />
+                            <p className="text-xs font-semibold">
+                              Job Roles
+                            </p>
+                          </div>
+
+                          <p className="
+                            text-xl font-bold
+                            text-primary-950 mt-2
+                          ">
                             {roleCount}
                           </p>
                         </div>
 
-                        <div className="bg-slate-50 rounded-xl p-3">
-                          <p className="text-xs text-slate-400">
-                            Employees
-                          </p>
-                          <p className="text-base font-bold text-slate-800 mt-1">
+                        <div className="
+                          bg-gradient-to-br from-slate-100 to-slate-50
+                          border border-slate-200
+                          rounded-xl p-3.5
+                        ">
+                          <div className="
+                            flex items-center gap-2
+                            text-slate-600
+                          ">
+                            <Users size={14} />
+                            <p className="text-xs font-semibold">
+                              Employees
+                            </p>
+                          </div>
+
+                          <p className="
+                            text-xl font-bold
+                            text-slate-800 mt-2
+                          ">
                             {employeeCount}
                           </p>
                         </div>
-
                       </div>
 
-                      {/* Mobile Visible Action Buttons */}
-                      <div className="flex items-center gap-2 mt-3.5 pt-3 border-t border-slate-100">
-
+                      {/* Mobile Action Buttons */}
+                      <div className="
+                        flex items-center gap-2
+                        mt-4 pt-3
+                        border-t border-primary-100
+                      ">
                         <button
                           type="button"
                           onClick={() =>
                             setSelectedDepartment(department)
                           }
                           className="
-                            flex-1 py-2 px-2.5
+                            flex-1 py-2.5 px-2
                             rounded-xl
-                            bg-slate-50 hover:bg-blue-50
-                            text-slate-600 hover:text-blue-600
-                            border border-slate-200
+                            bg-primary-50
+                            hover:bg-primary-700
+                            text-primary-800
+                            hover:text-white
+                            border border-primary-200
+                            hover:border-primary-700
                             text-xs font-semibold
                             flex items-center justify-center gap-1.5
                             transition-colors
@@ -1111,15 +1379,16 @@ const Department = () => {
 
                         <button
                           type="button"
-                          onClick={() =>
-                            handleEdit(department)
-                          }
+                          onClick={() => handleEdit(department)}
                           className="
-                            flex-1 py-2 px-2.5
+                            flex-1 py-2.5 px-2
                             rounded-xl
-                            bg-slate-50 hover:bg-amber-50
-                            text-slate-600 hover:text-amber-600
-                            border border-slate-200
+                            bg-primary-50
+                            hover:bg-primary-700
+                            text-primary-800
+                            hover:text-white
+                            border border-primary-200
+                            hover:border-primary-700
                             text-xs font-semibold
                             flex items-center justify-center gap-1.5
                             transition-colors
@@ -1131,15 +1400,16 @@ const Department = () => {
 
                         <button
                           type="button"
-                          onClick={() =>
-                            setDeleteDepartment(department)
-                          }
+                          onClick={() => setDeleteDepartment(department)}
                           className="
-                            flex-1 py-2 px-2.5
+                            flex-1 py-2.5 px-2
                             rounded-xl
-                            bg-slate-50 hover:bg-red-50
-                            text-slate-600 hover:text-red-600
-                            border border-slate-200
+                            bg-red-50
+                            hover:bg-red-600
+                            text-red-600
+                            hover:text-white
+                            border border-red-100
+                            hover:border-red-600
                             text-xs font-semibold
                             flex items-center justify-center gap-1.5
                             transition-colors
@@ -1148,35 +1418,15 @@ const Department = () => {
                           <Trash2 size={14} />
                           Delete
                         </button>
-
                       </div>
-
                     </div>
-
                   </div>
                 );
               })}
-
-              {/* Filler rows keep the table height constant across pages,
-                  so the pagination bar stays in a fixed position. */}
-              {paginatedDepartments.length > 0 &&
-                paginatedDepartments.length < ROWS_PER_PAGE &&
-                Array.from({
-                  length: ROWS_PER_PAGE - paginatedDepartments.length,
-                }).map((_, idx) => (
-                  <div
-                    key={`filler-${idx}`}
-                    aria-hidden="true"
-                    className="hidden md:block px-4 sm:px-6 py-4 h-[81px]"
-                  />
-                ))}
-
             </div>
           )}
 
-          {/* =====================================================
-              PAGINATION CONTROLS
-          ====================================================== */}
+          {/* Pagination */}
           {!loading && filteredDepartments.length > 0 && (
             <DeptPaginationBar
               currentPage={currentPage}
@@ -1186,9 +1436,7 @@ const Department = () => {
               pageSize={ROWS_PER_PAGE}
             />
           )}
-
         </div>
-
       </div>
 
       {/* =====================================================
@@ -1198,57 +1446,92 @@ const Department = () => {
       {showAddForm && (
         <div className="
           fixed inset-0 z-50
-          bg-slate-900/40
+          bg-slate-950/60
           backdrop-blur-sm
           flex items-center justify-center
           p-4
         ">
-
           <div className="
             bg-white
             w-full max-w-3xl
             max-h-[92vh]
             overflow-hidden
             rounded-2xl
+            border border-primary-200
             shadow-2xl
             flex flex-col
           ">
-
             {/* Modal Header */}
             <div className="
+              relative overflow-hidden
               px-6 py-5
-              bg-gradient-to-r from-teal-500 to-emerald-600
+              bg-gradient-to-r from-primary-900 via-primary-800 to-primary-700
               flex items-center justify-between
             ">
+              <div className="
+                absolute -right-10 -top-16
+                h-40 w-40
+                rounded-full
+                bg-white/10
+              " />
 
-              <div>
-                <h2 className="text-lg font-bold text-white">
-                  {editingDepartment
-                    ? "Edit Department"
-                    : "Add Department"}
-                </h2>
-                <p className="text-xs text-white/80 mt-0.5">
-                  {editingDepartment
-                    ? "Update this department's details and job roles"
-                    : "Set up a new department for your organization"}
-                </p>
+              <div className="relative flex items-center gap-3">
+                <div className="
+                  h-11 w-11
+                  rounded-xl
+                  bg-white/15
+                  border border-white/20
+                  flex items-center justify-center
+                  text-white
+                  shadow-sm
+                ">
+                  <Building2 size={21} />
+                </div>
+
+                <div>
+                  <p className="
+                    text-[10px]
+                    font-bold
+                    uppercase
+                    tracking-[0.16em]
+                    text-primary-200
+                  ">
+                    Department Management
+                  </p>
+
+                  <h2 className="text-lg font-bold text-white mt-0.5">
+                    {editingDepartment
+                      ? "Edit Department"
+                      : "Add Department"}
+                  </h2>
+
+                  <p className="text-xs text-primary-100 mt-1">
+                    {editingDepartment
+                      ? "Update this department's details and job roles"
+                      : "Set up a new department for your organization"}
+                  </p>
+                </div>
               </div>
 
               <button
                 onClick={closeForm}
+                disabled={saving}
                 className="
+                  relative
                   h-9 w-9
                   rounded-lg
                   flex items-center justify-center
                   text-white/80
-                  hover:bg-white/15
+                  bg-white/10
+                  hover:bg-white/20
                   hover:text-white
+                  disabled:opacity-50
                   transition-colors
                 "
+                aria-label="Close form"
               >
                 <X size={19} />
               </button>
-
             </div>
 
             {/* Modal Body */}
@@ -1256,86 +1539,83 @@ const Department = () => {
               onSubmit={handleSubmit}
               className="flex flex-col min-h-0"
             >
-
               <div className="
                 overflow-y-auto
                 p-6
-                space-y-7
+                space-y-8
+                bg-gradient-to-b from-primary-50/40 to-white
               ">
-
                 {/* Department Information */}
-                <section>
-
+                <section className="
+                  rounded-2xl
+                  border border-primary-100
+                  bg-white
+                  p-5
+                  shadow-sm
+                ">
                   <SectionTitle
                     number="01"
                     title="Department Information"
                     description="Basic information about the department"
                   />
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mt-5">
-
-                    {/* Name */}
+                  <div className="
+                    grid grid-cols-1
+                    md:grid-cols-2
+                    gap-5 mt-5
+                  ">
                     <div className="md:col-span-2">
-
-                      <label className="form-label">
+                      <label className="
+                        block text-sm
+                        font-semibold text-slate-700 mb-2
+                      ">
                         Department Name
-                        <span className="text-red-500 ml-1">
-                          *
-                        </span>
+                        <span className="text-red-500 ml-1">*</span>
                       </label>
 
                       <input
                         type="text"
                         value={formData.name}
                         onChange={(e) =>
-                          handleDepartmentChange(
-                            "name",
-                            e.target.value
-                          )
+                          handleDepartmentChange("name", e.target.value)
                         }
                         placeholder="e.g. Software Engineering"
                         required
-                        className="form-input"
+                        className={inputClass}
                       />
-
                     </div>
 
-                    {/* Code */}
                     <div>
-
-                      <label className="form-label">
+                      <label className="
+                        block text-sm
+                        font-semibold text-slate-700 mb-2
+                      ">
                         Department Code
-                        <span className="text-red-500 ml-1">
-                          *
-                        </span>
+                        <span className="text-red-500 ml-1">*</span>
                       </label>
 
                       <input
                         type="text"
                         value={formData.shortCode}
                         onChange={(e) =>
-                          handleDepartmentChange(
-                            "shortCode",
-                            e.target.value
-                          )
+                          handleDepartmentChange("shortCode", e.target.value)
                         }
                         placeholder="e.g. SE"
                         required
                         maxLength={10}
-                        className="form-input uppercase"
+                        className={`${inputClass} uppercase`}
                       />
-
                     </div>
 
-                    {/* Description */}
                     <div className="md:col-span-2">
-
-                      <label className="form-label">
+                      <label className="
+                        block text-sm
+                        font-semibold text-slate-700 mb-2
+                      ">
                         Description
                         <span className="
                           text-slate-400
                           font-normal
-                          normal-case
                           ml-2
                         ">
                           Optional
@@ -1352,161 +1632,142 @@ const Department = () => {
                         }
                         placeholder="Briefly describe the purpose of this department..."
                         rows={3}
-                        className="
-                          form-input
-                          resize-none
-                        "
+                        className={`${inputClass} resize-none`}
                       />
-
                     </div>
-
                   </div>
-
                 </section>
 
                 {/* Job Roles */}
-                <section>
-
+                <section className="
+                  rounded-2xl
+                  border border-primary-100
+                  bg-white
+                  p-5
+                  shadow-sm
+                ">
                   <div className="
                     flex flex-col sm:flex-row
                     sm:items-end
                     sm:justify-between
                     gap-3
                   ">
-
                     <SectionTitle
                       number="02"
                       title="Job Roles"
+                      description="Add the job titles belonging to this department"
                     />
 
                     <span className="
                       inline-flex
                       items-center
                       w-fit
-                      px-2.5 py-1
+                      px-3 py-1.5
                       rounded-lg
-                      bg-blue-50
-                      text-blue-600
+                      bg-primary-100
+                      border border-primary-200
+                      text-primary-800
                       text-xs
-                      font-semibold
+                      font-bold
                     ">
                       {formData.jobRoles.length}{" "}
-                      {formData.jobRoles.length === 1
-                        ? "Role"
-                        : "Roles"}
+                      {formData.jobRoles.length === 1 ? "Role" : "Roles"}
                     </span>
-
                   </div>
 
                   <div className="space-y-4 mt-5">
+                    {formData.jobRoles.map((role, index) => (
+                      <div
+                        key={index}
+                        className="
+                          rounded-2xl
+                          border border-primary-200
+                          bg-gradient-to-r from-primary-50/80 to-white
+                          p-5
+                        "
+                      >
+                        <div className="
+                          flex items-center
+                          justify-between
+                          mb-4
+                        ">
+                          <div className="flex items-center gap-2.5">
+                            <div className="
+                              h-9 w-9
+                              rounded-xl
+                              bg-primary-700
+                              text-white
+                              shadow-sm
+                              flex items-center justify-center
+                            ">
+                              <BriefcaseBusiness size={16} />
+                            </div>
 
-                    {formData.jobRoles.map(
-                      (role, index) => (
-                        <div
-                          key={index}
-                          className="
-                            rounded-2xl
-                            border border-slate-200
-                            bg-slate-50/60
-                            p-5
-                          "
-                        >
+                            <span className="
+                              text-sm
+                              font-bold
+                              text-primary-950
+                            ">
+                              Job Role {index + 1}
+                            </span>
+                          </div>
 
-                          <div className="
-                            flex items-center
-                            justify-between
-                            mb-4
-                          ">
-
-                            <div className="flex items-center gap-2.5">
-
-                              <div className="
-                                h-8 w-8
-                                rounded-lg
-                                bg-white
-                                border border-slate-200
-                                text-blue-600
-                                flex items-center justify-center
-                              ">
-                                <BriefcaseBusiness
-                                  size={15}
-                                />
-                              </div>
-
-                              <span className="
-                                text-sm
+                          {formData.jobRoles.length > 1 && (
+                            <button
+                              type="button"
+                              onClick={() => removeJobRole(index)}
+                              className="
+                                inline-flex
+                                items-center gap-1.5
+                                text-xs
                                 font-semibold
-                                text-slate-700
-                              ">
-                                Job Role {index + 1}
-                              </span>
-
-                            </div>
-
-                            {formData.jobRoles.length > 1 && (
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  removeJobRole(index)
-                                }
-                                className="
-                                  inline-flex
-                                  items-center gap-1.5
-                                  text-xs
-                                  font-semibold
-                                  text-red-500
-                                  hover:text-red-600
-                                  hover:bg-red-50
-                                  px-2.5 py-1.5
-                                  rounded-lg
-                                  transition-colors
-                                "
-                              >
-                                <Trash2 size={13} />
-                                Remove
-                              </button>
-                            )}
-
-                          </div>
-
-                          <div className="
-                            grid grid-cols-1
-                            md:grid-cols-2
-                            gap-4
-                          ">
-
-                            {/* Job Title */}
-                            <div>
-
-                              <label className="form-label">
-                                Job Title
-                                <span className="text-red-500 ml-1">
-                                  *
-                                </span>
-                              </label>
-
-                              <input
-                                type="text"
-                                value={role.jobTitle}
-                                onChange={(e) =>
-                                  updateJobRole(
-                                    index,
-                                    "jobTitle",
-                                    e.target.value
-                                  )
-                                }
-                                placeholder="e.g. Software Engineer"
-                                className="form-input bg-white"
-                              />
-
-                            </div>
-
-                          </div>
-
+                                text-red-600
+                                bg-red-50
+                                border border-red-100
+                                hover:bg-red-600
+                                hover:text-white
+                                px-3 py-2
+                                rounded-lg
+                                transition-colors
+                              "
+                            >
+                              <Trash2 size={13} />
+                              Remove
+                            </button>
+                          )}
                         </div>
-                      )
-                    )}
 
+                        <div className="
+                          grid grid-cols-1
+                          md:grid-cols-2
+                          gap-4
+                        ">
+                          <div>
+                            <label className="
+                              block text-sm
+                              font-semibold text-slate-700 mb-2
+                            ">
+                              Job Title
+                              <span className="text-red-500 ml-1">*</span>
+                            </label>
+
+                            <input
+                              type="text"
+                              value={role.jobTitle}
+                              onChange={(e) =>
+                                updateJobRole(
+                                  index,
+                                  "jobTitle",
+                                  e.target.value
+                                )
+                              }
+                              placeholder="e.g. Software Engineer"
+                              className={inputClass}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    ))}
                   </div>
 
                   {/* Add Role */}
@@ -1516,13 +1777,13 @@ const Department = () => {
                     className="
                       mt-4
                       w-full
-                      border-2
-                      border-dashed
-                      border-blue-200
-                      hover:border-blue-400
-                      hover:bg-blue-50/50
-                      text-blue-600
-                      py-3
+                      border-2 border-dashed
+                      border-primary-300
+                      bg-primary-50/50
+                      hover:border-primary-500
+                      hover:bg-primary-100
+                      text-primary-800
+                      py-3.5
                       rounded-xl
                       text-sm
                       font-semibold
@@ -1534,17 +1795,27 @@ const Department = () => {
                     <Plus size={17} />
                     Add Another Job Role
                   </button>
-
                 </section>
-
               </div>
 
               {formError && (
                 <div
                   role="alert"
-                  className="mx-6 mb-3 px-4 py-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm font-medium flex items-start gap-2"
+                  className="
+                    mx-6 mb-3
+                    px-4 py-3
+                    rounded-xl
+                    bg-red-50
+                    border border-red-200
+                    text-red-700
+                    text-sm font-medium
+                    flex items-start gap-2
+                  "
                 >
-                  <AlertCircle size={16} className="mt-0.5 flex-shrink-0" />
+                  <AlertCircle
+                    size={16}
+                    className="mt-0.5 flex-shrink-0"
+                  />
                   <span>{formError}</span>
                 </div>
               )}
@@ -1552,14 +1823,13 @@ const Department = () => {
               {/* Modal Footer */}
               <div className="
                 px-6 py-4
-                border-t border-slate-200
-                bg-slate-50/70
+                border-t border-primary-100
+                bg-primary-50/70
                 flex flex-col-reverse
                 sm:flex-row
                 sm:justify-end
                 gap-3
               ">
-
                 <button
                   type="button"
                   onClick={closeForm}
@@ -1567,11 +1837,10 @@ const Department = () => {
                   className="
                     px-5 py-2.5
                     rounded-xl
-                    bg-white
                     border border-slate-200
+                    bg-white
                     text-slate-700
-                    text-sm
-                    font-semibold
+                    text-sm font-semibold
                     hover:bg-slate-100
                     disabled:opacity-50
                     transition-colors
@@ -1586,13 +1855,11 @@ const Department = () => {
                   className="
                     px-5 py-2.5
                     rounded-xl
-                    bg-gradient-to-br from-teal-400 to-emerald-500
-                    hover:from-teal-500 hover:to-emerald-600
+                    bg-primary-700
+                    hover:bg-primary-800
                     text-white
-                    text-sm
-                    font-semibold
-                    shadow-sm
-                    shadow-teal-500/20
+                    text-sm font-semibold
+                    shadow-md shadow-primary-700/20
                     disabled:opacity-60
                     disabled:cursor-not-allowed
                     flex items-center
@@ -1600,13 +1867,9 @@ const Department = () => {
                     transition-colors
                   "
                 >
-
                   {saving ? (
                     <>
-                      <Loader2
-                        size={16}
-                        className="animate-spin"
-                      />
+                      <Loader2 size={16} className="animate-spin" />
                       Saving...
                     </>
                   ) : (
@@ -1617,13 +1880,9 @@ const Department = () => {
                         : "Save Department"}
                     </>
                   )}
-
                 </button>
-
               </div>
-
             </form>
-
           </div>
         </div>
       )}
@@ -1636,9 +1895,7 @@ const Department = () => {
         <DepartmentDetailsModal
           department={selectedDepartment}
           employeeCount={getEmployeeCount(selectedDepartment)}
-          onClose={() =>
-            setSelectedDepartment(null)
-          }
+          onClose={() => setSelectedDepartment(null)}
           onEdit={() => {
             setSelectedDepartment(null);
             handleEdit(selectedDepartment);
@@ -1653,124 +1910,152 @@ const Department = () => {
       {deleteDepartment && (
         <div className="
           fixed inset-0 z-[60]
-          bg-slate-900/40
+          bg-slate-950/60
           backdrop-blur-sm
           flex items-center justify-center
           p-4
         ">
-
           <div className="
             bg-white
             w-full max-w-md
             rounded-2xl
+            border border-red-100
             shadow-2xl
-            p-6
+            overflow-hidden
           ">
+            <div className="
+              h-2
+              bg-gradient-to-r from-red-500 via-red-600 to-red-700
+            " />
 
-            <div className="flex items-start gap-4">
+            <div className="p-6">
+              <div className="flex items-start gap-4">
+                <div className="
+                  h-12 w-12
+                  flex-shrink-0
+                  rounded-xl
+                  bg-red-50
+                  border border-red-100
+                  text-red-600
+                  flex items-center justify-center
+                ">
+                  <AlertCircle size={22} />
+                </div>
+
+                <div>
+                  <h3 className="text-base font-bold text-slate-900">
+                    Delete Department?
+                  </h3>
+
+                  <p className="
+                    text-sm text-slate-500
+                    mt-1.5 leading-relaxed
+                  ">
+                    Are you sure you want to delete{" "}
+                    <span className="font-semibold text-slate-800">
+                      {deleteDepartment.name}
+                    </span>
+                    ? This also removes its{" "}
+                    {deleteDepartment.jobRoleCount ??
+                      deleteDepartment.jobRoles?.length ??
+                      0}{" "}
+                    job role(s) and cannot be undone.
+                  </p>
+
+                  {getEmployeeCount(deleteDepartment) > 0 && (
+                    <p className="
+                      mt-3
+                      text-sm text-red-700
+                      bg-red-50
+                      border border-red-200
+                      rounded-xl
+                      px-3 py-2.5
+                    ">
+                      {getEmployeeCount(deleteDepartment)} employee(s) are still
+                      assigned to this department. Reassign or remove them first,
+                      then delete the department.
+                    </p>
+                  )}
+                </div>
+              </div>
 
               <div className="
-                h-11 w-11
-                flex-shrink-0
-                rounded-xl
-                bg-red-50
-                text-red-600
-                flex items-center justify-center
+                flex flex-col-reverse
+                sm:flex-row
+                sm:justify-end
+                gap-3
+                mt-6
               ">
-                <AlertCircle size={21} />
+                <button
+                  onClick={() => setDeleteDepartment(null)}
+                  className="
+                    px-5 py-2.5
+                    rounded-xl
+                    border border-slate-200
+                    bg-white
+                    hover:bg-slate-50
+                    text-slate-700
+                    text-sm font-semibold
+                    transition-colors
+                  "
+                >
+                  Cancel
+                </button>
+
+                <button
+                  onClick={handleDelete}
+                  disabled={getEmployeeCount(deleteDepartment) > 0}
+                  className="
+                    px-5 py-2.5
+                    rounded-xl
+                    bg-red-600
+                    hover:bg-red-700
+                    text-white
+                    text-sm font-semibold
+                    flex items-center
+                    justify-center gap-2
+                    shadow-sm
+                    disabled:opacity-40
+                    disabled:cursor-not-allowed
+                    transition-colors
+                  "
+                >
+                  <Trash2 size={15} />
+                  Delete Department
+                </button>
               </div>
-
-              <div>
-                <h3 className="text-base font-bold text-slate-900">
-                  Delete Department?
-                </h3>
-
-                <p className="text-sm text-slate-500 mt-1.5 leading-relaxed">
-                  Are you sure you want to delete{" "}
-                  <span className="font-semibold text-slate-700">
-                    {deleteDepartment.name}
-                  </span>
-                  ? This also removes its{" "}
-                  {deleteDepartment.jobRoleCount ??
-                    deleteDepartment.jobRoles?.length ??
-                    0}{" "}
-                  job role(s) and cannot be undone.
-                </p>
-
-                {getEmployeeCount(deleteDepartment) > 0 && (
-                  <p className="mt-3 text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
-                    {getEmployeeCount(deleteDepartment)} employee(s) are still
-                    assigned to this department. Reassign or remove them first,
-                    then delete the department.
-                  </p>
-                )}
-              </div>
-
             </div>
-
-            <div className="
-              flex flex-col-reverse
-              sm:flex-row
-              sm:justify-end
-              gap-3
-              mt-6
-            ">
-
-              <button
-                onClick={() =>
-                  setDeleteDepartment(null)
-                }
-                className="
-                  px-4 py-2.5
-                  rounded-xl
-                  bg-slate-100
-                  hover:bg-slate-200
-                  text-slate-700
-                  text-sm font-semibold
-                "
-              >
-                Cancel
-              </button>
-
-              <button
-                onClick={handleDelete}
-                disabled={getEmployeeCount(deleteDepartment) > 0}
-                className="
-                  disabled:opacity-40
-                  disabled:cursor-not-allowed
-                  px-4 py-2.5
-                  rounded-xl
-                  bg-red-600
-                  hover:bg-red-700
-                  text-white
-                  text-sm font-semibold
-                  flex items-center
-                  justify-center gap-2
-                "
-              >
-                <Trash2 size={15} />
-                Delete Department
-              </button>
-
-            </div>
-
           </div>
         </div>
       )}
 
       <NotificationPopup
         isOpen={showNotifications}
-        onClose={() =>
-          setShowNotifications(false)
-        }
+        onClose={() => setShowNotifications(false)}
       />
-
     </PageLayout>
   );
 };
 
+// Shared input styling for the department form.
+const inputClass = `
+  w-full
+  rounded-xl
+  border border-primary-200
+  bg-white
+  px-3.5 py-3
+  text-sm text-slate-800
+  placeholder:text-slate-400
+  shadow-sm
+  focus:outline-none
+  focus:border-primary-500
+  focus:ring-4
+  focus:ring-primary-100
+  transition-all duration-200
+`;
+
 // =============================================================
-// SUMMARY CARD
+// SUMMARY CARD - UNCHANGED
 // =============================================================
 
 const SummaryCard = ({
@@ -1778,70 +2063,97 @@ const SummaryCard = ({
   title,
   value,
   description,
-  className = "",
 }) => {
   return (
-    <div className={`
-        rounded-2xl
-        border border-slate-200
-        p-5
-        shadow-sm
-        hover:shadow-md
-        transition-shadow
-        text-white
-        ${className || "bg-gradient-to-br from-teal-400 to-emerald-500"}
-      `}>
+    <div className="
+      relative
+      overflow-hidden
+      rounded-2xl
+      border border-primary-100
+      bg-gradient-to-br
+      from-primary-50
+      via-white
+      to-primary-50/70
+      p-5
+      shadow-sm
+      transition-all duration-200
+      hover:-translate-y-1
+      hover:shadow-md
+    ">
+      {/* Decorative background shape */}
+      <div className="
+        absolute -right-7 -top-7
+        h-28 w-28
+        rounded-full
+        bg-primary-100/70
+      " />
 
-      <div className={icon ? "flex items-start justify-between" : ""}>
+      <div className="relative flex items-start justify-between gap-4">
 
-        <div>
+        <div className="min-w-0">
 
           <p className="
             text-xs
-            font-semibold
+            font-bold
             uppercase
             tracking-wider
-            text-white
+            text-slate-600
           ">
             {title}
           </p>
 
           <p className="
-            mt-2
-            text-2xl
+            mt-3
+            text-3xl
             font-bold
-            text-white
+            tracking-tight
+            text-primary-900
           ">
             {value}
           </p>
 
-          {description && (
-            <p className="
-              mt-1
-              text-xs
-              text-white/80
-            ">
-              {description}
-            </p>
-          )}
+          <p className="
+            mt-2
+            text-xs
+            font-medium
+            text-slate-500
+          ">
+            {description}
+          </p>
 
         </div>
 
-        {icon && (
-          <div className="
-            h-10 w-10
-            rounded-xl
-            bg-white/20
-            text-white
-            flex items-center
-            justify-center
-          ">
-            {icon}
-          </div>
-        )}
+        <div className="
+          h-12 w-12
+          flex-shrink-0
+          rounded-xl
+          bg-primary-700
+          text-white
+          shadow-md
+          shadow-primary-700/20
+          flex items-center justify-center
+        ">
+          {icon}
+        </div>
 
       </div>
 
+      <div className="
+        relative
+        mt-5
+        h-1.5
+        w-full
+        overflow-hidden
+        rounded-full
+        bg-primary-100
+      ">
+        <div className="
+          h-full
+          w-1/3
+          rounded-full
+          bg-primary-600
+        " />
+      </div>
     </div>
   );
 };
@@ -1857,7 +2169,7 @@ const TableHeader = ({ children, className = "" }) => {
       font-bold
       uppercase
       tracking-wider
-      text-white
+      text-primary-800
       ${className}
     `}>
       {children}
@@ -1876,41 +2188,39 @@ const SectionTitle = ({
 }) => {
   return (
     <div className="flex items-start gap-3">
-
       <div className="
-        h-8 w-8
+        h-9 w-9
         flex-shrink-0
-        rounded-lg
-        bg-gradient-to-br from-teal-400 to-emerald-500
+        rounded-xl
+        bg-primary-700
         text-white
-        flex items-center
-        justify-center
-        text-[10px]
+        flex items-center justify-center
+        text-xs
         font-bold
+        shadow-sm shadow-primary-700/20
       ">
         {number}
       </div>
 
       <div>
-
         <h3 className="
           text-sm
           font-bold
-          text-slate-800
+          text-primary-950
         ">
           {title}
         </h3>
 
-        <p className="
-          text-xs
-          text-slate-400
-          mt-0.5
-        ">
-          {description}
-        </p>
-
+        {description && (
+          <p className="
+            text-xs
+            text-slate-500
+            mt-1
+          ">
+            {description}
+          </p>
+        )}
       </div>
-
     </div>
   );
 };
@@ -1928,18 +2238,20 @@ const DepartmentMenu = ({
 }) => {
   return (
     <div className={`
-      ${mobile
-        ? "absolute right-0 top-11 w-48"
-        : `absolute right-0 ${openUpwards ? "bottom-10" : "top-10"} w-48`
+      ${
+        mobile
+          ? "absolute right-0 top-11 w-48"
+          : `absolute right-0 ${
+              openUpwards ? "bottom-10" : "top-10"
+            } w-48`
       }
       z-50
       bg-white
       rounded-xl
-      border border-slate-200
+      border border-primary-100
       shadow-xl
       py-1
     `}>
-
       <button
         type="button"
         onClick={onView}
@@ -1949,8 +2261,8 @@ const DepartmentMenu = ({
           flex items-center gap-2.5
           text-sm
           text-slate-700
-          hover:bg-blue-50
-          hover:text-blue-600
+          hover:bg-primary-50
+          hover:text-primary-800
           text-left
           transition-colors
         "
@@ -1968,8 +2280,8 @@ const DepartmentMenu = ({
           flex items-center gap-2.5
           text-sm
           text-slate-700
-          hover:bg-amber-50
-          hover:text-amber-600
+          hover:bg-primary-50
+          hover:text-primary-800
           text-left
           transition-colors
         "
@@ -1978,7 +2290,7 @@ const DepartmentMenu = ({
         Edit Department
       </button>
 
-      <div className="border-t border-slate-100 my-1" />
+      <div className="border-t border-primary-100 my-1" />
 
       <button
         type="button"
@@ -1997,7 +2309,6 @@ const DepartmentMenu = ({
         <Trash2 size={15} />
         Delete Department
       </button>
-
     </div>
   );
 };
@@ -2027,70 +2338,77 @@ const DepartmentDetailsModal = ({
   return (
     <div className="
       fixed inset-0 z-50
-      bg-slate-900/40
+      bg-slate-950/60
       backdrop-blur-sm
       flex items-center justify-center
       p-4
     ">
-
       <div className="
         bg-white
         w-full max-w-3xl
         max-h-[90vh]
         rounded-2xl
+        border border-primary-200
         shadow-2xl
         overflow-hidden
         flex flex-col
       ">
-
         {/* Header */}
         <div className="
+          relative overflow-hidden
           p-6
-          bg-gradient-to-br
-          from-teal-500
-          to-emerald-600
+          bg-gradient-to-r from-primary-900 via-primary-800 to-primary-700
           text-white
         ">
+          <div className="
+            absolute -right-10 -top-16
+            h-44 w-44
+            rounded-full
+            bg-white/10
+          " />
 
           <div className="
+            relative
             flex items-start
             justify-between
           ">
-
             <div className="flex items-center gap-4">
-
               <div className="
                 h-14 w-14
                 rounded-2xl
                 bg-white/15
                 border border-white/20
-                flex items-center
-                justify-center
+                shadow-sm
+                flex items-center justify-center
               ">
                 <Building2 size={27} />
               </div>
 
               <div>
-
-                <h2 className="
-                  text-xl
+                <p className="
+                  text-[10px]
                   font-bold
+                  uppercase
+                  tracking-[0.16em]
+                  text-primary-200
                 ">
+                  Department Details
+                </p>
+
+                <h2 className="text-xl font-bold mt-1">
                   {department.name}
                 </h2>
 
                 <p className="
-                  text-teal-100
+                  text-primary-100
                   text-sm
-                  mt-0.5
+                  mt-1
                 ">
                   {department.shortCode ||
                     department.code ||
                     `DPT-${department.id}`}
                 </p>
-
               </div>
-
             </div>
 
             <button
@@ -2100,19 +2418,20 @@ const DepartmentDetailsModal = ({
                 rounded-lg
                 bg-white/10
                 hover:bg-white/20
-                flex items-center
-                justify-center
+                flex items-center justify-center
+                transition-colors
               "
+              aria-label="Close details"
             >
               <X size={18} />
             </button>
-
           </div>
 
           {department.description && (
             <p className="
+              relative
               text-sm
-              text-teal-100
+              text-primary-100
               mt-5
               max-w-2xl
               leading-relaxed
@@ -2120,7 +2439,6 @@ const DepartmentDetailsModal = ({
               {department.description}
             </p>
           )}
-
         </div>
 
         {/* Content */}
@@ -2128,15 +2446,14 @@ const DepartmentDetailsModal = ({
           overflow-y-auto
           p-6
           space-y-6
+          bg-gradient-to-b from-primary-50/50 to-white
         ">
-
           {/* Statistics */}
           <div className="
             grid grid-cols-2
             md:grid-cols-3
             gap-3
           ">
-
             <DetailStat
               icon={<BriefcaseBusiness size={17} />}
               label="Job Roles"
@@ -2151,52 +2468,60 @@ const DepartmentDetailsModal = ({
 
             <DetailStat
               icon={<DollarSign size={17} />}
-              label="Department"
+              label="Department Code"
               value={
                 department.shortCode ||
                 department.code ||
                 "—"
               }
             />
-
           </div>
 
           {/* Job Roles */}
-          <div>
-
-            <div className="
-              flex items-center
-              justify-between
-              mb-4
-            ">
-
+          <div className="
+            rounded-2xl
+            border border-primary-100
+            bg-white
+            p-5
+            shadow-sm
+          ">
+            <div className="mb-4 flex items-center justify-between gap-3">
               <div>
                 <h3 className="
                   text-base
                   font-bold
-                  text-slate-800
+                  text-primary-950
                 ">
                   Job Roles
                 </h3>
 
                 <p className="
                   text-xs
-                  text-slate-400
-                  mt-0.5
+                  text-slate-500
+                  mt-1
                 ">
                   Roles defined under this department
                 </p>
               </div>
 
+              <span className="
+                px-3 py-1.5
+                rounded-lg
+                bg-primary-100
+                border border-primary-200
+                text-primary-800
+                text-xs font-bold
+              ">
+                {roleCount} {roleCount === 1 ? "Role" : "Roles"}
+              </span>
             </div>
 
             {jobRoles.length > 0 ? (
               <div className="
-                border border-slate-200
+                border border-primary-100
                 rounded-xl
                 overflow-hidden
               ">
-
                 {jobRoles.map((role, index) => (
                   <div
                     key={role.id || index}
@@ -2207,103 +2532,93 @@ const DepartmentDetailsModal = ({
                       px-4 py-4
                       border-b
                       last:border-b-0
-                      border-slate-100
+                      border-primary-100
+                      bg-white
+                      hover:bg-primary-50
+                      transition-colors
                     "
                   >
-
                     <div className="flex items-center gap-3">
-
                       <div className="
-                        h-9 w-9
-                        rounded-lg
-                        bg-blue-50
-                        text-blue-600
-                        flex items-center
-                        justify-center
+                        h-10 w-10
+                        rounded-xl
+                        bg-primary-100
+                        border border-primary-200
+                        text-primary-800
+                        flex items-center justify-center
                       ">
-                        <BriefcaseBusiness
-                          size={16}
-                        />
+                        <BriefcaseBusiness size={17} />
                       </div>
 
                       <div>
-
                         <p className="
                           text-sm
                           font-semibold
                           text-slate-800
                         ">
-                          {role.jobTitle ||
-                            role.title}
+                          {role.jobTitle || role.title}
                         </p>
 
                         <p className="
                           text-xs
-                          text-slate-400
-                          mt-0.5
+                          text-slate-500
+                          mt-1
                         ">
                           Job Role {index + 1}
                         </p>
-
                       </div>
-
                     </div>
 
+                    <ArrowUpRight
+                      size={16}
+                      className="text-primary-500"
+                    />
                   </div>
                 ))}
-
               </div>
             ) : (
               <div className="
                 py-10
                 rounded-xl
-                bg-slate-50
-                border border-slate-200
+                bg-primary-50
+                border border-primary-100
                 text-center
               ">
                 <BriefcaseBusiness
-                  size={24}
-                  className="
-                    mx-auto
-                    text-slate-300
-                    mb-2
-                  "
+                  size={25}
+                  className="mx-auto text-primary-500 mb-2"
                 />
 
                 <p className="
                   text-sm
-                  font-medium
+                  font-semibold
                   text-slate-600
                 ">
                   No job roles defined
                 </p>
-
               </div>
             )}
-
           </div>
-
         </div>
 
         {/* Footer */}
         <div className="
           px-6 py-4
-          border-t border-slate-200
-          bg-slate-50
+          border-t border-primary-100
+          bg-primary-50/70
           flex justify-end gap-3
         ">
-
           <button
             onClick={onClose}
             className="
-              px-4 py-2.5
+              px-5 py-2.5
               rounded-xl
-              bg-white
               border border-slate-200
+              bg-white
               text-slate-700
-              text-sm
-              font-semibold
+              text-sm font-semibold
               hover:bg-slate-100
+              transition-colors
             "
           >
             Close
@@ -2312,25 +2627,23 @@ const DepartmentDetailsModal = ({
           <button
             onClick={onEdit}
             className="
-              px-4 py-2.5
+              px-5 py-2.5
               rounded-xl
-              bg-gradient-to-br from-teal-400 to-emerald-500
-              hover:from-teal-500 hover:to-emerald-600
+              bg-primary-700
+              hover:bg-primary-800
               text-white
-              text-sm
-              font-semibold
+              text-sm font-semibold
               flex items-center
               gap-2
+              shadow-sm
+              transition-colors
             "
           >
             <Edit3 size={15} />
             Edit Department
           </button>
-
         </div>
-
       </div>
-
     </div>
   );
 };
@@ -2346,22 +2659,21 @@ const DetailStat = ({
 }) => {
   return (
     <div className="
-      bg-slate-50
-      border border-slate-200
+      bg-gradient-to-br from-primary-100 to-primary-50
+      border border-primary-200
       rounded-xl
       p-4
     ">
-
       <div className="
         flex items-center
         gap-2
-        text-slate-400
+        text-primary-800
       ">
         {icon}
 
         <span className="
           text-xs
-          font-medium
+          font-semibold
         ">
           {label}
         </span>
@@ -2371,18 +2683,18 @@ const DetailStat = ({
         mt-2
         text-lg
         font-bold
-        text-slate-800
+        text-primary-950
       ">
         {value}
       </p>
-
     </div>
   );
 };
 
 // =============================================================
-// PAGINATION BAR — page numbers + prev/next
+// PAGINATION BAR
 // =============================================================
+
 const DeptPaginationBar = ({
   currentPage,
   totalPages,
@@ -2390,10 +2702,15 @@ const DeptPaginationBar = ({
   totalItems,
   pageSize,
 }) => {
-  const start = totalItems === 0 ? 0 : (currentPage - 1) * pageSize + 1;
+  const start =
+    totalItems === 0
+      ? 0
+      : (currentPage - 1) * pageSize + 1;
+
   const end = Math.min(currentPage * pageSize, totalItems);
 
   const pages = [];
+
   for (let p = 1; p <= totalPages; p++) {
     if (
       p === 1 ||
@@ -2408,60 +2725,83 @@ const DeptPaginationBar = ({
 
   return (
     <div className="
-      flex flex-col
+      flex flex-col sm:flex-row
       items-center
-      gap-2
+      justify-between
+      gap-3
       px-4 sm:px-6
       py-4
-      border-t border-slate-100
+      border-t border-primary-100
+      bg-gradient-to-r from-primary-50/70 via-white to-primary-50/70
     ">
+      <p className="text-xs text-slate-500 font-medium">
+        Showing{" "}
+        <strong className="text-primary-900">
+          {start}-{end}
+        </strong>{" "}
+        of{" "}
+        <strong className="text-primary-900">
+          {totalItems}
+        </strong>{" "}
+        departments
+      </p>
+
       <div className="flex items-center justify-center gap-1.5">
         <button
           type="button"
-          onClick={() => onPageChange(Math.max(1, currentPage - 1))}
+          onClick={() =>
+            onPageChange(Math.max(1, currentPage - 1))
+          }
           disabled={currentPage === 1}
           className="
-            h-8 w-8
+            h-9 w-9
             rounded-lg
             flex items-center justify-center
-            text-slate-500
-            border border-slate-200
-            hover:bg-slate-50
+            text-primary-700
+            border border-primary-200
+            bg-white
+            hover:bg-primary-100
+            hover:border-primary-300
             disabled:opacity-40
             disabled:cursor-not-allowed
             transition-colors
           "
           aria-label="Previous page"
         >
-          <ChevronLeft size={15} />
+          <ChevronLeft size={16} />
         </button>
 
-        {pages.map((p, idx) =>
-          p === "..." ? (
+        {pages.map((page, index) =>
+          page === "..." ? (
             <span
-              key={`dots-${idx}`}
-              className="px-1.5 text-xs text-slate-400 select-none"
+              key={`dots-${index}`}
+              className="
+                px-1.5
+                text-xs
+                text-slate-400
+                select-none
+              "
             >
               …
             </span>
           ) : (
             <button
-              key={p}
+              key={page}
               type="button"
-              onClick={() => onPageChange(p)}
+              onClick={() => onPageChange(page)}
               className={`
-                h-8 min-w-[2rem] px-2
+                h-9 min-w-[2.25rem] px-2
                 rounded-lg
-                text-xs font-semibold
-                transition-colors
+                text-xs font-bold
+                transition-all
                 ${
-                  p === currentPage
-                    ? "bg-gradient-to-r from-teal-500 to-emerald-600 text-white shadow-sm"
-                    : "text-slate-600 border border-slate-200 hover:bg-slate-50"
+                  page === currentPage
+                    ? "bg-primary-700 hover:bg-primary-800 text-white shadow-md shadow-primary-700/20"
+                    : "bg-white text-primary-800 border border-primary-200 hover:bg-primary-100 hover:border-primary-300"
                 }
               `}
             >
-              {p}
+              {page}
             </button>
           )
         )}
@@ -2473,31 +2813,23 @@ const DeptPaginationBar = ({
           }
           disabled={currentPage === totalPages}
           className="
-            h-8 w-8
+            h-9 w-9
             rounded-lg
             flex items-center justify-center
-            text-slate-500
-            border border-slate-200
-            hover:bg-slate-50
+            text-primary-700
+            border border-primary-200
+            bg-white
+            hover:bg-primary-100
+            hover:border-primary-300
             disabled:opacity-40
             disabled:cursor-not-allowed
             transition-colors
           "
           aria-label="Next page"
         >
-          <ChevronRight size={15} />
+          <ChevronRight size={16} />
         </button>
       </div>
-
-      <p className="text-xs text-slate-500 font-medium">
-        Showing{" "}
-        <strong className="text-slate-800">
-          {start}-{end}
-        </strong>{" "}
-        of{" "}
-        <strong className="text-slate-800">{totalItems}</strong>{" "}
-        departments
-      </p>
     </div>
   );
 };

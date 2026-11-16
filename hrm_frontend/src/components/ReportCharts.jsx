@@ -43,11 +43,11 @@ const TipRow = ({ color, name, value }) => (
 
 // ─── Card / empty ─────────────────────────────────────────────────────────────
 export const ChartCard = ({ title, subtitle, action, children, className = "" }) => (
-    <section className={`bg-white rounded-2xl border border-gray-100 shadow-sm p-5 break-inside-avoid min-w-0 ${className}`}>
+    <section className={`bg-white rounded-xl border border-slate-200 shadow-sm p-5 break-inside-avoid min-w-0 transition-shadow hover:shadow-md ${className}`}>
         <header className="flex items-start justify-between gap-3 mb-4">
             <div className="min-w-0">
-                <h3 className="text-sm font-semibold text-gray-800">{title}</h3>
-                {subtitle && <p className="text-xs text-gray-400 mt-0.5">{subtitle}</p>}
+                <h3 className="text-sm font-semibold text-slate-800">{title}</h3>
+                {subtitle && <p className="text-xs text-slate-400 mt-0.5">{subtitle}</p>}
             </div>
             {action}
         </header>
@@ -56,7 +56,7 @@ export const ChartCard = ({ title, subtitle, action, children, className = "" })
 );
 
 export const EmptyState = ({ text = "No data for this selection", height = 128 }) => (
-    <div className="flex items-center justify-center text-xs text-gray-400 border border-dashed border-gray-200 rounded-xl px-4 text-center" style={{ height }}>
+    <div className="flex items-center justify-center text-xs text-slate-400 border border-dashed border-slate-200 rounded-xl px-4 text-center" style={{ height }}>
         {text}
     </div>
 );
@@ -330,31 +330,66 @@ export const Delta = ({ cur, prev, mode = "pct", good = "up", suffix = "", onDar
     );
 };
 
+
 export const KpiCard = ({ icon: Icon, tint = "teal", label, value, sub, delta, spark, onClick }) => {
-    // Same gradient set as the other HR pages: green, blue, purple, yellow (+ red for alerts).
+    // Blue summary-card theme matching the Employee page.
     const grads = {
-        teal: "from-teal-400 to-emerald-500", sky: "from-sky-400 to-blue-500", violet: "from-violet-400 to-purple-500",
-        amber: "from-amber-400 to-orange-500", mint: "from-emerald-400 to-teal-600", rose: "from-rose-400 to-red-500",
+        teal: "from-primary-600 to-primary-700",
+        sky: "from-primary-500 to-primary-700",
+        violet: "from-primary-700 to-primary-900",
+        amber: "from-primary-600 to-primary-800",
+        mint: "from-primary-500 to-primary-800",
+        rose: "from-primary-700 to-primary-900",
     };
+
     const Tag = onClick ? "button" : "div";
-    const d = React.isValidElement(delta) ? React.cloneElement(delta, { onDark: true }) : delta;
+    const d = React.isValidElement(delta)
+        ? React.cloneElement(delta, { onDark: true })
+        : delta;
+
     return (
-        <Tag onClick={onClick} className={`text-left bg-gradient-to-br ${grads[tint] || grads.teal} text-white rounded-2xl shadow-sm p-5 flex flex-col gap-3 min-w-0 break-inside-avoid hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 ${onClick ? "cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-teal-500" : ""}`}>
-            <div className="flex items-center justify-between gap-2">
-                <span className="text-sm text-white/85 font-medium">{label}</span>
-                <span className="w-9 h-9 rounded-xl flex items-center justify-center bg-white/20"><Icon size={18} /></span>
+        <Tag
+            onClick={onClick}
+            className={`relative overflow-hidden text-left bg-gradient-to-br ${
+                grads[tint] || grads.teal
+            } text-white rounded-xl shadow-sm p-5 flex flex-col gap-3 min-w-0 break-inside-avoid transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md ${
+                onClick
+                    ? "cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-primary-500"
+                    : ""
+            }`}
+        >
+            {/* Decorative background circles */}
+            <div className="absolute -right-6 -top-8 w-28 h-28 rounded-full bg-white/10 pointer-events-none" />
+            <div className="absolute -right-2 -bottom-12 w-24 h-24 rounded-full bg-white/10 pointer-events-none" />
+
+            <div className="relative flex items-center justify-between gap-2">
+                <span className="text-sm text-white/90 font-medium">
+                    {label}
+                </span>
+
+                <span className="w-10 h-10 rounded-xl flex items-center justify-center bg-white/20">
+                    <Icon size={19} />
+                </span>
             </div>
-            <div className="flex items-end justify-between gap-3">
-                <span className="text-[28px] leading-none font-bold tabular-nums tracking-tight">{value}</span>
+
+            <div className="relative flex items-end justify-between gap-3">
+                <span className="text-[28px] leading-none font-bold tabular-nums tracking-tight">
+                    {value}
+                </span>
+
                 {spark && <Sparkline values={spark} color="#ffffff" />}
             </div>
-            <div className="space-y-1 min-h-[2.25rem]">
+
+            <div className="relative space-y-1 min-h-[2.25rem]">
                 {d}
-                {sub && <p className="text-xs text-white/80">{sub}</p>}
+                {sub && (
+                    <p className="text-xs text-white/85">{sub}</p>
+                )}
             </div>
         </Tag>
     );
 };
+
 
 export const Badge = ({ tone = "gray", children }) => {
     const tones = {

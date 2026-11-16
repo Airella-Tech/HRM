@@ -26,12 +26,16 @@ import {
   MapPin,
   ChevronLeft,
   ChevronRight,
+  Layers3,
 } from "lucide-react";
 import { PageLayout } from "../../components/PageLayout";
 import { NameListModal } from "../../components/NameListModal";
 import { hrApi, userHrApi } from "../../services/api";
 import AddEmployeeModal from "./AddEmployeeModal";
-import { groupSessionsByEmployee, toLocalDateString } from "../../utils/attendance";
+import {
+  groupSessionsByEmployee,
+  toLocalDateString,
+} from "../../utils/attendance";
 
 const Employee = () => {
   const navigate = useNavigate();
@@ -51,8 +55,10 @@ const Employee = () => {
   const [editingEmployee, setEditingEmployee] = useState(null);
   const [viewingEmployee, setViewingEmployee] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
-  const [showAddEmployeeTypeModal, setShowAddEmployeeTypeModal] = useState(false);
-  const [showAddWorkLocationModal, setShowAddWorkLocationModal] = useState(false);
+  const [showAddEmployeeTypeModal, setShowAddEmployeeTypeModal] =
+    useState(false);
+  const [showAddWorkLocationModal, setShowAddWorkLocationModal] =
+    useState(false);
 
   // ---------------------------------------------------------
   // PAGINATION — show a fixed number of rows per page, with
@@ -71,10 +77,7 @@ const Employee = () => {
       try {
         const parsed = JSON.parse(storedUser);
 
-        if (
-          parsed.role !== "HR_MANAGER" &&
-          parsed.role !== "ADMIN"
-        ) {
+        if (parsed.role !== "HR_MANAGER" && parsed.role !== "ADMIN") {
           navigate("/unauthorized");
           return;
         }
@@ -126,12 +129,12 @@ const Employee = () => {
       const sessions = Array.isArray(res?.data)
         ? res.data
         : Array.isArray(res)
-        ? res
-        : [];
+          ? res
+          : [];
 
       const perEmployee = groupSessionsByEmployee(sessions);
       const present = perEmployee.filter(
-        (row) => row.status === "PRESENT"
+        (row) => row.status === "PRESENT",
       ).length;
 
       setPresentToday(present);
@@ -187,23 +190,15 @@ const Employee = () => {
     if (!deleteTarget) return;
 
     try {
-      await userHrApi.deleteEmployee(
-        deleteTarget.id
-      );
+      await userHrApi.deleteEmployee(deleteTarget.id);
 
       await fetchEmployees();
 
       setDeleteTarget(null);
     } catch (error) {
-      console.error(
-        "Failed to delete employee:",
-        error
-      );
+      console.error("Failed to delete employee:", error);
 
-      alert(
-        error.message ||
-        "Failed to delete employee."
-      );
+      alert(error.message || "Failed to delete employee.");
     }
   };
 
@@ -211,8 +206,7 @@ const Employee = () => {
   // FILTERING
   // ---------------------------------------------------------
   const filteredEmployees = useMemo(() => {
-    const search =
-      searchTerm.toLowerCase().trim();
+    const search = searchTerm.toLowerCase().trim();
 
     return employees.filter((emp) => {
       if (selectedDeptFilter !== "ALL") {
@@ -222,41 +216,24 @@ const Employee = () => {
           ""
         ).toLowerCase();
 
-        if (
-          empDept !==
-          selectedDeptFilter.toLowerCase()
-        ) {
+        if (empDept !== selectedDeptFilter.toLowerCase()) {
           return false;
         }
       }
 
       if (!search) return true;
 
-      const name = (
-        emp.fullName || ""
-      ).toLowerCase();
+      const name = (emp.fullName || "").toLowerCase();
 
-      const id = (
-        emp.employeeId || ""
-      ).toLowerCase();
+      const id = (emp.employeeId || "").toLowerCase();
 
-      const email = (
-        emp.email || ""
-      ).toLowerCase();
+      const email = (emp.email || "").toLowerCase();
 
-      const role = (
-        emp.designation || ""
-      ).toLowerCase();
+      const role = (emp.designation || "").toLowerCase();
 
-      const phone = (
-        emp.phone || ""
-      ).toLowerCase();
+      const phone = (emp.phone || "").toLowerCase();
 
-      const dept = (
-        emp.departmentName ||
-        emp.department ||
-        ""
-      ).toLowerCase();
+      const dept = (emp.departmentName || emp.department || "").toLowerCase();
 
       return (
         name.includes(search) ||
@@ -267,11 +244,7 @@ const Employee = () => {
         dept.includes(search)
       );
     });
-  }, [
-    employees,
-    searchTerm,
-    selectedDeptFilter,
-  ]);
+  }, [employees, searchTerm, selectedDeptFilter]);
 
   // ---------------------------------------------------------
   // SORTING
@@ -309,7 +282,7 @@ const Employee = () => {
       pick(a).toString().localeCompare(pick(b).toString(), undefined, {
         numeric: true,
         sensitivity: "base",
-      })
+      }),
     );
 
     return sortDir === "asc" ? sorted : sorted.reverse();
@@ -322,7 +295,7 @@ const Employee = () => {
   // ---------------------------------------------------------
   const totalPages = Math.max(
     1,
-    Math.ceil(sortedEmployees.length / ROWS_PER_PAGE)
+    Math.ceil(sortedEmployees.length / ROWS_PER_PAGE),
   );
 
   useEffect(() => {
@@ -343,11 +316,9 @@ const Employee = () => {
   // ---------------------------------------------------------
   // SUMMARY COUNTS
   // ---------------------------------------------------------
-  const totalEmployees =
-    employees.length;
+  const totalEmployees = employees.length;
 
-  const totalDeptsRepresented =
-    departments.length;
+  const totalDeptsRepresented = departments.length;
 
   if (!user) return null;
 
@@ -363,18 +334,15 @@ const Employee = () => {
             onClick={() => setShowAddEmployeeTypeModal(true)}
             className="
               inline-flex items-center gap-2
-              bg-gradient-to-br from-teal-400 to-emerald-500
-              hover:from-teal-500 hover:to-emerald-600
+             bg-primary-600
+             hover:bg-primary-700
               text-white px-4 py-2.5
               rounded-xl text-sm font-semibold
-              shadow-sm shadow-teal-500/20
+              shadow-sm shadow-primary-600/20
               transition-all duration-200
             "
           >
-            <Plus
-              size={17}
-              strokeWidth={2.5}
-            />
+            <Plus size={17} strokeWidth={2.5} />
             Add Employee Type
           </button>
 
@@ -382,18 +350,15 @@ const Employee = () => {
             onClick={() => setShowAddWorkLocationModal(true)}
             className="
               inline-flex items-center gap-2
-              bg-gradient-to-br from-teal-400 to-emerald-500
-              hover:from-teal-500 hover:to-emerald-600
+              bg-primary-600
+              hover:bg-primary-700
               text-white px-4 py-2.5
               rounded-xl text-sm font-semibold
-              shadow-sm shadow-teal-500/20
+              shadow-sm shadow-primary-600/20
               transition-all duration-200
             "
           >
-            <Plus
-              size={17}
-              strokeWidth={2.5}
-            />
+            <Plus size={17} strokeWidth={2.5} />
             Add Work Location
           </button>
 
@@ -401,71 +366,162 @@ const Employee = () => {
             onClick={openCreateForm}
             className="
               inline-flex items-center gap-2
-              bg-gradient-to-br from-teal-400 to-emerald-500
-              hover:from-teal-500 hover:to-emerald-600
+              bg-primary-600
+              hover:bg-primary-700
               text-white px-4 py-2.5
               rounded-xl text-sm font-semibold
-              shadow-sm shadow-teal-500/20
+              shadow-sm shadow-primary-600/20
               transition-all duration-200
             "
           >
-            <Plus
-              size={17}
-              strokeWidth={2.5}
-            />
+            <Plus size={17} strokeWidth={2.5} />
             Add Employee
           </button>
         </div>
       }
     >
       <div className="space-y-6">
+        {/* EMPLOYEE DIRECTORY INTRO */}
+        <div
+          className="
+  relative overflow-hidden
+  rounded-2xl
+  border border-primary-200
+  bg-gradient-to-r from-primary-100 via-primary-50 to-white
+  p-6 sm:p-7
+"
+        >
+          <div
+            className="
+    absolute -right-10 -top-12
+    h-40 w-40 rounded-full
+    bg-primary-200/40
+  "
+          />
+
+          <div
+            className="
+    absolute right-24 -bottom-16
+    h-36 w-36 rounded-full
+    bg-primary-100/70
+  "
+          />
+
+          <div className="relative flex flex-col sm:flex-row sm:items-center justify-between gap-5">
+            <div className="flex items-start gap-4">
+              <div
+                className="
+        h-14 w-14 shrink-0
+        rounded-2xl
+        bg-primary-600
+        text-white
+        flex items-center justify-center
+        shadow-lg shadow-primary-600/20
+      "
+              >
+                <Users size={27} />
+              </div>
+
+              <div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h2 className="text-xl sm:text-2xl font-bold text-slate-900">
+                    Employee Directory
+                  </h2>
+
+                  <span
+                    className="
+            inline-flex items-center gap-1
+            rounded-full
+            bg-primary-100
+            border border-primary-200
+            px-2.5 py-1
+            text-[10px] font-bold uppercase tracking-wider
+            text-primary-700
+          "
+                  >
+                    <BadgeCheck size={12} />
+                    HR Management
+                  </span>
+                </div>
+
+                <p className="mt-1.5 text-sm text-slate-600 max-w-xl">
+                  Manage employee records, employment details, departments, and
+                  work assignments from one central directory.
+                </p>
+              </div>
+            </div>
+
+            <div
+              className="
+      relative flex items-center gap-2
+      rounded-xl border border-primary-200
+      bg-white/80 px-4 py-3
+      text-sm font-semibold text-primary-700
+      shadow-sm
+    "
+            >
+              <UserCheck size={18} />
+              <span>{totalEmployees} Registered Employees</span>
+            </div>
+          </div>
+        </div>
 
         {/* =====================================================
             SUMMARY METRICS
         ====================================================== */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-
-          {/* GREEN - TOTAL EMPLOYEES */}
+          {/*TOTAL EMPLOYEES */}
           <SummaryCard
             icon={<Users size={20} />}
             title="Total Employees"
             value={totalEmployees}
             description="Registered in organization"
-            className="
-              bg-gradient-to-br
-              from-green-400
-              to-emerald-500
-            "
+            className="bg-primary-600"
           />
 
-          {/* YELLOW - ACTIVE EMPLOYEES (present today, from attendance) */}
+          {/* ACTIVE EMPLOYEES (present today, from attendance) */}
           <SummaryCard
             icon={<UserCheck size={20} />}
             title="Active Employees"
             value={presentToday}
             description="Present today · click to view attendance"
             onClick={() => navigate("/hr/attendance")}
-            className="bg-yellow-500"
+            className="bg-primary-500"
           />
 
-          {/* PURPLE - DEPARTMENTS */}
+          {/*DEPARTMENTS */}
           <SummaryCard
             icon={<Building2 size={20} />}
             title="Departments"
             value={totalDeptsRepresented}
             description="Active database departments · click to view"
             onClick={() => navigate("/hr/departments")}
-            className="bg-purple-600"
+            className="bg-primary-700"
           />
         </div>
 
         {/* =====================================================
             SEARCH & FILTER CONTROLS
         ====================================================== */}
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-5">
-          <div className="flex flex-col lg:flex-row gap-3 lg:items-center lg:justify-between">
+        <div
+          className="
+           overflow-hidden
+           bg-white
+           rounded-2xl
+           border border-slate-200
+           shadow-sm
+"
+        >
+          <div className="px-5 py-4 border-b border-slate-100">
+            <h3 className="text-sm font-bold text-slate-900">Find Employees</h3>
+            <p className="text-xs text-slate-500 mt-0.5">
+              Search and filter your employee directory
+            </p>
+          </div>
 
+          <div className="flex flex-col lg:flex-row gap-3 lg:items-center lg:justify-between p-4 sm:p-5">
             {/* Search Input */}
+
             <div className="relative flex-1 max-w-lg">
               <Search
                 size={18}
@@ -479,9 +535,7 @@ const Employee = () => {
               <input
                 type="text"
                 value={searchTerm}
-                onChange={(e) =>
-                  setSearchTerm(e.target.value)
-                }
+                onChange={(e) => setSearchTerm(e.target.value)}
                 placeholder="Search by name, ID (e.g. SE003), email, or role..."
                 className="
                   w-full
@@ -494,18 +548,16 @@ const Employee = () => {
                   placeholder:text-slate-400
                   focus:outline-none
                   focus:bg-white
-                  focus:border-blue-500
-                  focus:ring-4
-                  focus:ring-blue-500/10
+                focus:border-primary-500
+focus:ring-4
+focus:ring-primary-500/10
                   transition-all
                 "
               />
 
               {searchTerm && (
                 <button
-                  onClick={() =>
-                    setSearchTerm("")
-                  }
+                  onClick={() => setSearchTerm("")}
                   className="
                     absolute right-3 top-1/2
                     -translate-y-1/2
@@ -520,20 +572,12 @@ const Employee = () => {
 
             {/* Department Filter */}
             <div className="flex items-center gap-3">
-
               <div className="flex items-center gap-2">
-                <Filter
-                  size={15}
-                  className="text-slate-400"
-                />
+                <Filter size={15} className="text-slate-400" />
 
                 <select
                   value={selectedDeptFilter}
-                  onChange={(e) =>
-                    setSelectedDeptFilter(
-                      e.target.value
-                    )
-                  }
+                  onChange={(e) => setSelectedDeptFilter(e.target.value)}
                   className="
                     px-3 py-2
                     bg-slate-50
@@ -543,38 +587,33 @@ const Employee = () => {
                     text-slate-700
                     focus:outline-none
                     focus:bg-white
-                    focus:border-blue-500
+                    focus:border-primary-500
+focus:ring-4
+focus:ring-primary-500/10
                   "
                 >
-                  <option value="ALL">
-                    All Departments
-                  </option>
+                  <option value="ALL">All Departments</option>
 
                   {departments.map((d) => (
-                    <option
-                      key={d.id}
-                      value={d.name}
-                    >
-                      {d.name}{" "}
-                      {d.shortCode
-                        ? `(${d.shortCode})`
-                        : ""}
+                    <option key={d.id} value={d.name}>
+                      {d.name} {d.shortCode ? `(${d.shortCode})` : ""}
                     </option>
                   ))}
                 </select>
               </div>
 
-              <span className="
+              <span
+                className="
                 text-xs text-slate-500
                 font-medium
-              ">
+              "
+              >
                 Showing{" "}
                 <strong className="text-slate-800">
                   {sortedEmployees.length}
                 </strong>{" "}
                 of {employees.length}
               </span>
-
             </div>
           </div>
         </div>
@@ -582,135 +621,159 @@ const Employee = () => {
         {/* =====================================================
             EMPLOYEE TABLE
         ====================================================== */}
-        <div className="
+        <div
+          className="
           bg-white
           rounded-2xl
           border border-slate-200
           shadow-sm
-        ">
-
+        "
+        >
           {/* Desktop Table Header */}
-          <div className="
+          <div
+            className="
             hidden lg:grid
             grid-cols-[2fr_1fr_1.2fr_1.2fr_1.1fr_1fr_110px]
             gap-4
             px-6 py-3.5
-            bg-gradient-to-br
-            from-teal-400
-            to-emerald-500
-            border-b border-slate-200
-            rounded-t-2xl
-            text-white
-          ">
-            <TableHeader onClick={() => toggleSort("fullName")} sortDir={sortKey === "fullName" ? sortDir : null}>
+           bg-primary-50
+          border-b border-primary-100
+           rounded-t-2xl
+          text-primary-800
+          "
+          >
+            <TableHeader
+              onClick={() => toggleSort("fullName")}
+              sortDir={sortKey === "fullName" ? sortDir : null}
+            >
               Employee
             </TableHeader>
 
-            <TableHeader onClick={() => toggleSort("employeeId")} sortDir={sortKey === "employeeId" ? sortDir : null}>
+            <TableHeader
+              onClick={() => toggleSort("employeeId")}
+              sortDir={sortKey === "employeeId" ? sortDir : null}
+            >
               ID
             </TableHeader>
 
-            <TableHeader onClick={() => toggleSort("department")} sortDir={sortKey === "department" ? sortDir : null}>
+            <TableHeader
+              onClick={() => toggleSort("department")}
+              sortDir={sortKey === "department" ? sortDir : null}
+            >
               Department
             </TableHeader>
 
-            <TableHeader onClick={() => toggleSort("designation")} sortDir={sortKey === "designation" ? sortDir : null}>
+            <TableHeader
+              onClick={() => toggleSort("designation")}
+              sortDir={sortKey === "designation" ? sortDir : null}
+            >
               Job Role
             </TableHeader>
 
-            <TableHeader onClick={() => toggleSort("dob")} sortDir={sortKey === "dob" ? sortDir : null}>
+            <TableHeader
+              onClick={() => toggleSort("dob")}
+              sortDir={sortKey === "dob" ? sortDir : null}
+            >
               Birthday
             </TableHeader>
 
-            <TableHeader onClick={() => toggleSort("phone")} sortDir={sortKey === "phone" ? sortDir : null}>
+            <TableHeader
+              onClick={() => toggleSort("phone")}
+              sortDir={sortKey === "phone" ? sortDir : null}
+            >
               Phone
             </TableHeader>
 
-            <TableHeader className="text-right">
-              Actions
-            </TableHeader>
+            <TableHeader className="text-right">Actions</TableHeader>
           </div>
 
           {/* Content States */}
           {loading ? (
-            <div className="
+            <div
+              className="
               py-20
               flex flex-col
               items-center
               justify-center
               text-center
-            ">
-              <div className="
+            "
+            >
+              <div
+                className="
                 h-11 w-11
                 rounded-xl
-                bg-blue-50
-                text-blue-600
+                bg-primary-50
+                text-primary-600
                 flex items-center
                 justify-center
                 mb-4
-              ">
-                <Loader2
-                  size={22}
-                  className="animate-spin"
-                />
+              "
+              >
+                <Loader2 size={22} className="animate-spin" />
               </div>
 
-              <p className="
+              <p
+                className="
                 text-sm
                 font-medium
                 text-slate-700
-              ">
+              "
+              >
                 Loading employee directory...
               </p>
 
-              <p className="
+              <p
+                className="
                 text-xs
                 text-slate-400
                 mt-1
-              ">
+              "
+              >
                 Fetching latest records from database
               </p>
             </div>
           ) : sortedEmployees.length === 0 ? (
-            <div className="
+            <div
+              className="
               py-16 px-6
               flex flex-col
               items-center
               justify-center
               text-center
-            ">
-              <div className="
+            "
+            >
+              <div
+                className="
                 h-16 w-16
                 rounded-2xl
-                bg-blue-50
-                text-blue-500
+                bg-primary-50
+                text-primary-600
                 flex items-center
                 justify-center
                 mb-4
-              ">
-                {searchTerm ? (
-                  <Search size={28} />
-                ) : (
-                  <Users size={28} />
-                )}
+              "
+              >
+                {searchTerm ? <Search size={28} /> : <Users size={28} />}
               </div>
 
-              <h3 className="
+              <h3
+                className="
                 text-base
                 font-bold
                 text-slate-800
-              ">
-                {searchTerm
-                  ? "No employees found"
-                  : "No employees added yet"}
+              "
+              >
+                {searchTerm ? "No employees found" : "No employees added yet"}
               </h3>
 
-              <p className="
+              <p
+                className="
                 text-sm
                 text-slate-500
                 mt-1
                 max-w-sm
-              ">
+              "
+              >
                 {searchTerm
                   ? "Try clearing your search query or choosing another department."
                   : "Start onboarding by adding your first employee to the database."}
@@ -724,8 +787,8 @@ const Employee = () => {
                     inline-flex
                     items-center
                     gap-2
-                    bg-blue-600
-                    hover:bg-blue-700
+                    bg-primary-600
+                    hover:bg-primary-700
                     text-white
                     px-4 py-2.5
                     rounded-xl
@@ -740,24 +803,18 @@ const Employee = () => {
               )}
             </div>
           ) : (
-            <div className="
+            <div
+              className="
               divide-y
               divide-slate-100
-            ">
+            "
+            >
               {paginatedEmployees.map((emp) => {
-                const empId =
-                  emp.employeeId ||
-                  `EMP-${emp.id}`;
+                const empId = emp.employeeId || `EMP-${emp.id}`;
 
-                const deptName =
-                  emp.departmentName ||
-                  emp.department ||
-                  "—";
+                const deptName = emp.departmentName || emp.department || "—";
 
-                const roleTitle =
-                  emp.designation ||
-                  emp.role ||
-                  "—";
+                const roleTitle = emp.designation || emp.role || "—";
 
                 return (
                   <div
@@ -766,55 +823,53 @@ const Employee = () => {
                       group
                       px-4 sm:px-6
                       py-4
-                      hover:bg-blue-50/40
+                      hover:bg-primary-50/50
                       transition-colors
                     "
                   >
-
                     {/* Desktop View */}
-                    <div className="
+                    <div
+                      className="
                       hidden lg:grid
                       grid-cols-[2fr_1fr_1.2fr_1.2fr_1.1fr_1fr_110px]
                       gap-4
                       items-center
-                    ">
-
+                    "
+                    >
                       {/* Employee */}
-                      <div className="
+                      <div
+                        className="
                         flex items-center
                         gap-3 min-w-0
-                      ">
-                        <div className="
+                      "
+                      >
+                        <div
+                          className="
                           h-10 w-10
                           flex-shrink-0
                           rounded-xl
-                          bg-gradient-to-br
-                          from-teal-400
-                          to-emerald-500
+                          bg-primary-600
                           text-white
                           font-bold
                           text-sm
                           flex items-center
                           justify-center
                           shadow-sm
-                        ">
+                        "
+                        >
                           {emp.fullName
-                            ? emp.fullName
-                              .charAt(0)
-                              .toUpperCase()
+                            ? emp.fullName.charAt(0).toUpperCase()
                             : "E"}
                         </div>
 
                         <div className="min-w-0">
                           <button
-                            onClick={() =>
-                              setViewingEmployee(emp)
-                            }
+                            onClick={() => setViewingEmployee(emp)}
                             className="
                               text-sm
                               font-semibold
                               text-slate-800
-                              hover:text-blue-600
+                              hover:text-primary-600
                               truncate
                               text-left
                               block
@@ -824,12 +879,14 @@ const Employee = () => {
                             {emp.fullName}
                           </button>
 
-                          <p className="
+                          <p
+                            className="
                             text-xs
                             text-slate-400
                             truncate
                             mt-0.5
-                          ">
+                          "
+                          >
                             {emp.email}
                           </p>
                         </div>
@@ -837,7 +894,8 @@ const Employee = () => {
 
                       {/* ID */}
                       <div>
-                        <span className="
+                        <span
+                          className="
                           inline-flex
                           items-center
                           px-2.5 py-1
@@ -849,41 +907,48 @@ const Employee = () => {
                           font-bold
                           border
                           border-slate-200
-                        ">
+                        "
+                        >
                           {empId}
                         </span>
                       </div>
 
                       {/* Department */}
-                      <div className="
+                      <div
+                        className="
                         flex items-center
                         gap-1.5
                         min-w-0
-                      ">
+                      "
+                      >
                         <Building2
                           size={14}
                           className="
-                            text-blue-500
+                            text-primary-600
                             flex-shrink-0
                           "
                         />
 
-                        <span className="
+                        <span
+                          className="
                           text-sm
                           text-slate-700
                           font-medium
                           truncate
-                        ">
+                        "
+                        >
                           {deptName}
                         </span>
                       </div>
 
                       {/* Job Role */}
-                      <div className="
+                      <div
+                        className="
                         flex items-center
                         gap-1.5
                         min-w-0
-                      ">
+                      "
+                      >
                         <BriefcaseBusiness
                           size={14}
                           className="
@@ -892,23 +957,27 @@ const Employee = () => {
                           "
                         />
 
-                        <span className="
+                        <span
+                          className="
                           text-sm
                           text-slate-700
                           font-semibold
                           truncate
-                        ">
+                        "
+                        >
                           {roleTitle}
                         </span>
                       </div>
 
                       {/* Birthday */}
-                      <div className="
+                      <div
+                        className="
                         flex items-center
                         gap-1.5
                         text-xs
                         text-slate-600
-                      ">
+                      "
+                      >
                         <Calendar
                           size={13}
                           className="
@@ -917,20 +986,18 @@ const Employee = () => {
                           "
                         />
 
-                        <span>
-                          {emp.dob ||
-                            emp.birthday ||
-                            "—"}
-                        </span>
+                        <span>{emp.dob || emp.birthday || "—"}</span>
                       </div>
 
                       {/* Phone */}
-                      <div className="
+                      <div
+                        className="
                         flex items-center
                         gap-1.5
                         text-xs
                         text-slate-600
-                      ">
+                      "
+                      >
                         <Phone
                           size={13}
                           className="
@@ -940,23 +1007,21 @@ const Employee = () => {
                         />
 
                         <span className="truncate">
-                          {emp.phone ||
-                            emp.phoneNumber ||
-                            "—"}
+                          {emp.phone || emp.phoneNumber || "—"}
                         </span>
                       </div>
 
                       {/* Actions */}
-                      <div className="
+                      <div
+                        className="
                         flex items-center
                         justify-end
                         gap-1
-                      ">
+                      "
+                      >
                         <button
                           type="button"
-                          onClick={() =>
-                            setViewingEmployee(emp)
-                          }
+                          onClick={() => setViewingEmployee(emp)}
                           title="View Employee Details"
                           className="
                             h-8 w-8
@@ -964,8 +1029,8 @@ const Employee = () => {
                             flex items-center
                             justify-center
                             text-slate-400
-                            hover:text-blue-600
-                            hover:bg-blue-50
+                            hover:text-primary-600
+                            hover:bg-primary-50
                             transition-colors
                           "
                         >
@@ -974,9 +1039,7 @@ const Employee = () => {
 
                         <button
                           type="button"
-                          onClick={() =>
-                            handleEdit(emp)
-                          }
+                          onClick={() => handleEdit(emp)}
                           title="Edit Employee"
                           className="
                             h-8 w-8
@@ -984,8 +1047,8 @@ const Employee = () => {
                             flex items-center
                             justify-center
                             text-slate-400
-                            hover:text-amber-600
-                            hover:bg-amber-50
+                           hover:text-primary-600
+                           hover:bg-primary-50
                             transition-colors
                           "
                         >
@@ -994,9 +1057,7 @@ const Employee = () => {
 
                         <button
                           type="button"
-                          onClick={() =>
-                            setDeleteTarget(emp)
-                          }
+                          onClick={() => setDeleteTarget(emp)}
                           title="Delete Employee"
                           className="
                             h-8 w-8
@@ -1015,45 +1076,49 @@ const Employee = () => {
                     </div>
 
                     {/* Mobile Card View */}
-                    <div className="
+                    <div
+                      className="
                       lg:hidden
                       space-y-3
-                    ">
-                      <div className="
+                    "
+                    >
+                      <div
+                        className="
                         flex items-start
                         justify-between
                         gap-3
-                      ">
-                        <div className="
+                      "
+                      >
+                        <div
+                          className="
                           flex items-center
                           gap-3
                           min-w-0
-                        ">
-                          <div className="
+                        "
+                        >
+                          <div
+                            className="
                             h-11 w-11
                             flex-shrink-0
                             rounded-xl
                             bg-gradient-to-br
-                            from-teal-400
-                            to-emerald-500
+                          from-primary-600
+                          to-primary-700
                             text-white
                             font-bold
                             text-sm
                             flex items-center
                             justify-center
-                          ">
+                          "
+                          >
                             {emp.fullName
-                              ? emp.fullName
-                                .charAt(0)
-                                .toUpperCase()
+                              ? emp.fullName.charAt(0).toUpperCase()
                               : "E"}
                           </div>
 
                           <div className="min-w-0">
                             <button
-                              onClick={() =>
-                                setViewingEmployee(emp)
-                              }
+                              onClick={() => setViewingEmployee(emp)}
                               className="
                                 font-semibold
                                 text-slate-800
@@ -1066,18 +1131,21 @@ const Employee = () => {
                               {emp.fullName}
                             </button>
 
-                            <p className="
+                            <p
+                              className="
                               text-xs
                               text-slate-400
                               truncate
                               mt-0.5
-                            ">
+                            "
+                            >
                               {emp.email}
                             </p>
                           </div>
                         </div>
 
-                        <span className="
+                        <span
+                          className="
                           px-2.5 py-1
                           rounded-lg
                           bg-slate-100
@@ -1087,138 +1155,161 @@ const Employee = () => {
                           font-bold
                           border
                           border-slate-200
-                        ">
+                        "
+                        >
                           {empId}
                         </span>
                       </div>
 
-                      <div className="
+                      <div
+                        className="
                         grid grid-cols-2
                         gap-2
                         text-xs
                         pt-2
-                      ">
-                        <div className="
+                      "
+                      >
+                        <div
+                          className="
                           bg-slate-50
                           p-2.5
                           rounded-xl
-                        ">
-                          <span className="
+                        "
+                        >
+                          <span
+                            className="
                             text-slate-400
                             block
                             text-[11px]
-                          ">
+                          "
+                          >
                             Department
                           </span>
 
-                          <span className="
+                          <span
+                            className="
                             font-semibold
                             text-slate-700
                             truncate
                             block
                             mt-0.5
-                          ">
+                          "
+                          >
                             {deptName}
                           </span>
                         </div>
 
-                        <div className="
+                        <div
+                          className="
                           bg-slate-50
                           p-2.5
                           rounded-xl
-                        ">
-                          <span className="
+                        "
+                        >
+                          <span
+                            className="
                             text-slate-400
                             block
                             text-[11px]
-                          ">
+                          "
+                          >
                             Job Role
                           </span>
 
-                          <span className="
+                          <span
+                            className="
                             font-semibold
                             text-slate-700
                             truncate
                             block
                             mt-0.5
-                          ">
+                          "
+                          >
                             {roleTitle}
                           </span>
                         </div>
 
-                        <div className="
+                        <div
+                          className="
                           bg-slate-50
                           p-2.5
                           rounded-xl
-                        ">
-                          <span className="
+                        "
+                        >
+                          <span
+                            className="
                             text-slate-400
                             block
                             text-[11px]
-                          ">
+                          "
+                          >
                             Birthday
                           </span>
 
-                          <span className="
+                          <span
+                            className="
                             font-medium
                             text-slate-600
                             block
                             mt-0.5
-                          ">
-                            {emp.dob ||
-                              emp.birthday ||
-                              "—"}
+                          "
+                          >
+                            {emp.dob || emp.birthday || "—"}
                           </span>
                         </div>
 
-                        <div className="
+                        <div
+                          className="
                           bg-slate-50
                           p-2.5
                           rounded-xl
-                        ">
-                          <span className="
+                        "
+                        >
+                          <span
+                            className="
                             text-slate-400
                             block
                             text-[11px]
-                          ">
+                          "
+                          >
                             Phone
                           </span>
 
-                          <span className="
+                          <span
+                            className="
                             font-medium
                             text-slate-600
                             truncate
                             block
                             mt-0.5
-                          ">
-                            {emp.phone ||
-                              emp.phoneNumber ||
-                              "—"}
+                          "
+                          >
+                            {emp.phone || emp.phoneNumber || "—"}
                           </span>
                         </div>
                       </div>
 
                       {/* Mobile Actions */}
-                      <div className="
+                      <div
+                        className="
                         flex items-center
                         gap-2
                         pt-2
                         border-t
                         border-slate-100
-                      ">
+                      "
+                      >
                         <button
                           type="button"
-                          onClick={() =>
-                            setViewingEmployee(emp)
-                          }
+                          onClick={() => setViewingEmployee(emp)}
                           className="
                             flex-1
                             py-2 px-2.5
                             rounded-xl
                             bg-slate-50
-                            hover:bg-blue-50
+                            hover:bg-primary-50
                             text-slate-600
-                            hover:text-blue-600
+                            hover:text-primary-600
                             border
                             border-slate-200
                             text-xs
@@ -1235,17 +1326,15 @@ const Employee = () => {
 
                         <button
                           type="button"
-                          onClick={() =>
-                            handleEdit(emp)
-                          }
+                          onClick={() => handleEdit(emp)}
                           className="
                             flex-1
                             py-2 px-2.5
                             rounded-xl
                             bg-slate-50
-                            hover:bg-amber-50
+                            hover:bg-primary-50
                             text-slate-600
-                            hover:text-amber-600
+                            hover:text-primary-600
                             border
                             border-slate-200
                             text-xs
@@ -1262,9 +1351,7 @@ const Employee = () => {
 
                         <button
                           type="button"
-                          onClick={() =>
-                            setDeleteTarget(emp)
-                          }
+                          onClick={() => setDeleteTarget(emp)}
                           className="
                             flex-1
                             py-2 px-2.5
@@ -1327,7 +1414,8 @@ const Employee = () => {
           VIEW DETAILS MODAL
       ====================================================== */}
       {viewingEmployee && (
-        <div className="
+        <div
+          className="
           fixed inset-0
           z-[100]
           bg-slate-900/40
@@ -1335,8 +1423,10 @@ const Employee = () => {
           flex items-center
           justify-center
           p-4
-        ">
-          <div className="
+        "
+        >
+          <div
+            className="
             bg-white
             w-full
             max-w-lg
@@ -1344,21 +1434,21 @@ const Employee = () => {
             shadow-2xl
             overflow-hidden
             flex flex-col
-          ">
-
+          "
+          >
             {/* Modal Header */}
-            <div className="
+            <div
+              className="
               p-6
               bg-gradient-to-br
-              from-teal-500
-              to-emerald-600
+            from-primary-600
+            to-primary-700
               text-white
               relative
-            ">
+            "
+            >
               <button
-                onClick={() =>
-                  setViewingEmployee(null)
-                }
+                onClick={() => setViewingEmployee(null)}
                 className="
                   absolute
                   top-4 right-4
@@ -1374,11 +1464,14 @@ const Employee = () => {
                 <X size={17} />
               </button>
 
-              <div className="
+              <div
+                className="
                 flex items-center
                 gap-4
-              ">
-                <div className="
+              "
+              >
+                <div
+                  className="
                   h-16 w-16
                   rounded-2xl
                   bg-white/15
@@ -1389,33 +1482,37 @@ const Employee = () => {
                   flex items-center
                   justify-center
                   shadow-inner
-                ">
+                "
+                >
                   {viewingEmployee.fullName
-                    ? viewingEmployee.fullName
-                      .charAt(0)
-                      .toUpperCase()
+                    ? viewingEmployee.fullName.charAt(0).toUpperCase()
                     : "E"}
                 </div>
 
                 <div>
-                  <h2 className="
+                  <h2
+                    className="
                     text-xl
                     font-bold
-                  ">
+                  "
+                  >
                     {viewingEmployee.fullName}
                   </h2>
 
-                  <p className="
-                    text-teal-100
+                  <p
+                    className="
+                    text-primary-100
                     text-sm
                     mt-0.5
-                  ">
+                  "
+                  >
                     {viewingEmployee.designation ||
                       viewingEmployee.role ||
                       "Employee"}
                   </p>
 
-                  <span className="
+                  <span
+                    className="
                     inline-block
                     mt-2
                     font-mono
@@ -1424,51 +1521,47 @@ const Employee = () => {
                     px-2.5 py-0.5
                     bg-white/20
                     rounded-md
-                  ">
-                    {viewingEmployee.employeeId ||
-                      `EMP-${viewingEmployee.id}`}
+                  "
+                  >
+                    {viewingEmployee.employeeId || `EMP-${viewingEmployee.id}`}
                   </span>
                 </div>
               </div>
             </div>
 
             {/* Modal Content */}
-            <div className="
+            <div
+              className="
               p-6
               space-y-4
               text-sm
-            ">
-              <div className="
+            "
+            >
+              <div
+                className="
                 grid
                 grid-cols-2
                 gap-3
-              ">
+              "
+              >
                 <DetailItem
                   icon={<Mail size={15} />}
                   label="Email Address"
-                  value={
-                    viewingEmployee.email
-                  }
+                  value={viewingEmployee.email}
                 />
 
                 <DetailItem
                   icon={<Phone size={15} />}
                   label="Phone Number"
                   value={
-                    viewingEmployee.phone ||
-                    viewingEmployee.phoneNumber ||
-                    "—"
+                    viewingEmployee.phone || viewingEmployee.phoneNumber || "—"
                   }
                 />
 
                 <DetailItem
                   icon={<Calendar size={15} />}
                   label="Birthday"
-                  value={
-                    viewingEmployee.dob ||
-                    viewingEmployee.birthday ||
-                    "—"
-                  }
+                  value={viewingEmployee.dob || viewingEmployee.birthday || "—"}
                 />
 
                 <DetailItem
@@ -1482,31 +1575,23 @@ const Employee = () => {
                 />
 
                 <DetailItem
-                  icon={
-                    <BriefcaseBusiness
-                      size={15}
-                    />
-                  }
+                  icon={<BriefcaseBusiness size={15} />}
                   label="Job Role"
                   value={
-                    viewingEmployee.designation ||
-                    viewingEmployee.role ||
-                    "—"
+                    viewingEmployee.designation || viewingEmployee.role || "—"
                   }
                 />
 
                 <DetailItem
                   icon={<UserCheck size={15} />}
                   label="Status"
-                  value={
-                    viewingEmployee.status ||
-                    "ACTIVE"
-                  }
+                  value={viewingEmployee.status || "ACTIVE"}
                 />
               </div>
 
               {viewingEmployee.joiningDate && (
-                <div className="
+                <div
+                  className="
                   bg-slate-50
                   p-3
                   rounded-xl
@@ -1514,11 +1599,14 @@ const Employee = () => {
                   border-slate-100
                   text-xs
                   text-slate-500
-                ">
+                "
+                >
                   Joined on:{" "}
-                  <strong className="
+                  <strong
+                    className="
                     text-slate-700
-                  ">
+                  "
+                  >
                     {viewingEmployee.joiningDate}
                   </strong>
                 </div>
@@ -1526,7 +1614,8 @@ const Employee = () => {
             </div>
 
             {/* Modal Footer */}
-            <div className="
+            <div
+              className="
               px-6 py-4
               border-t
               border-slate-200
@@ -1534,7 +1623,8 @@ const Employee = () => {
               flex items-center
               justify-end
               gap-3
-            ">
+            "
+            >
               <button
                 onClick={() => {
                   const emp = viewingEmployee;
@@ -1561,9 +1651,7 @@ const Employee = () => {
               </button>
 
               <button
-                onClick={() =>
-                  setViewingEmployee(null)
-                }
+                onClick={() => setViewingEmployee(null)}
                 className="
                   px-4 py-2
                   rounded-xl
@@ -1580,27 +1668,24 @@ const Employee = () => {
 
               <button
                 onClick={() => {
-                  const emp =
-                    viewingEmployee;
+                  const emp = viewingEmployee;
 
                   setViewingEmployee(null);
 
                   handleEdit(emp);
                 }}
                 className="
-                  px-4 py-2
-                  rounded-xl
-                  bg-gradient-to-br
-                  from-teal-400
-                  to-emerald-500
-                  hover:from-teal-500
-                  hover:to-emerald-600
-                  text-white
-                  text-sm
-                  font-semibold
-                  flex items-center
-                  gap-1.5
-                "
+                    px-4 py-2
+                    rounded-xl
+                   bg-primary-600
+                   hover:bg-primary-700
+                   text-white
+                    text-sm
+                    font-semibold
+                    flex items-center
+                    gap-1.5
+                    transition-colors
+                    "
               >
                 <Edit3 size={14} />
                 Edit Record
@@ -1681,7 +1766,8 @@ const Employee = () => {
           DELETE CONFIRMATION MODAL
       ====================================================== */}
       {deleteTarget && (
-        <div className="
+        <div
+          className="
           fixed inset-0
           z-[100]
           bg-slate-900/40
@@ -1689,20 +1775,26 @@ const Employee = () => {
           flex items-center
           justify-center
           p-4
-        ">
-          <div className="
+        "
+        >
+          <div
+            className="
             bg-white
             w-full
             max-w-md
             rounded-2xl
             shadow-2xl
             p-6
-          ">
-            <div className="
+          "
+          >
+            <div
+              className="
               flex items-start
               gap-4
-            ">
-              <div className="
+            "
+            >
+              <div
+                className="
                 h-11 w-11
                 flex-shrink-0
                 rounded-xl
@@ -1710,48 +1802,55 @@ const Employee = () => {
                 text-red-600
                 flex items-center
                 justify-center
-              ">
+              "
+              >
                 <AlertCircle size={22} />
               </div>
 
               <div>
-                <h3 className="
+                <h3
+                  className="
                   text-base
                   font-bold
                   text-slate-900
-                ">
+                "
+                >
                   Delete Employee?
                 </h3>
 
-                <p className="
+                <p
+                  className="
                   text-sm
                   text-slate-500
                   mt-1
                   leading-relaxed
-                ">
+                "
+                >
                   Are you sure you want to permanently delete{" "}
-                  <strong className="
+                  <strong
+                    className="
                     text-slate-800
-                  ">
+                  "
+                  >
                     {deleteTarget.fullName}
                   </strong>{" "}
-                  ({deleteTarget.employeeId})? Their account and related
-                  records (leave, payslips, salary) will be removed. This
-                  cannot be undone.
+                  ({deleteTarget.employeeId})? Their account and related records
+                  (leave, payslips, salary) will be removed. This cannot be
+                  undone.
                 </p>
               </div>
             </div>
 
-            <div className="
+            <div
+              className="
               flex
               justify-end
               gap-3
               mt-6
-            ">
+            "
+            >
               <button
-                onClick={() =>
-                  setDeleteTarget(null)
-                }
+                onClick={() => setDeleteTarget(null)}
                 className="
                   px-4 py-2.5
                   rounded-xl
@@ -1792,17 +1891,11 @@ const Employee = () => {
   );
 };
 
-
 // ─────────────────────────────────────────────
 // HELPER COMPONENTS
 // ─────────────────────────────────────────────
 
-const TableHeader = ({
-  children,
-  className = "",
-  onClick,
-  sortDir,
-}) => (
+const TableHeader = ({ children, className = "", onClick, sortDir }) => (
   <div
     onClick={onClick}
     className={`
@@ -1810,21 +1903,25 @@ const TableHeader = ({
       font-bold
       uppercase
       tracking-wider
-      text-white
-      ${onClick ? "flex items-center gap-1 cursor-pointer select-none hover:text-teal-50" : ""}
+      text-primary-800
+${onClick ? "flex items-center gap-1 cursor-pointer select-none hover:text-primary-600" : ""}
       ${className}
     `}
   >
     {children}
-    {onClick && (
-      sortDir ? (
-        sortDir === "asc" ? <ChevronUp size={12} /> : <ChevronDown size={12} />
+    {onClick &&
+      (sortDir ? (
+        sortDir === "asc" ? (
+          <ChevronUp size={12} />
+        ) : (
+          <ChevronDown size={12} />
+        )
       ) : (
         <ArrowUpDown size={11} className="opacity-60" />
-      )
-    )}
+      ))}
   </div>
 );
+
 
 const SummaryCard = ({
   icon,
@@ -1849,95 +1946,79 @@ const SummaryCard = ({
         : undefined
     }
     className={`
+      relative overflow-hidden
       rounded-2xl
       p-5
       text-white
       shadow-sm
-      hover:shadow-md
-      transition-shadow
-      ${onClick ? "cursor-pointer hover:-translate-y-0.5 transition-transform duration-200" : ""}
+      hover:shadow-lg
+      transition-all duration-300
+      min-h-[140px]
+      ${onClick ? "cursor-pointer hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-300" : ""}
       ${className}
     `}
   >
-    <div className="
-      flex items-start
-      justify-between
-    ">
+    {/* Decorative background circles */}
+    <div className="absolute -right-5 -top-5 w-24 h-24 rounded-full bg-white/10" />
+    <div className="absolute -right-2 -bottom-10 w-28 h-28 rounded-full bg-white/10" />
+
+    <div className="relative z-10 flex items-start justify-between">
       <div>
-        <p className="
-          text-xs
-          font-semibold
-          uppercase
-          tracking-wider
-          text-white
-        ">
+        <p className="text-xs font-semibold uppercase tracking-wider text-white/90">
           {title}
         </p>
 
-        <p className="
-          mt-2
-          text-2xl
-          font-bold
-          text-white
-        ">
+        <p className="mt-3 text-3xl font-bold text-white">
           {value}
         </p>
 
         {description && (
-          <p className="
-            mt-1
-            text-xs
-            text-white/80
-          ">
+          <p className="mt-2 text-xs text-white/80">
             {description}
           </p>
         )}
       </div>
 
-      <div className="
-        h-10 w-10
-        rounded-xl
-        bg-white/15
-        text-white
-        flex items-center
-        justify-center
-      ">
+      <div className="h-11 w-11 rounded-xl bg-white/20 text-white flex items-center justify-center flex-shrink-0">
         {icon}
       </div>
     </div>
   </div>
 );
 
-const DetailItem = ({
-  icon,
-  label,
-  value,
-}) => (
-  <div className="
+
+const DetailItem = ({ icon, label, value }) => (
+  <div
+    className="
     bg-slate-50
     p-3
     rounded-xl
     border
     border-slate-100
-  ">
-    <div className="
+  "
+  >
+    <div
+      className="
       flex items-center
       gap-1.5
       text-slate-400
       text-xs
-    ">
+    "
+    >
       {icon}
 
       <span>{label}</span>
     </div>
 
-    <p className="
+    <p
+      className="
       mt-1
       font-semibold
       text-slate-800
       text-sm
       truncate
-    ">
+    "
+    >
       {value}
     </p>
   </div>
@@ -1972,14 +2053,16 @@ const PaginationBar = ({
   }
 
   return (
-    <div className="
+    <div
+      className="
       flex flex-col
       items-center
       gap-2
       px-4 sm:px-6
       py-4
       border-t border-slate-100
-    ">
+    "
+    >
       <div className="flex items-center justify-center gap-1.5">
         <button
           type="button"
@@ -2021,21 +2104,19 @@ const PaginationBar = ({
                 transition-colors
                 ${
                   p === currentPage
-                    ? "bg-gradient-to-br from-teal-400 to-emerald-500 text-white shadow-sm"
+                    ? "bg-primary-600 text-white shadow-sm"
                     : "text-slate-600 border border-slate-200 hover:bg-slate-50"
                 }
               `}
             >
               {p}
             </button>
-          )
+          ),
         )}
 
         <button
           type="button"
-          onClick={() =>
-            onPageChange(Math.min(totalPages, currentPage + 1))
-          }
+          onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
           disabled={currentPage === totalPages}
           className="
             h-8 w-8
@@ -2059,9 +2140,7 @@ const PaginationBar = ({
         <strong className="text-slate-800">
           {start}-{end}
         </strong>{" "}
-        of{" "}
-        <strong className="text-slate-800">{totalItems}</strong>{" "}
-        employees
+        of <strong className="text-slate-800">{totalItems}</strong> employees
       </p>
     </div>
   );

@@ -177,18 +177,11 @@ const NAV = {
     },
 
     {
-<<<<<<< HEAD
       name: "Evaluation Review",
       icon: CheckCircle2,
       path: "/recruitment/evaluation-review",
       requiresAny: ["INTERVIEW_DECIDE"],
-      requiresAny: ["INTERVIEW_DECIDE", "INTERVIEW_SCHEDULE"],
-=======
-     name: "Evaluation Review",
-     icon: CheckCircle2,
-     path: "/recruitment/evaluation-review",
-     requiresAny: ["INTERVIEW_DECIDE", "INTERVIEW_SCHEDULE"],
->>>>>>> e857671fa270fdb43422ab8dd837e0adc4ac5c1d
+    
     },
 
     // Job Offers
@@ -206,13 +199,8 @@ const NAV = {
       path: "/recruitment/roles-permissions",
       requiresAny: ["RECRUITMENT_ROLE_ADMIN", "MANAGE_ROLES_PERMISSIONS"],
     },
-<<<<<<< HEAD
-    // Audit trail (HR Manager / Admin only)
-    {
-=======
     // Audit trail (needs AUDIT_VIEW, or full access)
 {
->>>>>>> e857671fa270fdb43422ab8dd837e0adc4ac5c1d
   name: "Audit Log",
   icon: Activity,
   path: "/recruitment/audit-log",
