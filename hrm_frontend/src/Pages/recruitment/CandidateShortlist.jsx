@@ -5,6 +5,7 @@ import StatCard, { StatCardGrid } from "../../components/StatCard";
 import { recruitmentApi } from "../../services/api";
 import { DeadlineMeter } from "../careers/careersShared";
 import { formatSalary, formatDate } from "../../utils/careersFormat";
+import { avatarColorClass } from "../../utils/avatarColor";
 import {
   isRemovedFromShortlist,
   setRemovedFromShortlist,
@@ -65,15 +66,6 @@ const REJECTION_REASONS = [
   "Failed initial screening assessment",
   "Position filled by higher-ranked candidate",
   "Other / Non-competitive background",
-];
-
-const AVATAR_GRADIENTS = [
-  "from-primary-600 to-primary-700",
-  "from-primary-500 to-primary-700",
-  "from-green-600 to-green-700",
-  "from-amber-600 to-amber-700",
-  "from-red-600 to-red-700",
-  "from-primary-600 to-primary-700",
 ];
 
 /**
@@ -1363,12 +1355,13 @@ export default function RecruitmentCandidateShortlist() {
                         <div className="flex flex-wrap gap-1.5 sm:gap-2">
                           {[
                             { id: "ALL", label: `All Ranked (${vacTotal})` },
-                            { id: "SUITABLE", label: `✓ Suitable (${vacSuitable})`, highlight: vacSuitable > 0 },
-                            { id: "NOT_SUITABLE", label: `✗ Not Suitable (${vacNotSuitable})` },
+                            { id: "SUITABLE", label: `Suitable (${vacSuitable})`, icon: Check, highlight: vacSuitable > 0 },
+                            { id: "NOT_SUITABLE", label: `Not Suitable (${vacNotSuitable})`, icon: X },
                             { id: "SHORTLISTED", label: `Shortlisted (${vacShortlisted})` },
                             {
                               id: "STAGED",
-                              label: `✨ Staged (${stagedCount})`,
+                              label: `Staged (${stagedCount})`,
+                              icon: Sparkles,
                               highlight: stagedCount > 0,
                             },
                             { id: "REJECTED", label: `Rejected (${vacRejected})` },
@@ -1376,7 +1369,7 @@ export default function RecruitmentCandidateShortlist() {
                             <button
                               key={t.id}
                               onClick={() => setStatusFilterForVacancy(vacKey, t.id)}
-                              className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+                              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
                                 statusFilter === t.id
                                   ? t.highlight
                                     ? "bg-amber-500 text-slate-950 shadow-sm"
@@ -1386,6 +1379,7 @@ export default function RecruitmentCandidateShortlist() {
                                   : "bg-slate-100 text-slate-600 hover:bg-slate-200"
                               }`}
                             >
+                              {t.icon && <t.icon size={14} />}
                               {t.label}
                             </button>
                           ))}
@@ -1449,7 +1443,7 @@ export default function RecruitmentCandidateShortlist() {
                                   const isRejected = cand.status === "REJECTED";
                                   const isStaged = stagedSet.has(cand.id);
                                   const isAutomated = cand.decisionSource === "SYSTEM_AUTOMATED";
-                                  const gradient = AVATAR_GRADIENTS[idx % AVATAR_GRADIENTS.length];
+                                  const gradient = avatarColorClass(idx);
 
                                   return (
                                     <tr

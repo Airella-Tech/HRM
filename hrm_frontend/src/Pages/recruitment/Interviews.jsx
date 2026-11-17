@@ -12,7 +12,6 @@ import {
   Video,
   Plus,
   Search,
-  Filter,
   MoreHorizontal,
   Pencil,
   Trash2,
@@ -38,6 +37,7 @@ import {
 import { PageLayout } from "../../components/PageLayout";
 import StatCard, { StatCardGrid } from "../../components/StatCard";
 import { recruitmentApi } from "../../services/api";
+import { avatarColorClass } from "../../utils/avatarColor";
 
 const ROUNDS = [
   "Technical Interview",
@@ -67,17 +67,17 @@ const blankForm = {
 };
 
 const invitationStyle = {
-  Sent: "bg-green-50 text-green-700",
-  Failed: "bg-red-50 text-red-700",
-  Pending: "bg-amber-50 text-amber-700",
-  "Not sent": "bg-slate-100 text-slate-600",
+  Sent: "bg-green-50 text-green-700 border-green-200",
+  Failed: "bg-red-50 text-red-700 border-red-200",
+  Pending: "bg-amber-50 text-amber-700 border-amber-200",
+  "Not sent": "bg-slate-100 text-slate-600 border-slate-200",
 };
 
 const statusStyle = {
-  Scheduled: "bg-primary-50 text-primary-700 ring-primary-200",
-  Completed: "bg-green-50 text-green-700 ring-green-200",
-  Pending: "bg-amber-50 text-amber-700 ring-amber-200",
-  Cancelled: "bg-red-50 text-red-700 ring-red-200",
+  Scheduled: "bg-primary-50 text-primary-700 border-primary-200",
+  Completed: "bg-green-50 text-green-700 border-green-200",
+  Pending: "bg-amber-50 text-amber-700 border-amber-200",
+  Cancelled: "bg-red-50 text-red-700 border-red-200",
 };
 
 const dateKey = (date = new Date()) =>
@@ -1352,15 +1352,34 @@ export default function RecruitmentInterviews() {
   };
 
   const statCards = [
-    [
-      "Total Interviews",
-      stats.total,
-      CalendarDays,
-      "bg-primary-50 text-primary-600",
-    ],
-    ["Scheduled", stats.scheduled, CalendarCheck, "bg-primary-50 text-primary-600"],
-    ["Completed", stats.completed, CheckCircle2, "bg-green-50 text-green-600"],
-    ["Pending", stats.pending, Clock3, "bg-amber-50 text-amber-600"],
+    {
+      label: "Total Interviews",
+      value: stats.total,
+      caption: "All scheduled interviews",
+      icon: CalendarDays,
+      tone: "primary",
+    },
+    {
+      label: "Scheduled",
+      value: stats.scheduled,
+      caption: "Upcoming interviews",
+      icon: CalendarCheck,
+      tone: "primary",
+    },
+    {
+      label: "Completed",
+      value: stats.completed,
+      caption: "Finished interviews",
+      icon: CheckCircle2,
+      tone: "green",
+    },
+    {
+      label: "Pending",
+      value: stats.pending,
+      caption: "Awaiting completion",
+      icon: Clock3,
+      tone: "amber",
+    },
   ];
 
   return (
@@ -1421,45 +1440,15 @@ export default function RecruitmentInterviews() {
           </div>
         )}
 
-        <StatCardGrid>
-          {statCards.map(([label, value, Icon, style]) => (
-            <StatCard
-              key={label}
-              label={label}
-              value={value}
-              icon={Icon}
-              tone={style.includes("amber") ? "amber" : style.includes("green") || style.includes("emerald") ? "green" : style.includes("red") ? "red" : "primary"}
-            />
-          ))}
-        </StatCardGrid>
+        <div className="mb-6">
+          <StatCardGrid>
+            {statCards.map((card) => (
+              <StatCard key={card.label} {...card} />
+            ))}
+          </StatCardGrid>
+        </div>
 
-        <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-          <div className="flex flex-col justify-between gap-4 border-b border-slate-200 p-5 sm:flex-row sm:items-center sm:p-6">
-            <div>
-              <h2 className="text-lg font-bold text-slate-800">
-                Interview Management
-              </h2>
-              <p className="mt-1 text-sm text-slate-500">
-                Manage the four-stage interview workflow, interviewers,
-                schedules, and invitations.
-              </p>
-            </div>
-            <div className="flex gap-2">
-              <button
-                onClick={() => setMode("list")}
-                className={`inline-flex items-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-semibold ${mode === "list" ? "border-primary-600 bg-primary-50 text-primary-700" : "border-slate-200 text-slate-600"}`}
-              >
-                <List size={17} /> List
-              </button>
-              <button
-                onClick={() => setMode("calendar")}
-                className={`inline-flex items-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-semibold ${mode === "calendar" ? "border-primary-600 bg-primary-50 text-primary-700" : "border-slate-200 text-slate-600"}`}
-              >
-                <CalendarRange size={17} /> Calendar
-              </button>
-            </div>
-          </div>
-
+        <section className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
           {mode === "calendar" && (
             <div className="p-4 sm:p-6">
               <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
@@ -1488,7 +1477,19 @@ export default function RecruitmentInterviews() {
                     {calendarHeading(calendarDate, calendarView)}
                   </h3>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    onClick={() => setMode("list")}
+                    className={`inline-flex items-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-semibold ${mode === "list" ? "border-primary-600 bg-primary-50 text-primary-700" : "border-slate-200 text-slate-600"}`}
+                  >
+                    <List size={17} /> List
+                  </button>
+                  <button
+                    onClick={() => setMode("calendar")}
+                    className={`inline-flex items-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-semibold ${mode === "calendar" ? "border-primary-600 bg-primary-50 text-primary-700" : "border-slate-200 text-slate-600"}`}
+                  >
+                    <CalendarRange size={17} /> Calendar
+                  </button>
                   {["day", "week", "month"].map((view) => (
                     <button
                       key={view}
@@ -1567,15 +1568,9 @@ export default function RecruitmentInterviews() {
           {mode === "list" && (
             <>
               <div className="border-b border-slate-200 p-5 sm:p-6">
-                <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-center">
-                  <div>
-                    <h3 className="font-bold text-slate-800">Interview List</h3>
-                    <p className="mt-1 text-sm text-slate-500">
-                      Search, filter, edit, reschedule, and manage interviews.
-                    </p>
-                  </div>
-                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:flex">
-                    <div className="relative">
+                <div className="flex flex-col gap-4">
+                  <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
+                    <div className="relative max-w-md flex-1">
                       <Search
                         size={18}
                         className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
@@ -1584,44 +1579,70 @@ export default function RecruitmentInterviews() {
                         value={search}
                         onChange={(event) => setSearch(event.target.value)}
                         placeholder="Search interviews..."
-                        className="w-full rounded-xl border py-2.5 pl-10 pr-4 text-sm lg:w-56"
+                        className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-10 pr-4 text-sm"
                       />
                     </div>
-                    <div className="relative">
-                      <Filter
-                        size={16}
-                        className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
-                      />
-                      <select
-                        value={statusFilter}
-                        onChange={(event) =>
-                          setStatusFilter(event.target.value)
-                        }
-                        className="w-full rounded-xl border bg-white py-2.5 pl-9 pr-4 text-sm"
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => setMode("list")}
+                        className={`inline-flex items-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-semibold ${mode === "list" ? "border-primary-600 bg-primary-50 text-primary-700" : "border-slate-200 text-slate-600"}`}
                       >
-                        <option>All</option>
-                        {STATUSES.map((status) => (
-                          <option key={status}>{status}</option>
-                        ))}
-                      </select>
+                        <List size={17} /> List
+                      </button>
+                      <button
+                        onClick={() => setMode("calendar")}
+                        className={`inline-flex items-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-semibold ${mode === "calendar" ? "border-primary-600 bg-primary-50 text-primary-700" : "border-slate-200 text-slate-600"}`}
+                      >
+                        <CalendarRange size={17} /> Calendar
+                      </button>
                     </div>
-                    <select
-                      value={roundFilter}
-                      onChange={(event) => setRoundFilter(event.target.value)}
-                      className="w-full rounded-xl border bg-white px-3 py-2.5 text-sm"
-                    >
-                      <option>All</option>
-                      {ROUNDS.map((round) => (
-                        <option key={round}>{round}</option>
-                      ))}
-                    </select>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                      Status
+                    </span>
+                    {["All", ...STATUSES].map((status) => (
+                      <button
+                        key={status}
+                        type="button"
+                        aria-pressed={statusFilter === status}
+                        onClick={() => setStatusFilter(status)}
+                        className={`rounded-full border px-3.5 py-2 text-sm font-semibold transition-colors ${
+                          statusFilter === status
+                            ? "border-primary-600 bg-primary-600 text-white shadow-sm"
+                            : "border-slate-300 bg-white text-slate-600 hover:bg-slate-50"
+                        }`}
+                      >
+                        {status}
+                      </button>
+                    ))}
+                    <span className="mx-1 h-5 w-px bg-slate-200" />
+                    <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                      Round
+                    </span>
+                    {["All", ...ROUNDS].map((round) => (
+                      <button
+                        key={round}
+                        type="button"
+                        aria-pressed={roundFilter === round}
+                        onClick={() => setRoundFilter(round)}
+                        className={`rounded-full border px-3.5 py-2 text-sm font-semibold transition-colors ${
+                          roundFilter === round
+                            ? "border-primary-600 bg-primary-600 text-white shadow-sm"
+                            : "border-slate-300 bg-white text-slate-600 hover:bg-slate-50"
+                        }`}
+                      >
+                        {round}
+                      </button>
+                    ))}
                   </div>
                 </div>
               </div>
 
-              <div className="overflow-x-auto">
-                <table className="w-full min-w-[1150px] text-left">
-                  <thead className="bg-slate-50">
+              <div className="mx-5 mb-5 overflow-hidden rounded-xl border border-slate-200 bg-white">
+                <div className="overflow-x-auto">
+                  <table className="w-full min-w-[1150px] text-left text-sm text-slate-600">
+                  <thead className="border-b border-slate-200 bg-slate-50/80 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
                     <tr>
                       {[
                         "Candidate",
@@ -1635,7 +1656,7 @@ export default function RecruitmentInterviews() {
                       ].map((heading) => (
                         <th
                           key={heading}
-                          className="whitespace-nowrap px-5 py-4 text-xs font-semibold uppercase tracking-wider text-slate-500"
+                          className="whitespace-nowrap px-3 py-3"
                         >
                           {heading}
                         </th>
@@ -1646,14 +1667,14 @@ export default function RecruitmentInterviews() {
                     {filtered.map((item) => {
                       const online = getInterviewType(item) === "Online";
                       return (
-                        <tr key={item.id} className="hover:bg-slate-50/80">
-                          <td className="px-5 py-4">
+                        <tr key={item.id} className="transition-colors duration-150 hover:bg-slate-50/80">
+                          <td className="whitespace-nowrap px-3 py-3.5">
                             <div className="flex items-center gap-3">
-                              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary-100 text-sm font-bold text-primary-700">
+                              <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-tr ${avatarColorClass(item.candidate || item.id)} text-xs font-bold text-white shadow-sm`}>
                                 {initials(item.candidate)}
                               </div>
                               <div>
-                                <p className="font-semibold text-slate-800">
+                                <p className="font-semibold text-slate-900">
                                   {item.candidate}
                                 </p>
                                 <p className="mt-1 text-xs text-slate-500">
@@ -1662,7 +1683,7 @@ export default function RecruitmentInterviews() {
                               </div>
                             </div>
                           </td>
-                          <td className="px-5 py-4">
+                          <td className="whitespace-nowrap px-3 py-3.5">
                             <p className="font-medium text-slate-800">
                               {item.vacancy}
                             </p>
@@ -1670,7 +1691,7 @@ export default function RecruitmentInterviews() {
                               {item.round}
                             </span>
                           </td>
-                          <td className="px-5 py-4">
+                          <td className="whitespace-nowrap px-3 py-3.5">
                             <p className="whitespace-nowrap text-sm font-medium">
                               {formatDate(item.date)}
                             </p>
@@ -1678,7 +1699,7 @@ export default function RecruitmentInterviews() {
                               {formatTime(item.time)} · {item.duration} min
                             </p>
                           </td>
-                          <td className="max-w-64 px-5 py-4">
+                          <td className="max-w-64 px-3 py-3.5">
                             <div className="flex items-start gap-2 text-sm text-slate-700">
                               <Users
                                 size={16}
@@ -1687,9 +1708,9 @@ export default function RecruitmentInterviews() {
                               <span>{normalizePeople(item).join(", ")}</span>
                             </div>
                           </td>
-                          <td className="px-5 py-4">
+                          <td className="px-3 py-3.5">
                             <span
-                              className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ${online ? "bg-primary-50 text-primary-700" : "bg-emerald-50 text-emerald-700"}`}
+                              className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ${online ? "bg-primary-50 text-primary-700" : "bg-slate-100 text-slate-700"}`}
                             >
                               {online ? (
                                 <Video size={14} />
@@ -1703,7 +1724,7 @@ export default function RecruitmentInterviews() {
                                 href={item.meetingLink}
                                 target="_blank"
                                 rel="noreferrer"
-                                className="mt-2 flex items-center gap-1 text-xs text-primary-600"
+                                className="mt-2 flex max-w-40 items-center gap-1 break-words text-xs text-primary-600"
                               >
                                 <LinkIcon size={13} /> Open meeting link
                               </a>
@@ -1713,22 +1734,24 @@ export default function RecruitmentInterviews() {
                               </p>
                             )}
                           </td>
-                          <td className="px-5 py-4">
+                          <td className="whitespace-nowrap px-3 py-3.5">
                             <span
-                              className={`rounded-full px-2.5 py-1 text-xs font-semibold ${invitationStyle[item.invitationStatus || "Not sent"] || invitationStyle["Not sent"]}`}
+                              className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-bold shadow-xs ${invitationStyle[item.invitationStatus || "Not sent"] || invitationStyle["Not sent"]}`}
                             >
+                              <span className="h-1.5 w-1.5 rounded-full bg-current" />
                               {item.invitationStatus || "Not sent"}
                             </span>
                           </td>
-                          <td className="px-5 py-4">
+                          <td className="whitespace-nowrap px-3 py-3.5">
                             <span
-                              className={`rounded-full px-3 py-1.5 text-xs font-semibold ring-1 ring-inset ${statusStyle[item.status] || "bg-slate-100 text-slate-600 ring-slate-200"}`}
+                              className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-bold shadow-xs ${statusStyle[item.status] || "bg-slate-100 text-slate-600 border-slate-200"}`}
                             >
+                              <span className="h-1.5 w-1.5 rounded-full bg-current" />
                               {item.status}
                             </span>
                           </td>
 
-                          <td className="px-5 py-4">
+                          <td className="min-w-[180px] whitespace-nowrap px-3 py-3.5">
                             <div className="flex items-center gap-1">
                               {/* View interview details */}
                               <button
@@ -1743,9 +1766,10 @@ export default function RecruitmentInterviews() {
                                 }}
                                 title="View details"
                                 aria-label={`View details for ${item.candidate}`}
-                                className="rounded-lg p-2 text-slate-500 hover:bg-primary-50 hover:text-primary-600"
+                                className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-xs hover:bg-slate-200"
                               >
-                                <MoreHorizontal size={18} />
+                                <MoreHorizontal size={14} />
+                                <span>View</span>
                               </button>
 
                               {/* Edit or reschedule the interview */}
@@ -1754,7 +1778,7 @@ export default function RecruitmentInterviews() {
                                 onClick={() => openEdit(item)}
                                 title="Edit / Reschedule"
                                 aria-label={`Edit or reschedule interview for ${item.candidate}`}
-                                className="rounded-lg p-2 text-slate-500 hover:bg-amber-50 hover:text-amber-600"
+                                className="rounded-xl bg-slate-100 p-2 text-slate-700 hover:bg-slate-200"
                               >
                                 <Pencil size={17} />
                               </button>
@@ -1765,7 +1789,7 @@ export default function RecruitmentInterviews() {
                                 onClick={() => setDeleteTarget(item)}
                                 title="Delete"
                                 aria-label={`Delete interview for ${item.candidate}`}
-                                className="rounded-lg p-2 text-slate-500 hover:bg-red-50 hover:text-red-600"
+                                className="rounded-xl bg-slate-100 p-2 text-slate-700 hover:bg-slate-200"
                               >
                                 <Trash2 size={17} />
                               </button>
@@ -1791,9 +1815,9 @@ export default function RecruitmentInterviews() {
                       </tr>
                     )}
                   </tbody>
-                </table>
-              </div>
-              <div className="flex flex-col gap-2 border-t px-5 py-4 text-sm text-slate-500 sm:flex-row sm:justify-between">
+                  </table>
+                </div>
+                <div className="flex flex-col gap-2 border-t px-4 py-3.5 text-sm text-slate-500 sm:flex-row sm:justify-between">
                 <span>
                   Showing {filtered.length} of {interviews.length} interviews
                 </span>
@@ -1802,6 +1826,7 @@ export default function RecruitmentInterviews() {
                     ? " "
                     : "Backend unavailable — no sample data shown"}
                 </span>
+                </div>
               </div>
             </>
           )}
@@ -2281,7 +2306,7 @@ export default function RecruitmentInterviews() {
                             },
                           })
                         }
-                        className={`rounded-xl border p-3 text-sm font-semibold ${form.interviewType === "Physical" ? "border-emerald-500 bg-emerald-50 text-emerald-700" : "border-slate-200"}`}
+                        className={`rounded-xl border p-3 text-sm font-semibold ${form.interviewType === "Physical" ? "border-primary-500 bg-primary-50 text-primary-700" : "border-slate-200"}`}
                       >
                         <MapPin className="mr-2 inline" size={17} />
                         Physical
