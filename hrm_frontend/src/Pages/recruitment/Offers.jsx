@@ -2,6 +2,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import PageLayout from "../../components/PageLayout";
 import StatCard, { StatCardGrid } from "../../components/StatCard";
+import VacancyGroupCard from "./VacancyGroupCard";
 import { recruitmentApi } from "../../services/api";
 import {
   Search,
@@ -26,6 +27,7 @@ import {
   Trash2,
   Users,
   UserCheck,
+  Info,
 } from "lucide-react";
 import { avatarColorClass } from "../../utils/avatarColor";
 
@@ -195,6 +197,7 @@ export default function JobOffers() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
   const [typeFilter, setTypeFilter] = useState("All");
+  const [collapsedGroups, setCollapsedGroups] = useState({});
 
   const [modal, setModal] = useState(null);
   const [selectedOffer, setSelectedOffer] = useState(null);
@@ -294,6 +297,36 @@ export default function JobOffers() {
       return matchesSearch && matchesStatus && matchesType;
     });
   }, [offers, search, statusFilter, typeFilter]);
+
+  const vacancyGroups = useMemo(() => {
+    const groups = new Map();
+
+    filteredOffers.forEach((offer) => {
+      const title = offer.jobTitle || "Position not specified";
+      const key = String(offer.vacancyId ?? offer.vacancy_id ?? title);
+
+      if (!groups.has(key)) {
+        groups.set(key, {
+          key,
+          title,
+          department: offer.department || "Department not specified",
+          rows: [],
+        });
+      }
+
+      groups.get(key).rows.push(offer);
+    });
+
+    return Array.from(groups.values());
+  }, [filteredOffers]);
+
+  const expandAllGroups = () => setCollapsedGroups({});
+
+  const collapseAllGroups = () => {
+    setCollapsedGroups(
+      Object.fromEntries(vacancyGroups.map((group) => [group.key, true])),
+    );
+  };
 
   // ----------------------------------------------------------
   // OPEN CREATE MODAL
@@ -829,9 +862,9 @@ export default function JobOffers() {
 
         {/* OFFERS TABLE */}
         <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-          <div className="border-b border-slate-200 p-5">
+          <div className="bg-white rounded-xl border border-slate-200 shadow-sm px-4 py-3">
             <div className="flex flex-wrap items-center gap-3">
-              <div className="relative min-w-56 flex-1">
+              <div className="relative min-w-[220px] flex-1">
                 <div className="relative">
                   <Search
                     size={17}
@@ -842,11 +875,19 @@ export default function JobOffers() {
                     value={search}
                     onChange={(event) => setSearch(event.target.value)}
                     placeholder="Search candidates..."
-                    className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 pl-9 text-sm text-slate-800 focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-100"
+                    className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50 pl-9 pr-3 text-sm text-slate-800 placeholder-slate-400 focus:border-primary-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary-100"
                   />
                 </div>
               </div>
-
+              <span
+                title="Search and filter the offers shown below."
+                className="inline-flex shrink-0 text-slate-400"
+              >
+                <Info size={14} />
+              </span>
+              <span className="text-sm font-semibold text-slate-600">
+                Status:
+              </span>
               <div className="relative">
                 <Filter
                   size={15}
@@ -856,7 +897,7 @@ export default function JobOffers() {
                 <select
                   value={statusFilter}
                   onChange={(event) => setStatusFilter(event.target.value)}
-                  className="w-full appearance-none rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 pl-9 text-sm text-slate-800 focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-100 sm:w-40"
+                  className="h-10 w-auto appearance-none rounded-xl border border-slate-200 bg-white px-3.5 pl-9 text-sm text-slate-800 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100"
                 >
                   <option value="All">All statuses</option>
                   <option value="Draft">Draft</option>
@@ -867,11 +908,13 @@ export default function JobOffers() {
                   <option value="Withdrawn">Withdrawn</option>
                 </select>
               </div>
-
+              <span className="text-sm font-semibold text-slate-600">
+                Type:
+              </span>
               <select
                 value={typeFilter}
                 onChange={(event) => setTypeFilter(event.target.value)}
-                className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-800 focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-100 sm:w-auto"
+                className="h-10 w-auto rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-800 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100"
               >
                 <option value="All">All employment types</option>
                 <option value="Full-time">Full-time</option>
@@ -883,190 +926,207 @@ export default function JobOffers() {
                 {filteredOffers.length} offer
                 {filteredOffers.length !== 1 ? "s" : ""} found
               </span>
+              {filteredOffers.length > 0 && (
+                <div className="flex items-center gap-1 border-l border-slate-200 pl-3">
+                  <button
+                    type="button"
+                    onClick={expandAllGroups}
+                    className="rounded-lg px-2 py-1 text-sm font-semibold text-slate-500 hover:bg-slate-50 hover:text-primary-600"
+                  >
+                    Expand All
+                  </button>
+                  <span className="h-4 w-px bg-slate-200" />
+                  <button
+                    type="button"
+                    onClick={collapseAllGroups}
+                    className="rounded-lg px-2 py-1 text-sm font-semibold text-slate-500 hover:bg-slate-50 hover:text-primary-600"
+                  >
+                    Collapse All
+                  </button>
+                </div>
+              )}
             </div>
           </div>
 
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[1000px] text-left text-sm text-slate-600">
-              <thead className="border-b border-slate-200 bg-slate-50/80 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
-                <tr>
-                  <th className="whitespace-nowrap px-4 py-3 font-semibold">Candidate</th>
-                  <th className="whitespace-nowrap px-4 py-3 font-semibold">Job Position</th>
-                  <th className="whitespace-nowrap px-4 py-3 font-semibold">Salary / Month</th>
-                  <th className="whitespace-nowrap px-4 py-3 font-semibold">Start Date</th>
-                  <th className="whitespace-nowrap px-4 py-3 font-semibold">Offer Expiry</th>
-                  <th className="whitespace-nowrap px-4 py-3 font-semibold">Status</th>
-                  <th className="whitespace-nowrap px-4 py-3 text-right font-semibold">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
+          {loading ? (
+            <div className="px-5 py-16 text-center">
+              <RefreshCw
+                size={28}
+                className="mx-auto mb-3 animate-spin text-primary-500"
+              />
+              <p className="font-medium text-slate-700">
+                Loading job offers...
+              </p>
+            </div>
+          ) : filteredOffers.length === 0 ? (
+            <div className="px-5 py-16 text-center">
+              <FileText size={36} className="mx-auto mb-3 text-slate-300" />
+              <p className="font-medium text-slate-700">No job offers found</p>
+              <p className="mt-1 text-sm text-slate-500">
+                {apiError
+                  ? "Check the error message above and try refreshing."
+                  : "Create an offer or change your search and filters."}
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-4 p-4">
+              {vacancyGroups.map((group) => {
+                const expanded = !collapsedGroups[group.key];
+                const awaitingCount = group.rows.filter((offer) =>
+                  ["Sent", "Pending"].includes(offer.status),
+                ).length;
+                const acceptedCount = group.rows.filter(
+                  (offer) => offer.status === "Accepted",
+                ).length;
 
-              <tbody className="divide-y divide-slate-100">
-                {loading ? (
-                  <tr>
-                    <td colSpan={7} className="px-5 py-16 text-center">
-                      <RefreshCw
-                        size={28}
-                        className="mx-auto mb-3 animate-spin text-primary-500"
-                      />
-
-                      <p className="font-medium text-slate-700">
-                        Loading job offers...
-                      </p>
-                    </td>
-                  </tr>
-                ) : (
-                  filteredOffers.map((offer) => (
-                    <tr
-                      key={offer.id}
-                      className="transition-colors duration-150 hover:bg-slate-50/80"
-                    >
-                      <td className="whitespace-nowrap px-4 py-3.5">
-                        <div className="flex items-center gap-3">
-                          <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${avatarColorClass(offer.candidateName)} text-xs font-bold text-white shadow-sm`}>
-                            {getInitials(offer.candidateName)}
-                          </div>
-
-                          <div>
-                            <p className="font-semibold text-slate-900">
-                              {offer.candidateName}
-                            </p>
-
-                            <p className="mt-1 text-xs text-slate-500">
-                              {offer.email}
-                            </p>
-                          </div>
-                        </div>
-                      </td>
-
-                      <td className="whitespace-nowrap px-4 py-3.5">
-                        <p className="font-medium text-slate-800">
-                          {offer.jobTitle}
-                        </p>
-
-                        <p className="mt-1 text-xs text-slate-500">
-                          {offer.department} · {offer.employmentType}
-                        </p>
-                      </td>
-
-                      <td className="whitespace-nowrap px-4 py-3.5 font-medium text-slate-800">
-                        {formatSalary(offer.salary)}
-                      </td>
-
-                      <td className="whitespace-nowrap px-4 py-3.5 text-slate-600">
-                        {formatDate(offer.startDate)}
-                      </td>
-
-                      <td className="whitespace-nowrap px-4 py-3.5 text-slate-600">
-                        {formatDate(offer.expiryDate)}
-                      </td>
-
-                      <td className="whitespace-nowrap px-4 py-3.5">
-                        <StatusBadge status={offer.status} />
-                      </td>
-
-                      <td className="whitespace-nowrap px-4 py-3.5 text-right">
-                        <div className="inline-flex items-center justify-end gap-1">
-                          <button
-                            type="button"
-                            title="View offer details"
-                            aria-label="View offer details"
-                            onClick={() => openDetails(offer)}
-                            className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-slate-100 text-slate-700 shadow-xs hover:bg-slate-200"
-                          >
-                            <Eye size={17} />
-                          </button>
-
-                          <button
-                            type="button"
-                            title="Edit draft offer"
-                            aria-label="Edit draft offer"
-                            onClick={() => openEdit(offer)}
-                            disabled={
-                              offer.status !== "Draft" ||
-                              actionId === offer.id
-                            }
-                            className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-slate-100 text-slate-700 shadow-xs hover:bg-slate-200 disabled:cursor-not-allowed disabled:opacity-30"
-                          >
-                            <Pencil size={17} />
-                          </button>
-
-                          {offer.status === "Draft" && (
-                            <>
-                              <button
-                                type="button"
-                                title="Send offer email"
-                                aria-label="Send offer email"
-                                onClick={() => openDetails(offer)}
-                                disabled={actionId === offer.id}
-                                className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-slate-100 text-slate-700 shadow-xs hover:bg-slate-200 disabled:opacity-50"
-                              >
-                                <Mail size={17} />
-                              </button>
-
-                              <button
-                                type="button"
-                                title="Delete draft offer"
-                                aria-label="Delete draft offer"
-                                onClick={() => deleteOffer(offer)}
-                                disabled={actionId === offer.id}
-                                className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-slate-100 text-slate-700 shadow-xs hover:bg-slate-200 disabled:opacity-50"
-                              >
-                                <Trash2 size={17} />
-                              </button>
-                            </>
-                          )}
-
-                          {["Sent", "Pending"].includes(offer.status) && (
-                            <button
-                              type="button"
-                              title="Withdraw offer"
-                              aria-label="Withdraw offer"
-                              disabled={actionId === offer.id}
-                              onClick={() => {
-                                if (
-                                  window.confirm(
-                                    `Withdraw the offer for ${offer.candidateName}?`
-                                  )
-                                ) {
-                                  changeStatus(offer, "Withdrawn");
-                                }
-                              }}
-                              className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-slate-100 text-slate-700 shadow-xs hover:bg-slate-200 disabled:opacity-50"
+                return (
+                  <VacancyGroupCard
+                    key={group.key}
+                    title={group.title}
+                    department={group.department}
+                    meta={`${group.rows.length} ${
+                      group.rows.length === 1 ? "offer" : "offers"
+                    }`}
+                    badges={[
+                      {
+                        label: `${awaitingCount} awaiting response`,
+                        tone: "amber",
+                      },
+                      { label: `${acceptedCount} accepted`, tone: "green" },
+                    ]}
+                    expanded={expanded}
+                    onToggle={() =>
+                      setCollapsedGroups((current) => ({
+                        ...current,
+                        [group.key]: expanded ? true : undefined,
+                      }))
+                    }
+                  >
+                    <div className="overflow-x-auto">
+                      <table className="w-full min-w-[900px] text-left text-sm text-slate-600">
+                        <thead className="border-b border-slate-200 bg-slate-50/80 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+                          <tr>
+                            <th className="whitespace-nowrap px-4 py-3 font-semibold">Candidate</th>
+                            <th className="whitespace-nowrap px-4 py-3 font-semibold">Salary / Month</th>
+                            <th className="whitespace-nowrap px-4 py-3 font-semibold">Start Date</th>
+                            <th className="whitespace-nowrap px-4 py-3 font-semibold">Offer Expiry</th>
+                            <th className="whitespace-nowrap px-4 py-3 font-semibold">Status</th>
+                            <th className="whitespace-nowrap px-4 py-3 text-right font-semibold">Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100">
+                          {group.rows.map((offer) => (
+                            <tr
+                              key={offer.id}
+                              className="transition-colors duration-150 hover:bg-slate-50/80"
                             >
-                              <Ban size={17} />
-                            </button>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  ))
-                )}
-
-                {!loading && filteredOffers.length === 0 && (
-                  <tr>
-                    <td colSpan={7} className="px-5 py-16 text-center">
-                      <FileText
-                        size={36}
-                        className="mx-auto mb-3 text-slate-300"
-                      />
-
-                      <p className="font-medium text-slate-700">
-                        No job offers found
-                      </p>
-
-                      <p className="mt-1 text-sm text-slate-500">
-                        {apiError
-                          ? "Check the error message above and try refreshing."
-                          : "Create an offer or change your search and filters."}
-                      </p>
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
+                              <td className="whitespace-nowrap px-4 py-3.5">
+                                <div className="flex items-center gap-3">
+                                  <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${avatarColorClass(offer.candidateName)} text-xs font-bold text-white shadow-sm`}>
+                                    {getInitials(offer.candidateName)}
+                                  </div>
+                                  <div>
+                                    <p className="font-semibold text-slate-900">
+                                      {offer.candidateName}
+                                    </p>
+                                    <p className="mt-1 text-xs text-slate-500">
+                                      {offer.email}
+                                    </p>
+                                  </div>
+                                </div>
+                              </td>
+                              <td className="whitespace-nowrap px-4 py-3.5 font-medium text-slate-800">
+                                {formatSalary(offer.salary)}
+                              </td>
+                              <td className="whitespace-nowrap px-4 py-3.5 text-slate-600">
+                                {formatDate(offer.startDate)}
+                              </td>
+                              <td className="whitespace-nowrap px-4 py-3.5 text-slate-600">
+                                {formatDate(offer.expiryDate)}
+                              </td>
+                              <td className="whitespace-nowrap px-4 py-3.5">
+                                <StatusBadge status={offer.status} />
+                              </td>
+                              <td className="whitespace-nowrap px-4 py-3.5 text-right">
+                                <div className="inline-flex items-center justify-end gap-1">
+                                  <button
+                                    type="button"
+                                    title="View offer details"
+                                    aria-label="View offer details"
+                                    onClick={() => openDetails(offer)}
+                                    className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-slate-100 text-slate-700 shadow-xs hover:bg-slate-200"
+                                  >
+                                    <Eye size={17} />
+                                  </button>
+                                  <button
+                                    type="button"
+                                    title="Edit draft offer"
+                                    aria-label="Edit draft offer"
+                                    onClick={() => openEdit(offer)}
+                                    disabled={
+                                      offer.status !== "Draft" ||
+                                      actionId === offer.id
+                                    }
+                                    className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-slate-100 text-slate-700 shadow-xs hover:bg-slate-200 disabled:cursor-not-allowed disabled:opacity-30"
+                                  >
+                                    <Pencil size={17} />
+                                  </button>
+                                  {offer.status === "Draft" && (
+                                    <>
+                                      <button
+                                        type="button"
+                                        title="Send offer email"
+                                        aria-label="Send offer email"
+                                        onClick={() => openDetails(offer)}
+                                        disabled={actionId === offer.id}
+                                        className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-slate-100 text-slate-700 shadow-xs hover:bg-slate-200 disabled:opacity-50"
+                                      >
+                                        <Mail size={17} />
+                                      </button>
+                                      <button
+                                        type="button"
+                                        title="Delete draft offer"
+                                        aria-label="Delete draft offer"
+                                        onClick={() => deleteOffer(offer)}
+                                        disabled={actionId === offer.id}
+                                        className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-slate-100 text-slate-700 shadow-xs hover:bg-slate-200 disabled:opacity-50"
+                                      >
+                                        <Trash2 size={17} />
+                                      </button>
+                                    </>
+                                  )}
+                                  {["Sent", "Pending"].includes(offer.status) && (
+                                    <button
+                                      type="button"
+                                      title="Withdraw offer"
+                                      aria-label="Withdraw offer"
+                                      disabled={actionId === offer.id}
+                                      onClick={() => {
+                                        if (
+                                          window.confirm(
+                                            `Withdraw the offer for ${offer.candidateName}?`,
+                                          )
+                                        ) {
+                                          changeStatus(offer, "Withdrawn");
+                                        }
+                                      }}
+                                      className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-slate-100 text-slate-700 shadow-xs hover:bg-slate-200 disabled:opacity-50"
+                                    >
+                                      <Ban size={17} />
+                                    </button>
+                                  )}
+                                </div>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </VacancyGroupCard>
+                );
+              })}
+            </div>
+          )}
 
           <div className="border-t border-slate-200 px-5 py-4 text-xs text-slate-500">
             Showing {filteredOffers.length} of {offers.length} offers

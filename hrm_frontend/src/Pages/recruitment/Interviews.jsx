@@ -33,9 +33,11 @@ import {
   RefreshCw,
   Check,
   Save,
+  Info,
 } from "lucide-react";
 import { PageLayout } from "../../components/PageLayout";
 import StatCard, { StatCardGrid } from "../../components/StatCard";
+import VacancyGroupCard from "./VacancyGroupCard";
 import { recruitmentApi } from "../../services/api";
 import { avatarColorClass } from "../../utils/avatarColor";
 
@@ -414,6 +416,7 @@ export default function RecruitmentInterviews() {
   const [mode, setMode] = useState("list");
   const [calendarView, setCalendarView] = useState("month");
   const [calendarDate, setCalendarDate] = useState(new Date());
+  const [collapsedGroups, setCollapsedGroups] = useState({});
 
   const [modalOpen, setModalOpen] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
@@ -664,6 +667,46 @@ export default function RecruitmentInterviews() {
     [interviews, search, statusFilter, roundFilter],
   );
 
+  const vacancyGroups = useMemo(() => {
+    const groups = new Map();
+
+    filtered.forEach((item) => {
+      const title = item.vacancy || "Vacancy not specified";
+      const key = String(item.vacancyId || title);
+
+      if (!groups.has(key)) {
+        groups.set(key, {
+          key,
+          title,
+          rows: [],
+        });
+      }
+
+      groups.get(key).rows.push(item);
+    });
+
+    const now = new Date();
+    const groupDate = (group) => {
+      const upcoming = group.rows
+        .map((item) => getStart(item))
+        .filter((date) => !Number.isNaN(date.getTime()) && date >= now);
+
+      return upcoming[0] || getStart(group.rows[0]);
+    };
+
+    return Array.from(groups.values()).sort(
+      (first, second) => groupDate(first) - groupDate(second),
+    );
+  }, [filtered]);
+
+  const expandAllGroups = () => setCollapsedGroups({});
+
+  const collapseAllGroups = () => {
+    setCollapsedGroups(
+      Object.fromEntries(vacancyGroups.map((group) => [group.key, true])),
+    );
+  };
+
   const filteredCandidates = useMemo(() => {
     const query = candidateSearch.toLowerCase().trim();
     return candidates.filter((candidate) =>
@@ -767,6 +810,137 @@ export default function RecruitmentInterviews() {
     scheduled: interviews.filter((item) => item.status === "Scheduled").length,
     completed: interviews.filter((item) => item.status === "Completed").length,
     pending: interviews.filter((item) => item.status === "Pending").length,
+  };
+
+  const renderInterviewRow = (item) => {
+    const online = getInterviewType(item) === "Online";
+
+    return (
+      <tr
+        key={item.id}
+        className="transition-colors duration-150 hover:bg-slate-50/80"
+      >
+        <td className="whitespace-nowrap px-3 py-3.5">
+          <div className="flex items-center gap-3">
+            <div
+              className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-tr ${avatarColorClass(item.candidate || item.id)} text-xs font-bold text-white shadow-sm`}
+            >
+              {initials(item.candidate)}
+            </div>
+            <div>
+              <p className="font-semibold text-slate-900">{item.candidate}</p>
+              <p className="mt-1 text-xs text-slate-500">{item.email}</p>
+            </div>
+          </div>
+        </td>
+        <td className="whitespace-nowrap px-3 py-3.5">
+          <span className="inline-flex rounded-md bg-primary-50 px-2 py-1 text-xs text-primary-700">
+            {item.round}
+          </span>
+        </td>
+        <td className="whitespace-nowrap px-3 py-3.5">
+          <p className="whitespace-nowrap text-sm font-medium">
+            {formatDate(item.date)}
+          </p>
+          <p className="mt-1 text-xs text-slate-500">
+            {formatTime(item.time)} · {item.duration} min
+          </p>
+        </td>
+        <td className="max-w-64 px-3 py-3.5">
+          <div className="flex items-start gap-2 text-sm text-slate-700">
+            <Users size={16} className="mt-0.5 shrink-0 text-slate-400" />
+            <span>{normalizePeople(item).join(", ")}</span>
+          </div>
+        </td>
+        <td className="px-3 py-3.5">
+          <span
+            className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ${
+              online
+                ? "bg-primary-50 text-primary-700"
+                : "bg-slate-100 text-slate-700"
+            }`}
+          >
+            {online ? <Video size={14} /> : <MapPin size={14} />}
+            {getInterviewType(item)}
+          </span>
+          {online && item.meetingLink ? (
+            <a
+              href={item.meetingLink}
+              target="_blank"
+              rel="noreferrer"
+              className="mt-2 flex max-w-40 items-center gap-1 break-words text-xs text-primary-600"
+            >
+              <LinkIcon size={13} /> Open meeting link
+            </a>
+          ) : (
+            <p className="mt-2 max-w-40 text-xs text-slate-500">
+              {item.location || "Not provided"}
+            </p>
+          )}
+        </td>
+        <td className="whitespace-nowrap px-3 py-3.5">
+          <span
+            className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-bold shadow-xs ${
+              invitationStyle[item.invitationStatus || "Not sent"] ||
+              invitationStyle["Not sent"]
+            }`}
+          >
+            <span className="h-1.5 w-1.5 rounded-full bg-current" />
+            {item.invitationStatus || "Not sent"}
+          </span>
+        </td>
+        <td className="whitespace-nowrap px-3 py-3.5">
+          <span
+            className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-bold shadow-xs ${
+              statusStyle[item.status] ||
+              "bg-slate-100 text-slate-600 border-slate-200"
+            }`}
+          >
+            <span className="h-1.5 w-1.5 rounded-full bg-current" />
+            {item.status}
+          </span>
+        </td>
+        <td className="min-w-[180px] whitespace-nowrap px-3 py-3.5">
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              onClick={() => {
+                setSelected(item);
+                setDetailsEditMode(false);
+                setEditingId(null);
+                setStatusError("");
+                setFormError("");
+                setConflictError("");
+              }}
+              title="View details"
+              aria-label={`View details for ${item.candidate}`}
+              className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-xs hover:bg-slate-200"
+            >
+              <MoreHorizontal size={14} />
+              <span>View</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => openEdit(item)}
+              title="Edit / Reschedule"
+              aria-label={`Edit or reschedule interview for ${item.candidate}`}
+              className="rounded-xl bg-slate-100 p-2 text-slate-700 hover:bg-slate-200"
+            >
+              <Pencil size={17} />
+            </button>
+            <button
+              type="button"
+              onClick={() => setDeleteTarget(item)}
+              title="Delete"
+              aria-label={`Delete interview for ${item.candidate}`}
+              className="rounded-xl bg-slate-100 p-2 text-slate-700 hover:bg-slate-200"
+            >
+              <Trash2 size={17} />
+            </button>
+          </div>
+        </td>
+      </tr>
+    );
   };
 
   const openCreate = (date = "") => {
@@ -1567,47 +1741,37 @@ export default function RecruitmentInterviews() {
 
           {mode === "list" && (
             <>
-              <div className="border-b border-slate-200 p-5 sm:p-6">
-                <div className="flex flex-col gap-4">
-                  <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
-                    <div className="relative max-w-md flex-1">
-                      <Search
-                        size={18}
-                        className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
-                      />
-                      <input
-                        value={search}
-                        onChange={(event) => setSearch(event.target.value)}
-                        placeholder="Search interviews..."
-                        className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-10 pr-4 text-sm"
-                      />
-                    </div>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => setMode("list")}
-                        className={`inline-flex items-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-semibold ${mode === "list" ? "border-primary-600 bg-primary-50 text-primary-700" : "border-slate-200 text-slate-600"}`}
-                      >
-                        <List size={17} /> List
-                      </button>
-                      <button
-                        onClick={() => setMode("calendar")}
-                        className={`inline-flex items-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-semibold ${mode === "calendar" ? "border-primary-600 bg-primary-50 text-primary-700" : "border-slate-200 text-slate-600"}`}
-                      >
-                        <CalendarRange size={17} /> Calendar
-                      </button>
-                    </div>
+              <div className="bg-white rounded-xl border border-slate-200 shadow-sm px-4 py-3">
+                <div className="flex flex-wrap items-center gap-3">
+                  <div className="relative flex-1 min-w-[220px]">
+                    <Search
+                      size={17}
+                      className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+                    />
+                    <input
+                      value={search}
+                      onChange={(event) => setSearch(event.target.value)}
+                      placeholder="Search interviews..."
+                      className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50 pl-9 pr-3 text-sm text-slate-800 placeholder-slate-400 focus:border-primary-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary-100"
+                    />
                   </div>
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                      Status
-                    </span>
+                  <span
+                    title="Search and filter scheduled interviews by status or round."
+                    className="inline-flex shrink-0 text-slate-400"
+                  >
+                    <Info size={14} />
+                  </span>
+                  <span className="text-sm font-semibold text-slate-600">
+                    Status:
+                  </span>
+                  <div className="flex flex-wrap items-center gap-1">
                     {["All", ...STATUSES].map((status) => (
                       <button
                         key={status}
                         type="button"
                         aria-pressed={statusFilter === status}
                         onClick={() => setStatusFilter(status)}
-                        className={`rounded-full border px-3.5 py-2 text-sm font-semibold transition-colors ${
+                        className={`rounded-full border px-3 py-1.5 text-sm font-semibold transition-colors ${
                           statusFilter === status
                             ? "border-primary-600 bg-primary-600 text-white shadow-sm"
                             : "border-slate-300 bg-white text-slate-600 hover:bg-slate-50"
@@ -1616,17 +1780,18 @@ export default function RecruitmentInterviews() {
                         {status}
                       </button>
                     ))}
-                    <span className="mx-1 h-5 w-px bg-slate-200" />
-                    <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                      Round
-                    </span>
+                  </div>
+                  <span className="text-sm font-semibold text-slate-600">
+                    Round:
+                  </span>
+                  <div className="flex flex-wrap items-center gap-1">
                     {["All", ...ROUNDS].map((round) => (
                       <button
                         key={round}
                         type="button"
                         aria-pressed={roundFilter === round}
                         onClick={() => setRoundFilter(round)}
-                        className={`rounded-full border px-3.5 py-2 text-sm font-semibold transition-colors ${
+                        className={`rounded-full border px-3 py-1.5 text-sm font-semibold transition-colors ${
                           roundFilter === round
                             ? "border-primary-600 bg-primary-600 text-white shadow-sm"
                             : "border-slate-300 bg-white text-slate-600 hover:bg-slate-50"
@@ -1636,17 +1801,156 @@ export default function RecruitmentInterviews() {
                       </button>
                     ))}
                   </div>
+                  <div className="flex items-center rounded-xl border border-slate-200 bg-slate-50 p-0.5">
+                    <button
+                      onClick={() => setMode("list")}
+                      className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-semibold ${
+                        mode === "list"
+                          ? "bg-white text-primary-700 shadow-sm"
+                          : "text-slate-600"
+                      }`}
+                    >
+                      <List size={14} /> List
+                    </button>
+                    <button
+                      onClick={() => setMode("calendar")}
+                      className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-semibold ${
+                        mode === "calendar"
+                          ? "bg-white text-primary-700 shadow-sm"
+                          : "text-slate-600"
+                      }`}
+                    >
+                      <CalendarRange size={14} /> Calendar
+                    </button>
+                  </div>
+                  <span className="ml-auto text-xs text-slate-500">
+                    {filtered.length} interview
+                    {filtered.length !== 1 ? "s" : ""} found
+                  </span>
+                  {vacancyGroups.length > 0 && (
+                    <div className="flex items-center gap-1 border-l border-slate-200 pl-3">
+                      <button
+                        type="button"
+                        onClick={expandAllGroups}
+                        className="rounded-lg px-2 py-1 text-sm font-semibold text-slate-500 hover:bg-slate-50 hover:text-primary-600"
+                      >
+                        Expand All
+                      </button>
+                      <span className="h-4 w-px bg-slate-200" />
+                      <button
+                        type="button"
+                        onClick={collapseAllGroups}
+                        className="rounded-lg px-2 py-1 text-sm font-semibold text-slate-500 hover:bg-slate-50 hover:text-primary-600"
+                      >
+                        Collapse All
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
 
-              <div className="mx-5 mb-5 overflow-hidden rounded-xl border border-slate-200 bg-white">
+              <div className="mx-5 mb-5 space-y-4">
+                {vacancyGroups.length ? (
+                  vacancyGroups.map((group) => {
+                    const expanded = !collapsedGroups[group.key];
+                    const scheduledCount = group.rows.filter(
+                      (item) => item.status === "Scheduled",
+                    ).length;
+                    const completedCount = group.rows.filter(
+                      (item) => item.status === "Completed",
+                    ).length;
+
+                    return (
+                      <VacancyGroupCard
+                        key={group.key}
+                        title={group.title}
+                        department="Interview schedule"
+                        meta={`${group.rows.length} ${
+                          group.rows.length === 1 ? "interview" : "interviews"
+                        }`}
+                        badges={[
+                          {
+                            label: `${scheduledCount} scheduled`,
+                            tone: "primary",
+                          },
+                          {
+                            label: `${completedCount} completed`,
+                            tone: "green",
+                          },
+                        ]}
+                        expanded={expanded}
+                        onToggle={() =>
+                          setCollapsedGroups((current) => ({
+                            ...current,
+                            [group.key]: expanded ? true : undefined,
+                          }))
+                        }
+                      >
+                        <div className="overflow-x-auto">
+                          <table className="w-full min-w-[1150px] text-left text-sm text-slate-600">
+                            <thead className="border-b border-slate-200 bg-slate-50/80 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+                              <tr>
+                                {[
+                                  "Candidate",
+                                  "Round",
+                                  "Date & Time",
+                                  "Interviewers",
+                                  "Mode",
+                                  "Invitation",
+                                  "Status",
+                                  "Actions",
+                                ].map((heading) => (
+                                  <th
+                                    key={heading}
+                                    className="whitespace-nowrap px-3 py-3"
+                                  >
+                                    {heading}
+                                  </th>
+                                ))}
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-100">
+                              {group.rows.map(renderInterviewRow)}
+                            </tbody>
+                          </table>
+                        </div>
+                      </VacancyGroupCard>
+                    );
+                  })
+                ) : (
+                  <div className="rounded-xl border border-slate-200 bg-white px-5 py-14 text-center">
+                    <CalendarDays
+                      size={34}
+                      className="mx-auto mb-3 text-slate-300"
+                    />
+                    <p className="font-semibold text-slate-700">
+                      No interviews found
+                    </p>
+                    <p className="mt-1 text-sm text-slate-500">
+                      Try changing your search or filters.
+                    </p>
+                  </div>
+                )}
+                <div className="flex flex-col gap-2 text-sm text-slate-500 sm:flex-row sm:justify-between">
+                  <span>
+                    Showing {filtered.length} of {interviews.length} interviews
+                  </span>
+                  <span>
+                    {backendConnected
+                      ? " "
+                      : "Backend unavailable — no sample data shown"}
+                  </span>
+                </div>
+              </div>
+
+              <div className="hidden mx-5 mb-5 overflow-hidden rounded-xl border border-slate-200 bg-white">
                 <div className="overflow-x-auto">
                   <table className="w-full min-w-[1150px] text-left text-sm text-slate-600">
                   <thead className="border-b border-slate-200 bg-slate-50/80 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
                     <tr>
                       {[
                         "Candidate",
-                        "Vacancy / Round",
+                        "Round",
                         "Date & Time",
                         "Interviewers",
                         "Mode",
@@ -1684,9 +1988,6 @@ export default function RecruitmentInterviews() {
                             </div>
                           </td>
                           <td className="whitespace-nowrap px-3 py-3.5">
-                            <p className="font-medium text-slate-800">
-                              {item.vacancy}
-                            </p>
                             <span className="mt-1 inline-flex rounded-md bg-primary-50 px-2 py-1 text-xs text-primary-700">
                               {item.round}
                             </span>
