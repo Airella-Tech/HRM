@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Building2,
+  BadgeCheck,
   Plus,
   Search,
   X,
@@ -26,7 +27,9 @@ import { hrApi, userHrApi } from "../../services/api";
 
 // Strips the "400: " style status prefix that the API helper adds to messages.
 const cleanError = (error) =>
-  String(error?.message || "").replace(/^\d{3}:\s*/, "").trim();
+  String(error?.message || "")
+    .replace(/^\d{3}:\s*/, "")
+    .trim();
 
 const Department = () => {
   const navigate = useNavigate();
@@ -79,10 +82,7 @@ const Department = () => {
       try {
         const parsedUser = JSON.parse(storedUser);
 
-        if (
-          parsedUser.role !== "HR_MANAGER" &&
-          parsedUser.role !== "ADMIN"
-        ) {
+        if (parsedUser.role !== "HR_MANAGER" && parsedUser.role !== "ADMIN") {
           navigate("/unauthorized");
           return;
         }
@@ -145,11 +145,7 @@ const Department = () => {
     const map = {};
 
     employees.forEach((emp) => {
-      const deptName = (
-        emp.departmentName ||
-        emp.department ||
-        ""
-      )
+      const deptName = (emp.departmentName || emp.department || "")
         .trim()
         .toLowerCase();
 
@@ -238,10 +234,10 @@ const Department = () => {
       jobRoles: prev.jobRoles.map((role, i) =>
         i === index
           ? {
-            ...role,
-            [field]: value,
-          }
-          : role
+              ...role,
+              [field]: value,
+            }
+          : role,
       ),
     }));
   };
@@ -277,7 +273,9 @@ const Department = () => {
 
       const key = title.toLowerCase();
       if (seenTitles.has(key)) {
-        setFormError(`Job title "${title}" is listed more than once for this department.`);
+        setFormError(
+          `Job title "${title}" is listed more than once for this department.`,
+        );
         return;
       }
       seenTitles.add(key);
@@ -300,7 +298,7 @@ const Department = () => {
       if (editingDepartment) {
         const response = await hrApi.updateDepartment(
           editingDepartment.id,
-          payload
+          payload,
         );
 
         savedDepartment = response?.data || null;
@@ -314,10 +312,14 @@ const Department = () => {
 
       // Double-check the job roles really reached the database.
       const storedCount = savedDepartment?.jobRoles?.length;
-      if (savedDepartment && storedCount !== undefined && storedCount !== jobRolesToSave.length) {
+      if (
+        savedDepartment &&
+        storedCount !== undefined &&
+        storedCount !== jobRolesToSave.length
+      ) {
         alert(
           `Department saved, but only ${storedCount} of ${jobRolesToSave.length} job role(s) were stored. ` +
-          "Please open the department and check its job roles."
+            "Please open the department and check its job roles.",
         );
       }
 
@@ -326,7 +328,7 @@ const Department = () => {
       console.error("Failed to save department:", error);
       setFormError(
         cleanError(error) ||
-        "Failed to save department to database. Please check your backend connection."
+          "Failed to save department to database. Please check your backend connection.",
       );
     } finally {
       setSaving(false);
@@ -344,24 +346,18 @@ const Department = () => {
 
     setFormData({
       name: department.name || "",
-      shortCode:
-        department.shortCode ||
-        department.code ||
-        "",
+      shortCode: department.shortCode || department.code || "",
       description: department.description || "",
       jobRoles:
         department.jobRoles?.length > 0
           ? department.jobRoles.map((role) => ({
-            jobTitle:
-              role.jobTitle ||
-              role.title ||
-              "",
-          }))
+              jobTitle: role.jobTitle || role.title || "",
+            }))
           : [
-            {
-              jobTitle: "",
-            },
-          ],
+              {
+                jobTitle: "",
+              },
+            ],
     });
 
     setShowAddForm(true);
@@ -378,10 +374,7 @@ const Department = () => {
       await hrApi.deleteDepartment(deleteDepartment.id);
 
       setDepartments((prev) =>
-        prev.filter(
-          (department) =>
-            department.id !== deleteDepartment.id
-        )
+        prev.filter((department) => department.id !== deleteDepartment.id),
       );
 
       await fetchDepartments();
@@ -411,18 +404,15 @@ const Department = () => {
 
       if (!search) return true;
 
-      const name =
-        department.name?.toLowerCase() || "";
+      const name = department.name?.toLowerCase() || "";
 
-      const code =
-        (
-          department.shortCode ||
-          department.code ||
-          ""
-        ).toLowerCase();
+      const code = (
+        department.shortCode ||
+        department.code ||
+        ""
+      ).toLowerCase();
 
-      const description =
-        department.description?.toLowerCase() || "";
+      const description = department.description?.toLowerCase() || "";
 
       return (
         name.includes(search) ||
@@ -440,7 +430,7 @@ const Department = () => {
 
   const totalPages = Math.max(
     1,
-    Math.ceil(filteredDepartments.length / ROWS_PER_PAGE)
+    Math.ceil(filteredDepartments.length / ROWS_PER_PAGE),
   );
 
   useEffect(() => {
@@ -468,18 +458,11 @@ const Department = () => {
   // sum of each department's own employeeCount field.
   const totalEmployees = employees.length;
 
-  const totalJobRoles = departments.reduce(
-    (total, department) => {
-      const count =
-        department.jobRoleCount ??
-        department.jobRoles?.length ??
-        0;
+  const totalJobRoles = departments.reduce((total, department) => {
+    const count = department.jobRoleCount ?? department.jobRoles?.length ?? 0;
 
-      return total + count;
-    },
-    0
-  );
-
+    return total + count;
+  }, 0);
 
   // ---------------------------------------------------------
   // LOADING
@@ -498,13 +481,13 @@ const Department = () => {
           onClick={openCreateForm}
           className="
             inline-flex items-center gap-2
-            bg-teal-500 hover:bg-teal-600
+            bg-sky-600 hover:bg-sky-700
             text-white
             px-4 py-2.5
             rounded-xl
             text-sm font-semibold
             shadow-sm
-            shadow-teal-600/20
+            shadow-sky-600/20
             transition-all
             duration-200
           "
@@ -513,22 +496,25 @@ const Department = () => {
           Add Department
         </button>
       }
+
+      
     >
       <div className="space-y-6">
 
-        {/* =====================================================
-            SUMMARY CARDS
-        ====================================================== */}
+
+  {/* =====================================================
+      SUMMARY CARDS
+  ====================================================== */}
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-
           {/* Total Departments */}
           <SummaryCard
             icon={<Building2 size={20} />}
             title="Total Departments"
             value={totalDepartments}
             description="Active in organization"
-            className="bg-gradient-to-br from-green-400 to-emerald-500 text-white" />
+            className="bg-gradient-to-br from-sky-700 to-sky-800 text-white"
+          />
 
           {/* Total Job Roles */}
           <SummaryCard
@@ -536,7 +522,8 @@ const Department = () => {
             title="Total Job Roles"
             value={totalJobRoles}
             description="Defined across departments"
-            className="bg-gradient-to-br from-orange-400 to-amber-500 text-white" />
+            className="bg-gradient-to-br from-sky-500 to-sky-600 text-white"
+          />
 
           {/* Total Employees */}
           <SummaryCard
@@ -544,22 +531,108 @@ const Department = () => {
             title="Total Employees"
             value={totalEmployees}
             description="Assigned to departments"
-            className="bg-gradient-to-br from-purple-500 to-indigo-600 text-white" />
-
+            className="bg-gradient-to-br from-sky-700 to-sky-800 text-white"
+          />
         </div>
 
+{/* DEPARTMENT DIRECTORY INTRO */}
+<div
+  className="
+    relative overflow-hidden
+    rounded-2xl
+    border border-sky-100
+    bg-gradient-to-r from-sky-50 via-sky-50/60 to-white
+    p-5 sm:p-6
+  "
+>
+  {/* Decorative circles */}
+  <div
+    className="
+      absolute -right-10 -top-12
+      h-36 w-36 rounded-full
+      bg-sky-200/40
+    "
+  />
+
+  <div
+    className="
+      absolute right-24 -bottom-16
+      h-32 w-32 rounded-full
+      bg-sky-300/20
+    "
+  />
+
+  <div className="relative flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div className="flex items-start gap-4">
+      {/* Icon */}
+      <div
+        className="
+          h-12 w-12 shrink-0
+          rounded-xl
+          bg-sky-600
+          text-white
+          flex items-center justify-center
+          shadow-lg shadow-sky-600/20
+        "
+      >
+        <Building2 size={24} />
+      </div>
+
+      <div>
+        <div className="flex items-center gap-2 flex-wrap">
+          <h2 className="text-lg sm:text-xl font-bold text-slate-900">
+            Department Directory
+          </h2>
+
+          <span
+            className="
+              inline-flex items-center gap-1
+              rounded-full
+              bg-sky-100
+              border border-sky-200
+              px-2.5 py-1
+              text-[10px] font-bold uppercase tracking-wider
+              text-sky-700
+            "
+          >
+            <BadgeCheck size={12} />
+            HR Management
+          </span>
+        </div>
+
+        <p className="mt-1.5 text-sm text-slate-600 max-w-xl">
+          Manage departments, job roles, and organizational team structures
+          from one central location.
+        </p>
+      </div>
+    </div>
+
+    {/* Department count */}
+    <div
+      className="
+        relative flex items-center gap-2
+        rounded-xl
+        border border-sky-100
+        bg-white/80
+        px-4 py-3
+        text-sm font-semibold text-sky-800
+        shadow-sm
+        shrink-0
+      "
+    >
+      <Building2 size={18} />
+      <span>{totalDepartments} Registered Departments</span>
+    </div>
+  </div>
+</div>
         {/* =====================================================
             SEARCH / FILTER BAR
         ====================================================== */}
 
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm">
-
+        <div className="bg-white rounded-xl border border-slate-200 shadow-sm">
           <div className="p-4 sm:p-5">
-
             <div className="flex flex-col lg:flex-row gap-3 lg:items-center lg:justify-between">
-
               <div className="relative flex-1 max-w-xl">
-
                 <Search
                   size={18}
                   className="
@@ -573,9 +646,7 @@ const Department = () => {
                 <input
                   type="text"
                   value={searchTerm}
-                  onChange={(e) =>
-                    setSearchTerm(e.target.value)
-                  }
+                  onChange={(e) => setSearchTerm(e.target.value)}
                   placeholder="Search by department name or code..."
                   className="
                     w-full
@@ -589,9 +660,9 @@ const Department = () => {
                     placeholder:text-slate-400
                     focus:outline-none
                     focus:bg-white
-                    focus:border-blue-500
+                    focus:border-sky-500
                     focus:ring-4
-                    focus:ring-blue-500/10
+                    focus:ring-sky-500/10
                     transition-all
                   "
                 />
@@ -610,22 +681,16 @@ const Department = () => {
                     <X size={16} />
                   </button>
                 )}
-
               </div>
 
               {/* Department Filter + Showing count (grouped together, like the Employee page) */}
               <div className="flex items-center gap-3">
                 <div className="flex items-center gap-2">
-                  <Filter
-                    size={15}
-                    className="text-slate-400"
-                  />
+                  <Filter size={15} className="text-slate-400" />
 
                   <select
                     value={selectedDeptFilter}
-                    onChange={(e) =>
-                      setSelectedDeptFilter(e.target.value)
-                    }
+                    onChange={(e) => setSelectedDeptFilter(e.target.value)}
                     className="
                       px-3 py-2
                       bg-slate-50
@@ -635,22 +700,16 @@ const Department = () => {
                       text-slate-700
                       focus:outline-none
                       focus:bg-white
-                      focus:border-teal-500
+                      focus:border-sky-500
+                      focus:ring-4
+                      focus:ring-sky-500/10
                     "
                   >
-                    <option value="ALL">
-                      All Departments
-                    </option>
+                    <option value="ALL">All Departments</option>
 
                     {departments.map((d) => (
-                      <option
-                        key={d.id}
-                        value={d.name}
-                      >
-                        {d.name}{" "}
-                        {d.shortCode
-                          ? `(${d.shortCode})`
-                          : ""}
+                      <option key={d.id} value={d.name}>
+                        {d.name} {d.shortCode ? `(${d.shortCode})` : ""}
                       </option>
                     ))}
                   </select>
@@ -668,9 +727,7 @@ const Department = () => {
                   departments
                 </div>
               </div>
-
             </div>
-
           </div>
         </div>
 
@@ -678,11 +735,9 @@ const Department = () => {
             DEPARTMENT TABLE
         ====================================================== */}
 
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm">
-
+        <div className="bg-white rounded-xl border border-slate-200 shadow-sm">
           {/* Desktop Header */}
-          <div className="hidden md:grid grid-cols-[2.2fr_1fr_1fr_1fr_140px] gap-4 px-6 py-3.5 bg-gradient-to-r from-teal-500 to-emerald-600 text-white border-b border-slate-200 rounded-t-2xl">
-
+          <div className="hidden md:grid grid-cols-[2.2fr_1fr_1fr_1fr_140px] gap-4 px-6 py-3.5 bg-gradient-to-r from-sky-600 to-sky-700 text-white border-b border-slate-200 rounded-t-2xl">
             <TableHeader>Department</TableHeader>
             <TableHeader>Code</TableHeader>
             <TableHeader>Job Roles</TableHeader>
@@ -693,12 +748,8 @@ const Department = () => {
           {/* Loading */}
           {loading ? (
             <div className="py-20 flex flex-col items-center justify-center">
-
-              <div className="h-11 w-11 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center mb-4">
-                <Loader2
-                  size={22}
-                  className="animate-spin"
-                />
+              <div className="h-11 w-11 rounded-xl bg-sky-50 text-sky-600 flex items-center justify-center mb-4">
+                <Loader2 size={22} className="animate-spin" />
               </div>
 
               <p className="text-sm font-medium text-slate-700">
@@ -708,25 +759,16 @@ const Department = () => {
               <p className="text-xs text-slate-400 mt-1">
                 Please wait a moment
               </p>
-
             </div>
           ) : filteredDepartments.length === 0 ? (
-
             /* Empty State */
             <div className="py-20 px-6 flex flex-col items-center justify-center text-center">
-
-              <div className="h-16 w-16 rounded-2xl bg-blue-50 text-blue-500 flex items-center justify-center mb-5">
-                {searchTerm ? (
-                  <Search size={28} />
-                ) : (
-                  <Building2 size={28} />
-                )}
+              <div className="h-16 w-16 rounded-2xl bg-sky-50 text-sky-500 flex items-center justify-center mb-5">
+                {searchTerm ? <Search size={28} /> : <Building2 size={28} />}
               </div>
 
               <h3 className="text-base font-bold text-slate-800">
-                {searchTerm
-                  ? "No departments found"
-                  : "No departments yet"}
+                {searchTerm ? "No departments found" : "No departments yet"}
               </h3>
 
               <p className="text-sm text-slate-500 mt-1 max-w-sm">
@@ -741,8 +783,8 @@ const Department = () => {
                   className="
                     mt-5
                     inline-flex items-center gap-2
-                    bg-blue-600
-                    hover:bg-blue-700
+                    bg-sky-600
+                    hover:bg-sky-700
                     text-white
                     px-4 py-2.5
                     rounded-xl
@@ -754,27 +796,20 @@ const Department = () => {
                   Add Department
                 </button>
               )}
-
             </div>
           ) : (
-
             /* Department Rows */
             <div className="divide-y divide-slate-100">
-
               {paginatedDepartments.map((department) => {
-
                 const code =
                   department.shortCode ||
                   department.code ||
                   `DPT-${department.id}`;
 
                 const roleCount =
-                  department.jobRoleCount ??
-                  department.jobRoles?.length ??
-                  0;
+                  department.jobRoleCount ?? department.jobRoles?.length ?? 0;
 
-                const employeeCount =
-                  getEmployeeCount(department);
+                const employeeCount = getEmployeeCount(department);
 
                 return (
                   <div
@@ -783,39 +818,35 @@ const Department = () => {
                       group relative
                       px-4 sm:px-6
                       py-4
-                      hover:bg-blue-50/40
+                      hover:bg-sky-50/40
                       transition-colors
                       ${openMenu === department.id ? "z-30" : "z-10"}
                     `}
                   >
-
                     {/* Desktop */}
                     <div className="hidden md:grid grid-cols-[2.2fr_1fr_1fr_1fr_140px] gap-4 items-center">
-
                       {/* Department */}
                       <div className="flex items-center gap-3 min-w-0">
-
-                        <div className="
+                        <div
+                          className="
                           h-10 w-10
                           flex-shrink-0
                           rounded-xl
-                          bg-blue-50
-                          text-blue-600
+                          bg-sky-50
+                          text-sky-600
                           flex items-center justify-center
-                        ">
+                        "
+                        >
                           <Building2 size={19} />
                         </div>
 
                         <div className="min-w-0">
-
                           <button
-                            onClick={() =>
-                              setSelectedDepartment(department)
-                            }
+                            onClick={() => setSelectedDepartment(department)}
                             className="
                               text-sm font-semibold
                               text-slate-800
-                              hover:text-blue-600
+                              hover:text-sky-600
                               truncate
                               text-left
                               transition-colors
@@ -825,23 +856,24 @@ const Department = () => {
                           </button>
 
                           {department.description && (
-                            <p className="
+                            <p
+                              className="
                               text-xs text-slate-400
                               mt-0.5
                               truncate
                               max-w-md
-                            ">
+                            "
+                            >
                               {department.description}
                             </p>
                           )}
-
                         </div>
-
                       </div>
 
                       {/* Code */}
                       <div>
-                        <span className="
+                        <span
+                          className="
                           inline-flex
                           px-2.5 py-1
                           rounded-lg
@@ -849,58 +881,56 @@ const Department = () => {
                           text-slate-600
                           text-xs
                           font-semibold
-                        ">
+                        "
+                        >
                           {code}
                         </span>
                       </div>
 
                       {/* Job Roles */}
                       <div className="flex items-center gap-2">
-
-                        <div className="
+                        <div
+                          className="
                           h-8 w-8
                           rounded-lg
-                          bg-blue-50
-                          text-blue-600
+                          bg-sky-50
+                          text-sky-600
                           flex items-center justify-center
-                        ">
+                        "
+                        >
                           <BriefcaseBusiness size={15} />
                         </div>
 
                         <span className="text-sm font-semibold text-slate-700">
                           {roleCount}
                         </span>
-
                       </div>
 
                       {/* Employees */}
                       <div className="flex items-center gap-2">
-
-                        <div className="
+                        <div
+                          className="
                           h-8 w-8
                           rounded-lg
                           bg-slate-100
                           text-slate-500
                           flex items-center justify-center
-                        ">
+                        "
+                        >
                           <Users size={15} />
                         </div>
 
                         <span className="text-sm font-semibold text-slate-700">
                           {employeeCount}
                         </span>
-
                       </div>
 
                       {/* Actions */}
                       <div className="flex items-center justify-end gap-1 relative">
-
                         {/* View Button */}
                         <button
                           type="button"
-                          onClick={() =>
-                            setSelectedDepartment(department)
-                          }
+                          onClick={() => setSelectedDepartment(department)}
                           title="View Details"
                           aria-label="View Details"
                           className="
@@ -908,8 +938,8 @@ const Department = () => {
                             rounded-lg
                             flex items-center justify-center
                             text-slate-400
-                            hover:text-blue-600
-                            hover:bg-blue-50
+                            hover:text-sky-600
+                            hover:bg-sky-50
                             transition-colors
                           "
                         >
@@ -919,9 +949,7 @@ const Department = () => {
                         {/* Edit Button */}
                         <button
                           type="button"
-                          onClick={() =>
-                            handleEdit(department)
-                          }
+                          onClick={() => handleEdit(department)}
                           title="Edit Department"
                           aria-label="Edit Department"
                           className="
@@ -940,9 +968,7 @@ const Department = () => {
                         {/* Delete Button */}
                         <button
                           type="button"
-                          onClick={() =>
-                            setDeleteDepartment(department)
-                          }
+                          onClick={() => setDeleteDepartment(department)}
                           title="Delete Department"
                           aria-label="Delete Department"
                           className="
@@ -957,37 +983,29 @@ const Department = () => {
                         >
                           <Trash2 size={16} />
                         </button>
-
                       </div>
-
                     </div>
 
                     {/* Mobile */}
                     <div className="md:hidden">
-
                       <div className="flex items-start justify-between gap-3">
-
                         <div className="flex items-center gap-3 min-w-0">
-
-                          <div className="
+                          <div
+                            className="
                             h-11 w-11
                             flex-shrink-0
                             rounded-xl
-                            bg-blue-50
-                            text-blue-600
+                            bg-sky-50
+                            text-sky-600
                             flex items-center justify-center
-                          ">
+                          "
+                          >
                             <Building2 size={20} />
                           </div>
 
                           <div className="min-w-0">
-
                             <button
-                              onClick={() =>
-                                setSelectedDepartment(
-                                  department
-                                )
-                              }
+                              onClick={() => setSelectedDepartment(department)}
                               className="
                                 font-semibold
                                 text-slate-800
@@ -1002,9 +1020,7 @@ const Department = () => {
                             <p className="text-xs text-slate-400 mt-0.5">
                               {code}
                             </p>
-
                           </div>
-
                         </div>
 
                         {/* Mobile Side Menu */}
@@ -1015,7 +1031,7 @@ const Department = () => {
                               setOpenMenu(
                                 openMenu === department.id
                                   ? null
-                                  : department.id
+                                  : department.id,
                               )
                             }
                             className={`
@@ -1024,9 +1040,10 @@ const Department = () => {
                               rounded-lg
                               flex items-center justify-center
                               transition-colors
-                              ${openMenu === department.id
-                                ? "text-blue-600 bg-blue-50"
-                                : "text-slate-400 hover:bg-slate-100"
+                              ${
+                                openMenu === department.id
+                                  ? "text-sky-600 bg-sky-50"
+                                  : "text-slate-400 hover:bg-slate-100"
                               }
                             `}
                           >
@@ -1042,9 +1059,7 @@ const Department = () => {
                               <DepartmentMenu
                                 mobile
                                 onView={() => {
-                                  setSelectedDepartment(
-                                    department
-                                  );
+                                  setSelectedDepartment(department);
                                   setOpenMenu(null);
                                 }}
                                 onEdit={() => {
@@ -1052,53 +1067,41 @@ const Department = () => {
                                   setOpenMenu(null);
                                 }}
                                 onDelete={() => {
-                                  setDeleteDepartment(
-                                    department
-                                  );
+                                  setDeleteDepartment(department);
                                   setOpenMenu(null);
                                 }}
                               />
                             </>
                           )}
                         </div>
-
                       </div>
 
                       <div className="grid grid-cols-2 gap-3 mt-4">
-
                         <div className="bg-slate-50 rounded-xl p-3">
-                          <p className="text-xs text-slate-400">
-                            Job Roles
-                          </p>
+                          <p className="text-xs text-slate-400">Job Roles</p>
                           <p className="text-base font-bold text-slate-800 mt-1">
                             {roleCount}
                           </p>
                         </div>
 
                         <div className="bg-slate-50 rounded-xl p-3">
-                          <p className="text-xs text-slate-400">
-                            Employees
-                          </p>
+                          <p className="text-xs text-slate-400">Employees</p>
                           <p className="text-base font-bold text-slate-800 mt-1">
                             {employeeCount}
                           </p>
                         </div>
-
                       </div>
 
                       {/* Mobile Visible Action Buttons */}
                       <div className="flex items-center gap-2 mt-3.5 pt-3 border-t border-slate-100">
-
                         <button
                           type="button"
-                          onClick={() =>
-                            setSelectedDepartment(department)
-                          }
+                          onClick={() => setSelectedDepartment(department)}
                           className="
                             flex-1 py-2 px-2.5
                             rounded-xl
-                            bg-slate-50 hover:bg-blue-50
-                            text-slate-600 hover:text-blue-600
+                            bg-slate-50 hover:bg-sky-50
+                            text-slate-600 hover:text-sky-600
                             border border-slate-200
                             text-xs font-semibold
                             flex items-center justify-center gap-1.5
@@ -1111,9 +1114,7 @@ const Department = () => {
 
                         <button
                           type="button"
-                          onClick={() =>
-                            handleEdit(department)
-                          }
+                          onClick={() => handleEdit(department)}
                           className="
                             flex-1 py-2 px-2.5
                             rounded-xl
@@ -1131,9 +1132,7 @@ const Department = () => {
 
                         <button
                           type="button"
-                          onClick={() =>
-                            setDeleteDepartment(department)
-                          }
+                          onClick={() => setDeleteDepartment(department)}
                           className="
                             flex-1 py-2 px-2.5
                             rounded-xl
@@ -1148,11 +1147,8 @@ const Department = () => {
                           <Trash2 size={14} />
                           Delete
                         </button>
-
                       </div>
-
                     </div>
-
                   </div>
                 );
               })}
@@ -1170,7 +1166,6 @@ const Department = () => {
                     className="hidden md:block px-4 sm:px-6 py-4 h-[81px]"
                   />
                 ))}
-
             </div>
           )}
 
@@ -1186,9 +1181,7 @@ const Department = () => {
               pageSize={ROWS_PER_PAGE}
             />
           )}
-
         </div>
-
       </div>
 
       {/* =====================================================
@@ -1196,15 +1189,17 @@ const Department = () => {
       ====================================================== */}
 
       {showAddForm && (
-        <div className="
+        <div
+          className="
           fixed inset-0 z-50
           bg-slate-900/40
           backdrop-blur-sm
           flex items-center justify-center
           p-4
-        ">
-
-          <div className="
+        "
+        >
+          <div
+            className="
             bg-white
             w-full max-w-3xl
             max-h-[92vh]
@@ -1212,20 +1207,19 @@ const Department = () => {
             rounded-2xl
             shadow-2xl
             flex flex-col
-          ">
-
+          "
+          >
             {/* Modal Header */}
-            <div className="
+            <div
+              className="
               px-6 py-5
-              bg-gradient-to-r from-teal-500 to-emerald-600
+              bg-gradient-to-r from-sky-600 to-sky-700
               flex items-center justify-between
-            ">
-
+            "
+            >
               <div>
                 <h2 className="text-lg font-bold text-white">
-                  {editingDepartment
-                    ? "Edit Department"
-                    : "Add Department"}
+                  {editingDepartment ? "Edit Department" : "Add Department"}
                 </h2>
                 <p className="text-xs text-white/80 mt-0.5">
                   {editingDepartment
@@ -1248,24 +1242,19 @@ const Department = () => {
               >
                 <X size={19} />
               </button>
-
             </div>
 
             {/* Modal Body */}
-            <form
-              onSubmit={handleSubmit}
-              className="flex flex-col min-h-0"
-            >
-
-              <div className="
+            <form onSubmit={handleSubmit} className="flex flex-col min-h-0">
+              <div
+                className="
                 overflow-y-auto
                 p-6
                 space-y-7
-              ">
-
+              "
+              >
                 {/* Department Information */}
                 <section>
-
                   <SectionTitle
                     number="01"
                     title="Department Information"
@@ -1273,71 +1262,57 @@ const Department = () => {
                   />
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mt-5">
-
                     {/* Name */}
                     <div className="md:col-span-2">
-
                       <label className="form-label">
                         Department Name
-                        <span className="text-red-500 ml-1">
-                          *
-                        </span>
+                        <span className="text-red-500 ml-1">*</span>
                       </label>
 
                       <input
                         type="text"
                         value={formData.name}
                         onChange={(e) =>
-                          handleDepartmentChange(
-                            "name",
-                            e.target.value
-                          )
+                          handleDepartmentChange("name", e.target.value)
                         }
                         placeholder="e.g. Software Engineering"
                         required
                         className="form-input"
                       />
-
                     </div>
 
                     {/* Code */}
                     <div>
-
                       <label className="form-label">
                         Department Code
-                        <span className="text-red-500 ml-1">
-                          *
-                        </span>
+                        <span className="text-red-500 ml-1">*</span>
                       </label>
 
                       <input
                         type="text"
                         value={formData.shortCode}
                         onChange={(e) =>
-                          handleDepartmentChange(
-                            "shortCode",
-                            e.target.value
-                          )
+                          handleDepartmentChange("shortCode", e.target.value)
                         }
                         placeholder="e.g. SE"
                         required
                         maxLength={10}
                         className="form-input uppercase"
                       />
-
                     </div>
 
                     {/* Description */}
                     <div className="md:col-span-2">
-
                       <label className="form-label">
                         Description
-                        <span className="
+                        <span
+                          className="
                           text-slate-400
                           font-normal
                           normal-case
                           ml-2
-                        ">
+                        "
+                        >
                           Optional
                         </span>
                       </label>
@@ -1345,10 +1320,7 @@ const Department = () => {
                       <textarea
                         value={formData.description}
                         onChange={(e) =>
-                          handleDepartmentChange(
-                            "description",
-                            e.target.value
-                          )
+                          handleDepartmentChange("description", e.target.value)
                         }
                         placeholder="Briefly describe the purpose of this department..."
                         rows={3}
@@ -1357,99 +1329,88 @@ const Department = () => {
                           resize-none
                         "
                       />
-
                     </div>
-
                   </div>
-
                 </section>
 
                 {/* Job Roles */}
                 <section>
-
-                  <div className="
+                  <div
+                    className="
                     flex flex-col sm:flex-row
                     sm:items-end
                     sm:justify-between
                     gap-3
-                  ">
+                  "
+                  >
+                    <SectionTitle number="02" title="Job Roles" />
 
-                    <SectionTitle
-                      number="02"
-                      title="Job Roles"
-                    />
-
-                    <span className="
+                    <span
+                      className="
                       inline-flex
                       items-center
                       w-fit
                       px-2.5 py-1
                       rounded-lg
-                      bg-blue-50
-                      text-blue-600
+                      bg-sky-50
+                      text-sky-600
                       text-xs
                       font-semibold
-                    ">
+                    "
+                    >
                       {formData.jobRoles.length}{" "}
-                      {formData.jobRoles.length === 1
-                        ? "Role"
-                        : "Roles"}
+                      {formData.jobRoles.length === 1 ? "Role" : "Roles"}
                     </span>
-
                   </div>
 
                   <div className="space-y-4 mt-5">
-
-                    {formData.jobRoles.map(
-                      (role, index) => (
-                        <div
-                          key={index}
-                          className="
+                    {formData.jobRoles.map((role, index) => (
+                      <div
+                        key={index}
+                        className="
                             rounded-2xl
                             border border-slate-200
                             bg-slate-50/60
                             p-5
                           "
-                        >
-
-                          <div className="
+                      >
+                        <div
+                          className="
                             flex items-center
                             justify-between
                             mb-4
-                          ">
-
-                            <div className="flex items-center gap-2.5">
-
-                              <div className="
+                          "
+                        >
+                          <div className="flex items-center gap-2.5">
+                            <div
+                              className="
                                 h-8 w-8
                                 rounded-lg
                                 bg-white
                                 border border-slate-200
-                                text-blue-600
+                                text-sky-600
                                 flex items-center justify-center
-                              ">
-                                <BriefcaseBusiness
-                                  size={15}
-                                />
-                              </div>
+                              "
+                            >
+                              <BriefcaseBusiness size={15} />
+                            </div>
 
-                              <span className="
+                            <span
+                              className="
                                 text-sm
                                 font-semibold
                                 text-slate-700
-                              ">
-                                Job Role {index + 1}
-                              </span>
+                              "
+                            >
+                              Job Role {index + 1}
+                            </span>
+                          </div>
 
-                            </div>
-
-                            {formData.jobRoles.length > 1 && (
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  removeJobRole(index)
-                                }
-                                className="
+                          {formData.jobRoles.length > 1 && (
+                            <button
+                              type="button"
+                              onClick={() => removeJobRole(index)}
+                              className="
                                   inline-flex
                                   items-center gap-1.5
                                   text-xs
@@ -1461,52 +1422,40 @@ const Department = () => {
                                   rounded-lg
                                   transition-colors
                                 "
-                              >
-                                <Trash2 size={13} />
-                                Remove
-                              </button>
-                            )}
+                            >
+                              <Trash2 size={13} />
+                              Remove
+                            </button>
+                          )}
+                        </div>
 
-                          </div>
-
-                          <div className="
+                        <div
+                          className="
                             grid grid-cols-1
                             md:grid-cols-2
                             gap-4
-                          ">
+                          "
+                        >
+                          {/* Job Title */}
+                          <div>
+                            <label className="form-label">
+                              Job Title
+                              <span className="text-red-500 ml-1">*</span>
+                            </label>
 
-                            {/* Job Title */}
-                            <div>
-
-                              <label className="form-label">
-                                Job Title
-                                <span className="text-red-500 ml-1">
-                                  *
-                                </span>
-                              </label>
-
-                              <input
-                                type="text"
-                                value={role.jobTitle}
-                                onChange={(e) =>
-                                  updateJobRole(
-                                    index,
-                                    "jobTitle",
-                                    e.target.value
-                                  )
-                                }
-                                placeholder="e.g. Software Engineer"
-                                className="form-input bg-white"
-                              />
-
-                            </div>
-
+                            <input
+                              type="text"
+                              value={role.jobTitle}
+                              onChange={(e) =>
+                                updateJobRole(index, "jobTitle", e.target.value)
+                              }
+                              placeholder="e.g. Software Engineer"
+                              className="form-input bg-white"
+                            />
                           </div>
-
                         </div>
-                      )
-                    )}
-
+                      </div>
+                    ))}
                   </div>
 
                   {/* Add Role */}
@@ -1518,10 +1467,10 @@ const Department = () => {
                       w-full
                       border-2
                       border-dashed
-                      border-blue-200
-                      hover:border-blue-400
-                      hover:bg-blue-50/50
-                      text-blue-600
+                      border-sky-200
+                      hover:border-sky-400
+                      hover:bg-sky-50/50
+                      text-sky-600
                       py-3
                       rounded-xl
                       text-sm
@@ -1534,9 +1483,7 @@ const Department = () => {
                     <Plus size={17} />
                     Add Another Job Role
                   </button>
-
                 </section>
-
               </div>
 
               {formError && (
@@ -1550,7 +1497,8 @@ const Department = () => {
               )}
 
               {/* Modal Footer */}
-              <div className="
+              <div
+                className="
                 px-6 py-4
                 border-t border-slate-200
                 bg-slate-50/70
@@ -1558,8 +1506,8 @@ const Department = () => {
                 sm:flex-row
                 sm:justify-end
                 gap-3
-              ">
-
+              "
+              >
                 <button
                   type="button"
                   onClick={closeForm}
@@ -1586,13 +1534,13 @@ const Department = () => {
                   className="
                     px-5 py-2.5
                     rounded-xl
-                    bg-gradient-to-br from-teal-400 to-emerald-500
-                    hover:from-teal-500 hover:to-emerald-600
+                    bg-sky-600
+                    hover:bg-sky-700
                     text-white
                     text-sm
                     font-semibold
                     shadow-sm
-                    shadow-teal-500/20
+                    shadow-sky-600/20
                     disabled:opacity-60
                     disabled:cursor-not-allowed
                     flex items-center
@@ -1600,13 +1548,9 @@ const Department = () => {
                     transition-colors
                   "
                 >
-
                   {saving ? (
                     <>
-                      <Loader2
-                        size={16}
-                        className="animate-spin"
-                      />
+                      <Loader2 size={16} className="animate-spin" />
                       Saving...
                     </>
                   ) : (
@@ -1617,13 +1561,9 @@ const Department = () => {
                         : "Save Department"}
                     </>
                   )}
-
                 </button>
-
               </div>
-
             </form>
-
           </div>
         </div>
       )}
@@ -1636,9 +1576,7 @@ const Department = () => {
         <DepartmentDetailsModal
           department={selectedDepartment}
           employeeCount={getEmployeeCount(selectedDepartment)}
-          onClose={() =>
-            setSelectedDepartment(null)
-          }
+          onClose={() => setSelectedDepartment(null)}
           onEdit={() => {
             setSelectedDepartment(null);
             handleEdit(selectedDepartment);
@@ -1651,32 +1589,35 @@ const Department = () => {
       ====================================================== */}
 
       {deleteDepartment && (
-        <div className="
+        <div
+          className="
           fixed inset-0 z-[60]
           bg-slate-900/40
           backdrop-blur-sm
           flex items-center justify-center
           p-4
-        ">
-
-          <div className="
+        "
+        >
+          <div
+            className="
             bg-white
             w-full max-w-md
             rounded-2xl
             shadow-2xl
             p-6
-          ">
-
+          "
+          >
             <div className="flex items-start gap-4">
-
-              <div className="
+              <div
+                className="
                 h-11 w-11
                 flex-shrink-0
                 rounded-xl
                 bg-red-50
                 text-red-600
                 flex items-center justify-center
-              ">
+              "
+              >
                 <AlertCircle size={21} />
               </div>
 
@@ -1705,21 +1646,19 @@ const Department = () => {
                   </p>
                 )}
               </div>
-
             </div>
 
-            <div className="
+            <div
+              className="
               flex flex-col-reverse
               sm:flex-row
               sm:justify-end
               gap-3
               mt-6
-            ">
-
+            "
+            >
               <button
-                onClick={() =>
-                  setDeleteDepartment(null)
-                }
+                onClick={() => setDeleteDepartment(null)}
                 className="
                   px-4 py-2.5
                   rounded-xl
@@ -1751,20 +1690,15 @@ const Department = () => {
                 <Trash2 size={15} />
                 Delete Department
               </button>
-
             </div>
-
           </div>
         </div>
       )}
 
       <NotificationPopup
         isOpen={showNotifications}
-        onClose={() =>
-          setShowNotifications(false)
-        }
+        onClose={() => setShowNotifications(false)}
       />
-
     </PageLayout>
   );
 };
@@ -1773,75 +1707,77 @@ const Department = () => {
 // SUMMARY CARD
 // =============================================================
 
-const SummaryCard = ({
-  icon,
-  title,
-  value,
-  description,
-  className = "",
-}) => {
+const SummaryCard = ({ icon, title, value, description, className = "" }) => {
   return (
-    <div className={`
-        rounded-2xl
-        border border-slate-200
-        p-5
-        shadow-sm
-        hover:shadow-md
-        transition-shadow
-        text-white
-        ${className || "bg-gradient-to-br from-teal-400 to-emerald-500"}
-      `}>
-
-      <div className={icon ? "flex items-start justify-between" : ""}>
-
+    <div
+  className={`
+    relative overflow-hidden
+    rounded-2xl
+    border border-white/10
+    p-5
+    shadow-sm
+    hover:shadow-md
+    transition-all duration-200
+    text-white
+    ${className || "bg-gradient-to-br from-sky-600 to-sky-700"}
+  `}
+>
+  {/* Decorative circles */}
+  <div className="absolute -right-8 -top-10 h-32 w-32 rounded-full bg-white/10" />
+  <div className="absolute -right-3 -bottom-16 h-28 w-28 rounded-full bg-white/10" />
+      <div className={`relative z-10 ${icon ? "flex items-start justify-between" : ""}`}>
         <div>
-
-          <p className="
+          <p
+            className="
             text-xs
             font-semibold
             uppercase
             tracking-wider
             text-white
-          ">
+          "
+          >
             {title}
           </p>
 
-          <p className="
+          <p
+            className="
             mt-2
             text-2xl
             font-bold
             text-white
-          ">
+          "
+          >
             {value}
           </p>
 
           {description && (
-            <p className="
+            <p
+              className="
               mt-1
               text-xs
               text-white/80
-            ">
+            "
+            >
               {description}
             </p>
           )}
-
         </div>
 
         {icon && (
-          <div className="
+          <div
+            className="
             h-10 w-10
             rounded-xl
             bg-white/20
             text-white
             flex items-center
             justify-center
-          ">
+          "
+          >
             {icon}
           </div>
         )}
-
       </div>
-
     </div>
   );
 };
@@ -1852,14 +1788,16 @@ const SummaryCard = ({
 
 const TableHeader = ({ children, className = "" }) => {
   return (
-    <div className={`
+    <div
+      className={`
       text-[11px]
       font-bold
       uppercase
       tracking-wider
       text-white
       ${className}
-    `}>
+    `}
+    >
       {children}
     </div>
   );
@@ -1869,48 +1807,46 @@ const TableHeader = ({ children, className = "" }) => {
 // SECTION TITLE
 // =============================================================
 
-const SectionTitle = ({
-  number,
-  title,
-  description,
-}) => {
+const SectionTitle = ({ number, title, description }) => {
   return (
     <div className="flex items-start gap-3">
-
-      <div className="
+      <div
+        className="
         h-8 w-8
         flex-shrink-0
         rounded-lg
-        bg-gradient-to-br from-teal-400 to-emerald-500
-        text-white
+        bg-sky-100
+        text-sky-700
         flex items-center
         justify-center
         text-[10px]
         font-bold
-      ">
+      "
+      >
         {number}
       </div>
 
       <div>
-
-        <h3 className="
+        <h3
+          className="
           text-sm
           font-bold
           text-slate-800
-        ">
+        "
+        >
           {title}
         </h3>
 
-        <p className="
+        <p
+          className="
           text-xs
           text-slate-400
           mt-0.5
-        ">
+        "
+        >
           {description}
         </p>
-
       </div>
-
     </div>
   );
 };
@@ -1927,10 +1863,12 @@ const DepartmentMenu = ({
   openUpwards = false,
 }) => {
   return (
-    <div className={`
-      ${mobile
-        ? "absolute right-0 top-11 w-48"
-        : `absolute right-0 ${openUpwards ? "bottom-10" : "top-10"} w-48`
+    <div
+      className={`
+      ${
+        mobile
+          ? "absolute right-0 top-11 w-48"
+          : `absolute right-0 ${openUpwards ? "bottom-10" : "top-10"} w-48`
       }
       z-50
       bg-white
@@ -1938,8 +1876,8 @@ const DepartmentMenu = ({
       border border-slate-200
       shadow-xl
       py-1
-    `}>
-
+    `}
+    >
       <button
         type="button"
         onClick={onView}
@@ -1949,8 +1887,8 @@ const DepartmentMenu = ({
           flex items-center gap-2.5
           text-sm
           text-slate-700
-          hover:bg-blue-50
-          hover:text-blue-600
+          hover:bg-sky-50
+          hover:text-sky-600
           text-left
           transition-colors
         "
@@ -1997,7 +1935,6 @@ const DepartmentMenu = ({
         <Trash2 size={15} />
         Delete Department
       </button>
-
     </div>
   );
 };
@@ -2014,26 +1951,22 @@ const DepartmentDetailsModal = ({
 }) => {
   const jobRoles = department.jobRoles || [];
 
-  const roleCount =
-    department.jobRoleCount ??
-    jobRoles.length ??
-    0;
+  const roleCount = department.jobRoleCount ?? jobRoles.length ?? 0;
 
-  const employeeCount =
-    employeeCountProp ??
-    department.employeeCount ??
-    0;
+  const employeeCount = employeeCountProp ?? department.employeeCount ?? 0;
 
   return (
-    <div className="
+    <div
+      className="
       fixed inset-0 z-50
       bg-slate-900/40
       backdrop-blur-sm
       flex items-center justify-center
       p-4
-    ">
-
-      <div className="
+    "
+    >
+      <div
+        className="
         bg-white
         w-full max-w-3xl
         max-h-[90vh]
@@ -2041,56 +1974,60 @@ const DepartmentDetailsModal = ({
         shadow-2xl
         overflow-hidden
         flex flex-col
-      ">
-
+      "
+      >
         {/* Header */}
-        <div className="
+        <div
+          className="
           p-6
           bg-gradient-to-br
-          from-teal-500
-          to-emerald-600
+          from-sky-600
+          to-sky-700
           text-white
-        ">
-
-          <div className="
+        "
+        >
+          <div
+            className="
             flex items-start
             justify-between
-          ">
-
+          "
+          >
             <div className="flex items-center gap-4">
-
-              <div className="
+              <div
+                className="
                 h-14 w-14
                 rounded-2xl
                 bg-white/15
                 border border-white/20
                 flex items-center
                 justify-center
-              ">
+              "
+              >
                 <Building2 size={27} />
               </div>
 
               <div>
-
-                <h2 className="
+                <h2
+                  className="
                   text-xl
                   font-bold
-                ">
+                "
+                >
                   {department.name}
                 </h2>
 
-                <p className="
-                  text-teal-100
+                <p
+                  className="
+                  text-sky-100
                   text-sm
                   mt-0.5
-                ">
+                "
+                >
                   {department.shortCode ||
                     department.code ||
                     `DPT-${department.id}`}
                 </p>
-
               </div>
-
             </div>
 
             <button
@@ -2106,37 +2043,39 @@ const DepartmentDetailsModal = ({
             >
               <X size={18} />
             </button>
-
           </div>
 
           {department.description && (
-            <p className="
+            <p
+              className="
               text-sm
-              text-teal-100
+              text-sky-100
               mt-5
               max-w-2xl
               leading-relaxed
-            ">
+            "
+            >
               {department.description}
             </p>
           )}
-
         </div>
 
         {/* Content */}
-        <div className="
+        <div
+          className="
           overflow-y-auto
           p-6
           space-y-6
-        ">
-
+        "
+        >
           {/* Statistics */}
-          <div className="
+          <div
+            className="
             grid grid-cols-2
             md:grid-cols-3
             gap-3
-          ">
-
+          "
+          >
             <DetailStat
               icon={<BriefcaseBusiness size={17} />}
               label="Job Roles"
@@ -2152,51 +2091,50 @@ const DepartmentDetailsModal = ({
             <DetailStat
               icon={<DollarSign size={17} />}
               label="Department"
-              value={
-                department.shortCode ||
-                department.code ||
-                "—"
-              }
+              value={department.shortCode || department.code || "—"}
             />
-
           </div>
 
           {/* Job Roles */}
           <div>
-
-            <div className="
+            <div
+              className="
               flex items-center
               justify-between
               mb-4
-            ">
-
+            "
+            >
               <div>
-                <h3 className="
+                <h3
+                  className="
                   text-base
                   font-bold
                   text-slate-800
-                ">
+                "
+                >
                   Job Roles
                 </h3>
 
-                <p className="
+                <p
+                  className="
                   text-xs
                   text-slate-400
                   mt-0.5
-                ">
+                "
+                >
                   Roles defined under this department
                 </p>
               </div>
-
             </div>
 
             {jobRoles.length > 0 ? (
-              <div className="
+              <div
+                className="
                 border border-slate-200
                 rounded-xl
                 overflow-hidden
-              ">
-
+              "
+              >
                 {jobRoles.map((role, index) => (
                   <div
                     key={role.id || index}
@@ -2210,57 +2148,55 @@ const DepartmentDetailsModal = ({
                       border-slate-100
                     "
                   >
-
                     <div className="flex items-center gap-3">
-
-                      <div className="
+                      <div
+                        className="
                         h-9 w-9
                         rounded-lg
-                        bg-blue-50
-                        text-blue-600
+                        bg-sky-50
+                        text-sky-600
                         flex items-center
                         justify-center
-                      ">
-                        <BriefcaseBusiness
-                          size={16}
-                        />
+                      "
+                      >
+                        <BriefcaseBusiness size={16} />
                       </div>
 
                       <div>
-
-                        <p className="
+                        <p
+                          className="
                           text-sm
                           font-semibold
                           text-slate-800
-                        ">
-                          {role.jobTitle ||
-                            role.title}
+                        "
+                        >
+                          {role.jobTitle || role.title}
                         </p>
 
-                        <p className="
+                        <p
+                          className="
                           text-xs
                           text-slate-400
                           mt-0.5
-                        ">
+                        "
+                        >
                           Job Role {index + 1}
                         </p>
-
                       </div>
-
                     </div>
-
                   </div>
                 ))}
-
               </div>
             ) : (
-              <div className="
+              <div
+                className="
                 py-10
                 rounded-xl
                 bg-slate-50
                 border border-slate-200
                 text-center
-              ">
+              "
+              >
                 <BriefcaseBusiness
                   size={24}
                   className="
@@ -2270,29 +2206,29 @@ const DepartmentDetailsModal = ({
                   "
                 />
 
-                <p className="
+                <p
+                  className="
                   text-sm
                   font-medium
                   text-slate-600
-                ">
+                "
+                >
                   No job roles defined
                 </p>
-
               </div>
             )}
-
           </div>
-
         </div>
 
         {/* Footer */}
-        <div className="
+        <div
+          className="
           px-6 py-4
           border-t border-slate-200
           bg-slate-50
           flex justify-end gap-3
-        ">
-
+        "
+        >
           <button
             onClick={onClose}
             className="
@@ -2314,8 +2250,8 @@ const DepartmentDetailsModal = ({
             className="
               px-4 py-2.5
               rounded-xl
-              bg-gradient-to-br from-teal-400 to-emerald-500
-              hover:from-teal-500 hover:to-emerald-600
+              bg-sky-600
+              hover:bg-sky-700
               text-white
               text-sm
               font-semibold
@@ -2326,11 +2262,8 @@ const DepartmentDetailsModal = ({
             <Edit3 size={15} />
             Edit Department
           </button>
-
         </div>
-
       </div>
-
     </div>
   );
 };
@@ -2339,43 +2272,45 @@ const DepartmentDetailsModal = ({
 // DETAIL STAT
 // =============================================================
 
-const DetailStat = ({
-  icon,
-  label,
-  value,
-}) => {
+const DetailStat = ({ icon, label, value }) => {
   return (
-    <div className="
+    <div
+      className="
       bg-slate-50
       border border-slate-200
       rounded-xl
       p-4
-    ">
-
-      <div className="
+    "
+    >
+      <div
+        className="
         flex items-center
         gap-2
         text-slate-400
-      ">
+      "
+      >
         {icon}
 
-        <span className="
+        <span
+          className="
           text-xs
           font-medium
-        ">
+        "
+        >
           {label}
         </span>
       </div>
 
-      <p className="
+      <p
+        className="
         mt-2
         text-lg
         font-bold
         text-slate-800
-      ">
+      "
+      >
         {value}
       </p>
-
     </div>
   );
 };
@@ -2407,14 +2342,16 @@ const DeptPaginationBar = ({
   }
 
   return (
-    <div className="
+    <div
+      className="
       flex flex-col
       items-center
       gap-2
       px-4 sm:px-6
       py-4
       border-t border-slate-100
-    ">
+    "
+    >
       <div className="flex items-center justify-center gap-1.5">
         <button
           type="button"
@@ -2456,21 +2393,19 @@ const DeptPaginationBar = ({
                 transition-colors
                 ${
                   p === currentPage
-                    ? "bg-gradient-to-r from-teal-500 to-emerald-600 text-white shadow-sm"
+                    ? "bg-gradient-to-r from-sky-600 to-sky-700 text-white shadow-sm"
                     : "text-slate-600 border border-slate-200 hover:bg-slate-50"
                 }
               `}
             >
               {p}
             </button>
-          )
+          ),
         )}
 
         <button
           type="button"
-          onClick={() =>
-            onPageChange(Math.min(totalPages, currentPage + 1))
-          }
+          onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
           disabled={currentPage === totalPages}
           className="
             h-8 w-8
@@ -2494,9 +2429,7 @@ const DeptPaginationBar = ({
         <strong className="text-slate-800">
           {start}-{end}
         </strong>{" "}
-        of{" "}
-        <strong className="text-slate-800">{totalItems}</strong>{" "}
-        departments
+        of <strong className="text-slate-800">{totalItems}</strong> departments
       </p>
     </div>
   );

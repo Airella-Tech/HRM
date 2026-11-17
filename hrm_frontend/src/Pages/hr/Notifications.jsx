@@ -59,22 +59,22 @@ const Notifications = () => {
       title="Notifications"
       subtitle={unread > 0 ? `You have ${unread} unread notification${unread > 1 ? "s" : ""}` : "All notifications read"}
       actions={unread > 0 ? (
-        <button onClick={markAllRead} className="text-sm font-semibold text-teal-600 hover:text-teal-800 transition-colors">Mark all as read</button>
+        <button onClick={markAllRead} className="text-sm font-semibold text-sky-600 hover:text-sky-800 transition-colors">Mark all as read</button>
       ) : null}
     >
       <div className="space-y-5">
         {/* Filters */}
         <div className="flex flex-col md:flex-row gap-3 md:items-center">
-          <div className="flex gap-2 bg-white p-2 rounded-2xl shadow-sm border border-gray-100 w-fit">
+          <div className="flex gap-2 bg-white p-2 rounded-2xl shadow-sm border border-slate-200 w-fit">
             {[["all", "All"], ["unread", `Unread (${unread})`], ["read", "Read"]].map(([key, label]) => (
               <button key={key} onClick={() => setFilter(key)}
-                className={`px-5 py-2 rounded-xl text-sm font-semibold transition-all ${filter === key ? theme.tabOn : "text-gray-600 hover:bg-gray-100"}`}>
+                className={`px-5 py-2 rounded-xl text-sm font-semibold transition-all ${filter === key ? theme.tabOn : "text-slate-600 hover:bg-sky-50 hover:text-sky-700"}`}>
                 {label}
               </button>
             ))}
           </div>
           <select value={topic} onChange={(e) => setTopic(e.target.value)}
-            className={`px-4 py-2.5 border border-gray-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 ${theme.ring} w-fit`}>
+            className={`px-4 py-2.5 border border-slate-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:border-sky-500 focus:ring-sky-500/10 w-fit`}>
             {TOPICS.map(([key, label]) => <option key={key} value={key}>{label}</option>)}
           </select>
         </div>
@@ -104,12 +104,12 @@ const Notifications = () => {
             />
           ))}
           {!loading && visible.length === 0 && (
-            <div className="text-center py-20 text-gray-400">
+            <div className="text-center py-20 text-slate-400">
               <Bell size={40} className="mx-auto mb-3 opacity-30" />
               <p className="font-medium">{filter === "unread" ? "All notifications have been read" : "No notifications yet"}</p>
             </div>
           )}
-          {loading && notifications.length === 0 && <div className="text-center py-20 text-gray-400">Loading notifications…</div>}
+          {loading && notifications.length === 0 && <div className="text-center py-20 text-slate-400">Loading notifications…</div>}
         </div>
       </div>
     </PageLayout>

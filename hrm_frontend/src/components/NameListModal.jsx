@@ -180,7 +180,7 @@ export const NameListModal = ({
     >
       <div className="bg-white w-full max-w-2xl max-h-[92vh] overflow-y-auto rounded-2xl shadow-2xl flex flex-col">
         {/* Header */}
-        <div className="px-6 py-5 border-b border-slate-200 flex items-center justify-between bg-gradient-to-r from-teal-500 to-emerald-600 rounded-t-2xl">
+       <div className="px-6 py-5 border-b border-sky-700 flex items-center justify-between bg-gradient-to-r from-sky-700 to-sky-600 rounded-t-2xl">
           <div>
             <h2 className="text-lg font-bold text-white flex items-center gap-2">{Icon && <Icon size={18} />} {title}</h2>
             {subtitle && <p className="text-xs text-white/80 mt-0.5">{subtitle}</p>}
@@ -195,15 +195,15 @@ export const NameListModal = ({
         </div>
 
         <div className="p-6 space-y-6">
-          {message && <div className="p-3 rounded-lg text-white bg-green-500 text-sm">{message}</div>}
+          {message && <div className="p-3 rounded-xl text-emerald-700 bg-emerald-50 border border-emerald-200 text-sm font-medium">{message}</div>}
 
           <form onSubmit={handleSave} className="space-y-3">
-            {heading && <h3 className="text-sm font-semibold text-gray-700">{heading}</h3>}
-            {hint && <p className="text-xs text-gray-500">{hint}</p>}
+            {heading && <h3 className="text-sm font-semibold text-slate-800">{heading}</h3>}
+            {hint && <p className="text-xs text-slate-500">{hint}</p>}
 
             {rows.map((row, i) => (
               <div key={row.key} className="flex items-center gap-3">
-                <span className="w-7 text-sm font-semibold text-gray-400 text-right">{i + 1}.</span>
+                <span className="w-7 text-sm font-semibold text-slate-400 text-right">{i + 1}.</span>
                 <input
                   ref={el => { inputRefs.current[row.key] = el; }}
                   value={row.name}
@@ -217,18 +217,18 @@ export const NameListModal = ({
                   }}
                   placeholder={placeholder}
                   maxLength={100}
-                  className="flex-1 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 bg-gray-50"
+                  className="flex-1 border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500 bg-slate-50 transition-colors"
                 />
                 <button type="button" onClick={() => removeRow(row.key)} disabled={rows.length === 1}
                   title="Remove row"
-                  className="p-2.5 rounded-xl text-gray-400 hover:text-red-500 hover:bg-red-50 disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-gray-400 transition-colors">
+                  className="p-2.5 rounded-xl text-slate-400 hover:text-red-600 hover:bg-red-50 disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-slate-400 transition-colors">
                   <X size={16} />
                 </button>
               </div>
             ))}
 
             <button type="button" onClick={addRow}
-              className="w-full mt-2 border-2 border-dashed border-teal-200 hover:border-teal-400 hover:bg-teal-50 text-teal-600 py-3 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 transition-colors">
+              className="w-full mt-2 border-2 border-dashed border-sky-200 hover:border-sky-400 hover:bg-sky-50 text-sky-700 py-3 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 transition-colors">
               <Plus size={16} strokeWidth={2.5} /> {addLabel}
             </button>
 
@@ -242,22 +242,22 @@ export const NameListModal = ({
                 Cancel
               </button>
               <button type="submit" disabled={saving}
-                className="inline-flex items-center gap-2 bg-gradient-to-br from-teal-400 to-emerald-500 hover:from-teal-500 hover:to-emerald-600 disabled:opacity-50 disabled:cursor-not-allowed text-white px-5 py-2.5 rounded-xl text-sm font-semibold shadow-sm shadow-teal-500/20 transition-all">
+                className="inline-flex items-center gap-2 bg-sky-600 hover:bg-sky-700 disabled:opacity-60 disabled:cursor-not-allowed text-white px-5 py-2.5 rounded-xl text-sm font-semibold shadow-sm transition-colors">
                 <Save size={16} /> {saving ? "Saving..." : saveLabel}
               </button>
             </div>
           </form>
 
           {/* Already added, so HR can see what exists before adding more */}
-          <div className="bg-gray-50 rounded-2xl border border-gray-100 p-5">
-            <h3 className="text-sm font-semibold text-gray-800 mb-3">{existingLabel} ({existing.length})</h3>
+          <div className="bg-slate-50 rounded-2xl border border-slate-200 p-5">
+            <h3 className="text-sm font-semibold text-slate-800 mb-3">{existingLabel} ({existing.length})</h3>
             {existing.length === 0 ? (
-              <p className="text-sm text-gray-400">{emptyLabel}</p>
+              <p className="text-sm text-slate-400">{emptyLabel}</p>
             ) : !editable ? (
               <div className="flex flex-wrap gap-2">
                 {existing.map(t => (
                   <span key={t.id} title={t.createdByName ? `Added by ${t.createdByName}` : undefined}
-                    className="px-3 py-1.5 bg-teal-50 text-teal-700 border border-teal-100 rounded-xl text-xs font-semibold">
+                    className="px-3 py-1.5 bg-sky-50 text-sky-700 border border-sky-100 rounded-xl text-xs font-semibold">
                     {t.name}
                   </span>
                 ))}
@@ -268,7 +268,7 @@ export const NameListModal = ({
                   const busy = rowBusyId === item.id;
                   return (
                     <div key={item.id}
-                      className="bg-white border border-teal-100 rounded-xl px-3 py-2.5">
+                      className="bg-white border border-slate-200 rounded-xl px-3 py-2.5">
                       {editingId === item.id ? (
                         <div className="flex items-center gap-2">
                           <input
@@ -281,14 +281,14 @@ export const NameListModal = ({
                             }}
                             maxLength={100}
                             disabled={busy}
-                            className="flex-1 border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 bg-gray-50"
+                            className="flex-1 border border-slate-200 rounded-lg px-3 py-1.5 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500 bg-slate-50"
                           />
                           <button type="button" onClick={() => saveEdit(item)} disabled={busy}
-                            title="Save" className="p-1.5 rounded-lg text-emerald-600 hover:bg-emerald-50 disabled:opacity-50 transition-colors">
+                            title="Save" className="p-1.5 rounded-lg text-sky-600 hover:bg-sky-50 disabled:opacity-50 transition-colors">
                             {busy ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} />}
                           </button>
                           <button type="button" onClick={cancelEdit} disabled={busy}
-                            title="Cancel" className="p-1.5 rounded-lg text-gray-400 hover:bg-gray-100 disabled:opacity-50 transition-colors">
+                            title="Cancel" className="p-1.5 rounded-lg text-slate-400 hover:bg-slate-100 disabled:opacity-50 transition-colors">
                             <X size={16} />
                           </button>
                         </div>
@@ -309,19 +309,19 @@ export const NameListModal = ({
                       ) : (
                         <div className="flex items-center justify-between gap-2">
                           <span title={item.createdByName ? `Added by ${item.createdByName}` : undefined}
-                            className="text-sm font-semibold text-teal-700">
+                            className="text-sm font-semibold text-sky-700">
                             {item.name}
                           </span>
                           <div className="flex items-center gap-1 flex-shrink-0">
                             {onUpdate && (
                               <button type="button" onClick={() => startEdit(item)}
-                                title="Rename" className="p-1.5 rounded-lg text-gray-400 hover:text-teal-600 hover:bg-teal-50 transition-colors">
+                                title="Rename" className="p-1.5 rounded-lg text-slate-400 hover:text-sky-700 hover:bg-sky-50 transition-colors">
                                 <Pencil size={14} />
                               </button>
                             )}
                             {onDelete && (
                               <button type="button" onClick={() => setConfirmDeleteId(item.id)}
-                                title="Delete" className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors">
+                                title="Delete" className="p-1.5 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors">
                                 <Trash2 size={14} />
                               </button>
                             )}

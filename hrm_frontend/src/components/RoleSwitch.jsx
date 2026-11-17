@@ -1,9 +1,8 @@
 /**
  * RoleSwitch — toggle that lets a user jump between the HR dashboard,
  * the Employee dashboard and the Recruitment area without logging out.
- * HR managers always see HR and Employee.
- * Recruitment area is ONLY shown when the user (HR Manager or Employee)
- * has been assigned a recruitment role or operational permissions.
+ * HR managers always see all three. Other users see Employee, plus Recruitment
+ * when they have recruitment access. Renders nothing for anyone else.
  *
  * Props:
  *   mode     : 'hr' | 'employee' | 'recruitment' — which side is currently being viewed
@@ -29,9 +28,11 @@ export const RoleSwitch = ({
 
   return (
     <div
-      className={`${sidebar
-        ? `flex ${stacked ? "flex-col" : "flex-row"} items-stretch bg-white/5 rounded-xl p-1 gap-1`
-        : "flex items-center bg-gray-100 rounded-xl p-1 gap-1"}`}
+      className={`${
+        sidebar
+          ? `flex ${stacked ? "flex-col" : "flex-row"} items-stretch bg-white/5 rounded-xl p-1 gap-1`
+          : "flex items-center bg-gray-100 rounded-xl p-1 gap-1"
+      }`}
       role="group"
       aria-label="Switch dashboard"
     >
@@ -51,7 +52,11 @@ export const RoleSwitch = ({
             aria-pressed={isActive}
             title={`Switch to ${label} dashboard`}
             className={`flex ${stacked ? "w-full" : "flex-1"} ${
-              collapsed ? "justify-center" : stacked ? "justify-start" : "justify-center"
+              collapsed
+                ? "justify-center"
+                : stacked
+                  ? "justify-start"
+                  : "justify-center"
             } items-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold transition-all ${
               isActive
                 ? active

@@ -44,20 +44,20 @@ const KIND = {
   BIRTHDAY_WISH:      { icon: Gift,         chip: "bg-pink-100 text-pink-600" },
   PAYSLIP:            { icon: Receipt,      chip: "bg-sky-100 text-sky-700" },
   COMPANY_REQUEST:    { icon: Building2,    chip: "bg-amber-100 text-amber-700" },
-  VACANCY_CREATED:    { icon: Send,         chip: "bg-blue-100 text-blue-700" },
+  VACANCY_CREATED:    { icon: Send,         chip: "bg-sky-100 text-sky-700" },
   VACANCY_SUBMITTED:  { icon: Send,         chip: "bg-amber-100 text-amber-700" },
   VACANCY_APPROVED:   { icon: CheckCircle2, chip: "bg-emerald-100 text-emerald-700" },
   VACANCY_REJECTED:   { icon: XCircle,      chip: "bg-red-100 text-red-700" },
-  VACANCY_PUBLISHED:  { icon: Megaphone,    chip: "bg-indigo-100 text-indigo-700" },
+  VACANCY_PUBLISHED:  { icon: Megaphone,    chip: "bg-sky-100 text-sky-700" },
   VACANCY_CLOSED:     { icon: XCircle,      chip: "bg-slate-100 text-slate-700" },
   // Candidate notifications
   CANDIDATE_APPLIED: {
     icon: UserPlus,
-    chip: "bg-blue-100 text-blue-700",
+    chip: "bg-sky-100 text-sky-700",
   },
   CANDIDATE_SHORTLISTED: {
     icon: UserCheck,
-    chip: "bg-emerald-100 text-emerald-700",
+    chip: "bg-sky-100 text-sky-700",
   },
   CANDIDATES_AUTO_SHORTLISTED: {
     icon: UserCheck,
@@ -66,7 +66,7 @@ const KIND = {
   // Interview notifications
   INTERVIEW_SCHEDULED: {
     icon: CalendarDays,
-    chip: "bg-blue-100 text-blue-700",
+    chip: "bg-sky-100 text-sky-700",
   },
   INTERVIEW_RESCHEDULED: {
     icon: CalendarClock,
@@ -74,11 +74,11 @@ const KIND = {
   },
   INTERVIEWER_ASSIGNED: {
     icon: UserCheck,
-    chip: "bg-purple-100 text-purple-700",
+    chip: "bg-sky-100 text-sky-700",
   },
   INTERVIEW_STATUS_UPDATED: {
     icon: RefreshCw,
-    chip: "bg-blue-100 text-blue-700",
+    chip: "bg-sky-100 text-sky-700",
   },
   INTERVIEW_EVALUATION_SUBMITTED: {
     icon: ClipboardCheck,
@@ -102,16 +102,16 @@ const KIND = {
   },
   OFFER_STATUS_UPDATED: {
     icon: Handshake,
-    chip: "bg-blue-100 text-blue-700",
+    chip: "bg-sky-100 text-sky-700",
   },
   // Role & permission notifications
   ROLE_ASSIGNED: {
     icon: UserCheck,
-    chip: "bg-purple-100 text-purple-700",
+    chip: "bg-sky-100 text-sky-700",
   },
   ROLES_UPDATED: {
     icon: UserCheck,
-    chip: "bg-purple-100 text-purple-700",
+    chip: "bg-sky-100 text-sky-700",
   },
   ROLE_REMOVED: {
     icon: XCircle,
@@ -119,11 +119,11 @@ const KIND = {
   },
   ROLE_CREATED: {
     icon: CheckCircle2,
-    chip: "bg-indigo-100 text-indigo-700",
+    chip: "bg-sky-100 text-sky-700",
   },
   ROLE_PERMISSIONS_UPDATED: {
     icon: RefreshCw,
-    chip: "bg-blue-100 text-blue-700",
+    chip: "bg-sky-100 text-sky-700",
   },
 };
 const DEFAULT_KIND = { icon: Bell, chip: "bg-slate-100 text-slate-600" };
@@ -205,20 +205,20 @@ export const linkLabel = (n) => {
   }
 };
 
-/** Role colour themes: HR = teal/emerald (the HR sidebar), employee = sky/blue, admin = indigo. */
+/** Role colour themes: HR = sky blue, employee = sky/blue, admin = indigo. */
 export const NOTIF_THEME = {
-  hr: {
-    header: "from-teal-600 to-emerald-600",
-    headerSub: "text-teal-100",
-    headerIcon: "text-teal-100",
-    unreadRow: "bg-teal-50/70 border-teal-100",
-    hoverRow: "hover:bg-teal-50",
-    link: "text-teal-700 hover:text-teal-900",
-    dot: "bg-teal-500",
-    tabOn: "bg-gradient-to-r from-teal-500 to-emerald-600 text-white shadow",
-    action: "text-teal-600 hover:text-teal-800",
-    ring: "focus:ring-teal-500",
-  },
+hr: {
+  header: "from-sky-600 to-sky-700",
+  headerSub: "text-sky-100",
+  headerIcon: "text-sky-100",
+  unreadRow: "bg-sky-50/70 border-sky-100",
+  hoverRow: "hover:bg-sky-50",
+  link: "text-sky-700 hover:text-sky-900",
+  dot: "bg-sky-600",
+  tabOn: "bg-gradient-to-r from-sky-600 to-sky-700 text-white shadow-sm",
+  action: "text-sky-600 hover:text-sky-800",
+  ring: "focus:ring-sky-500",
+},
   employee: {
     header: "from-sky-500 to-blue-600",
     headerSub: "text-sky-100",
