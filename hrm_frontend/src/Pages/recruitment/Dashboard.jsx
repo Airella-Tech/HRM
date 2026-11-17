@@ -282,6 +282,25 @@ const VACANCY_STATUS = [
     color: "#94a3b8",
   },
 ];
+<<<<<<< HEAD
+=======
+const CHIP = {
+  PUBLISHED: "bg-primary-50 text-primary-700",
+  PENDING_APPROVAL: "bg-amber-50 text-amber-700",
+  APPROVED: "bg-emerald-50 text-emerald-700",
+  DRAFT: "bg-slate-100 text-slate-600",
+  CLOSED: "bg-slate-100 text-slate-600",
+  SHORTLISTED: "bg-emerald-50 text-emerald-700",
+  REJECTED: "bg-red-50 text-red-600",
+  SCHEDULED: "bg-primary-50 text-primary-700",
+  COMPLETED: "bg-emerald-50 text-emerald-700",
+  CANCELLED: "bg-slate-100 text-slate-600",
+  ACCEPTED: "bg-emerald-50 text-emerald-700",
+  SENT: "bg-primary-50 text-primary-700",
+};
+const AVATAR = ["bg-primary-100 text-primary-700", "bg-emerald-100 text-emerald-700", "bg-amber-100 text-amber-700", "bg-slate-100 text-slate-700", "bg-primary-100 text-primary-700", "bg-red-100 text-red-700"];
+const avatarTone = (name) => AVATAR[(name || "?").charCodeAt(0) % AVATAR.length];
+>>>>>>> 06d87dccdb7b3e630a625ec3662665b1077e8774
 
 const STATUS_STYLES = {
   PUBLISHED: "bg-indigo-50 text-indigo-700 ring-indigo-100",
@@ -416,11 +435,15 @@ const Avatar = ({ name }) => (
   </span>
 );
 
+<<<<<<< HEAD
 /* =========================================================================
    SPARKLINE
 ========================================================================= */
 
 const Sparkline = ({ data, color }) => {
+=======
+const Sparkline = ({ data }) => {
+>>>>>>> 06d87dccdb7b3e630a625ec3662665b1077e8774
   const max = Math.max(1, ...data);
   const width = 90;
   const height = 34;
@@ -438,6 +461,7 @@ const Sparkline = ({ data, color }) => {
     .join(" ");
 
   return (
+<<<<<<< HEAD
     <svg
       viewBox={`0 0 ${width} ${height}`}
       className="h-9 w-[90px]"
@@ -451,10 +475,15 @@ const Sparkline = ({ data, color }) => {
         strokeLinecap="round"
         strokeLinejoin="round"
       />
+=======
+    <svg viewBox={`0 0 ${W} ${H}`} className="h-7 w-20" aria-hidden="true">
+      <polyline points={pts} fill="none" stroke="white" opacity="0.7" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+>>>>>>> 06d87dccdb7b3e630a625ec3662665b1077e8774
     </svg>
   );
 };
 
+<<<<<<< HEAD
 /* =========================================================================
    KPI CARD
 ========================================================================= */
@@ -546,6 +575,38 @@ const KpiCard = ({
 /* =========================================================================
    TREND CHART
 ========================================================================= */
+=======
+const Delta = ({ metric, label }) => {
+  if (metric.delta == null) {
+    return <span className="text-xs text-white/90">{metric.current ? "No previous period" : label}</span>;
+  }
+  const up = metric.delta >= 0;
+  const Icon = up ? TrendingUp : TrendingDown;
+  return (
+    <span className="inline-flex items-center gap-1 text-xs font-semibold text-white/90">
+      <Icon size={13} />
+      {up ? "+" : ""}
+      {metric.delta}%<span className="font-normal text-white/90">vs previous</span>
+    </span>
+  );
+};
+
+const KpiCard = ({ icon: Icon, label, value, metric, color, tone, footnote }) => (
+  <Card className={`bg-gradient-to-br p-5 text-white shadow-md ${tone}`}>
+    <div className="flex items-center justify-between">
+      <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/20 text-white">
+        <Icon size={18} />
+      </span>
+      {metric && <Sparkline data={metric.spark} color={color} />}
+    </div>
+    <p className="mt-4 text-3xl font-bold tracking-tight text-white">{value ?? "-"}</p>
+    <p className="mt-0.5 text-sm text-white/85">{label}</p>
+    <div className="mt-3 border-t border-white/20 pt-3">
+      {metric ? <Delta metric={metric} label="No data in range" /> : <span className="text-xs text-white/90">{footnote}</span>}
+    </div>
+  </Card>
+);
+>>>>>>> 06d87dccdb7b3e630a625ec3662665b1077e8774
 
 const TrendChart = ({ series, labels }) => {
   const width = 600;
@@ -873,6 +934,7 @@ const BarList = ({ data }) => {
               {item.value}
             </span>
           </div>
+<<<<<<< HEAD
 
           <div className="h-2 overflow-hidden rounded-full bg-slate-100">
             <div
@@ -881,6 +943,10 @@ const BarList = ({ data }) => {
                 width: `${(item.value / max) * 100}%`,
               }}
             />
+=======
+          <div className="h-1.5 overflow-hidden rounded-full bg-slate-100">
+            <div className="h-full rounded-full bg-primary-600" style={{ width: `${(d.value / max) * 100}%` }} />
+>>>>>>> 06d87dccdb7b3e630a625ec3662665b1077e8774
           </div>
         </div>
       ))}
@@ -1562,12 +1628,170 @@ const Dashboard = () => {
                 NEEDS ATTENTION
             ========================================================= */}
 
+<<<<<<< HEAD
             {attention.some((item) => item.value > 0) && (
               <Card className="border-amber-200 bg-gradient-to-r from-amber-50/80 to-white p-4 shadow-none">
                 <div className="flex flex-wrap items-center gap-3">
                   <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-100 text-amber-600">
                     <Clock3 size={19} />
                   </div>
+=======
+        {/* KPIs */}
+        {anything && (
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
+            {canVacancies && (
+              <KpiCard icon={BriefcaseBusiness} tone="from-primary-600 to-primary-700" color="#4f46e5" label="Open vacancies"
+                value={vacancies.loading ? "-" : vacancyCounts.PUBLISHED || 0}
+                footnote={`${vacancyCounts.PENDING_APPROVAL || 0} pending approval`} />
+            )}
+            {canApplications && (
+              <KpiCard icon={FileText} tone="from-primary-700 to-primary-800" color="#4f46e5" label="Applications"
+                value={applications.loading ? "-" : m.apps.current} metric={m.apps} />
+            )}
+            {canApplications && (
+              <KpiCard icon={Users} tone="from-primary-500 to-primary-600" color="#10b981" label="Shortlisted"
+                value={applications.loading ? "-" : m.shortlisted.current} metric={m.shortlisted} />
+            )}
+            {canInterviews && (
+              <KpiCard icon={CalendarDays} tone="from-primary-800 to-primary-900" color="#4f46e5" label={canInterviewsMine ? "My interviews" : "Interviews"}
+                value={interviews.loading ? "-" : m.interviews.current} metric={m.interviews} />
+            )}
+            {canOffers && (
+              <KpiCard icon={Handshake} tone="from-primary-600 to-primary-700" color="#f59e0b" label="Offers"
+                value={offers.loading ? "-" : m.offers.current} metric={m.offers} />
+            )}
+          </div>
+        )}
+
+        {/* Trend + agenda */}
+        {(canApplications || canInterviews) && (
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
+            {canApplications && (
+              <Card className="lg:col-span-8">
+                <CardHead title="Applications over time" subtitle={`Last ${days} days`}
+                  right={canOffers && m.acceptRate != null ? (
+                    <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700">{m.acceptRate}% offer acceptance</span>
+                  ) : null} />
+                {applications.loading ? <Skeleton /> : applications.error ? <Empty text={applications.error} /> : (
+                  <TrendChart labels={labels} series={[
+                    { name: "Applications", color: "#4f46e5", data: m.apps.spark },
+                    { name: "Shortlisted", color: "#10b981", data: m.shortlisted.spark },
+                  ]} />
+                )}
+              </Card>
+            )}
+            {canInterviews && (
+              <Card className={canApplications ? "lg:col-span-4" : "lg:col-span-12"}>
+                <CardHead title="Upcoming interviews" subtitle="Next 7 days" />
+                {interviews.loading ? <Skeleton /> : interviews.error ? <Empty text={interviews.error} /> : agenda.length === 0 ? <Empty text="Nothing scheduled this week." /> : (
+                  <ul className="mt-3 divide-y divide-slate-100 px-5 pb-3">
+                    {agenda.map(({ i, t }) => {
+                      const hasTime = String(i.scheduledAt || i.interviewDate || i.date).includes("T");
+                      const time = i.interviewTime || i.startTime || (hasTime ? new Date(t).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "");
+                      return (
+                        <li key={i.id} className="flex items-center gap-3 py-3">
+                          <div className="w-[72px] shrink-0">
+                            <p className={`text-xs font-semibold ${dayLabel(t) === "Today" ? "text-primary-600" : "text-slate-500"}`}>{dayLabel(t)}</p>
+                            <p className="text-xs text-slate-400">{time || "-"}</p>
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate text-sm font-semibold text-slate-900">{personName(i)}</p>
+                            <p className="truncate text-xs text-slate-500">{vacancyName(i)}{i.round ? ` · Round ${i.round}` : ""}</p>
+                          </div>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
+              </Card>
+            )}
+          </div>
+        )}
+
+        {/* Funnel, vacancies, top vacancies */}
+        {(funnel.length > 1 || canVacancies || canApplications) && (
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+            {funnel.length > 1 && (
+              <Card>
+                <CardHead title="Hiring funnel" subtitle={`Last ${days} days, % moved on from previous stage`} />
+                <Funnel steps={funnel} />
+              </Card>
+            )}
+            {canVacancies && (
+              <Card>
+                <CardHead title="Vacancies by status" subtitle="Current snapshot" />
+                <Donut label="vacancies" data={VACANCY_STATUS.map((s) => ({ label: s.key, name: s.label, color: s.color, value: vacancyCounts[s.key] || 0 }))} />
+              </Card>
+            )}
+            {canApplications && (
+              <Card>
+                <CardHead title="Top vacancies" subtitle={`Most applications, last ${days} days`} />
+                <BarList data={topVacancies} />
+              </Card>
+            )}
+          </div>
+        )}
+
+        {/* Recent applications + activity */}
+        {(canApplications || anything) && (
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
+            {canApplications && (
+              <Card className="lg:col-span-8">
+                <CardHead title="Recent applications" subtitle="Latest candidates to apply" />
+                {applications.loading ? <Skeleton /> : applications.error ? <Empty text={applications.error} /> : recentApps.length === 0 ? <Empty text="No applications yet." /> : (
+                  <div className="mt-3 overflow-x-auto">
+                    <table className="w-full text-left text-sm">
+                      <thead>
+                        <tr className="border-y border-slate-100 bg-slate-50/60 text-xs text-slate-500">
+                          <th className="px-5 py-2.5 font-medium">Candidate</th>
+                          <th className="px-3 py-2.5 font-medium">Vacancy</th>
+                          <th className="px-3 py-2.5 font-medium">Status</th>
+                          <th className="px-5 py-2.5 text-right font-medium">Applied</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100">
+                        {recentApps.map((a) => (
+                          <tr key={a.id}>
+                            <td className="px-5 py-3">
+                              <div className="flex items-center gap-3">
+                                <Avatar name={personName(a)} />
+                                <span className="font-medium text-slate-900">{personName(a)}</span>
+                              </div>
+                            </td>
+                            <td className="max-w-[200px] truncate px-3 py-3 text-slate-600">{vacancyName(a)}</td>
+                            <td className="px-3 py-3">{a.status && <Chip status={a.status} />}</td>
+                            <td className="whitespace-nowrap px-5 py-3 text-right text-slate-500">{ago(appTime(a)) || "-"}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </Card>
+            )}
+            <Card className={canApplications ? "lg:col-span-4" : "lg:col-span-12"}>
+              <CardHead title="Recent activity" subtitle={full ? "Audit trail" : "Your notifications"} />
+              {activity.loading ? <Skeleton /> : (activity.data || []).length === 0 ? <Empty text="No recent activity." /> : (
+                <ol className="mt-4 space-y-4 px-5 pb-5">
+                  {[...activity.data].sort((a, b) => (actTime(b) || 0) - (actTime(a) || 0)).slice(0, 7).map((a, idx) => (
+                    <li key={a.id ?? idx} className="flex gap-3">
+                      <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-primary-400" />
+                      <div className="min-w-0">
+                        <p className="line-clamp-2 text-sm text-slate-700">
+                          {a.description || a.details || a.message || a.title || [a.action, a.entityType].filter(Boolean).join(" ") || "Activity"}
+                        </p>
+                        <p className="mt-0.5 text-xs text-slate-400">
+                          {[a.performedBy || a.userName || a.user, ago(actTime(a))].filter(Boolean).join(" · ")}
+                        </p>
+                      </div>
+                    </li>
+                  ))}
+                </ol>
+              )}
+            </Card>
+          </div>
+        )}
+>>>>>>> 06d87dccdb7b3e630a625ec3662665b1077e8774
 
                   <div className="mr-auto">
                     <p className="text-sm font-bold text-slate-900">

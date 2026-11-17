@@ -570,6 +570,14 @@ export default function RecruitmentVacancies() {
       setSearchParams({}, { replace: true });
     }
   }, [view, canCreate, setSearchParams]);
+    // Notification links: ?edit=<vacancy id> opens that vacancy in the edit form
+  const editId = searchParams.get("edit");
+  useEffect(() => {
+    if (!editId || loading || vacancies.length === 0) return;
+    const target = vacancies.find((v) => String(v.id) === String(editId));
+    if (target && canCreate) setModal({ vacancy: target });
+    setSearchParams({}, { replace: true });
+  }, [editId, loading, vacancies, canCreate, setSearchParams]);
 
    const [search, setSearch] = useState("");
 
@@ -702,8 +710,6 @@ export default function RecruitmentVacancies() {
             caption="All vacancies"
             icon={BriefcaseBusiness}
             tone="primary"
-            onClick={() => setFilter("ALL")}
-            active={filter === "ALL"}
           />
           <StatCard
             label="Pending approval"
@@ -711,8 +717,6 @@ export default function RecruitmentVacancies() {
             caption="Waiting for an approver"
             icon={Clock}
             tone="amber"
-            onClick={() => setFilter("PENDING_APPROVAL")}
-            active={filter === "PENDING_APPROVAL"}
           />
           <StatCard
             label="Published"
@@ -720,8 +724,6 @@ export default function RecruitmentVacancies() {
             caption="Open for applications"
             icon={Megaphone}
             tone="green"
-            onClick={() => setFilter("PUBLISHED")}
-            active={filter === "PUBLISHED"}
           />
           <StatCard
             label="Drafts"
@@ -729,8 +731,6 @@ export default function RecruitmentVacancies() {
             caption="Not submitted yet"
             icon={FileText}
             tone="slate"
-            onClick={() => setFilter("DRAFT")}
-            active={filter === "DRAFT"}
           />
         </StatCardGrid>
         {/* Filters + search */}

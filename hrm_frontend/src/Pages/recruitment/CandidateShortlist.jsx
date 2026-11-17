@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { PageLayout } from "../../components/PageLayout";
+import StatCard, { StatCardGrid } from "../../components/StatCard";
 import { recruitmentApi } from "../../services/api";
 import { DeadlineMeter } from "../careers/careersShared";
 import { formatSalary, formatDate } from "../../utils/careersFormat";
+import { avatarColorClass } from "../../utils/avatarColor";
 import {
   isRemovedFromShortlist,
   setRemovedFromShortlist,
@@ -19,6 +21,7 @@ import {
   AlertTriangle,
   Building2,
   Briefcase,
+  Users,
   Award,
   ChevronDown,
   ChevronUp,
@@ -63,15 +66,6 @@ const REJECTION_REASONS = [
   "Failed initial screening assessment",
   "Position filled by higher-ranked candidate",
   "Other / Non-competitive background",
-];
-
-const AVATAR_GRADIENTS = [
-  "from-primary-500 to-purple-600",
-  "from-sky-400 to-blue-600",
-  "from-emerald-400 to-teal-600",
-  "from-amber-400 to-orange-500",
-  "from-pink-500 to-rose-600",
-  "from-primary-500 to-primary-600",
 ];
 
 /**
@@ -960,20 +954,16 @@ export default function RecruitmentCandidateShortlist() {
         )}
 
         {/* ── Top Summary & Metrics (one joined card) ── */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 bg-white rounded-xl border border-slate-200 shadow-sm divide-slate-200 divide-y lg:divide-y-0 lg:divide-x">
+        <StatCardGrid>
           {[
-            { label: "Active Vacancies", value: displayedVacancyGroups.length, hint: "Separated configurations", tone: "text-slate-900" },
-            { label: "Total Applicants", value: totalApplicants, hint: "Across all vacancies", tone: "text-slate-900" },
-            { label: "Recommended / Staged", value: totalStaged > 0 ? totalStaged : totalRecommended, hint: "Qualifies for shortlist", tone: "text-amber-600" },
-            { label: "Confirmed Shortlist", value: totalShortlisted, hint: "Advanced candidates", tone: "text-emerald-600" },
+            { label: "Active Vacancies", value: displayedVacancyGroups.length, caption: "Separated configurations", tone: "primary", icon: Briefcase },
+            { label: "Total Applicants", value: totalApplicants, caption: "Across all vacancies", tone: "primary", icon: Users },
+            { label: "Recommended / Staged", value: totalStaged > 0 ? totalStaged : totalRecommended, caption: "Qualifies for shortlist", tone: "amber", icon: Award },
+            { label: "Confirmed Shortlist", value: totalShortlisted, caption: "Advanced candidates", tone: "green", icon: CheckCircle2 },
           ].map((m) => (
-            <div key={m.label} className="px-5 py-4">
-              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{m.label}</p>
-              <h3 className={`text-2xl font-bold mt-1 ${m.tone}`}>{m.value}</h3>
-              <p className="text-xs text-slate-500 mt-0.5">{m.hint}</p>
-            </div>
+            <StatCard key={m.label} label={m.label} value={m.value} caption={m.caption} tone={m.tone} icon={m.icon} />
           ))}
-        </div>
+        </StatCardGrid>
 
         {/* ── Global Search & Position Filter Bar ── */}
         <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm flex flex-col md:flex-row justify-between items-center gap-4">
@@ -1365,12 +1355,13 @@ export default function RecruitmentCandidateShortlist() {
                         <div className="flex flex-wrap gap-1.5 sm:gap-2">
                           {[
                             { id: "ALL", label: `All Ranked (${vacTotal})` },
-                            { id: "SUITABLE", label: `✓ Suitable (${vacSuitable})`, highlight: vacSuitable > 0 },
-                            { id: "NOT_SUITABLE", label: `✗ Not Suitable (${vacNotSuitable})` },
+                            { id: "SUITABLE", label: `Suitable (${vacSuitable})`, icon: Check, highlight: vacSuitable > 0 },
+                            { id: "NOT_SUITABLE", label: `Not Suitable (${vacNotSuitable})`, icon: X },
                             { id: "SHORTLISTED", label: `Shortlisted (${vacShortlisted})` },
                             {
                               id: "STAGED",
-                              label: `✨ Staged (${stagedCount})`,
+                              label: `Staged (${stagedCount})`,
+                              icon: Sparkles,
                               highlight: stagedCount > 0,
                             },
                             { id: "REJECTED", label: `Rejected (${vacRejected})` },
@@ -1378,7 +1369,7 @@ export default function RecruitmentCandidateShortlist() {
                             <button
                               key={t.id}
                               onClick={() => setStatusFilterForVacancy(vacKey, t.id)}
-                              className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+                              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
                                 statusFilter === t.id
                                   ? t.highlight
                                     ? "bg-amber-500 text-slate-950 shadow-sm"
@@ -1388,6 +1379,7 @@ export default function RecruitmentCandidateShortlist() {
                                   : "bg-slate-100 text-slate-600 hover:bg-slate-200"
                               }`}
                             >
+                              {t.icon && <t.icon size={14} />}
                               {t.label}
                             </button>
                           ))}
@@ -1451,7 +1443,7 @@ export default function RecruitmentCandidateShortlist() {
                                   const isRejected = cand.status === "REJECTED";
                                   const isStaged = stagedSet.has(cand.id);
                                   const isAutomated = cand.decisionSource === "SYSTEM_AUTOMATED";
-                                  const gradient = AVATAR_GRADIENTS[idx % AVATAR_GRADIENTS.length];
+                                  const gradient = avatarColorClass(idx);
 
                                   return (
                                     <tr

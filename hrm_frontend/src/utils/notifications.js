@@ -140,7 +140,12 @@ export const normalizeNotification = (n, role) => ({
   createdAt: n.createdAt || null,
   refId: n.refId || null,
   // Birthdays never navigate; everything else opens the page named by the backend.
-  link: isBirthday(n) ? null : n.link || (role === "admin" ? "/admin/companies" : null),
+  // A rejected vacancy opens that vacancy in edit mode instead of a blank form.
+  link: isBirthday(n)
+    ? null
+    : (n.type || n.category) === "VACANCY_REJECTED" && n.refId && String(n.link || "").includes("/recruitment/vacancies")
+      ? `/recruitment/vacancies?edit=${n.refId}`
+      : n.link || (role === "admin" ? "/admin/companies" : null),
   subject: {
     name: n.subjectName || null,
     employeeId: n.subjectEmployeeCode || null,
@@ -238,16 +243,16 @@ hr: {
     action: "text-indigo-600 hover:text-indigo-800",
     ring: "focus:ring-indigo-500",
   },
-  recruiter: {
-    header: "from-indigo-600 to-violet-600",
-    headerSub: "text-indigo-100",
-    headerIcon: "text-indigo-100",
-    unreadRow: "bg-indigo-50/70 border-indigo-100",
-    hoverRow: "hover:bg-indigo-50",
-    link: "text-indigo-700 hover:text-indigo-900",
-    dot: "bg-indigo-500",
-    tabOn: "bg-gradient-to-r from-indigo-500 to-violet-600 text-white shadow",
-    action: "text-indigo-600 hover:text-indigo-800",
-    ring: "focus:ring-indigo-500",
+   recruiter: {
+    header: "from-primary-700 to-primary-900",
+    headerSub: "text-primary-100",
+    headerIcon: "text-primary-100",
+    unreadRow: "bg-primary-50/70 border-primary-100",
+    hoverRow: "hover:bg-primary-50",
+    link: "text-primary-700 hover:text-primary-900",
+    dot: "bg-primary-500",
+    tabOn: "bg-gradient-to-r from-primary-600 to-primary-700 text-white shadow",
+    action: "text-primary-600 hover:text-primary-800",
+    ring: "focus:ring-primary-500",
   },
 };
