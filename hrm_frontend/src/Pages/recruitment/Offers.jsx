@@ -783,7 +783,7 @@ export default function JobOffers() {
         </div>
 
         {/* ELIGIBLE CANDIDATES SUMMARY */}
-        <div className="mb-6 rounded-xl border border-slate-200 border-l-4 border-l-primary-600 bg-white p-5 shadow-sm">
+        <div className="mb-6 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
           <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary-50 text-primary-700">
