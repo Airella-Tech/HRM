@@ -698,11 +698,12 @@ export default function JobOffers() {
       }
     >
       <>
+        <div className="space-y-6 max-w-7xl mx-auto">
         {/* API ERROR */}
         {apiError && (
           <div
             role="alert"
-            className="mb-5 flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700"
+            className="flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700"
           >
             <AlertCircle size={19} className="mt-0.5 shrink-0" />
 
@@ -726,7 +727,7 @@ export default function JobOffers() {
         {successMessage && (
           <div
             role="status"
-            className="mb-5 flex items-center justify-between gap-3 rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800"
+            className="flex items-center justify-between gap-3 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-800"
           >
             <span>{successMessage}</span>
 
@@ -742,7 +743,7 @@ export default function JobOffers() {
         )}
 
         {/* STATISTICS */}
-        <div className="mb-6">
+        <div>
           <StatCardGrid cols={5}>
             <StatCard
               label="Total Offers"
@@ -783,7 +784,7 @@ export default function JobOffers() {
         </div>
 
         {/* ELIGIBLE CANDIDATES SUMMARY */}
-        <div className="mb-6 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+        <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
           <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary-50 text-primary-700">
@@ -861,8 +862,7 @@ export default function JobOffers() {
         </div>
 
         {/* OFFERS TABLE */}
-        <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-          <div className="bg-white rounded-xl border border-slate-200 shadow-sm px-4 py-3">
+        <div className="bg-white rounded-xl border border-slate-200 shadow-sm px-4 py-3">
             <div className="flex flex-wrap items-center gap-3">
               <div className="relative min-w-[220px] flex-1">
                 <div className="relative">
@@ -946,10 +946,12 @@ export default function JobOffers() {
                 </div>
               )}
             </div>
-          </div>
+        </div>
+
+        <div className="space-y-6">
 
           {loading ? (
-            <div className="px-5 py-16 text-center">
+            <div className="bg-white rounded-xl border border-slate-200 shadow-sm px-5 py-16 text-center">
               <RefreshCw
                 size={28}
                 className="mx-auto mb-3 animate-spin text-primary-500"
@@ -959,7 +961,7 @@ export default function JobOffers() {
               </p>
             </div>
           ) : filteredOffers.length === 0 ? (
-            <div className="px-5 py-16 text-center">
+            <div className="bg-white rounded-xl border border-slate-200 shadow-sm px-5 py-16 text-center">
               <FileText size={36} className="mx-auto mb-3 text-slate-300" />
               <p className="font-medium text-slate-700">No job offers found</p>
               <p className="mt-1 text-sm text-slate-500">
@@ -969,7 +971,7 @@ export default function JobOffers() {
               </p>
             </div>
           ) : (
-            <div className="space-y-4 p-4">
+            <div className="space-y-6">
               {vacancyGroups.map((group) => {
                 const expanded = !collapsedGroups[group.key];
                 const awaitingCount = group.rows.filter((offer) =>
@@ -1128,12 +1130,14 @@ export default function JobOffers() {
             </div>
           )}
 
-          <div className="border-t border-slate-200 px-5 py-4 text-xs text-slate-500">
+          <div className="px-1 text-xs text-slate-500">
             Showing {filteredOffers.length} of {offers.length} offers
           </div>
         </div>
 
         {/* CREATE / EDIT MODAL */}
+        </div>
+
         {(modal === "create" || modal === "edit") && (
           <div
             className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4"

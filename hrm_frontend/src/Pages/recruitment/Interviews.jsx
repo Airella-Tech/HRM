@@ -1589,11 +1589,11 @@ export default function RecruitmentInterviews() {
         </div>
       }
     >
-      <div>
+      <div className="space-y-6 max-w-7xl mx-auto">
         {notice && (
           <div
             role="status"
-            className="mb-4 flex items-start justify-between gap-3 rounded-xl border border-primary-200 bg-primary-50 px-4 py-3 text-sm font-medium text-primary-800"
+            className="flex items-start justify-between gap-3 rounded-xl border border-primary-200 bg-primary-50 px-4 py-3 text-sm font-medium text-primary-800"
           >
             <span>{notice}</span>
             <button onClick={() => setNotice("")} aria-label="Dismiss notice">
@@ -1603,18 +1603,18 @@ export default function RecruitmentInterviews() {
         )}
 
         {loading && (
-          <div className="mb-4 text-sm text-slate-500">Loading interviews...</div>
+          <div className="text-sm text-slate-500">Loading interviews...</div>
         )}
         {!loading && !backendConnected && (
           <div
             role="alert"
-            className="mb-4 px-4 py-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm font-medium"
+            className="px-4 py-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm font-medium"
           >
             Backend unavailable — no sample data shown
           </div>
         )}
 
-        <div className="mb-6">
+        <div>
           <StatCardGrid>
             {statCards.map((card) => (
               <StatCard key={card.label} {...card} />
@@ -1622,9 +1622,9 @@ export default function RecruitmentInterviews() {
           </StatCardGrid>
         </div>
 
-        <section className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+        <div className="space-y-6">
           {mode === "calendar" && (
-            <div className="p-4 sm:p-6">
+            <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-4 sm:p-6">
               <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
                 <div className="flex flex-wrap items-center gap-2">
                   <button
@@ -1849,7 +1849,7 @@ export default function RecruitmentInterviews() {
                 </div>
               </div>
 
-              <div className="mx-5 mb-5 space-y-4">
+              <div className="space-y-6">
                 {vacancyGroups.length ? (
                   vacancyGroups.map((group) => {
                     const expanded = !collapsedGroups[group.key];
@@ -1943,7 +1943,7 @@ export default function RecruitmentInterviews() {
                 </div>
               </div>
 
-              <div className="hidden mx-5 mb-5 overflow-hidden rounded-xl border border-slate-200 bg-white">
+              <div className="hidden overflow-hidden rounded-xl border border-slate-200 bg-white">
                 <div className="overflow-x-auto">
                   <table className="w-full min-w-[1150px] text-left text-sm text-slate-600">
                   <thead className="border-b border-slate-200 bg-slate-50/80 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
@@ -2131,7 +2131,7 @@ export default function RecruitmentInterviews() {
               </div>
             </>
           )}
-        </section>
+        </div>
 
         {/* Backend shortlisted-candidate picker */}
         {pickerOpen && (

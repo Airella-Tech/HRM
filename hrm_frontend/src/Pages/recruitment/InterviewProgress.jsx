@@ -1046,7 +1046,7 @@ export default function InterviewProgress() {
         </button>
       }
     >
-      <div className="min-h-full bg-slate-50/70 px-4 sm:px-6 lg:px-8">
+      <div>
         <div className="mx-auto max-w-7xl space-y-6">
           {error && (
             <div
@@ -1163,7 +1163,7 @@ export default function InterviewProgress() {
             )}
           </section>
 
-          <section className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+          <div className="space-y-6">
             <div className="bg-white rounded-xl border border-slate-200 shadow-sm px-4 py-3">
               <div className="flex flex-wrap items-center gap-3">
               <div className="relative flex-1 min-w-[220px]">
@@ -1303,7 +1303,7 @@ export default function InterviewProgress() {
             )}
             </div>
 
-            <div className="mx-5 mb-5 space-y-4">
+            <div className="space-y-6">
               {loading ? (
                 <div className="rounded-xl border border-slate-200 bg-white px-5 py-14 text-center text-sm text-slate-500">
                   Loading interview progress from backend...
@@ -1394,14 +1394,14 @@ export default function InterviewProgress() {
                 })
               )}
 
-              <div className="border-t border-slate-200 px-5 py-3 text-xs text-slate-500">
+              <div className="px-1 text-xs text-slate-500">
                 Showing {loading ? "…" : filteredCandidates.length} of{" "}
                 {candidates.length} applications returned by the backend.
                 Auto-refreshes every 15 seconds.
               </div>
             </div>
 
-            <div className="hidden mx-5 mb-5 overflow-hidden rounded-xl border border-slate-200 bg-white">
+            <div className="hidden overflow-hidden rounded-xl border border-slate-200 bg-white">
               <div className="overflow-x-auto">
               <table className="w-full min-w-[1000px] text-left text-sm text-slate-600">
                 <thead className="border-b border-slate-200 bg-slate-50/80 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
@@ -1526,12 +1526,7 @@ export default function InterviewProgress() {
             </div>
             </div>
 
-            <div className="border-t border-slate-200 px-5 py-3 text-xs text-slate-500">
-              Showing {loading ? "…" : filteredCandidates.length} of{" "}
-              {candidates.length} applications returned by the backend.
-              Auto-refreshes every 15 seconds.
-            </div>
-          </section>
+          </div>
 
           <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
             <h2 className="font-semibold text-slate-900">Stage Status Guide</h2>

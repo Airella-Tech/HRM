@@ -941,7 +941,7 @@ export default function AssignInterviewers() {
         </div>
       }
     >
-      <div className="space-y-6">
+      <div className="space-y-6 max-w-7xl mx-auto">
 
           {(loading || employeesLoading) && (
             <div className="flex items-center gap-2 rounded-xl border border-primary-100 bg-primary-50 p-4 text-sm text-primary-700">
@@ -1038,7 +1038,7 @@ export default function AssignInterviewers() {
             </StatCardGrid>
           </div>
 
-          <section className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+          <div className="space-y-6">
             <div className="bg-white rounded-xl border border-slate-200 shadow-sm px-4 py-3">
               <div className="flex flex-wrap items-center gap-3">
                 <div className="relative flex-1 min-w-[220px]">
@@ -1125,7 +1125,7 @@ export default function AssignInterviewers() {
               </div>
             </div>
 
-            <div className="space-y-4 p-4">
+            <div className="space-y-6">
               {vacancyGroups.map((group) => {
                 const expanded = !collapsedGroups[group.key];
                 const awaitingCount = group.rows.filter(
@@ -1279,7 +1279,7 @@ export default function AssignInterviewers() {
             </div>
 
             {!loading && filteredInterviews.length === 0 && (
-              <div className="px-6 py-16 text-center">
+              <div className="bg-white rounded-xl border border-slate-200 shadow-sm px-6 py-16 text-center">
                 <Search className="mx-auto mb-3 text-slate-300" size={32} />
                 <p className="font-medium text-slate-700">
                   {loadError
@@ -1298,11 +1298,11 @@ export default function AssignInterviewers() {
               </div>
             )}
 
-            <div className="border-t border-slate-100 px-5 py-4 text-sm text-slate-500">
+            <div className="px-1 text-sm text-slate-500">
               Showing {filteredInterviews.length} of {interviews.length} backend
               interviews
             </div>
-          </section>
+          </div>
         </div>
 
       {selectedInterview && (
