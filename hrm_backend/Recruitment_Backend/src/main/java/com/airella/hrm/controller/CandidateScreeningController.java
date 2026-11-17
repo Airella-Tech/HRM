@@ -29,7 +29,7 @@ public class CandidateScreeningController {
      * Get the active or default screening configuration for a specific vacancy.
      */
     @GetMapping("/config/{vacancyId}")
-    @PreAuthorize("@perm.hasAny('APPLICATION_VIEW', 'APPLICATION_SCREEN', 'VACANCY_CREATE')")
+    @PreAuthorize("@perm.isFullAccess() or @perm.hasRecruitmentAccess()")
     public ResponseEntity<ApiResponse<VacancyScreeningConfigDTO>> getConfig(@PathVariable Long vacancyId) {
         VacancyScreeningConfigDTO config = screeningService.getConfigForVacancy(vacancyId);
         return ResponseEntity.ok(ApiResponse.success(config, "Vacancy screening configuration retrieved"));
@@ -39,7 +39,7 @@ public class CandidateScreeningController {
      * Save or update vacancy-specific screening rules and category weights.
      */
     @PutMapping("/config/{vacancyId}")
-    @PreAuthorize("@perm.hasAny('APPLICATION_SCREEN', 'VACANCY_CREATE')")
+    @PreAuthorize("@perm.hasAny('APPLICATION_SCREEN', 'APPLICATION_SHORTLIST', 'VACANCY_CREATE')")
     public ResponseEntity<ApiResponse<VacancyScreeningConfigDTO>> saveConfig(
             @PathVariable Long vacancyId,
             @RequestBody VacancyScreeningConfigDTO dto) {
@@ -81,7 +81,7 @@ public class CandidateScreeningController {
      * Retrieve the latest detailed screening result for a candidate application.
      */
     @GetMapping("/results/{applicationId}")
-    @PreAuthorize("@perm.hasAny('APPLICATION_VIEW', 'APPLICATION_SCREEN', 'APPLICATION_SHORTLIST', 'INTERVIEW_SCHEDULE', 'INTERVIEW_ASSIGN', 'INTERVIEW_PROGRESS_VIEW', 'INTERVIEW_DECIDE')")
+    @PreAuthorize("@perm.isFullAccess() or @perm.hasRecruitmentAccess()")
     public ResponseEntity<ApiResponse<CandidateScreeningResultDTO>> getResultForApplication(@PathVariable Long applicationId) {
         CandidateScreeningResultDTO result = screeningService.getLatestResultForApplication(applicationId);
         return ResponseEntity.ok(ApiResponse.success(result, "Screening result retrieved successfully"));
@@ -91,7 +91,7 @@ public class CandidateScreeningController {
      * Retrieve latest screening results for all candidates of a vacancy.
      */
     @GetMapping("/vacancy/{vacancyId}/results")
-    @PreAuthorize("@perm.hasAny('APPLICATION_VIEW', 'APPLICATION_SCREEN', 'APPLICATION_SHORTLIST', 'INTERVIEW_SCHEDULE', 'INTERVIEW_ASSIGN', 'INTERVIEW_PROGRESS_VIEW', 'INTERVIEW_DECIDE')")
+    @PreAuthorize("@perm.isFullAccess() or @perm.hasRecruitmentAccess()")
     public ResponseEntity<ApiResponse<List<CandidateScreeningResultDTO>>> getResultsForVacancy(@PathVariable Long vacancyId) {
         List<CandidateScreeningResultDTO> results = screeningService.getResultsForVacancy(vacancyId);
         return ResponseEntity.ok(ApiResponse.success(results, "Screening results retrieved for vacancy"));

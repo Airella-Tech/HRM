@@ -4,19 +4,26 @@
  */
 import React, { useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { Search, Building2, Clock, Banknote, ChevronRight } from "lucide-react";
+import {
+  Search,
+  Building2,
+  Clock,
+  Banknote,
+  ChevronRight,
+  Filter,
+  X,
+  Briefcase,
+  Sparkles,
+} from "lucide-react";
 import { careersApi } from "../../services/api";
 import { CareersLayout, DeadlineMeter, Notice } from "./careersShared";
 import { errorText, formatSalary, isNew } from "../../utils/careersFormat";
 
-const focusRing =
-  "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2";
-
 const SkeletonRow = () => (
-  <div className="px-5 py-5 sm:px-6 animate-pulse motion-reduce:animate-none">
-    <div className="h-5 w-1/3 rounded bg-slate-200" />
-    <div className="h-4 w-1/2 rounded bg-slate-100 mt-3" />
-    <div className="h-4 w-1/4 rounded bg-slate-100 mt-3" />
+  <div className="p-6 bg-white rounded-2xl border border-slate-200/80 shadow-sm animate-pulse space-y-3">
+    <div className="h-5 w-1/3 rounded-lg bg-slate-200" />
+    <div className="h-4 w-1/2 rounded-lg bg-slate-100" />
+    <div className="h-4 w-1/4 rounded-lg bg-slate-100" />
   </div>
 );
 
@@ -39,7 +46,7 @@ export default function Careers() {
     careersApi
       .getJobs(company)
       .then((res) => !cancelled && setJobs(res.data || []))
-      .catch((e) => !cancelled && setError(errorText(e, "Could not load the open roles")))
+      .catch((e) => !cancelled && setError(errorText(e, "Could not load open roles")))
       .finally(() => !cancelled && setLoading(false));
     return () => {
       cancelled = true;
@@ -73,150 +80,232 @@ export default function Careers() {
     return (
       <CareersLayout>
         <Notice
-          title="This careers link is incomplete"
-          text="Please open the full careers link shared by the company."
+          title="Careers Link Incomplete"
+          text="Please open the full careers portal link provided by the hiring organization."
         />
       </CareersLayout>
     );
   }
 
   const hero = (
-    <div className="pt-6 pb-10 sm:pt-10 sm:pb-14">
-      <h1 className="text-3xl sm:text-5xl font-bold tracking-tight leading-[1.1] max-w-2xl">
-        Find your next role
-      </h1>
-      <p className="mt-3 text-primary-100/80 max-w-xl">
-        Browse the positions open right now, and apply before the deadline.
-      </p>
+    <div className="pt-6 pb-10 sm:pt-8 sm:pb-12">
+      <div className="max-w-2xl">
+        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-sky-500/10 border border-sky-400/20 text-sky-300 text-xs font-semibold mb-3">
+          <Sparkles size={13} /> Open Opportunities
+        </span>
+        <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight leading-tight text-white">
+          Find Your Next Career Move
+        </h1>
+        <p className="mt-2 text-slate-300 text-sm sm:text-base leading-relaxed">
+          Explore positions open right now, review role requirements, and submit your application online.
+        </p>
+      </div>
+
+      {/* Hero search bar */}
       <div className="relative mt-6 max-w-2xl">
-        <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+        <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
         <input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search by job title, department or skill"
-          aria-label="Search open roles"
-          className={`w-full rounded-xl bg-white pl-11 pr-4 py-3.5 text-[15px] text-slate-900 placeholder:text-slate-400 shadow-lg shadow-black/10 ${focusRing} focus-visible:ring-offset-[#0F1B3D]`}
+          placeholder="Search by job title, department, or required skills..."
+          className="w-full rounded-xl bg-white pl-11 pr-10 py-3 text-sm text-slate-900 placeholder:text-slate-400 shadow-md focus:outline-none focus:ring-4 focus:ring-sky-500/20 transition-all"
         />
+        {search && (
+          <button
+            type="button"
+            onClick={() => setSearch("")}
+            className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1"
+          >
+            <X size={15} />
+          </button>
+        )}
+        {search && (
+          <button
+            onClick={() => setSearch("")}
+            className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1"
+          >
+            <X size={16} />
+          </button>
+        )}
       </div>
     </div>
   );
 
   return (
     <CareersLayout hero={hero}>
-      {/* Filters */}
-      {!loading && jobs.length > 0 && (
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-5">
-          <div className="flex flex-wrap gap-2" role="group" aria-label="Filter by department">
-            {["", ...departments].map((d) => (
-              <button
-                key={d || "all"}
-                onClick={() => setDepartment(d)}
-                aria-pressed={department === d}
-                className={`px-3.5 py-1.5 rounded-full text-sm font-medium border transition-colors ${focusRing} ${
-                  department === d
-                    ? "bg-[#0F1B3D] text-white border-[#0F1B3D]"
-                    : "bg-white text-slate-600 border-slate-200 hover:border-slate-300"
-                }`}
-              >
-                {d || "All departments"}
-              </button>
-            ))}
-          </div>
-          {jobTypes.length > 1 && (
+      {/* ── Filters Toolbar ── */}
+      <div className="bg-white p-4 rounded-2xl border border-slate-200/90 shadow-sm mb-6 flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center gap-2.5">
+          <span className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1">
+            <Filter size={13} /> Filter:
+          </span>
+
+          {departments.length > 0 && (
             <select
-              value={jobType}
-              onChange={(e) => setJobType(e.target.value)}
-              aria-label="Filter by job type"
-              className={`rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-700 ${focusRing}`}
+              value={department}
+              onChange={(e) => setDepartment(e.target.value)}
+              className="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 focus:outline-none focus:bg-white focus:border-sky-500 transition-all"
             >
-              <option value="">All job types</option>
-              {jobTypes.map((t) => (
-                <option key={t} value={t}>{t}</option>
+              <option value="">All Departments ({departments.length})</option>
+              {departments.map((d) => (
+                <option key={d} value={d}>
+                  {d}
+                </option>
               ))}
             </select>
           )}
+
+          {jobTypes.length > 0 && (
+            <select
+              value={jobType}
+              onChange={(e) => setJobType(e.target.value)}
+              className="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 focus:outline-none focus:bg-white focus:border-sky-500 transition-all"
+            >
+              <option value="">All Job Types ({jobTypes.length})</option>
+              {jobTypes.map((t) => (
+                <option key={t} value={t}>
+                  {t}
+                </option>
+              ))}
+            </select>
+          )}
+
+          {hasFilters && (
+            <button
+              type="button"
+              onClick={clearFilters}
+              className="text-xs font-semibold text-rose-600 hover:text-rose-800 px-2.5 py-1 rounded-lg hover:bg-rose-50 transition-colors"
+            >
+              Clear filters
+            </button>
+          )}
+        </div>
+
+        <span className="text-xs text-slate-500 font-medium">
+          Showing <strong className="text-slate-900">{filtered.length}</strong> of {jobs.length} roles
+        </span>
+      </div>
+
+      {/* Error state */}
+      {error && (
+        <div className="p-4 rounded-xl border text-sm font-medium bg-rose-50 border-rose-200 text-rose-800 mb-6">
+          {error}
         </div>
       )}
 
+      {/* ── Vacancies List ── */}
       {loading ? (
-        <div className="bg-white rounded-2xl border border-slate-200 divide-y divide-slate-100 overflow-hidden">
-          <SkeletonRow /><SkeletonRow /><SkeletonRow />
-        </div>
-      ) : error ? (
-        <div className="px-4 py-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm font-medium">
-          {error}
+        <div className="space-y-4">
+          <SkeletonRow />
+          <SkeletonRow />
+          <SkeletonRow />
         </div>
       ) : filtered.length === 0 ? (
-        jobs.length === 0 ? (
-          <Notice
-            title="No open roles right now"
-            text="There are no positions open at the moment. Please check back soon."
-          />
-        ) : (
-          <Notice title="No roles match your search" text="Try a different word, or show all roles.">
-            {hasFilters && (
-              <button
-                onClick={clearFilters}
-                className={`px-4 py-2 rounded-xl bg-[#0F1B3D] text-white text-sm font-semibold hover:bg-[#1a2a55] ${focusRing}`}
-              >
-                Clear filters
-              </button>
-            )}
-          </Notice>
-        )
+        <Notice
+          title={hasFilters ? "No matching roles found" : "No open positions at this time"}
+          text={
+            hasFilters
+              ? "Try broadening your search keywords or resetting active filters."
+              : "Please check back soon for future openings."
+          }
+        >
+          {hasFilters && (
+            <button
+              type="button"
+              onClick={clearFilters}
+              className="px-4 py-2 rounded-xl bg-slate-900 text-white text-xs font-semibold hover:bg-slate-800 transition-colors"
+            >
+              Reset Filters
+            </button>
+          )}
+        </Notice>
       ) : (
-        <>
-          <p className="text-sm text-slate-500 mb-3">
-            {filtered.length} open {filtered.length === 1 ? "role" : "roles"}
-          </p>
-          <div className="bg-white rounded-2xl border border-slate-200 divide-y divide-slate-100 overflow-hidden">
-            {filtered.map((job) => {
-              const salary = formatSalary(job.salaryMin, job.salaryMax);
-              return (
-                <Link
-                  key={job.id}
-                  to={`/careers/jobs/${job.id}?company=${encodeURIComponent(company)}`}
-                  className={`group grid sm:grid-cols-[1fr_220px_24px] gap-x-8 gap-y-4 items-center px-5 py-5 sm:px-6 hover:bg-slate-50 transition-colors ${focusRing} focus-visible:ring-inset`}
-                >
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-2.5">
-                      <h2 className="text-lg font-bold text-slate-900 tracking-tight truncate">{job.title}</h2>
-                      {isNew(job.publishedAt) && (
-                        <span className="shrink-0 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-xs font-semibold">
-                          New
-                        </span>
-                      )}
-                    </div>
-                    <div className="flex flex-wrap items-center gap-x-5 gap-y-1 mt-1.5 text-sm text-slate-500">
-                      <span className="inline-flex items-center gap-1.5"><Building2 size={14} />{job.department}</span>
-                      <span className="inline-flex items-center gap-1.5"><Clock size={14} />{job.jobType}</span>
-                      {salary && <span className="inline-flex items-center gap-1.5"><Banknote size={14} />{salary}</span>}
-                    </div>
-                    {(job.requiredSkills || []).length > 0 && (
-                      <div className="flex flex-wrap gap-1.5 mt-3">
-                        {job.requiredSkills.slice(0, 4).map((s) => (
-                          <span key={s} className="px-2.5 py-0.5 rounded-md bg-slate-100 text-slate-600 text-xs font-medium">
-                            {s}
-                          </span>
-                        ))}
-                        {job.requiredSkills.length > 4 && (
-                          <span className="px-1 py-0.5 text-xs text-slate-400">+{job.requiredSkills.length - 4} more</span>
-                        )}
-                      </div>
+        <div className="space-y-4">
+          {filtered.map((job) => {
+            const salary = formatSalary(job.salaryMin, job.salaryMax);
+            const isBrandNew = isNew(job.publishedAt);
+            const jobUrl = `/careers/jobs/${job.id}?company=${encodeURIComponent(company)}`;
+
+            return (
+              <div
+                key={job.id}
+                className="bg-white rounded-2xl border border-slate-200/90 shadow-sm hover:shadow-md transition-all duration-200 p-6 flex flex-col md:flex-row md:items-center justify-between gap-6"
+              >
+                <div className="flex-1 min-w-0 space-y-2.5">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Link
+                      to={jobUrl}
+                      className="text-lg font-bold text-slate-900 hover:text-sky-600 transition-colors"
+                    >
+                      {job.title}
+                    </Link>
+                    {isBrandNew && (
+                      <span className="inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200">
+                        New
+                      </span>
                     )}
                   </div>
 
-                  <DeadlineMeter deadline={job.deadline} publishedAt={job.publishedAt} />
+                  <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500">
+                    <span className="inline-flex items-center gap-1 font-medium text-slate-700">
+                      <Building2 size={13} className="text-slate-400" />
+                      {job.department}
+                    </span>
+                    <span>·</span>
+                    <span className="inline-flex items-center gap-1">
+                      <Clock size={13} className="text-slate-400" />
+                      {job.jobType}
+                    </span>
+                    {salary && (
+                      <>
+                        <span>·</span>
+                        <span className="inline-flex items-center gap-1 font-semibold text-slate-800">
+                          <Banknote size={13} className="text-slate-400" />
+                          {salary}
+                        </span>
+                      </>
+                    )}
+                  </div>
 
-                  <ChevronRight
-                    size={20}
-                    className="hidden sm:block text-slate-300 group-hover:text-primary-500 group-hover:translate-x-0.5 transition motion-reduce:transition-none"
-                  />
-                </Link>
-              );
-            })}
-          </div>
-        </>
+                  {job.requiredSkills && job.requiredSkills.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5 pt-1">
+                      {job.requiredSkills.slice(0, 5).map((skill) => (
+                        <span
+                          key={skill}
+                          className="px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 text-[11px] font-medium"
+                        >
+                          {skill}
+                        </span>
+                      ))}
+                      {job.requiredSkills.length > 5 && (
+                        <span className="text-[11px] text-slate-400 self-center">
+                          +{job.requiredSkills.length - 5} more
+                        </span>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {/* Deadline & Apply Action */}
+                <div className="flex flex-col sm:flex-row md:flex-col items-start sm:items-center md:items-end justify-between md:justify-center gap-4 shrink-0 min-w-[180px]">
+                  {job.deadline && (
+                    <div className="w-full max-w-[160px]">
+                      <DeadlineMeter deadline={job.deadline} publishedAt={job.publishedAt} />
+                    </div>
+                  )}
+
+                  <Link
+                    to={jobUrl}
+                    className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold shadow-xs transition-all active:scale-[0.99]"
+                  >
+                    <span>View Role</span>
+                    <ChevronRight size={14} />
+                  </Link>
+                </div>
+              </div>
+            );
+          })}
+        </div>
       )}
     </CareersLayout>
   );

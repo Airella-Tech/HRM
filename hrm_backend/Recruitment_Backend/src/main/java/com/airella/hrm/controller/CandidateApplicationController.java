@@ -36,7 +36,7 @@ public class CandidateApplicationController {
      * Supports filtering by vacancyId, status, and search query.
      */
     @GetMapping
-    @PreAuthorize("@perm.hasAny('APPLICATION_VIEW', 'APPLICATION_SCREEN', 'APPLICATION_SHORTLIST', 'INTERVIEW_SCHEDULE', 'INTERVIEW_ASSIGN', 'INTERVIEW_PROGRESS_VIEW', 'INTERVIEW_EVALUATE', 'INTERVIEW_DECIDE', 'OFFER_MANAGE')")
+    @PreAuthorize("@perm.isFullAccess() or @perm.hasRecruitmentAccess()")
     public ResponseEntity<ApiResponse<List<CandidateApplicationDTO>>> getApplications(
             @RequestParam(required = false) Long vacancyId,
             @RequestParam(required = false) String status,
@@ -49,7 +49,7 @@ public class CandidateApplicationController {
      * Get a single candidate application profile by ID.
      */
     @GetMapping("/{id}")
-    @PreAuthorize("@perm.hasAny('APPLICATION_VIEW', 'APPLICATION_SCREEN', 'APPLICATION_SHORTLIST', 'INTERVIEW_SCHEDULE', 'INTERVIEW_ASSIGN', 'INTERVIEW_PROGRESS_VIEW', 'INTERVIEW_EVALUATE', 'INTERVIEW_DECIDE', 'OFFER_MANAGE')")
+    @PreAuthorize("@perm.isFullAccess() or @perm.hasRecruitmentAccess()")
     public ResponseEntity<ApiResponse<CandidateApplicationDTO>> getApplicationById(@PathVariable Long id) {
         CandidateApplicationDTO result = applicationService.getApplicationById(id);
         return ResponseEntity.ok(ApiResponse.success(result, "Candidate application retrieved successfully"));
@@ -84,7 +84,7 @@ public class CandidateApplicationController {
      * Manual reject candidate with structured reason.
      */
     @PostMapping("/{id}/reject")
-    @PreAuthorize("@perm.has('APPLICATION_SHORTLIST')")
+    @PreAuthorize("@perm.hasAny('APPLICATION_SHORTLIST', 'APPLICATION_SCREEN')")
     public ResponseEntity<ApiResponse<CandidateApplicationDTO>> rejectCandidate(
             @PathVariable Long id,
             @RequestBody com.airella.hrm.dto.RejectActionRequest request) {
@@ -98,7 +98,7 @@ public class CandidateApplicationController {
      * Follows the Employee_Backend AllowanceRequestController pattern.
      */
     @GetMapping("/{id}/resume")
-    @PreAuthorize("@perm.hasAny('APPLICATION_VIEW', 'APPLICATION_SCREEN', 'APPLICATION_SHORTLIST', 'INTERVIEW_SCHEDULE', 'INTERVIEW_ASSIGN', 'INTERVIEW_PROGRESS_VIEW', 'INTERVIEW_EVALUATE', 'INTERVIEW_DECIDE', 'OFFER_MANAGE')")
+    @PreAuthorize("@perm.isFullAccess() or @perm.hasRecruitmentAccess()")
     public ResponseEntity<byte[]> getResume(
             @PathVariable Long id,
             @RequestParam(required = false, defaultValue = "false") boolean download) {

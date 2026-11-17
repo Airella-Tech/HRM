@@ -269,7 +269,7 @@ public class JobVacancyService {
      * Remove vacancy from Shortlist page:
      * 1. Marks vacancy as removedFromShortlist = true.
      * 2. Finds all candidate applications for this vacancy:
-     *    Any candidate not confirmed as SHORTLISTED (and not already REJECTED, HIRED, OFFER_MADE)
+     *    Any candidate not confirmed as SHORTLISTED (and not already REJECTED)
      *    is automatically set to REJECTED with rejectionReason = "Position archived / closed without shortlist confirmation".
      *    This immediately updates their status in the public tracking page (/careers/track).
      * 3. DOES NOT touch vacancy.status (remains PUBLISHED or unchanged in Job Vacancy create page).
@@ -291,9 +291,7 @@ public class JobVacancyService {
             for (CandidateApplication app : apps) {
                 ApplicationStatus curStatus = app.getStatus();
                 if (curStatus != ApplicationStatus.SHORTLISTED
-                        && curStatus != ApplicationStatus.REJECTED
-                        && curStatus != ApplicationStatus.HIRED
-                        && curStatus != ApplicationStatus.OFFER_MADE) {
+                        && curStatus != ApplicationStatus.REJECTED) {
                     app.setStatus(ApplicationStatus.REJECTED);
                     app.setEligibilityStatus(EligibilityStatus.INELIGIBLE);
                     app.setRejectionReason("Position archived / closed without shortlist confirmation");

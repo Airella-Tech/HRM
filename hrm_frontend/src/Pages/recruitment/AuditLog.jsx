@@ -4,8 +4,9 @@
  */
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { PageLayout } from "../../components/PageLayout";
+import StatCard, { StatCardGrid } from "../../components/StatCard";
 import { recruitmentApi } from "../../services/api";
-import { Activity, Loader2, RefreshCw, Search } from "lucide-react";
+import { Activity, Loader2, RefreshCw, Search, CalendarDays, BriefcaseBusiness, ShieldCheck } from "lucide-react";
 
 const PAGE_SIZE = 15;
 
@@ -76,6 +77,16 @@ const AuditLog = () => {
       );
     });
   }, [logs, search, actionFilter, entityFilter]);
+    // Summary numbers describe the records that were loaded (the newest 500)
+  const stats = useMemo(() => {
+    const today = new Date().toDateString();
+    return {
+      total: logs.length,
+      today: logs.filter((l) => l.createdAt && new Date(l.createdAt).toDateString() === today).length,
+      vacancy: logs.filter((l) => l.entity === "JobVacancy").length,
+      roles: logs.filter((l) => l.entity === "RecruitmentRole" || l.entity === "UserRecruitmentRole").length,
+    };
+  }, [logs]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const currentPage = Math.min(page, totalPages);
@@ -89,6 +100,13 @@ const AuditLog = () => {
       subtitle="A record of recruitment actions: who did what, and when"
     >
       <div className="space-y-5">
+                {/* Summary cards */}
+        <StatCardGrid>
+          <StatCard label="Records loaded" value={loading ? "-" : stats.total} caption="Newest 500 records" icon={Activity} tone="primary" />
+          <StatCard label="Today" value={loading ? "-" : stats.today} caption="Since midnight" icon={CalendarDays} tone="primary" />
+          <StatCard label="Vacancy actions" value={loading ? "-" : stats.vacancy} caption="Created, approved, published..." icon={BriefcaseBusiness} tone="green" />
+          <StatCard label="Role changes" value={loading ? "-" : stats.roles} caption="Roles and assignments" icon={ShieldCheck} tone="amber" />
+        </StatCardGrid>
         {/* Filters */}
         <div className="flex flex-wrap items-center gap-3">
           <div className="relative min-w-[220px] flex-1">

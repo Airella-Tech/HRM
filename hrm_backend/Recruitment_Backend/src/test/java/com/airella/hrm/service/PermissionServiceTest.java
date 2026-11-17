@@ -173,6 +173,23 @@ class PermissionServiceTest {
         assertThrows(AccessDeniedException.class, () -> permissionService.requireRoleManagement());
     }
 
+    @Test
+    void hasRecruitmentAccess_WhenEmployeeHasAssignedRoleOrPermission_ReturnsTrue() {
+        setAuth("emp@example.com", 10L, List.of(new SimpleGrantedAuthority("ROLE_EMPLOYEE")));
+        when(userRoleRepo.findPermissionCodesByUserId(10L)).thenReturn(List.of("APPLICATION_SCREEN"));
+
+        assertTrue(permissionService.hasRecruitmentAccess());
+    }
+
+    @Test
+    void hasRecruitmentAccess_WhenEmployeeHasNoRoleAndNoPermissions_ReturnsFalse() {
+        setAuth("emp@example.com", 10L, List.of(new SimpleGrantedAuthority("ROLE_EMPLOYEE")));
+        when(userRoleRepo.findPermissionCodesByUserId(10L)).thenReturn(List.of());
+        when(userRoleRepo.findRoleNamesByUserId(10L)).thenReturn(List.of());
+
+        assertFalse(permissionService.hasRecruitmentAccess());
+    }
+
     private void setAuth(String email, Long userId, List<GrantedAuthority> authorities) {
         AuthenticatedUser principal = new AuthenticatedUser(email, userId);
         UsernamePasswordAuthenticationToken auth =

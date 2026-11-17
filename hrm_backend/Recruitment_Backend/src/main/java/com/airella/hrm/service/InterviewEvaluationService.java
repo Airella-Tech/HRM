@@ -337,9 +337,15 @@ public class InterviewEvaluationService {
 
         Interview interview = findInterview(interviewId, companyId);
 
-        if (permissionService.hasAny(
-                "INTERVIEW_SCHEDULE",
-                "INTERVIEW_DECIDE") || permissionService.has("INTERVIEW_PROGRESS_VIEW")) {
+        boolean canViewAllEvaluations = permissionService.isFullAccess()
+                || permissionService.hasAny(
+                        "INTERVIEW_SCHEDULE",
+                        "INTERVIEW_DECIDE")
+                || permissionService.has("INTERVIEW_PROGRESS_VIEW")
+                || permissionService.currentPermissions().stream()
+                        .anyMatch(code -> !"INTERVIEW_EVALUATE".equals(code));
+
+        if (canViewAllEvaluations) {
 
             return evaluationRepository
                     .findByCompanyIdAndInterviewIdOrderByCreatedAtAsc(

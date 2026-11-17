@@ -23,7 +23,7 @@ const STATUS_STYLE = {
 const STATUS_ICON = { PENDING: <Clock size={13} />, APPROVED: <CheckCircle size={13} />, REJECTED: <XCircle size={13} /> };
 const statusLabel = (s) => (s ? s.charAt(0) + s.slice(1).toLowerCase() : "");
 
-const inputCls = "w-full border border-slate-300 rounded-lg px-4 py-3 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-employee-500 focus:border-employee-500 bg-white";
+const inputCls = "w-full border border-slate-300 rounded-xl px-3.5 py-2.5 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 bg-white transition-all";
 
 /** Opens a PDF blob in a new tab (falls back to downloading it if pop-ups are blocked). */
 const openPdf = (blob, fileName) => {
@@ -171,7 +171,7 @@ const AllowanceRequests = ({ showForm, onCloseForm }) => {
 
   const documentButton = (r) => (
     <button onClick={() => viewDocument(r)} title={r.documentName}
-      className="inline-flex items-center gap-1.5 text-xs font-semibold text-blue-600 hover:text-blue-700 bg-sky-50 hover:bg-sky-100 px-2.5 py-1.5 rounded-lg transition-colors">
+      className="inline-flex items-center gap-1.5 text-xs font-semibold text-teal-700 hover:text-teal-800 bg-teal-50 hover:bg-teal-100 border border-teal-100 px-3 py-1.5 rounded-xl transition-colors shadow-xs">
       <FileText size={13} /> PDF
     </button>
   );
@@ -179,7 +179,7 @@ const AllowanceRequests = ({ showForm, onCloseForm }) => {
   return (
     <>
       {message && (
-        <div className={`p-4 rounded-lg text-white ${message.startsWith("✓") ? "bg-green-500" : "bg-red-500"}`}>
+        <div className={`px-4 py-3 rounded-xl border text-sm font-medium ${message.startsWith("✓") ? "bg-emerald-50 border-emerald-200 text-emerald-800" : "bg-rose-50 border-rose-200 text-rose-800"}`}>
           {message}
         </div>
       )}
@@ -216,7 +216,7 @@ const AllowanceRequests = ({ showForm, onCloseForm }) => {
         {loading ? (
           <LoadingState title="Loading allowance requests..." />
         ) : loadError ? (
-          <p className="m-5 text-sm text-red-700 bg-red-50 border border-red-200 rounded-lg px-4 py-3">{loadError}</p>
+          <p className="m-5 text-sm text-red-700 bg-red-50 border border-red-200 rounded-xl px-4 py-3">{loadError}</p>
         ) : sorted.length === 0 ? (
           <EmptyState
             icon={isFiltering ? <Search size={28} /> : <FileText size={28} />}
@@ -246,7 +246,7 @@ const AllowanceRequests = ({ showForm, onCloseForm }) => {
                 }
               >
                 <div className="flex items-center gap-3 min-w-0">
-                  <div className={`h-10 w-10 flex-shrink-0 rounded-xl ${EMP_GRADIENT} text-white font-bold text-sm flex items-center justify-center shadow-sm`}>
+                  <div className="h-10 w-10 flex-shrink-0 rounded-xl bg-teal-50 text-teal-700 border border-teal-100 font-bold text-sm flex items-center justify-center shadow-xs">
                     {(r.name || "A").charAt(0).toUpperCase()}
                   </div>
                   <div className="min-w-0">
@@ -254,7 +254,7 @@ const AllowanceRequests = ({ showForm, onCloseForm }) => {
                     {r.description && <p className="text-xs text-slate-400 truncate mt-0.5" title={r.description}>{r.description}</p>}
                   </div>
                 </div>
-                <span className="text-sm font-bold text-blue-700">Rs. {money(r.amount)}</span>
+                <span className="text-sm font-bold text-teal-700">Rs. {money(r.amount)}</span>
                 <span className="flex items-center gap-1.5 text-xs text-slate-600">
                   <Calendar size={13} className="text-slate-400" /> {formatDate(r.createdAt)}
                 </span>
@@ -269,36 +269,39 @@ const AllowanceRequests = ({ showForm, onCloseForm }) => {
 
       {/* Request for Allowance popup */}
       {showForm && (
-        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl border border-slate-200 shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between p-6 border-b border-slate-200">
-              <h2 className="text-lg font-semibold text-slate-800">Request for Allowance</h2>
-              <button onClick={() => !submitting && onCloseForm()} className="p-2 hover:bg-slate-100 rounded-lg transition-colors">
-                <X size={18} className="text-slate-500" />
+        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between p-6 border-b border-slate-100">
+              <div>
+                <h2 className="text-lg font-bold text-slate-900">Request for Allowance</h2>
+                <p className="text-xs text-slate-500 mt-0.5">Submit allowance request with supporting documents</p>
+              </div>
+              <button onClick={() => !submitting && onCloseForm()} className="h-8 w-8 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-800 flex items-center justify-center transition-colors">
+                <X size={17} />
               </button>
             </div>
             <form onSubmit={handleSubmit} className="p-6 space-y-4">
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Name *</label>
+                <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wide mb-1.5">Name *</label>
                 <input value={form.name} maxLength={100} required onChange={e => setForm({ ...form, name: e.target.value })}
                   className={inputCls} placeholder="e.g. Medical claim" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Amount (Rs.) *</label>
+                <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wide mb-1.5">Amount (Rs.) *</label>
                 <input type="number" min="0.01" step="0.01" value={form.amount} required onChange={e => setForm({ ...form, amount: e.target.value })}
                   className={inputCls} placeholder="0.00" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Description *</label>
+                <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wide mb-1.5">Description *</label>
                 <textarea value={form.description} maxLength={1000} rows="3" required onChange={e => setForm({ ...form, description: e.target.value })}
                   className={`${inputCls} resize-none`} placeholder="Why are you requesting this allowance?" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Supporting Document (PDF, max 5 MB) *</label>
-                <label className={`flex items-center gap-3 border-2 border-dashed rounded-lg px-4 py-4 cursor-pointer transition-colors ${file ? "border-employee-300 bg-employee-50/60" : "border-slate-300 hover:border-employee-400 hover:bg-slate-50"}`}>
-                  <span className="bg-white border border-slate-200 p-2 rounded-lg text-employee-600">{file ? <FileText size={20} /> : <Upload size={20} />}</span>
+                <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wide mb-1.5">Supporting Document (PDF, max 5 MB) *</label>
+                <label className={`flex items-center gap-3 border-2 border-dashed rounded-xl px-4 py-4 cursor-pointer transition-colors ${file ? "border-teal-400 bg-teal-50/50" : "border-slate-300 hover:border-teal-400 hover:bg-slate-50"}`}>
+                  <span className="bg-white border border-slate-200 p-2.5 rounded-xl text-teal-600 shadow-xs">{file ? <FileText size={20} /> : <Upload size={20} />}</span>
                   <span className="min-w-0 flex-1">
-                    <span className="block text-sm font-medium text-slate-700 truncate">{file ? file.name : "Choose a PDF file"}</span>
+                    <span className="block text-sm font-semibold text-slate-800 truncate">{file ? file.name : "Choose a PDF file"}</span>
                     <span className="block text-xs text-slate-400">{file ? fileSize(file.size) : "Click to browse"}</span>
                   </span>
                   <input ref={fileInput} type="file" accept="application/pdf,.pdf" className="hidden"
@@ -306,13 +309,13 @@ const AllowanceRequests = ({ showForm, onCloseForm }) => {
                 </label>
               </div>
               {formError && (
-                <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg px-4 py-3">{formError}</div>
+                <div className="bg-rose-50 border border-rose-200 text-rose-700 text-xs font-medium rounded-xl px-4 py-3">{formError}</div>
               )}
               <div className="flex gap-3 pt-2">
-                <EmpButton type="submit" disabled={submitting} className="flex-1 py-3">
+                <EmpButton type="submit" disabled={submitting} className="flex-1 py-2.5">
                   {submitting ? "Sending..." : "Send Request"}
                 </EmpButton>
-                <EmpButton type="button" variant="secondary" onClick={onCloseForm} disabled={submitting} className="flex-1 py-3">
+                <EmpButton type="button" variant="secondary" onClick={onCloseForm} disabled={submitting} className="flex-1 py-2.5">
                   Cancel
                 </EmpButton>
               </div>

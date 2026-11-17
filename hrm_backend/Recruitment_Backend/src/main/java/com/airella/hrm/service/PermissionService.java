@@ -141,6 +141,21 @@ public class PermissionService {
     }
 
     /**
+     * True if the user participates in recruitment (ADMIN, or any user
+     * with at least one assigned recruitment role or permission).
+     */
+    public boolean hasRecruitmentAccess() {
+        if (isFullAccess()) {
+            return true;
+        }
+        if (!currentPermissions().isEmpty()) {
+            return true;
+        }
+        Long userId = currentUserId();
+        return userId != null && !userRoleRepo.findRoleNamesByUserId(userId).isEmpty();
+    }
+
+    /**
      * True if the current user can configure recruitment roles and assign users.
      * Allowed for: ADMIN, HR_MANAGER, or any user holding RECRUITMENT_ROLE_ADMIN permission.
      */

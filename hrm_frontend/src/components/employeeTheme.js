@@ -1,17 +1,18 @@
 import { useMemo, useState } from "react";
 
-// Employee portal accent — matches the employee sidebar (sky → blue)
-export const EMP_GRADIENT = "bg-gradient-to-br from-sky-400 to-blue-500";
+// Employee portal primary accent — professional Teal (#0d9488)
+export const EMP_GRADIENT = "bg-teal-600";
 
-// Summary card colours — same set as the HR Employees page cards, with the sidebar blue first
+// Summary card tones — clean white cards with tinted icon chips matching Recruitment's StatCard pattern
 export const CARD_TONES = {
-  blue: "bg-gradient-to-br from-sky-400 to-blue-500",
-  green: "bg-gradient-to-br from-green-400 to-emerald-500",
-  yellow: "bg-yellow-500",
-  purple: "bg-purple-600",
-  orange: "bg-gradient-to-br from-amber-400 to-orange-500",
-  red: "bg-gradient-to-br from-rose-400 to-red-500",
-  slate: "bg-gradient-to-br from-slate-500 to-slate-700",
+  teal: "bg-teal-50 text-teal-600",
+  blue: "bg-teal-50 text-teal-600",
+  green: "bg-emerald-50 text-emerald-600",
+  yellow: "bg-amber-50 text-amber-600",
+  purple: "bg-violet-50 text-violet-600",
+  orange: "bg-orange-50 text-orange-600",
+  red: "bg-rose-50 text-rose-600",
+  slate: "bg-slate-100 text-slate-600",
 };
 
 // Sort state + sorted copy of `rows`; `pick(row, key)` returns the value to compare
