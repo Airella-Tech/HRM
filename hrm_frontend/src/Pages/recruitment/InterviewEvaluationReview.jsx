@@ -15,10 +15,13 @@ import {
   ClipboardCheck,
   ChevronDown,
   ChevronUp,
+  Info,
 } from "lucide-react";
 import PageLayout from "../../components/PageLayout";
 import StatCard, { StatCardGrid } from "../../components/StatCard";
+import VacancyGroupCard from "./VacancyGroupCard";
 import { recruitmentApi } from "../../services/api";
+import { avatarColorClass } from "../../utils/avatarColor";
 
 // Interview rounds must follow this order.
 const ROUND_ORDER = [
@@ -486,6 +489,7 @@ export default function InterviewEvaluationReview() {
 
   const [selectedInterview, setSelectedInterview] = useState(null);
   const [expandedEvaluations, setExpandedEvaluations] = useState({});
+  const [collapsedGroups, setCollapsedGroups] = useState({});
 
   const [decisionComments, setDecisionComments] = useState("");
   const [decisionReason, setDecisionReason] = useState("");
@@ -683,6 +687,47 @@ export default function InterviewEvaluationReview() {
       return matchesSearch && matchesRound && Boolean(id);
     });
   }, [reviewableInterviews, search, roundFilter]);
+
+  const vacancyGroups = useMemo(() => {
+    const groups = new Map();
+
+    filteredInterviews.forEach((interview) => {
+      const title = getVacancyName(interview);
+      const vacancyId = getValue(
+        interview?.vacancyId,
+        interview?.vacancy?.id,
+        interview?.jobVacancyId,
+        interview?.jobVacancy?.id,
+      );
+      const key = String(vacancyId ?? title);
+
+      if (!groups.has(key)) {
+        groups.set(key, {
+          key,
+          title,
+          department: getValue(
+            interview?.department,
+            interview?.vacancy?.department,
+            interview?.jobVacancy?.department,
+            "Department not specified",
+          ),
+          rows: [],
+        });
+      }
+
+      groups.get(key).rows.push(interview);
+    });
+
+    return Array.from(groups.values());
+  }, [filteredInterviews]);
+
+  const expandAllGroups = () => setCollapsedGroups({});
+
+  const collapseAllGroups = () => {
+    setCollapsedGroups(
+      Object.fromEntries(vacancyGroups.map((group) => [group.key, true])),
+    );
+  };
 
   /* -------------------------------------------------------
      SELECTED INTERVIEW DATA
@@ -943,6 +988,7 @@ export default function InterviewEvaluationReview() {
             <StatCard
               label="Completed Interviews"
               value={reviewableInterviews.length}
+              caption="Rounds finished"
               icon={CalendarDays}
               tone="primary"
             />
@@ -951,6 +997,7 @@ export default function InterviewEvaluationReview() {
               value={reviewableInterviews.filter(
                 (interview) => getDecisionLabel(interview) === "Pending Review",
               ).length}
+              caption="Need a decision"
               icon={Clock}
               tone="amber"
             />
@@ -959,17 +1006,18 @@ export default function InterviewEvaluationReview() {
               value={reviewableInterviews.filter(
                 (interview) => getDecisionLabel(interview) === "Approved",
               ).length}
+              caption="Moved forward"
               icon={CheckCircle2}
               tone="green"
             />
           </StatCardGrid>
 
           {/* Filters */}
-          <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-            <div className="flex flex-col gap-3 md:flex-row">
-              <div className="relative flex-1">
+          <div className="bg-white rounded-xl border border-slate-200 shadow-sm px-4 py-3">
+            <div className="flex flex-wrap items-center gap-3">
+              <div className="relative flex-1 min-w-[220px]">
                 <Search
-                  size={18}
+                  size={17}
                   className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
                 />
 
@@ -978,14 +1026,22 @@ export default function InterviewEvaluationReview() {
                   value={search}
                   onChange={(event) => setSearch(event.target.value)}
                   placeholder="Search candidate or vacancy..."
-                  className="w-full rounded-lg border border-slate-300 py-2.5 pl-10 pr-4 text-sm outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-100"
+                  className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50 pl-9 pr-3 text-sm text-slate-800 placeholder-slate-400 focus:border-primary-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary-100"
                 />
               </div>
-
+              <span
+                title="Review all submitted evaluations before making a decision."
+                className="inline-flex shrink-0 text-slate-400"
+              >
+                <Info size={14} />
+              </span>
+              <span className="text-sm font-semibold text-slate-600">
+                Round:
+              </span>
               <select
                 value={roundFilter}
                 onChange={(event) => setRoundFilter(event.target.value)}
-                className="rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm outline-none focus:border-primary-500"
+                className="h-10 w-auto rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-800 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100"
               >
                 <option value="ALL">All Interview Rounds</option>
 
@@ -995,21 +1051,34 @@ export default function InterviewEvaluationReview() {
                   </option>
                 ))}
               </select>
+              <span className="ml-auto text-xs text-slate-500">
+                {filteredInterviews.length} interview
+                {filteredInterviews.length !== 1 ? "s" : ""} found
+              </span>
+              {filteredInterviews.length > 0 && (
+                <div className="flex items-center gap-1 border-l border-slate-200 pl-3">
+                  <button
+                    type="button"
+                    onClick={expandAllGroups}
+                    className="rounded-lg px-2 py-1 text-sm font-semibold text-slate-500 hover:bg-slate-50 hover:text-primary-600"
+                  >
+                    Expand All
+                  </button>
+                  <span className="h-4 w-px bg-slate-200" />
+                  <button
+                    type="button"
+                    onClick={collapseAllGroups}
+                    className="rounded-lg px-2 py-1 text-sm font-semibold text-slate-500 hover:bg-slate-50 hover:text-primary-600"
+                  >
+                    Collapse All
+                  </button>
+                </div>
+              )}
             </div>
           </div>
 
           {/* Interview list */}
-          <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-            <div className="border-b border-slate-200 px-5 py-4">
-              <h2 className="font-semibold text-slate-900">
-                Completed Interview Rounds
-              </h2>
-
-              <p className="mt-1 text-xs text-slate-500">
-                Review all submitted evaluations before making a decision.
-              </p>
-            </div>
-
+          <div>
             {loading ? (
               <div className="flex items-center justify-center gap-3 p-12 text-sm text-slate-500">
                 <RefreshCw className="animate-spin" size={19} />
@@ -1031,159 +1100,148 @@ export default function InterviewEvaluationReview() {
                 </p>
               </div>
             ) : (
-              <>
-                {/* Desktop table */}
-                <div className="hidden overflow-x-auto md:block">
-                  <table className="w-full text-left text-sm">
-                    <thead className="bg-slate-50 text-xs uppercase text-slate-500">
-                      <tr>
-                        <th className="px-5 py-3 font-semibold">
-                          Candidate
-                        </th>
-
-                        <th className="px-5 py-3 font-semibold">
-                          Vacancy
-                        </th>
-
-                        <th className="px-5 py-3 font-semibold">
-                          Round
-                        </th>
-
-                        <th className="px-5 py-3 font-semibold">
-                          Evaluations
-                        </th>
-
-                        <th className="px-5 py-3 font-semibold">
-                          Decision
-                        </th>
-
-                        <th className="px-5 py-3 text-right font-semibold">
-                          Action
-                        </th>
-                      </tr>
-                    </thead>
-
-                    <tbody className="divide-y divide-slate-100">
-                      {filteredInterviews.map((interview) => {
-                        const id = String(getInterviewId(interview));
-                        const evaluationStatus =
-                          getEvaluationStatus(interview);
-                        const managerDecision =
-                          getDecisionLabel(interview);
-
-                        return (
-                          <tr key={id} className="hover:bg-slate-50">
-                            <td className="px-5 py-4">
-                              <div className="flex items-center gap-3">
-                                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary-50 text-primary-600">
-                                  <UserRound size={17} />
-                                </div>
-
-                                <span className="font-semibold text-slate-800">
-                                  {getCandidateName(interview)}
-                                </span>
-                              </div>
-                            </td>
-
-                            <td className="px-5 py-4 text-slate-600">
-                              {getVacancyName(interview)}
-                            </td>
-
-                            <td className="px-5 py-4">
-                              <span className="rounded-full bg-primary-50 px-3 py-1 text-xs font-medium text-primary-700">
-                                {getRoundName(interview)}
-                              </span>
-                            </td>
-
-                            <td className="px-5 py-4">
-                              <span
-                                className={`font-semibold ${
-                                  evaluationStatus.complete
-                                    ? "text-green-700"
-                                    : "text-amber-700"
-                                }`}
-                              >
-                                {evaluationStatus.submittedCount}/
-                                {evaluationStatus.assignedCount} submitted
-                              </span>
-                            </td>
-
-                            <td className="px-5 py-4">
-                              <span
-                                className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                                  managerDecision === "Approved"
-                                    ? "bg-green-100 text-green-700"
-                                    : managerDecision === "Rejected"
-                                      ? "bg-red-100 text-red-700"
-                                      : managerDecision === "Unable to Load"
-                                        ? "bg-red-100 text-red-700"
-                                        : "bg-amber-100 text-amber-700"
-                                }`}
-                              >
-                                {managerDecision}
-                              </span>
-                            </td>
-
-                            <td className="px-5 py-4 text-right">
-                              <button
-                                type="button"
-                                onClick={() => openReview(interview)}
-                                className="inline-flex items-center gap-2 rounded-xl bg-primary-600 px-3 py-2 text-xs font-semibold text-white hover:bg-primary-700"
-                              >
-                                <Eye size={15} />
-                                View Reviews
-                              </button>
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-
-                {/* Mobile list */}
-                <div className="divide-y divide-slate-100 md:hidden">
-                  {filteredInterviews.map((interview) => {
-                    const id = String(getInterviewId(interview));
-                    const evaluationStatus =
-                      getEvaluationStatus(interview);
+              <div>
+                <div className="space-y-4">
+                  {vacancyGroups.map((group) => {
+                    const expanded = !collapsedGroups[group.key];
+                    const pendingCount = group.rows.filter(
+                      (interview) =>
+                        getDecisionLabel(interview) === "Pending Review",
+                    ).length;
+                    const approvedCount = group.rows.filter(
+                      (interview) =>
+                        getDecisionLabel(interview) === "Approved",
+                    ).length;
 
                     return (
-                      <div key={id} className="space-y-3 p-4">
-                        <div>
-                          <h3 className="font-semibold text-slate-900">
-                            {getCandidateName(interview)}
-                          </h3>
+                      <VacancyGroupCard
+                        key={group.key}
+                        title={group.title}
+                        department={group.department}
+                        meta={`${group.rows.length} ${
+                          group.rows.length === 1 ? "candidate" : "candidates"
+                        }`}
+                        badges={[
+                          {
+                            label: `${pendingCount} awaiting decision`,
+                            tone: "amber",
+                          },
+                          { label: `${approvedCount} approved`, tone: "green" },
+                        ]}
+                        expanded={expanded}
+                        onToggle={() =>
+                          setCollapsedGroups((current) => ({
+                            ...current,
+                            [group.key]: expanded ? true : undefined,
+                          }))
+                        }
+                      >
+                        <div className="overflow-x-auto">
+                          <table className="w-full min-w-[800px] text-left text-sm text-slate-600">
+                            <thead className="border-b border-slate-200 bg-slate-50/80 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+                              <tr>
+                                <th className="whitespace-nowrap px-4 py-3 font-semibold">
+                                  Candidate
+                                </th>
+                                <th className="whitespace-nowrap px-4 py-3 font-semibold">
+                                  Round
+                                </th>
+                                <th className="whitespace-nowrap px-4 py-3 font-semibold">
+                                  Evaluations
+                                </th>
+                                <th className="whitespace-nowrap px-4 py-3 font-semibold">
+                                  Decision
+                                </th>
+                                <th className="whitespace-nowrap px-4 py-3 text-right font-semibold">
+                                  Action
+                                </th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-100">
+                              {group.rows.map((interview) => {
+                                const id = String(getInterviewId(interview));
+                                const evaluationStatus =
+                                  getEvaluationStatus(interview);
+                                const managerDecision =
+                                  getDecisionLabel(interview);
 
-                          <p className="mt-1 text-sm text-slate-500">
-                            {getVacancyName(interview)}
-                          </p>
+                                return (
+                                  <tr
+                                    key={id}
+                                    className="transition-colors duration-150 hover:bg-slate-50/80"
+                                  >
+                                    <td className="whitespace-nowrap px-4 py-3.5">
+                                      <div className="flex items-center gap-3">
+                                        <div
+                                          className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${avatarColorClass(getCandidateName(interview))} text-xs font-bold text-white shadow-sm`}
+                                        >
+                                          {getCandidateName(interview)
+                                            .split(/\s+/)
+                                            .map((part) => part[0])
+                                            .filter(Boolean)
+                                            .slice(0, 2)
+                                            .join("")
+                                            .toUpperCase()}
+                                        </div>
+                                        <span className="font-semibold text-slate-800">
+                                          {getCandidateName(interview)}
+                                        </span>
+                                      </div>
+                                    </td>
+                                    <td className="whitespace-nowrap px-4 py-3.5">
+                                      <span className="inline-flex whitespace-nowrap rounded-md bg-primary-50 px-2 py-1 text-xs font-semibold text-primary-700">
+                                        {getRoundName(interview)}
+                                      </span>
+                                    </td>
+                                    <td className="whitespace-nowrap px-4 py-3.5">
+                                      <span
+                                        className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-bold shadow-xs ${
+                                          evaluationStatus.complete
+                                            ? "border-green-200 bg-green-50 text-green-700"
+                                            : "border-amber-200 bg-amber-50 text-amber-700"
+                                        }`}
+                                      >
+                                        <span className="h-1.5 w-1.5 rounded-full bg-current" />
+                                        {evaluationStatus.submittedCount}/
+                                        {evaluationStatus.assignedCount} submitted
+                                      </span>
+                                    </td>
+                                    <td className="whitespace-nowrap px-4 py-3.5">
+                                      <span
+                                        className={`inline-flex whitespace-nowrap rounded-full border px-2.5 py-1 text-xs font-bold shadow-xs ${
+                                          managerDecision === "Approved"
+                                            ? "border-green-200 bg-green-50 text-green-700"
+                                            : managerDecision === "Rejected"
+                                              ? "border-red-200 bg-red-50 text-red-700"
+                                              : managerDecision === "Unable to Load"
+                                                ? "border-red-200 bg-red-50 text-red-700"
+                                                : "border-amber-200 bg-amber-50 text-amber-700"
+                                        }`}
+                                      >
+                                        {managerDecision}
+                                      </span>
+                                    </td>
+                                    <td className="whitespace-nowrap px-4 py-3.5 text-right">
+                                      <button
+                                        type="button"
+                                        onClick={() => openReview(interview)}
+                                        className="inline-flex items-center gap-2 whitespace-nowrap rounded-xl bg-primary-600 px-3 py-2 text-sm font-semibold text-white hover:bg-primary-700"
+                                      >
+                                        <Eye size={15} />
+                                        View Reviews
+                                      </button>
+                                    </td>
+                                  </tr>
+                                );
+                              })}
+                            </tbody>
+                          </table>
                         </div>
-
-                        <div className="flex flex-wrap items-center gap-2 text-xs">
-                          <span className="rounded-full bg-primary-50 px-3 py-1 text-primary-700">
-                            {getRoundName(interview)}
-                          </span>
-
-                          <span className="text-slate-600">
-                            {evaluationStatus.submittedCount}/
-                            {evaluationStatus.assignedCount} evaluations
-                            submitted
-                          </span>
-                        </div>
-
-                        <button
-                          type="button"
-                          onClick={() => openReview(interview)}
-                          className="w-full rounded-xl bg-primary-600 px-4 py-2.5 text-sm font-semibold text-white"
-                        >
-                          View Evaluations
-                        </button>
-                      </div>
+                      </VacancyGroupCard>
                     );
                   })}
                 </div>
-              </>
+              </div>
             )}
           </div>
         </div>

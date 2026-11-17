@@ -11,6 +11,7 @@ import {
   ClipboardCheck,
   Clock,
   CheckCircle2,
+  Check,
   Circle,
   XCircle,
   Eye,
@@ -23,10 +24,13 @@ import {
   Users,
   TrendingUp,
   AlertCircle,
-  ChevronRight,
+  Info,
 } from "lucide-react";
 import PageLayout from "../../components/PageLayout";
+import StatCard, { StatCardGrid } from "../../components/StatCard";
+import VacancyGroupCard from "./VacancyGroupCard";
 import { recruitmentApi } from "../../services/api";
+import { avatarColorClass } from "../../utils/avatarColor";
 
 const ROUNDS = [
   "Technical Interview",
@@ -519,31 +523,6 @@ function normalizeInterviews(rows) {
   });
 }
 
-function StatCard({ title, value, description, icon: Icon, iconStyle }) {
-  const gradient = iconStyle.includes("primary-500")
-    ? "from-primary-500 to-primary-600"
-    : iconStyle.includes("primary-700")
-      ? "from-primary-700 to-primary-800"
-      : iconStyle.includes("primary-800")
-        ? "from-primary-800 to-primary-900"
-        : "from-primary-600 to-primary-700";
-
-  return (
-    <div className={`rounded-2xl bg-gradient-to-br ${gradient} p-5 text-white shadow-md`}>
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <p className="text-sm font-medium text-white/85">{title}</p>
-          <p className="mt-2 text-3xl font-bold text-white">{value}</p>
-          <p className="mt-1 text-xs text-white/75">{description}</p>
-        </div>
-        <div className="rounded-xl bg-white/20 p-3 text-white">
-          <Icon size={22} />
-        </div>
-      </div>
-    </div>
-  );
-}
-
 function ProgressBar({ candidate }) {
   const completed = getCompletedStages(candidate);
   const progress = getProgress(candidate);
@@ -797,6 +776,7 @@ export default function InterviewProgress() {
   const [jobFilter, setJobFilter] = useState("All");
   const [showFilters, setShowFilters] = useState(false);
   const [selectedCandidate, setSelectedCandidate] = useState(null);
+  const [collapsedGroups, setCollapsedGroups] = useState({});
 
   const requestInFlight = useRef(false);
   const mounted = useRef(false);
@@ -949,12 +929,102 @@ export default function InterviewProgress() {
       );
   }, [candidates, searchTerm, statusFilter, jobFilter, roundFilter]);
 
+  const vacancyGroups = useMemo(() => {
+    const groups = new Map();
+
+    filteredCandidates.forEach((candidate) => {
+      const title = candidate.jobTitle || "Position not specified";
+      const key = String(candidate.vacancyId ?? candidate.jobTitle ?? title);
+
+      if (!groups.has(key)) {
+        groups.set(key, {
+          key,
+          title,
+          department: candidate.department || "Department not specified",
+          rows: [],
+        });
+      }
+
+      groups.get(key).rows.push(candidate);
+    });
+
+    return Array.from(groups.values());
+  }, [filteredCandidates]);
+
+  const expandAllGroups = () => setCollapsedGroups({});
+
+  const collapseAllGroups = () => {
+    setCollapsedGroups(
+      Object.fromEntries(vacancyGroups.map((group) => [group.key, true])),
+    );
+  };
+
   const resetFilters = () => {
     setSearchTerm("");
     setStatusFilter("All");
     setRoundFilter("All");
     setJobFilter("All");
   };
+
+  const renderCandidateRow = (candidate) => (
+    <tr
+      key={candidate.id}
+      className="transition-colors duration-150 hover:bg-slate-50/80"
+    >
+      <td className="whitespace-nowrap px-4 py-3.5">
+        <div className="flex items-center gap-3">
+          <div
+            className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${avatarColorClass(candidate.candidateName)} text-xs font-bold text-white shadow-sm`}
+          >
+            {(candidate.candidateName || "Candidate")
+              .split(" ")
+              .map((part) => part[0])
+              .slice(0, 2)
+              .join("")
+              .toUpperCase()}
+          </div>
+          <div>
+            <p className="font-semibold text-slate-900">
+              {candidate.candidateName}
+            </p>
+            <p className="mt-1 text-xs text-slate-500">
+              {candidate.candidateEmail || "Email unavailable"}
+            </p>
+            {candidate.applicationId != null && (
+              <p className="mt-1 text-xs text-slate-400">
+                Application #{candidate.applicationId}
+              </p>
+            )}
+          </div>
+        </div>
+      </td>
+      <td className="whitespace-nowrap px-4 py-3.5 text-sm font-medium text-slate-700">
+        {getCurrentStage(candidate)}
+      </td>
+      <td className="px-4 py-3.5">
+        <ProgressBar candidate={candidate} />
+      </td>
+      <td className="whitespace-nowrap px-4 py-3.5">
+        <span
+          className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-bold shadow-xs ${getStatusStyle(candidate.overallStatus)}`}
+        >
+          <span className="h-1.5 w-1.5 rounded-full bg-current" />
+          {candidate.overallStatus}
+        </span>
+      </td>
+      <td className="whitespace-nowrap px-4 py-3.5">
+        <div className="flex justify-end">
+          <button
+            type="button"
+            onClick={() => setSelectedCandidate(candidate)}
+            className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-xl border border-slate-200 bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-xs hover:bg-slate-200"
+          >
+            <Eye size={15} /> View Progress <ArrowRight size={14} />
+          </button>
+        </div>
+      </td>
+    </tr>
+  );
 
   return (
     <PageLayout
@@ -977,7 +1047,7 @@ export default function InterviewProgress() {
         </button>
       }
     >
-      <div className="min-h-full bg-slate-50/70 px-4 py-6 sm:px-6 lg:px-8">
+      <div>
         <div className="mx-auto max-w-7xl space-y-6">
           {error && (
             <div
@@ -998,48 +1068,56 @@ export default function InterviewProgress() {
             </div>
           )}
 
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <StatCardGrid>
             <StatCard
-              title="Total Candidates"
+              label="Total Candidates"
               value={stats.total}
-              description="Applications with interview records"
+              caption="With interview records"
               icon={Users}
-              iconStyle="bg-primary-600 text-primary-600"
+              tone="primary"
             />
             <StatCard
-              title="In Progress"
+              label="In Progress"
               value={stats.inProgress}
-              description="Candidates in active interview stages"
+              caption="In active stages"
               icon={Clock}
-              iconStyle="bg-primary-700 text-primary-600"
+              tone="primary"
             />
             <StatCard
-              title="Completed"
+              label="Completed"
               value={stats.completed}
-              description="Candidates completing all four rounds"
+              caption="All four rounds done"
               icon={CheckCircle2}
-              iconStyle="bg-primary-500 text-primary-600"
+              tone="primary"
             />
             <StatCard
-              title="Completed Stages"
+              label="Completed Stages"
               value={stats.stageCompletions}
-              description="Total interview stages completed"
+              caption="Stages completed"
               icon={TrendingUp}
-              iconStyle="bg-primary-800 text-primary-600"
+              tone="primary"
             />
-          </div>
+          </StatCardGrid>
 
           <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-            <div className="mb-4">
-              <h2 className="font-semibold text-slate-900">
-                Interview Pipeline
+            <div className="flex items-center justify-between">
+              <h2 className="text-base font-semibold text-slate-900">
+                Interview pipeline
               </h2>
-              <p className="mt-1 text-sm text-slate-500">
-                Select a stage to filter candidates by their current stage.
-              </p>
+              {(roundFilter !== "All" || statusFilter === "Completed") && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setRoundFilter("All");
+                    setStatusFilter("All");
+                  }}
+                  className="inline-flex items-center gap-1 text-sm font-medium text-slate-500 hover:text-slate-800"
+                >
+                  <X size={14} /> Clear filter
+                </button>
+              )}
             </div>
-
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            <div className="mt-4 grid grid-cols-2 gap-3 lg:flex lg:flex-nowrap lg:gap-0">
               {ROUNDS.map((round, index) => {
                 const stageCandidates = candidates.filter((candidate) => {
                   const currentStage = getCurrentStage(candidate);
@@ -1053,101 +1131,209 @@ export default function InterviewProgress() {
                   ),
                 ).length;
 
-                const selected = roundFilter === round;
+                const selected =
+                  roundFilter === round && statusFilter !== "Completed";
 
                 return (
                   <button
-                    type="button"
                     key={round}
-                    onClick={() =>
-                      setRoundFilter((current) =>
-                        current === round ? "All" : round,
-                      )
-                    }
-                    className={`rounded-xl border p-4 text-left transition ${
+                    type="button"
+                    onClick={() => {
+                      if (roundFilter === round && statusFilter !== "Completed") {
+                        setRoundFilter("All");
+                      } else {
+                        setRoundFilter(round);
+                        setStatusFilter("All");
+                      }
+                    }}
+                    aria-pressed={selected}
+                    className={`h-28 flex-1 rounded-xl py-4 pr-4 text-left transition-colors hover:brightness-95 lg:rounded-none lg:pr-6 ${
+                      index === 0
+                        ? "lg:[clip-path:polygon(0_0,calc(100%-24px)_0,100%_50%,calc(100%-24px)_100%,0_100%)] lg:pl-8"
+                        : "lg:[clip-path:polygon(0_0,calc(100%-24px)_0,100%_50%,calc(100%-24px)_100%,0_100%,24px_50%)] lg:pl-8 lg:-ml-[18px]"
+                    } ${
                       selected
-                        ? "border-primary-400 bg-primary-50 ring-1 ring-primary-100"
-                        : "border-slate-200 hover:border-primary-200 hover:bg-slate-50"
+                        ? "bg-gradient-to-br from-primary-600 to-primary-800 text-white"
+                        : [
+                            "bg-primary-50 text-slate-900",
+                            "bg-primary-100 text-slate-900",
+                            "bg-primary-200 text-slate-900",
+                            "bg-primary-300 text-slate-900",
+                          ][index]
                     }`}
                   >
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="flex h-8 w-8 items-center justify-center rounded-full bg-primary-100 text-sm font-bold text-primary-700">
+                    <span className="flex h-full items-center gap-3 px-4 lg:px-0">
+                      <span
+                        className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold ${
+                          selected
+                            ? "bg-white/25 text-white"
+                            : "bg-white text-primary-700"
+                        }`}
+                      >
                         {index + 1}
                       </span>
-                      <span className="text-xs text-slate-500">
-                        {completed} completed
+                      <span className="min-w-0 flex-1">
+                        <span
+                          title={round}
+                          className="block truncate text-sm font-semibold"
+                        >
+                          {round}
+                        </span>
+                        <span className="mt-2 flex flex-nowrap gap-1.5">
+                          <span
+                            className={`whitespace-nowrap rounded-full px-2.5 py-0.5 text-xs font-semibold ${
+                              selected
+                                ? "bg-white/20 text-white"
+                                : "bg-white text-primary-700"
+                            }`}
+                          >
+                            {stageCandidates} current
+                          </span>
+                          <span
+                            className={`whitespace-nowrap rounded-full px-2.5 py-0.5 text-xs font-semibold ${
+                              selected
+                                ? "bg-emerald-900/40 text-emerald-200"
+                                : "bg-white text-emerald-700"
+                            }`}
+                          >
+                            {completed} done
+                          </span>
+                        </span>
                       </span>
-                    </div>
-                    <p className="mt-3 text-sm font-semibold text-slate-800">
-                      {round}
-                    </p>
-                    <p className="mt-1 text-xs text-slate-500">
-                      {stageCandidates} current candidates
-                    </p>
+                    </span>
                   </button>
                 );
               })}
+              {(() => {
+                const selected = statusFilter === "Completed";
+                return (
+                  <button
+                    type="button"
+                    aria-pressed={selected}
+                    onClick={() => {
+                      if (statusFilter === "Completed") {
+                        setStatusFilter("All");
+                      } else {
+                        setStatusFilter("Completed");
+                        setRoundFilter("All");
+                      }
+                    }}
+                    className={`h-28 flex-1 rounded-xl py-4 pr-4 text-left transition-colors lg:rounded-none lg:pr-6 lg:[clip-path:polygon(0_0,calc(100%-24px)_0,100%_50%,calc(100%-24px)_100%,0_100%,24px_50%)] lg:pl-8 lg:-ml-[18px] ${
+                      selected
+                        ? "bg-gradient-to-br from-primary-600 to-primary-800 text-white hover:brightness-95"
+                        : "bg-emerald-100 text-emerald-900 hover:brightness-95"
+                    }`}
+                  >
+                    <span className="flex h-full items-center gap-3 px-4 lg:px-0">
+                      <span
+                        className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full ${
+                          selected
+                            ? "bg-white/25 text-white"
+                            : "bg-emerald-500 text-white"
+                        }`}
+                      >
+                        <Check size={18} />
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <span
+                          title="All rounds done"
+                          className="block truncate text-sm font-semibold"
+                        >
+                          All rounds done
+                        </span>
+                        <span className="mt-2 flex flex-nowrap">
+                          <span
+                            className={`whitespace-nowrap rounded-full px-2.5 py-0.5 text-xs font-semibold ${
+                              selected
+                                ? "bg-white/20 text-white"
+                                : "bg-white text-emerald-700"
+                            }`}
+                          >
+                            {stats.completed} candidate
+                            {stats.completed === 1 ? "" : "s"}
+                          </span>
+                        </span>
+                      </span>
+                    </span>
+                  </button>
+                );
+              })()}
             </div>
           </section>
 
-          <section className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-            <div className="flex flex-col gap-4 border-b border-slate-200 p-5 lg:flex-row lg:items-center lg:justify-between">
-              <div>
-                <h2 className="font-semibold text-slate-900">
-                  Candidate Progress
-                </h2>
-                <p className="mt-1 text-sm text-slate-500">
-                  {loading
-                    ? "Loading candidates..."
-                    : `${filteredCandidates.length} candidate${filteredCandidates.length !== 1 ? "s" : ""} found`}
-                </p>
+          <div className="space-y-6">
+            <div className="bg-white rounded-xl border border-slate-200 shadow-sm px-4 py-3">
+              <div className="flex flex-wrap items-center gap-3">
+              <div className="relative flex-1 min-w-[220px]">
+                <Search
+                  size={17}
+                  className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+                />
+                <input
+                  type="search"
+                  value={searchTerm}
+                  onChange={(event) => setSearchTerm(event.target.value)}
+                  placeholder="Search candidates..."
+                  aria-label="Search candidates"
+                  className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50 pl-9 pr-3 text-sm text-slate-800 placeholder-slate-400 focus:border-primary-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary-100"
+                />
               </div>
-
-              <div className="flex flex-col gap-3 sm:flex-row">
-                <div className="relative">
-                  <Search
-                    size={17}
-                    className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
-                  />
-                  <input
-                    type="search"
-                    value={searchTerm}
-                    onChange={(event) => setSearchTerm(event.target.value)}
-                    placeholder="Search candidates..."
-                    aria-label="Search candidates"
-                    className="w-full rounded-lg border border-slate-200 py-2.5 pl-9 pr-3 text-sm outline-none focus:border-primary-400 focus:ring-2 focus:ring-primary-100 sm:w-64"
-                  />
-                </div>
-
+              <span
+                title="Search candidates and filter by status, current interview round, or job position."
+                className="inline-flex shrink-0 text-slate-400"
+              >
+                <Info size={14} />
+              </span>
+              <div className="flex items-center">
                 <button
                   type="button"
                   onClick={() => setShowFilters((value) => !value)}
                   aria-expanded={showFilters}
-                  className={`inline-flex items-center justify-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-medium ${
-                    showFilters
-                      ? "border-primary-200 bg-primary-50 text-primary-700"
-                      : "border-slate-200 text-slate-700 hover:bg-slate-50"
-                  }`}
+                  className="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-slate-200 px-4 text-sm font-semibold text-slate-700 hover:bg-slate-50"
                 >
                   <Filter size={16} /> Filters
                 </button>
               </div>
+              <span className="ml-auto text-xs text-slate-500">
+                {loading
+                  ? "Loading candidates..."
+                  : `${filteredCandidates.length} candidate${filteredCandidates.length !== 1 ? "s" : ""} found`}
+              </span>
+              {vacancyGroups.length > 0 && (
+                <div className="flex items-center gap-1 border-l border-slate-200 pl-3">
+                  <button
+                    type="button"
+                    onClick={expandAllGroups}
+                    className="rounded-lg px-2 py-1 text-sm font-semibold text-slate-500 hover:bg-slate-50 hover:text-primary-600"
+                  >
+                    Expand All
+                  </button>
+                  <span className="h-4 w-px bg-slate-200" />
+                  <button
+                    type="button"
+                    onClick={collapseAllGroups}
+                    className="rounded-lg px-2 py-1 text-sm font-semibold text-slate-500 hover:bg-slate-50 hover:text-primary-600"
+                  >
+                    Collapse All
+                  </button>
+                </div>
+              )}
             </div>
 
             {showFilters && (
-              <div className="grid grid-cols-1 gap-4 border-b border-slate-200 bg-slate-50 p-5 sm:grid-cols-2 xl:grid-cols-4">
-                <div>
+              <div className="mt-3 flex flex-wrap items-center gap-3 border-t border-slate-200 pt-3">
+                <div className="flex items-center gap-2">
                   <label
                     htmlFor="progress-status-filter"
-                    className="mb-2 block text-xs font-semibold uppercase tracking-wide text-slate-500"
+                    className="text-sm font-semibold text-slate-600"
                   >
-                    Overall Status
+                    Status:
                   </label>
                   <select
                     id="progress-status-filter"
                     value={statusFilter}
                     onChange={(event) => setStatusFilter(event.target.value)}
-                    className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm"
+                    className="h-10 w-auto rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-800 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100"
                   >
                     <option value="All">All</option>
                     {STATUS_OPTIONS.map((status) => (
@@ -1158,18 +1344,18 @@ export default function InterviewProgress() {
                   </select>
                 </div>
 
-                <div>
+                <div className="flex items-center gap-2">
                   <label
                     htmlFor="progress-round-filter"
-                    className="mb-2 block text-xs font-semibold uppercase tracking-wide text-slate-500"
+                    className="text-sm font-semibold text-slate-600"
                   >
-                    Current Interview Round
+                    Round:
                   </label>
                   <select
                     id="progress-round-filter"
                     value={roundFilter}
                     onChange={(event) => setRoundFilter(event.target.value)}
-                    className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm"
+                    className="h-10 w-auto rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-800 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100"
                   >
                     <option value="All">All</option>
                     {ROUNDS.map((round) => (
@@ -1180,18 +1366,18 @@ export default function InterviewProgress() {
                   </select>
                 </div>
 
-                <div>
+                <div className="flex items-center gap-2">
                   <label
                     htmlFor="progress-job-filter"
-                    className="mb-2 block text-xs font-semibold uppercase tracking-wide text-slate-500"
+                    className="text-sm font-semibold text-slate-600"
                   >
-                    Job Position
+                    Position:
                   </label>
                   <select
                     id="progress-job-filter"
                     value={jobFilter}
                     onChange={(event) => setJobFilter(event.target.value)}
-                    className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm"
+                    className="h-10 w-auto rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-800 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100"
                   >
                     <option value="All">All</option>
                     {jobTitles.map((job) => (
@@ -1202,34 +1388,133 @@ export default function InterviewProgress() {
                   </select>
                 </div>
 
-                <div className="flex items-end">
+                <div className="flex items-center">
                   <button
                     type="button"
                     onClick={resetFilters}
-                    className="w-full rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-100"
+                    className="h-10 rounded-xl border border-slate-200 bg-white px-4 text-sm font-medium text-slate-600 hover:bg-slate-50"
                   >
                     Clear Filters
                   </button>
                 </div>
               </div>
             )}
+            </div>
 
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[1000px] text-left">
-                <thead className="bg-slate-50">
-                  <tr className="border-b border-slate-200 text-xs uppercase tracking-wide text-slate-500">
+            <div className="space-y-6">
+              {loading ? (
+                <div className="rounded-xl border border-slate-200 bg-white px-5 py-14 text-center text-sm text-slate-500">
+                  Loading interview progress from backend...
+                </div>
+              ) : vacancyGroups.length === 0 ? (
+                <div className="rounded-xl border border-slate-200 bg-white px-5 py-14 text-center">
+                  <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 text-slate-400">
+                    <Search size={22} />
+                  </div>
+                  <p className="mt-3 font-semibold text-slate-700">
+                    No interview progress records found
+                  </p>
+                  <p className="mt-1 text-sm text-slate-500">
+                    No backend interview records match these filters.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={resetFilters}
+                    className="mt-3 text-sm font-semibold text-primary-600"
+                  >
+                    Clear filters
+                  </button>
+                </div>
+              ) : (
+                vacancyGroups.map((group) => {
+                  const expanded = !collapsedGroups[group.key];
+                  const inProgressCount = group.rows.filter(
+                    (candidate) =>
+                      candidate.overallStatus === "In Progress",
+                  ).length;
+                  const completedCount = group.rows.filter(
+                    (candidate) => candidate.overallStatus === "Completed",
+                  ).length;
+
+                  return (
+                    <VacancyGroupCard
+                      key={group.key}
+                      title={group.title}
+                      department={group.department}
+                      meta={`${group.rows.length} ${
+                        group.rows.length === 1 ? "candidate" : "candidates"
+                      }`}
+                      badges={[
+                        {
+                          label: `${inProgressCount} in progress`,
+                          tone: "primary",
+                        },
+                        {
+                          label: `${completedCount} completed`,
+                          tone: "green",
+                        },
+                      ]}
+                      expanded={expanded}
+                      onToggle={() =>
+                        setCollapsedGroups((current) => ({
+                          ...current,
+                          [group.key]: expanded ? true : undefined,
+                        }))
+                      }
+                    >
+                      <div className="overflow-x-auto">
+                        <table className="w-full min-w-[900px] text-left text-sm text-slate-600">
+                          <thead className="border-b border-slate-200 bg-slate-50/80 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+                            <tr>
+                              {[
+                                "Candidate",
+                                "Current Stage",
+                                "Progress",
+                                "Status",
+                                "Actions",
+                              ].map((heading) => (
+                                <th
+                                  key={heading}
+                                  className="whitespace-nowrap px-4 py-3 font-semibold"
+                                >
+                                  {heading}
+                                </th>
+                              ))}
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-slate-100">
+                            {group.rows.map(renderCandidateRow)}
+                          </tbody>
+                        </table>
+                      </div>
+                    </VacancyGroupCard>
+                  );
+                })
+              )}
+
+              <div className="border-t border-slate-100 px-4 py-3 text-xs text-slate-500">
+                Showing {loading ? "…" : filteredCandidates.length} of{" "}
+                {candidates.length} candidates{" "}
+                <span className="text-slate-400">· Updates automatically</span>
+              </div>
+            </div>
+
+            <div className="hidden overflow-hidden rounded-xl border border-slate-200 bg-white">
+              <div className="overflow-x-auto">
+              <table className="w-full min-w-[1000px] text-left text-sm text-slate-600">
+                <thead className="border-b border-slate-200 bg-slate-50/80 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+                  <tr>
                     {[
                       "Candidate",
-                      "Job Position",
                       "Current Stage",
                       "Progress",
-                      "Overall Status",
+                      "Status",
                     ].map((heading) => (
-                      <th key={heading} className="px-5 py-4 font-semibold">
+                      <th key={heading} className="whitespace-nowrap px-4 py-3 font-semibold">
                         {heading}
                       </th>
                     ))}
-                    <th className="px-5 py-4 text-right font-semibold">
+                    <th className="whitespace-nowrap px-4 py-3 text-right font-semibold">
                       Actions
                     </th>
                   </tr>
@@ -1240,11 +1525,11 @@ export default function InterviewProgress() {
                     filteredCandidates.map((candidate) => (
                       <tr
                         key={candidate.id}
-                        className="transition hover:bg-slate-50/80"
+                        className="transition-colors duration-150 hover:bg-slate-50/80"
                       >
-                        <td className="px-5 py-4">
+                        <td className="whitespace-nowrap px-4 py-3.5">
                           <div className="flex items-center gap-3">
-                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary-50 text-sm font-bold text-primary-700">
+                            <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${avatarColorClass(candidate.candidateName)} text-xs font-bold text-white shadow-sm`}>
                               {(candidate.candidateName || "Candidate")
                                 .split(" ")
                                 .map((part) => part[0])
@@ -1253,7 +1538,7 @@ export default function InterviewProgress() {
                                 .toUpperCase()}
                             </div>
                             <div>
-                              <p className="font-semibold text-slate-800">
+                              <p className="font-semibold text-slate-900">
                                 {candidate.candidateName}
                               </p>
                               <p className="mt-1 text-xs text-slate-500">
@@ -1269,37 +1554,29 @@ export default function InterviewProgress() {
                           </div>
                         </td>
 
-                        <td className="px-5 py-4">
-                          <span className="text-sm text-slate-700">
-                            {candidate.jobTitle}
-                          </span>
-                          <p className="mt-1 text-xs text-slate-400">
-                            Applied {formatDate(candidate.appliedDate)}
-                          </p>
-                        </td>
-
-                        <td className="px-5 py-4 text-sm font-medium text-slate-700">
+                        <td className="whitespace-nowrap px-4 py-3.5 text-sm font-medium text-slate-700">
                           {getCurrentStage(candidate)}
                         </td>
 
-                        <td className="px-5 py-4">
+                        <td className="px-4 py-3.5">
                           <ProgressBar candidate={candidate} />
                         </td>
 
-                        <td className="px-5 py-4">
+                        <td className="whitespace-nowrap px-4 py-3.5">
                           <span
-                            className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${getStatusStyle(candidate.overallStatus)}`}
+                            className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-bold shadow-xs ${getStatusStyle(candidate.overallStatus)}`}
                           >
+                            <span className="h-1.5 w-1.5 rounded-full bg-current" />
                             {candidate.overallStatus}
                           </span>
                         </td>
 
-                        <td className="px-5 py-4">
+                        <td className="whitespace-nowrap px-4 py-3.5">
                           <div className="flex justify-end">
                             <button
                               type="button"
                               onClick={() => setSelectedCandidate(candidate)}
-                              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700 hover:border-primary-200 hover:bg-primary-50 hover:text-primary-700"
+                              className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-xl border border-slate-200 bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-xs hover:bg-slate-200"
                             >
                               <Eye size={15} /> View Progress{" "}
                               <ArrowRight size={14} />
@@ -1345,13 +1622,9 @@ export default function InterviewProgress() {
                 </tbody>
               </table>
             </div>
-
-            <div className="border-t border-slate-200 px-5 py-3 text-xs text-slate-500">
-              Showing {loading ? "…" : filteredCandidates.length} of{" "}
-              {candidates.length} applications returned by the backend.
-              Auto-refreshes every 15 seconds.
             </div>
-          </section>
+
+          </div>
 
           <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
             <h2 className="font-semibold text-slate-900">Stage Status Guide</h2>
