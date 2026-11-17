@@ -26,7 +26,9 @@ import {
   ChevronRight,
 } from "lucide-react";
 import PageLayout from "../../components/PageLayout";
+import StatCard, { StatCardGrid } from "../../components/StatCard";
 import { recruitmentApi } from "../../services/api";
+import { avatarColorClass } from "../../utils/avatarColor";
 
 const ROUNDS = [
   "Technical Interview",
@@ -519,31 +521,6 @@ function normalizeInterviews(rows) {
   });
 }
 
-function StatCard({ title, value, description, icon: Icon, iconStyle }) {
-  const gradient = iconStyle.includes("primary-500")
-    ? "from-primary-500 to-primary-600"
-    : iconStyle.includes("primary-700")
-      ? "from-primary-700 to-primary-800"
-      : iconStyle.includes("primary-800")
-        ? "from-primary-800 to-primary-900"
-        : "from-primary-600 to-primary-700";
-
-  return (
-    <div className={`rounded-2xl bg-gradient-to-br ${gradient} p-5 text-white shadow-md`}>
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <p className="text-sm font-medium text-white/85">{title}</p>
-          <p className="mt-2 text-3xl font-bold text-white">{value}</p>
-          <p className="mt-1 text-xs text-white/75">{description}</p>
-        </div>
-        <div className="rounded-xl bg-white/20 p-3 text-white">
-          <Icon size={22} />
-        </div>
-      </div>
-    </div>
-  );
-}
-
 function ProgressBar({ candidate }) {
   const completed = getCompletedStages(candidate);
   const progress = getProgress(candidate);
@@ -977,7 +954,7 @@ export default function InterviewProgress() {
         </button>
       }
     >
-      <div className="min-h-full bg-slate-50/70 px-4 py-6 sm:px-6 lg:px-8">
+      <div className="min-h-full bg-slate-50/70 px-4 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-7xl space-y-6">
           {error && (
             <div
@@ -998,48 +975,39 @@ export default function InterviewProgress() {
             </div>
           )}
 
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <StatCardGrid>
             <StatCard
-              title="Total Candidates"
+              label="Total Candidates"
               value={stats.total}
-              description="Applications with interview records"
+              caption="With interview records"
               icon={Users}
-              iconStyle="bg-primary-600 text-primary-600"
+              tone="primary"
             />
             <StatCard
-              title="In Progress"
+              label="In Progress"
               value={stats.inProgress}
-              description="Candidates in active interview stages"
+              caption="In active stages"
               icon={Clock}
-              iconStyle="bg-primary-700 text-primary-600"
+              tone="primary"
             />
             <StatCard
-              title="Completed"
+              label="Completed"
               value={stats.completed}
-              description="Candidates completing all four rounds"
+              caption="All four rounds done"
               icon={CheckCircle2}
-              iconStyle="bg-primary-500 text-primary-600"
+              tone="primary"
             />
             <StatCard
-              title="Completed Stages"
+              label="Completed Stages"
               value={stats.stageCompletions}
-              description="Total interview stages completed"
+              caption="Stages completed"
               icon={TrendingUp}
-              iconStyle="bg-primary-800 text-primary-600"
+              tone="primary"
             />
-          </div>
+          </StatCardGrid>
 
           <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-            <div className="mb-4">
-              <h2 className="font-semibold text-slate-900">
-                Interview Pipeline
-              </h2>
-              <p className="mt-1 text-sm text-slate-500">
-                Select a stage to filter candidates by their current stage.
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
               {ROUNDS.map((round, index) => {
                 const stageCandidates = candidates.filter((candidate) => {
                   const currentStage = getCurrentStage(candidate);
@@ -1055,83 +1023,109 @@ export default function InterviewProgress() {
 
                 const selected = roundFilter === round;
 
+                const total = completed + stageCandidates;
+
                 return (
-                  <button
-                    type="button"
-                    key={round}
-                    onClick={() =>
-                      setRoundFilter((current) =>
-                        current === round ? "All" : round,
-                      )
-                    }
-                    className={`rounded-xl border p-4 text-left transition ${
-                      selected
-                        ? "border-primary-400 bg-primary-50 ring-1 ring-primary-100"
-                        : "border-slate-200 hover:border-primary-200 hover:bg-slate-50"
-                    }`}
-                  >
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="flex h-8 w-8 items-center justify-center rounded-full bg-primary-100 text-sm font-bold text-primary-700">
-                        {index + 1}
-                      </span>
-                      <span className="text-xs text-slate-500">
+                  <div key={round} className="relative">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setRoundFilter((current) =>
+                          current === round ? "All" : round,
+                        )
+                      }
+                      aria-pressed={selected}
+                      title={`${selected ? "Clear" : "Filter by"} ${round}`}
+                      className={`w-full cursor-pointer rounded-xl border border-l-4 bg-white p-4 text-left transition-shadow hover:shadow-md ${
+                        selected
+                          ? "border-primary-500 border-l-primary-600 bg-primary-50/50 ring-2 ring-primary-100"
+                          : "border-slate-200 border-l-transparent"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <span
+                          className={`flex h-9 w-9 items-center justify-center rounded-full text-sm font-bold ${
+                            selected
+                              ? "bg-primary-600 text-white"
+                              : "bg-primary-50 text-primary-700"
+                          }`}
+                        >
+                          {index + 1}
+                        </span>
+                        <span className="rounded-full bg-primary-50 px-2.5 py-1 text-xs font-semibold text-primary-700">
+                          {stageCandidates} current
+                        </span>
+                      </div>
+                      <p className="mt-3 text-sm font-semibold text-slate-900">
+                        {round}
+                      </p>
+                      <p className="mt-1 flex items-center gap-1 text-xs text-emerald-700">
+                        <CheckCircle2 size={14} />
                         {completed} completed
-                      </span>
-                    </div>
-                    <p className="mt-3 text-sm font-semibold text-slate-800">
-                      {round}
-                    </p>
-                    <p className="mt-1 text-xs text-slate-500">
-                      {stageCandidates} current candidates
-                    </p>
-                  </button>
+                      </p>
+                      {total > 0 && (
+                        <div className="mt-3 h-1.5 rounded-full bg-slate-100">
+                          <div
+                            className="h-1.5 rounded-full bg-primary-600"
+                            style={{ width: `${(completed / total) * 100}%` }}
+                          />
+                        </div>
+                      )}
+                    </button>
+                    {index < ROUNDS.length - 1 && (
+                      <ChevronRight
+                        size={18}
+                        className="absolute -right-3 top-1/2 z-10 hidden -translate-y-1/2 text-slate-400 xl:block"
+                      />
+                    )}
+                  </div>
                 );
               })}
             </div>
+            {roundFilter !== "All" && (
+              <div className="mt-3 flex justify-end">
+                <button
+                  type="button"
+                  onClick={() => setRoundFilter("All")}
+                  className="inline-flex items-center gap-1 text-sm font-semibold text-primary-700 hover:text-primary-900"
+                >
+                  <X size={14} /> Clear filter
+                </button>
+              </div>
+            )}
           </section>
 
           <section className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-            <div className="flex flex-col gap-4 border-b border-slate-200 p-5 lg:flex-row lg:items-center lg:justify-between">
-              <div>
-                <h2 className="font-semibold text-slate-900">
-                  Candidate Progress
-                </h2>
-                <p className="mt-1 text-sm text-slate-500">
-                  {loading
-                    ? "Loading candidates..."
-                    : `${filteredCandidates.length} candidate${filteredCandidates.length !== 1 ? "s" : ""} found`}
-                </p>
+            <div className="flex flex-wrap items-center gap-3 border-b border-slate-200 p-5">
+              <div className="relative min-w-56 flex-1">
+                <Search
+                  size={17}
+                  className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+                />
+                <input
+                  type="search"
+                  value={searchTerm}
+                  onChange={(event) => setSearchTerm(event.target.value)}
+                  placeholder="Search candidates..."
+                  aria-label="Search candidates"
+                  className="w-full rounded-xl border border-slate-200 py-2.5 pl-9 pr-3 text-sm outline-none focus:border-primary-400 focus:ring-2 focus:ring-primary-100"
+                />
               </div>
-
               <div className="flex flex-col gap-3 sm:flex-row">
-                <div className="relative">
-                  <Search
-                    size={17}
-                    className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
-                  />
-                  <input
-                    type="search"
-                    value={searchTerm}
-                    onChange={(event) => setSearchTerm(event.target.value)}
-                    placeholder="Search candidates..."
-                    aria-label="Search candidates"
-                    className="w-full rounded-lg border border-slate-200 py-2.5 pl-9 pr-3 text-sm outline-none focus:border-primary-400 focus:ring-2 focus:ring-primary-100 sm:w-64"
-                  />
-                </div>
-
                 <button
                   type="button"
                   onClick={() => setShowFilters((value) => !value)}
                   aria-expanded={showFilters}
-                  className={`inline-flex items-center justify-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-medium ${
-                    showFilters
-                      ? "border-primary-200 bg-primary-50 text-primary-700"
-                      : "border-slate-200 text-slate-700 hover:bg-slate-50"
-                  }`}
+                  className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 px-5 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50"
                 >
                   <Filter size={16} /> Filters
                 </button>
               </div>
+              <span className="ml-auto text-xs text-slate-500">
+                {loading
+                  ? "Loading candidates..."
+                  : `${filteredCandidates.length} candidate${filteredCandidates.length !== 1 ? "s" : ""} found`}
+              </span>
             </div>
 
             {showFilters && (
@@ -1214,22 +1208,23 @@ export default function InterviewProgress() {
               </div>
             )}
 
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[1000px] text-left">
-                <thead className="bg-slate-50">
-                  <tr className="border-b border-slate-200 text-xs uppercase tracking-wide text-slate-500">
+            <div className="mx-5 mb-5 overflow-hidden rounded-xl border border-slate-200 bg-white">
+              <div className="overflow-x-auto">
+              <table className="w-full min-w-[1000px] text-left text-sm text-slate-600">
+                <thead className="border-b border-slate-200 bg-slate-50/80 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+                  <tr>
                     {[
                       "Candidate",
                       "Job Position",
                       "Current Stage",
                       "Progress",
-                      "Overall Status",
+                      "Status",
                     ].map((heading) => (
-                      <th key={heading} className="px-5 py-4 font-semibold">
+                      <th key={heading} className="whitespace-nowrap px-4 py-3 font-semibold">
                         {heading}
                       </th>
                     ))}
-                    <th className="px-5 py-4 text-right font-semibold">
+                    <th className="whitespace-nowrap px-4 py-3 text-right font-semibold">
                       Actions
                     </th>
                   </tr>
@@ -1240,11 +1235,11 @@ export default function InterviewProgress() {
                     filteredCandidates.map((candidate) => (
                       <tr
                         key={candidate.id}
-                        className="transition hover:bg-slate-50/80"
+                        className="transition-colors duration-150 hover:bg-slate-50/80"
                       >
-                        <td className="px-5 py-4">
+                        <td className="whitespace-nowrap px-4 py-3.5">
                           <div className="flex items-center gap-3">
-                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary-50 text-sm font-bold text-primary-700">
+                            <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${avatarColorClass(candidate.candidateName)} text-xs font-bold text-white shadow-sm`}>
                               {(candidate.candidateName || "Candidate")
                                 .split(" ")
                                 .map((part) => part[0])
@@ -1253,7 +1248,7 @@ export default function InterviewProgress() {
                                 .toUpperCase()}
                             </div>
                             <div>
-                              <p className="font-semibold text-slate-800">
+                              <p className="font-semibold text-slate-900">
                                 {candidate.candidateName}
                               </p>
                               <p className="mt-1 text-xs text-slate-500">
@@ -1269,37 +1264,38 @@ export default function InterviewProgress() {
                           </div>
                         </td>
 
-                        <td className="px-5 py-4">
+                        <td className="whitespace-nowrap px-4 py-3.5">
                           <span className="text-sm text-slate-700">
                             {candidate.jobTitle}
                           </span>
                           <p className="mt-1 text-xs text-slate-400">
-                            Applied {formatDate(candidate.appliedDate)}
+                            Applied · {formatDate(candidate.appliedDate)}
                           </p>
                         </td>
 
-                        <td className="px-5 py-4 text-sm font-medium text-slate-700">
+                        <td className="whitespace-nowrap px-4 py-3.5 text-sm font-medium text-slate-700">
                           {getCurrentStage(candidate)}
                         </td>
 
-                        <td className="px-5 py-4">
+                        <td className="px-4 py-3.5">
                           <ProgressBar candidate={candidate} />
                         </td>
 
-                        <td className="px-5 py-4">
+                        <td className="whitespace-nowrap px-4 py-3.5">
                           <span
-                            className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${getStatusStyle(candidate.overallStatus)}`}
+                            className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-bold shadow-xs ${getStatusStyle(candidate.overallStatus)}`}
                           >
+                            <span className="h-1.5 w-1.5 rounded-full bg-current" />
                             {candidate.overallStatus}
                           </span>
                         </td>
 
-                        <td className="px-5 py-4">
+                        <td className="whitespace-nowrap px-4 py-3.5">
                           <div className="flex justify-end">
                             <button
                               type="button"
                               onClick={() => setSelectedCandidate(candidate)}
-                              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700 hover:border-primary-200 hover:bg-primary-50 hover:text-primary-700"
+                              className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-xl border border-slate-200 bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-xs hover:bg-slate-200"
                             >
                               <Eye size={15} /> View Progress{" "}
                               <ArrowRight size={14} />
@@ -1344,6 +1340,7 @@ export default function InterviewProgress() {
                   )}
                 </tbody>
               </table>
+            </div>
             </div>
 
             <div className="border-t border-slate-200 px-5 py-3 text-xs text-slate-500">

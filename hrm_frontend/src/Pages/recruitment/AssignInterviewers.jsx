@@ -10,14 +10,15 @@ import {
   AlertTriangle,
   X,
   Pencil,
-  Filter,
-  ChevronDown,
   RefreshCw,
   LoaderCircle,
   Ban,
+  Eye,
 } from "lucide-react";
 import PageLayout from "../../components/PageLayout";
+import StatCard, { StatCardGrid } from "../../components/StatCard";
 import { recruitmentApi } from "../../services/api";
+import { avatarColorClass } from "../../utils/avatarColor";
 
 const STAGES = [
   "Technical Interview",
@@ -785,10 +786,9 @@ export default function AssignInterviewers() {
   const stageColor = (stage) => {
     if (stage === "Technical Interview") return "bg-primary-50 text-primary-700";
     if (stage === "HR Interview") return "bg-slate-100 text-slate-700";
-    if (stage === "Hiring Manager Interview")
-      return "bg-amber-50 text-amber-700";
+    if (stage === "Hiring Manager Interview") return "bg-primary-50 text-primary-700";
 
-    return "bg-emerald-50 text-emerald-700";
+    return "bg-slate-100 text-slate-700";
   };
 
   const statusBadge = (interview) => {
@@ -797,7 +797,7 @@ export default function AssignInterviewers() {
 
     const className =
       status === "Completed"
-        ? "bg-emerald-50 text-emerald-700"
+        ? "bg-green-50 text-green-700"
         : status === "Cancelled"
           ? "bg-red-50 text-red-700"
           : locked
@@ -808,6 +808,7 @@ export default function AssignInterviewers() {
       <span
         className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ${className}`}
       >
+        <span className="h-1.5 w-1.5 rounded-full bg-current" />
         {status === "Completed" && <CheckCircle2 size={14} />}
         {status === "Cancelled" && <Ban size={14} />}
         {status}
@@ -835,7 +836,7 @@ export default function AssignInterviewers() {
         {assignedPeople.map(({ id, person }) => (
           <div key={id} className="flex items-center gap-2">
             {!compact && (
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary-100 text-xs font-semibold text-primary-700">
+              <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl ${avatarColorClass(person?.name ?? id)} text-xs font-semibold text-white`}>
                 {getInitials(person?.name ?? "Unknown")}
               </div>
             )}
@@ -934,7 +935,8 @@ export default function AssignInterviewers() {
             >
               <span>
                 <AlertTriangle size={17} className="mr-2 inline" />
-                {employeeLoadError}
+                No interviewers are available yet. Ask an admin to give
+                employees the Interviewer role.
               </span>
               <button
                 type="button"
@@ -962,47 +964,43 @@ export default function AssignInterviewers() {
             </div>
           )}
 
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <div className="mb-6">
+            <StatCardGrid>
             <StatCard
               label="Total Interviews"
               value={loading ? "—" : interviews.length}
-              icon={<CalendarDays size={21} />}
-              color="primary"
+              caption="All interviews"
+              icon={CalendarDays}
+              tone="primary"
             />
             <StatCard
               label="Assigned Interviews"
               value={loading ? "—" : assignedCount}
-              icon={<CheckCircle2 size={21} />}
-              color="green"
+              caption="Panel assigned"
+              icon={CheckCircle2}
+              tone="green"
             />
             <StatCard
               label="Awaiting Assignment"
               value={loading ? "—" : unassignedCount}
-              icon={<AlertTriangle size={21} />}
-              color="amber"
+              caption="Need interviewers"
+              icon={AlertTriangle}
+              tone="amber"
             />
             <StatCard
               label="Total Assignments"
               value={loading ? "—" : totalAssignments}
-              icon={<Users size={21} />}
-              color="slate"
+              caption="Interviewer assignments"
+              icon={Users}
+              tone="slate"
             />
+            </StatCardGrid>
           </div>
 
-          <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+          <section className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
             <div className="border-b border-slate-100 p-5 sm:p-6">
-              <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-center">
-                <div>
-                  <h2 className="text-lg font-semibold text-slate-900">
-                    Interview Assignments
-                  </h2>
-                  <p className="mt-1 text-sm text-slate-500">
-                    Manage interview panels for interviews returned by the
-                    backend.
-                  </p>
-                </div>
-
-                <div className="relative w-full lg:max-w-xs">
+              <div className="flex flex-col gap-4">
+                <div className="relative max-w-md">
                   <Search
                     size={18}
                     className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
@@ -1014,53 +1012,52 @@ export default function AssignInterviewers() {
                     className="w-full rounded-xl border border-slate-200 py-2.5 pl-10 pr-4 text-sm outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-100"
                   />
                 </div>
-              </div>
-
-              <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2">
-                <div className="relative">
-                  <Filter
-                    size={16}
-                    className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
-                  />
-                  <select
-                    value={stageFilter}
-                    onChange={(event) => setStageFilter(event.target.value)}
-                    className="w-full appearance-none rounded-xl border border-slate-200 bg-white py-2.5 pl-9 pr-9 text-sm text-slate-700 outline-none focus:border-primary-500"
-                  >
-                    <option>All Stages</option>
-                    {STAGES.map((stage) => (
-                      <option key={stage}>{stage}</option>
-                    ))}
-                  </select>
-                  <ChevronDown
-                    size={16}
-                    className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-400"
-                  />
-                </div>
-
-                <div className="relative">
-                  <select
-                    value={assignmentFilter}
-                    onChange={(event) =>
-                      setAssignmentFilter(event.target.value)
-                    }
-                    className="w-full appearance-none rounded-xl border border-slate-200 bg-white px-4 py-2.5 pr-9 text-sm text-slate-700 outline-none focus:border-primary-500"
-                  >
-                    <option>All Interviews</option>
-                    <option>Assigned</option>
-                    <option>Unassigned</option>
-                  </select>
-                  <ChevronDown
-                    size={16}
-                    className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-400"
-                  />
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    Stage
+                  </span>
+                  {["All Stages", ...STAGES].map((stage) => (
+                    <button
+                      key={stage}
+                      type="button"
+                      aria-pressed={stageFilter === stage}
+                      onClick={() => setStageFilter(stage)}
+                      className={`rounded-full border px-3.5 py-2 text-sm font-semibold transition-colors ${
+                        stageFilter === stage
+                          ? "border-primary-600 bg-primary-600 text-white shadow-sm"
+                          : "border-slate-300 bg-white text-slate-600 hover:bg-slate-50"
+                      }`}
+                    >
+                      {stage}
+                    </button>
+                  ))}
+                  <span className="mx-1 h-5 w-px bg-slate-200" />
+                  <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    Status
+                  </span>
+                  {["All Interviews", "Assigned", "Unassigned"].map((status) => (
+                    <button
+                      key={status}
+                      type="button"
+                      aria-pressed={assignmentFilter === status}
+                      onClick={() => setAssignmentFilter(status)}
+                      className={`rounded-full border px-3.5 py-2 text-sm font-semibold transition-colors ${
+                        assignmentFilter === status
+                          ? "border-primary-600 bg-primary-600 text-white shadow-sm"
+                          : "border-slate-300 bg-white text-slate-600 hover:bg-slate-50"
+                      }`}
+                    >
+                      {status}
+                    </button>
+                  ))}
                 </div>
               </div>
             </div>
 
-            <div className="hidden overflow-x-auto md:block">
-              <table className="w-full min-w-[900px] text-left">
-                <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
+            <div className="mx-5 mb-5 hidden overflow-hidden rounded-xl border border-slate-200 bg-white md:block">
+              <div className="overflow-x-auto">
+              <table className="w-full min-w-[900px] text-left text-sm text-slate-600">
+                <thead className="border-b border-slate-200 bg-slate-50/80 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
                   <tr>
                     {[
                       "Candidate",
@@ -1070,7 +1067,7 @@ export default function AssignInterviewers() {
                       "Status",
                       "Actions",
                     ].map((heading) => (
-                      <th key={heading} className="px-6 py-4 font-semibold">
+                      <th key={heading} className="whitespace-nowrap px-4 py-3">
                         {heading}
                       </th>
                     ))}
@@ -1085,12 +1082,17 @@ export default function AssignInterviewers() {
                     return (
                       <tr
                         key={interview.id}
-                        className="transition hover:bg-slate-50/70"
+                        className="transition-colors duration-150 hover:bg-slate-50/80"
                       >
-                        <td className="px-6 py-5">
-                          <p className="font-semibold text-slate-900">
-                            {interview.candidate}
-                          </p>
+                        <td className="whitespace-nowrap px-4 py-3.5">
+                          <div className="flex items-center gap-3">
+                            <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${avatarColorClass(interview.candidate || interview.id)} text-xs font-bold text-white shadow-sm`}>
+                              {getInitials(interview.candidate)}
+                            </div>
+                            <div>
+                              <p className="font-semibold text-slate-900">
+                                {interview.candidate}
+                              </p>
                           <p className="mt-1 text-xs text-slate-500">
                             {interview.position}
                           </p>
@@ -1099,17 +1101,19 @@ export default function AssignInterviewers() {
                               Application ID: {interview.applicationId}
                             </p>
                           )}
+                            </div>
+                          </div>
                         </td>
 
-                        <td className="px-6 py-5">
+                        <td className="whitespace-nowrap px-4 py-3.5">
                           <span
-                            className={`inline-flex rounded-full px-3 py-1.5 text-xs font-medium ${stageColor(interview.stage)}`}
+                            className={`inline-flex whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-bold ${stageColor(interview.stage)}`}
                           >
                             {interview.stage}
                           </span>
                         </td>
 
-                        <td className="px-6 py-5">
+                        <td className="whitespace-nowrap px-4 py-3.5">
                           <p className="flex items-center gap-2 text-sm text-slate-700">
                             <CalendarDays
                               size={15}
@@ -1124,16 +1128,25 @@ export default function AssignInterviewers() {
                           </p>
                         </td>
 
-                        <td className="px-6 py-5">
+                        <td className="px-4 py-3.5">
                           {renderAssigned(interview)}
                         </td>
 
-                        <td className="px-6 py-5">
+                        <td className="whitespace-nowrap px-4 py-3.5">
                           {statusBadge(interview)}
                         </td>
 
-                        <td className="px-6 py-5 text-right">
-                          {!locked ? (
+                        <td className="whitespace-nowrap px-4 py-3.5 text-right">
+                          {getDisplayStatus(interview) === "Completed" ? (
+                            <button
+                              type="button"
+                              disabled
+                              className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-400"
+                            >
+                              <Eye size={14} />
+                              View
+                            </button>
+                          ) : !locked ? (
                             <button
                               type="button"
                               onClick={() => openAssignmentModal(interview)}
@@ -1157,6 +1170,7 @@ export default function AssignInterviewers() {
                   })}
                 </tbody>
               </table>
+              </div>
             </div>
 
             <div className="space-y-4 p-4 md:hidden">
@@ -1471,26 +1485,5 @@ export default function AssignInterviewers() {
         </div>
       )}
     </PageLayout>
-  );
-}
-
-function StatCard({ label, value, icon, color }) {
-  const colors = {
-    primary: "from-primary-600 to-primary-700",
-    green: "from-primary-700 to-primary-800",
-    amber: "from-primary-500 to-primary-600",
-    slate: "from-primary-800 to-primary-900",
-  };
-
-  return (
-    <div className={`rounded-2xl bg-gradient-to-br p-5 text-white shadow-md ${colors[color] || colors.primary}`}>
-      <div className="flex items-center justify-between gap-3">
-        <div className="rounded-xl bg-white/20 p-3 text-white">{icon}</div>
-        <span className="text-3xl font-bold tabular-nums text-white">
-          {value}
-        </span>
-      </div>
-      <p className="mt-4 text-sm font-medium text-white/85">{label}</p>
-    </div>
   );
 }

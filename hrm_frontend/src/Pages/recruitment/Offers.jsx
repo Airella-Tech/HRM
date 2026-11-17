@@ -1,6 +1,7 @@
 
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import PageLayout from "../../components/PageLayout";
+import StatCard, { StatCardGrid } from "../../components/StatCard";
 import { recruitmentApi } from "../../services/api";
 import {
   Search,
@@ -24,7 +25,9 @@ import {
   Mail,
   Trash2,
   Users,
+  UserCheck,
 } from "lucide-react";
+import { avatarColorClass } from "../../utils/avatarColor";
 
 // ============================================================
 // CONSTANTS
@@ -44,12 +47,12 @@ const emptyForm = {
 };
 
 const statusStyles = {
-  Draft: "bg-slate-100 text-slate-700",
-  Sent: "bg-primary-100 text-primary-700",
-  Pending: "bg-amber-100 text-amber-700",
-  Accepted: "bg-emerald-100 text-emerald-700",
-  Rejected: "bg-rose-100 text-rose-700",
-  Withdrawn: "bg-slate-200 text-slate-600",
+  Draft: "bg-slate-100 text-slate-700 border-slate-200",
+  Sent: "bg-primary-50 text-primary-700 border-primary-200",
+  Pending: "bg-amber-50 text-amber-700 border-amber-200",
+  Accepted: "bg-green-50 text-green-700 border-green-200",
+  Rejected: "bg-red-50 text-red-700 border-red-200",
+  Withdrawn: "bg-slate-100 text-slate-600 border-slate-200",
 };
 
 // ============================================================
@@ -162,40 +165,13 @@ function getInitials(name = "") {
 function StatusBadge({ status }) {
   return (
     <span
-      className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ${
+      className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-bold shadow-xs ${
         statusStyles[status] || statusStyles.Draft
       }`}
     >
+      <span className="h-1.5 w-1.5 rounded-full bg-current" />
       {status}
     </span>
-  );
-}
-
-function StatCard({ title, value, icon: Icon, color, description }) {
-  const gradient = color === "red"
-    ? "from-primary-600 to-primary-700"
-    : color === "green"
-      ? "from-primary-700 to-primary-800"
-      : color === "amber"
-        ? "from-primary-500 to-primary-600"
-        : color === "slate"
-          ? "from-primary-800 to-primary-900"
-          : "from-primary-600 to-primary-700";
-
-  return (
-    <div className={`rounded-2xl bg-gradient-to-br ${gradient} p-5 text-white shadow-md`}>
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <p className="text-sm font-medium text-white/85">{title}</p>
-          <h3 className="mt-2 text-3xl font-bold text-white">{value}</h3>
-          <p className="mt-1 text-xs text-white/75">{description}</p>
-        </div>
-
-        <div className="rounded-xl bg-white/20 p-3 text-white">
-          <Icon size={21} />
-        </div>
-      </div>
-    </div>
   );
 }
 
@@ -732,11 +708,52 @@ export default function JobOffers() {
           </div>
         )}
 
+        {/* STATISTICS */}
+        <div className="mb-6">
+          <StatCardGrid cols={5}>
+            <StatCard
+              label="Total Offers"
+              value={stats.total}
+              caption="All offer records"
+              icon={FileText}
+              tone="primary"
+            />
+            <StatCard
+              label="Drafts"
+              value={stats.drafts}
+              caption="Not yet sent"
+              icon={Pencil}
+              tone="slate"
+            />
+            <StatCard
+              label="Awaiting Response"
+              value={stats.pending}
+              caption="Sent or pending"
+              icon={Clock}
+              tone="amber"
+            />
+            <StatCard
+              label="Accepted"
+              value={stats.accepted}
+              caption="Accepted offers"
+              icon={CheckCircle2}
+              tone="green"
+            />
+            <StatCard
+              label="Rejected"
+              value={stats.rejected}
+              caption="Declined offers"
+              icon={XCircle}
+              tone="red"
+            />
+          </StatCardGrid>
+        </div>
+
         {/* ELIGIBLE CANDIDATES SUMMARY */}
-        <div className="mb-7 rounded-xl border border-primary-100 bg-primary-50/60 p-5">
+        <div className="mb-6 rounded-xl border border-slate-200 border-l-4 border-l-primary-600 bg-white p-5 shadow-sm">
           <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
             <div className="flex items-center gap-3">
-              <div className="rounded-xl bg-primary-100 p-3 text-primary-700">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary-50 text-primary-700">
                 <Users size={22} />
               </div>
 
@@ -745,23 +762,19 @@ export default function JobOffers() {
                   Eligible Candidates
                 </h2>
 
-                <p className="mt-1 text-sm text-slate-600">
-                  Candidates who successfully completed all four interview
-                  rounds and are ready for an offer.
+                <p className="mt-1 text-sm text-slate-500">
+                  Finished all four interview rounds and ready for an offer
                 </p>
               </div>
             </div>
 
-            <div className="text-left sm:text-right">
-              <p className="text-2xl font-bold text-primary-700">
-                {eligibleLoading ? "..." : eligibleCandidates.length}
-              </p>
-              <p className="text-xs text-slate-500">Ready for job offers</p>
-            </div>
+            <span className="rounded-full bg-primary-50 px-3 py-1 text-xs font-semibold text-primary-700">
+              {eligibleLoading ? "..." : eligibleCandidates.length} ready
+            </span>
           </div>
 
           {eligibleError && (
-            <div className="mt-3 flex items-start gap-2 rounded-lg bg-white p-3 text-sm text-rose-700">
+            <div className="mt-4 flex items-start gap-2 rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm text-slate-600">
               <AlertCircle size={17} className="mt-0.5 shrink-0" />
               <span>{eligibleError}</span>
             </div>
@@ -770,96 +783,55 @@ export default function JobOffers() {
           {!eligibleLoading &&
             !eligibleError &&
             eligibleCandidates.length === 0 && (
-              <p className="mt-4 rounded-lg bg-white p-3 text-sm text-slate-500">
-                No eligible candidates are currently available. Candidates
-                will appear here after passing all four interview rounds.
-              </p>
+              <div className="mt-5 flex flex-col items-center justify-center text-center">
+                <UserCheck className="h-10 w-10 text-primary-300" />
+                <p className="mt-3 font-medium text-slate-700">
+                  No candidates are ready for an offer yet
+                </p>
+                <p className="mt-1 text-sm text-slate-500">
+                  They appear here after passing all four interview rounds.
+                </p>
+              </div>
             )}
 
           {eligibleCandidates.length > 0 && (
-            <div className="mt-4 flex flex-wrap gap-2">
-              {eligibleCandidates.slice(0, 5).map((candidate) => (
+            <div className="mt-5 space-y-2">
+              {eligibleCandidates.map((candidate) => (
                 <div
                   key={candidate.applicationId}
-                  className="rounded-lg border border-primary-100 bg-white px-3 py-2"
+                  className="flex flex-col gap-3 rounded-xl border border-slate-200 p-3 sm:flex-row sm:items-center sm:justify-between"
                 >
-                  <p className="text-sm font-semibold text-slate-800">
-                    {candidate.candidateName}
-                  </p>
-                  <p className="mt-0.5 text-xs text-slate-500">
-                    {candidate.jobTitle}
-                  </p>
+                  <div className="flex items-center gap-3">
+                    <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${avatarColorClass(candidate.candidateName)} text-xs font-bold text-white shadow-sm`}>
+                      {getInitials(candidate.candidateName)}
+                    </div>
+                    <div>
+                      <p className="font-semibold text-slate-900">
+                        {candidate.candidateName}
+                      </p>
+                      <p className="mt-0.5 text-xs text-slate-500">
+                        {candidate.jobTitle}
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={openCreate}
+                    className="rounded-xl bg-primary-600 px-4 py-2 text-sm font-semibold text-white hover:bg-primary-700"
+                  >
+                    Create offer
+                  </button>
                 </div>
               ))}
-
-              {eligibleCandidates.length > 5 && (
-                <div className="flex items-center rounded-lg bg-white px-3 py-2 text-xs font-medium text-primary-700">
-                  +{eligibleCandidates.length - 5} more candidates
-                </div>
-              )}
             </div>
           )}
-        </div>
-
-        {/* STATISTICS */}
-        <div className="mb-7 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
-          <StatCard
-            title="Total Offers"
-            value={stats.total}
-            icon={FileText}
-            color="primary"
-            description="All offer records"
-          />
-
-          <StatCard
-            title="Drafts"
-            value={stats.drafts}
-            icon={Pencil}
-            color="slate"
-            description="Not yet sent"
-          />
-
-          <StatCard
-            title="Awaiting Response"
-            value={stats.pending}
-            icon={Clock}
-            color="amber"
-            description="Sent or pending"
-          />
-
-          <StatCard
-            title="Accepted"
-            value={stats.accepted}
-            icon={CheckCircle2}
-            color="green"
-            description="Accepted offers"
-          />
-
-          <StatCard
-            title="Rejected"
-            value={stats.rejected}
-            icon={XCircle}
-            color="red"
-            description="Declined offers"
-          />
         </div>
 
         {/* OFFERS TABLE */}
         <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
           <div className="border-b border-slate-200 p-5">
-            <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-              <div>
-                <h2 className="font-semibold text-slate-900">
-                  Job Offer Records
-                </h2>
-
-                <p className="mt-1 text-sm text-slate-500">
-                  {filteredOffers.length} offer
-                  {filteredOffers.length !== 1 ? "s" : ""} found
-                </p>
-              </div>
-
-              <div className="flex flex-col gap-3 sm:flex-row">
+            <div className="flex flex-wrap items-center gap-3">
+              <div className="relative min-w-56 flex-1">
                 <div className="relative">
                   <Search
                     size={17}
@@ -870,57 +842,61 @@ export default function JobOffers() {
                     value={search}
                     onChange={(event) => setSearch(event.target.value)}
                     placeholder="Search candidates..."
-                    className="w-full rounded-xl border border-slate-200 py-2.5 pl-9 pr-3 text-sm outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-100 sm:w-60"
+                    className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 pl-9 text-sm text-slate-800 focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-100"
                   />
                 </div>
+              </div>
 
-                <div className="relative">
-                  <Filter
-                    size={15}
-                    className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
-                  />
-
-                  <select
-                    value={statusFilter}
-                    onChange={(event) => setStatusFilter(event.target.value)}
-                    className="w-full appearance-none rounded-xl border border-slate-200 bg-white py-2.5 pl-9 pr-8 text-sm outline-none focus:border-primary-500 sm:w-40"
-                  >
-                    <option value="All">All statuses</option>
-                    <option value="Draft">Draft</option>
-                    <option value="Sent">Sent</option>
-                    <option value="Pending">Pending</option>
-                    <option value="Accepted">Accepted</option>
-                    <option value="Rejected">Rejected</option>
-                    <option value="Withdrawn">Withdrawn</option>
-                  </select>
-                </div>
+              <div className="relative">
+                <Filter
+                  size={15}
+                  className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+                />
 
                 <select
-                  value={typeFilter}
-                  onChange={(event) => setTypeFilter(event.target.value)}
-                  className="rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-primary-500"
+                  value={statusFilter}
+                  onChange={(event) => setStatusFilter(event.target.value)}
+                  className="w-full appearance-none rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 pl-9 text-sm text-slate-800 focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-100 sm:w-40"
                 >
-                  <option value="All">All employment types</option>
-                  <option value="Full-time">Full-time</option>
-                  <option value="Part-time">Part-time</option>
-                  <option value="Contract">Contract</option>
-                  <option value="Internship">Internship</option>
+                  <option value="All">All statuses</option>
+                  <option value="Draft">Draft</option>
+                  <option value="Sent">Sent</option>
+                  <option value="Pending">Pending</option>
+                  <option value="Accepted">Accepted</option>
+                  <option value="Rejected">Rejected</option>
+                  <option value="Withdrawn">Withdrawn</option>
                 </select>
               </div>
+
+              <select
+                value={typeFilter}
+                onChange={(event) => setTypeFilter(event.target.value)}
+                className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-800 focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-100 sm:w-auto"
+              >
+                <option value="All">All employment types</option>
+                <option value="Full-time">Full-time</option>
+                <option value="Part-time">Part-time</option>
+                <option value="Contract">Contract</option>
+                <option value="Internship">Internship</option>
+              </select>
+              <span className="ml-auto text-xs text-slate-500">
+                {filteredOffers.length} offer
+                {filteredOffers.length !== 1 ? "s" : ""} found
+              </span>
             </div>
           </div>
 
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[1000px] text-left text-sm">
-              <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
+            <table className="w-full min-w-[1000px] text-left text-sm text-slate-600">
+              <thead className="border-b border-slate-200 bg-slate-50/80 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
                 <tr>
-                  <th className="px-5 py-4 font-semibold">Candidate</th>
-                  <th className="px-5 py-4 font-semibold">Job Position</th>
-                  <th className="px-5 py-4 font-semibold">Salary / Month</th>
-                  <th className="px-5 py-4 font-semibold">Start Date</th>
-                  <th className="px-5 py-4 font-semibold">Offer Expiry</th>
-                  <th className="px-5 py-4 font-semibold">Status</th>
-                  <th className="px-5 py-4 text-right font-semibold">
+                  <th className="whitespace-nowrap px-4 py-3 font-semibold">Candidate</th>
+                  <th className="whitespace-nowrap px-4 py-3 font-semibold">Job Position</th>
+                  <th className="whitespace-nowrap px-4 py-3 font-semibold">Salary / Month</th>
+                  <th className="whitespace-nowrap px-4 py-3 font-semibold">Start Date</th>
+                  <th className="whitespace-nowrap px-4 py-3 font-semibold">Offer Expiry</th>
+                  <th className="whitespace-nowrap px-4 py-3 font-semibold">Status</th>
+                  <th className="whitespace-nowrap px-4 py-3 text-right font-semibold">
                     Actions
                   </th>
                 </tr>
@@ -944,11 +920,11 @@ export default function JobOffers() {
                   filteredOffers.map((offer) => (
                     <tr
                       key={offer.id}
-                      className="transition hover:bg-slate-50"
+                      className="transition-colors duration-150 hover:bg-slate-50/80"
                     >
-                      <td className="px-5 py-4">
+                      <td className="whitespace-nowrap px-4 py-3.5">
                         <div className="flex items-center gap-3">
-                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary-100 font-semibold text-primary-700">
+                          <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${avatarColorClass(offer.candidateName)} text-xs font-bold text-white shadow-sm`}>
                             {getInitials(offer.candidateName)}
                           </div>
 
@@ -964,7 +940,7 @@ export default function JobOffers() {
                         </div>
                       </td>
 
-                      <td className="px-5 py-4">
+                      <td className="whitespace-nowrap px-4 py-3.5">
                         <p className="font-medium text-slate-800">
                           {offer.jobTitle}
                         </p>
@@ -974,29 +950,30 @@ export default function JobOffers() {
                         </p>
                       </td>
 
-                      <td className="whitespace-nowrap px-5 py-4 font-medium text-slate-800">
+                      <td className="whitespace-nowrap px-4 py-3.5 font-medium text-slate-800">
                         {formatSalary(offer.salary)}
                       </td>
 
-                      <td className="whitespace-nowrap px-5 py-4 text-slate-600">
+                      <td className="whitespace-nowrap px-4 py-3.5 text-slate-600">
                         {formatDate(offer.startDate)}
                       </td>
 
-                      <td className="whitespace-nowrap px-5 py-4 text-slate-600">
+                      <td className="whitespace-nowrap px-4 py-3.5 text-slate-600">
                         {formatDate(offer.expiryDate)}
                       </td>
 
-                      <td className="px-5 py-4">
+                      <td className="whitespace-nowrap px-4 py-3.5">
                         <StatusBadge status={offer.status} />
                       </td>
 
-                      <td className="px-5 py-4">
-                        <div className="flex items-center justify-end gap-1">
+                      <td className="whitespace-nowrap px-4 py-3.5 text-right">
+                        <div className="inline-flex items-center justify-end gap-1">
                           <button
                             type="button"
                             title="View offer details"
+                            aria-label="View offer details"
                             onClick={() => openDetails(offer)}
-                            className="rounded-md p-2 text-slate-500 hover:bg-primary-50 hover:text-primary-600"
+                            className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-slate-100 text-slate-700 shadow-xs hover:bg-slate-200"
                           >
                             <Eye size={17} />
                           </button>
@@ -1004,12 +981,13 @@ export default function JobOffers() {
                           <button
                             type="button"
                             title="Edit draft offer"
+                            aria-label="Edit draft offer"
                             onClick={() => openEdit(offer)}
                             disabled={
                               offer.status !== "Draft" ||
                               actionId === offer.id
                             }
-                            className="rounded-md p-2 text-slate-500 hover:bg-primary-50 hover:text-primary-600 disabled:cursor-not-allowed disabled:opacity-30"
+                            className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-slate-100 text-slate-700 shadow-xs hover:bg-slate-200 disabled:cursor-not-allowed disabled:opacity-30"
                           >
                             <Pencil size={17} />
                           </button>
@@ -1019,9 +997,10 @@ export default function JobOffers() {
                               <button
                                 type="button"
                                 title="Send offer email"
+                                aria-label="Send offer email"
                                 onClick={() => openDetails(offer)}
                                 disabled={actionId === offer.id}
-                                className="rounded-md p-2 text-slate-500 hover:bg-emerald-50 hover:text-emerald-600 disabled:opacity-50"
+                                className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-slate-100 text-slate-700 shadow-xs hover:bg-slate-200 disabled:opacity-50"
                               >
                                 <Mail size={17} />
                               </button>
@@ -1029,9 +1008,10 @@ export default function JobOffers() {
                               <button
                                 type="button"
                                 title="Delete draft offer"
+                                aria-label="Delete draft offer"
                                 onClick={() => deleteOffer(offer)}
                                 disabled={actionId === offer.id}
-                                className="rounded-md p-2 text-slate-500 hover:bg-rose-50 hover:text-rose-600 disabled:opacity-50"
+                                className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-slate-100 text-slate-700 shadow-xs hover:bg-slate-200 disabled:opacity-50"
                               >
                                 <Trash2 size={17} />
                               </button>
@@ -1042,6 +1022,7 @@ export default function JobOffers() {
                             <button
                               type="button"
                               title="Withdraw offer"
+                              aria-label="Withdraw offer"
                               disabled={actionId === offer.id}
                               onClick={() => {
                                 if (
@@ -1052,7 +1033,7 @@ export default function JobOffers() {
                                   changeStatus(offer, "Withdrawn");
                                 }
                               }}
-                              className="rounded-md p-2 text-slate-500 hover:bg-rose-50 hover:text-rose-600 disabled:opacity-50"
+                              className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-slate-100 text-slate-700 shadow-xs hover:bg-slate-200 disabled:opacity-50"
                             >
                               <Ban size={17} />
                             </button>

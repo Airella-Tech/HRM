@@ -19,6 +19,7 @@ import {
 import PageLayout from "../../components/PageLayout";
 import StatCard, { StatCardGrid } from "../../components/StatCard";
 import { recruitmentApi } from "../../services/api";
+import { avatarColorClass } from "../../utils/avatarColor";
 
 // Interview rounds must follow this order.
 const ROUND_ORDER = [
@@ -943,6 +944,7 @@ export default function InterviewEvaluationReview() {
             <StatCard
               label="Completed Interviews"
               value={reviewableInterviews.length}
+              caption="Rounds finished"
               icon={CalendarDays}
               tone="primary"
             />
@@ -951,6 +953,7 @@ export default function InterviewEvaluationReview() {
               value={reviewableInterviews.filter(
                 (interview) => getDecisionLabel(interview) === "Pending Review",
               ).length}
+              caption="Need a decision"
               icon={Clock}
               tone="amber"
             />
@@ -959,6 +962,7 @@ export default function InterviewEvaluationReview() {
               value={reviewableInterviews.filter(
                 (interview) => getDecisionLabel(interview) === "Approved",
               ).length}
+              caption="Moved forward"
               icon={CheckCircle2}
               tone="green"
             />
@@ -978,14 +982,14 @@ export default function InterviewEvaluationReview() {
                   value={search}
                   onChange={(event) => setSearch(event.target.value)}
                   placeholder="Search candidate or vacancy..."
-                  className="w-full rounded-lg border border-slate-300 py-2.5 pl-10 pr-4 text-sm outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-100"
+                  className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 pl-10 text-sm text-slate-800 focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-100"
                 />
               </div>
 
               <select
                 value={roundFilter}
                 onChange={(event) => setRoundFilter(event.target.value)}
-                className="rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm outline-none focus:border-primary-500"
+                className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-800 focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-100 md:w-auto"
               >
                 <option value="ALL">All Interview Rounds</option>
 
@@ -996,20 +1000,13 @@ export default function InterviewEvaluationReview() {
                 ))}
               </select>
             </div>
+            <p className="mt-3 text-xs text-slate-500">
+              Review all submitted evaluations before making a decision.
+            </p>
           </div>
 
           {/* Interview list */}
           <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-            <div className="border-b border-slate-200 px-5 py-4">
-              <h2 className="font-semibold text-slate-900">
-                Completed Interview Rounds
-              </h2>
-
-              <p className="mt-1 text-xs text-slate-500">
-                Review all submitted evaluations before making a decision.
-              </p>
-            </div>
-
             {loading ? (
               <div className="flex items-center justify-center gap-3 p-12 text-sm text-slate-500">
                 <RefreshCw className="animate-spin" size={19} />
@@ -1034,30 +1031,30 @@ export default function InterviewEvaluationReview() {
               <>
                 {/* Desktop table */}
                 <div className="hidden overflow-x-auto md:block">
-                  <table className="w-full text-left text-sm">
-                    <thead className="bg-slate-50 text-xs uppercase text-slate-500">
+                  <table className="w-full min-w-[980px] text-left text-sm text-slate-600">
+                    <thead className="border-b border-slate-200 bg-slate-50/80 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
                       <tr>
-                        <th className="px-5 py-3 font-semibold">
+                        <th className="whitespace-nowrap px-4 py-3 font-semibold">
                           Candidate
                         </th>
 
-                        <th className="px-5 py-3 font-semibold">
+                        <th className="whitespace-nowrap px-4 py-3 font-semibold">
                           Vacancy
                         </th>
 
-                        <th className="px-5 py-3 font-semibold">
+                        <th className="whitespace-nowrap px-4 py-3 font-semibold">
                           Round
                         </th>
 
-                        <th className="px-5 py-3 font-semibold">
+                        <th className="whitespace-nowrap px-4 py-3 font-semibold">
                           Evaluations
                         </th>
 
-                        <th className="px-5 py-3 font-semibold">
+                        <th className="whitespace-nowrap px-4 py-3 font-semibold">
                           Decision
                         </th>
 
-                        <th className="px-5 py-3 text-right font-semibold">
+                        <th className="whitespace-nowrap px-4 py-3 text-right font-semibold">
                           Action
                         </th>
                       </tr>
@@ -1072,11 +1069,17 @@ export default function InterviewEvaluationReview() {
                           getDecisionLabel(interview);
 
                         return (
-                          <tr key={id} className="hover:bg-slate-50">
-                            <td className="px-5 py-4">
+                          <tr key={id} className="transition-colors duration-150 hover:bg-slate-50/80">
+                            <td className="whitespace-nowrap px-4 py-3.5">
                               <div className="flex items-center gap-3">
-                                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary-50 text-primary-600">
-                                  <UserRound size={17} />
+                                <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${avatarColorClass(getCandidateName(interview))} text-xs font-bold text-white shadow-sm`}>
+                                  {getCandidateName(interview)
+                                    .split(/\s+/)
+                                    .map((part) => part[0])
+                                    .filter(Boolean)
+                                    .slice(0, 2)
+                                    .join("")
+                                    .toUpperCase()}
                                 </div>
 
                                 <span className="font-semibold text-slate-800">
@@ -1085,50 +1088,51 @@ export default function InterviewEvaluationReview() {
                               </div>
                             </td>
 
-                            <td className="px-5 py-4 text-slate-600">
+                            <td className="whitespace-nowrap px-4 py-3.5 text-slate-600">
                               {getVacancyName(interview)}
                             </td>
 
-                            <td className="px-5 py-4">
-                              <span className="rounded-full bg-primary-50 px-3 py-1 text-xs font-medium text-primary-700">
+                            <td className="whitespace-nowrap px-4 py-3.5">
+                              <span className="inline-flex whitespace-nowrap rounded-md bg-primary-50 px-2 py-1 text-xs font-semibold text-primary-700">
                                 {getRoundName(interview)}
                               </span>
                             </td>
 
-                            <td className="px-5 py-4">
+                            <td className="whitespace-nowrap px-4 py-3.5">
                               <span
-                                className={`font-semibold ${
+                                className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-bold shadow-xs ${
                                   evaluationStatus.complete
-                                    ? "text-green-700"
-                                    : "text-amber-700"
+                                    ? "border-green-200 bg-green-50 text-green-700"
+                                    : "border-amber-200 bg-amber-50 text-amber-700"
                                 }`}
                               >
+                                <span className="h-1.5 w-1.5 rounded-full bg-current" />
                                 {evaluationStatus.submittedCount}/
                                 {evaluationStatus.assignedCount} submitted
                               </span>
                             </td>
 
-                            <td className="px-5 py-4">
+                            <td className="whitespace-nowrap px-4 py-3.5">
                               <span
-                                className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                                className={`inline-flex whitespace-nowrap rounded-full border px-2.5 py-1 text-xs font-bold shadow-xs ${
                                   managerDecision === "Approved"
-                                    ? "bg-green-100 text-green-700"
+                                    ? "border-green-200 bg-green-50 text-green-700"
                                     : managerDecision === "Rejected"
-                                      ? "bg-red-100 text-red-700"
+                                      ? "border-red-200 bg-red-50 text-red-700"
                                       : managerDecision === "Unable to Load"
-                                        ? "bg-red-100 text-red-700"
-                                        : "bg-amber-100 text-amber-700"
+                                        ? "border-red-200 bg-red-50 text-red-700"
+                                        : "border-amber-200 bg-amber-50 text-amber-700"
                                 }`}
                               >
                                 {managerDecision}
                               </span>
                             </td>
 
-                            <td className="px-5 py-4 text-right">
+                            <td className="whitespace-nowrap px-4 py-3.5 text-right">
                               <button
                                 type="button"
                                 onClick={() => openReview(interview)}
-                                className="inline-flex items-center gap-2 rounded-xl bg-primary-600 px-3 py-2 text-xs font-semibold text-white hover:bg-primary-700"
+                                className="inline-flex items-center gap-2 whitespace-nowrap rounded-xl bg-primary-600 px-3 py-2 text-sm font-semibold text-white hover:bg-primary-700"
                               >
                                 <Eye size={15} />
                                 View Reviews
