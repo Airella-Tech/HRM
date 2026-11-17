@@ -228,8 +228,8 @@ const ACCENT = {
     topbar: "border-gray-100",
     title: "text-gray-900",
     hover: "hover:bg-gray-100",
-    activeBg: "#1B347D",
-    activeBorder: "border-blue-400",
+    activeBg: "#0369a1",
+    activeBorder: "border-sky-300",
   },
   admin: {
     from: "rgba(99,102,241,0.8)",
