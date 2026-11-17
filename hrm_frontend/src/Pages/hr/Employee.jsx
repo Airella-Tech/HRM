@@ -15,10 +15,8 @@ import {
   Calendar,
   Loader2,
   AlertCircle,
-  CheckCircle2,
   Filter,
   UserCheck,
-  Sparkles,
   ArrowUpDown,
   ChevronUp,
   ChevronDown,
@@ -26,7 +24,6 @@ import {
   MapPin,
   ChevronLeft,
   ChevronRight,
-  Layers3,
 } from "lucide-react";
 import { PageLayout } from "../../components/PageLayout";
 import { NameListModal } from "../../components/NameListModal";
@@ -334,12 +331,12 @@ const Employee = () => {
             onClick={() => setShowAddEmployeeTypeModal(true)}
             className="
               inline-flex items-center gap-2
-             bg-primary-600
-             hover:bg-primary-700
-              text-white px-4 py-2.5
-              rounded-xl text-sm font-semibold
-              shadow-sm shadow-primary-600/20
-              transition-all duration-200
+             bg-sky-600
+             hover:bg-sky-700
+             text-white px-4 py-2.5
+               rounded-xl text-sm font-semibold
+               shadow-sm shadow-sky-600/20
+               transition-all duration-200
             "
           >
             <Plus size={17} strokeWidth={2.5} />
@@ -350,12 +347,12 @@ const Employee = () => {
             onClick={() => setShowAddWorkLocationModal(true)}
             className="
               inline-flex items-center gap-2
-              bg-primary-600
-              hover:bg-primary-700
+              bg-sky-600
+              hover:bg-sky-700
               text-white px-4 py-2.5
-              rounded-xl text-sm font-semibold
-              shadow-sm shadow-primary-600/20
-              transition-all duration-200
+                rounded-xl text-sm font-semibold
+                shadow-sm shadow-sky-600/20
+                transition-all duration-200
             "
           >
             <Plus size={17} strokeWidth={2.5} />
@@ -366,12 +363,12 @@ const Employee = () => {
             onClick={openCreateForm}
             className="
               inline-flex items-center gap-2
-              bg-primary-600
-              hover:bg-primary-700
+              bg-sky-600
+              hover:bg-sky-700
               text-white px-4 py-2.5
-              rounded-xl text-sm font-semibold
-              shadow-sm shadow-primary-600/20
-              transition-all duration-200
+                rounded-xl text-sm font-semibold
+                shadow-sm shadow-sky-600/20
+                transition-all duration-200
             "
           >
             <Plus size={17} strokeWidth={2.5} />
@@ -384,39 +381,39 @@ const Employee = () => {
         {/* EMPLOYEE DIRECTORY INTRO */}
         <div
           className="
-  relative overflow-hidden
-  rounded-2xl
-  border border-primary-200
-  bg-gradient-to-r from-primary-100 via-primary-50 to-white
-  p-6 sm:p-7
+            relative overflow-hidden
+            rounded-2xl
+            border border-sky-100
+            bg-gradient-to-r from-sky-50 via-sky-50/60 to-white
+           p-6 sm:p-7
 "
         >
           <div
             className="
-    absolute -right-10 -top-12
-    h-40 w-40 rounded-full
-    bg-primary-200/40
-  "
+             absolute -right-10 -top-12
+             h-40 w-40 rounded-full
+             bg-sky-200/40
+             "
           />
 
           <div
-            className="
-    absolute right-24 -bottom-16
-    h-36 w-36 rounded-full
-    bg-primary-100/70
-  "
+             className="
+               absolute right-24 -bottom-16
+               h-36 w-36 rounded-full
+              bg-sky-300/20
+               "
           />
 
           <div className="relative flex flex-col sm:flex-row sm:items-center justify-between gap-5">
             <div className="flex items-start gap-4">
               <div
                 className="
-        h-14 w-14 shrink-0
-        rounded-2xl
-        bg-primary-600
-        text-white
-        flex items-center justify-center
-        shadow-lg shadow-primary-600/20
+                    h-14 w-14 shrink-0
+                    rounded-2xl
+                  bg-sky-600
+                  text-white
+                    flex items-center justify-center
+                    shadow-lg shadow-sky-600/20
       "
               >
                 <Users size={27} />
@@ -432,11 +429,11 @@ const Employee = () => {
                     className="
             inline-flex items-center gap-1
             rounded-full
-            bg-primary-100
-            border border-primary-200
+            bg-sky-50
+            border border-sky-100
             px-2.5 py-1
             text-[10px] font-bold uppercase tracking-wider
-            text-primary-700
+            text-sky-700
           "
                   >
                     <BadgeCheck size={12} />
@@ -453,12 +450,12 @@ const Employee = () => {
 
             <div
               className="
-      relative flex items-center gap-2
-      rounded-xl border border-primary-200
-      bg-white/80 px-4 py-3
-      text-sm font-semibold text-primary-700
-      shadow-sm
-    "
+                 relative flex items-center gap-2
+                 rounded-xl border border-sky-100
+               bg-white/80 px-4 py-3
+                 text-sm font-semibold text-sky-800
+                  shadow-sm
+                  "
             >
               <UserCheck size={18} />
               <span>{totalEmployees} Registered Employees</span>
@@ -476,7 +473,7 @@ const Employee = () => {
             title="Total Employees"
             value={totalEmployees}
             description="Registered in organization"
-            className="bg-primary-600"
+            className="bg-gradient-to-br from-sky-600 to-sky-700"
           />
 
           {/* ACTIVE EMPLOYEES (present today, from attendance) */}
@@ -486,7 +483,7 @@ const Employee = () => {
             value={presentToday}
             description="Present today · click to view attendance"
             onClick={() => navigate("/hr/attendance")}
-            className="bg-primary-500"
+            className="bg-gradient-to-br from-sky-500 to-sky-600"
           />
 
           {/*DEPARTMENTS */}
@@ -496,7 +493,7 @@ const Employee = () => {
             value={totalDeptsRepresented}
             description="Active database departments · click to view"
             onClick={() => navigate("/hr/departments")}
-            className="bg-primary-700"
+            className="bg-gradient-to-br from-sky-700 to-sky-800"
           />
         </div>
 
@@ -548,9 +545,9 @@ const Employee = () => {
                   placeholder:text-slate-400
                   focus:outline-none
                   focus:bg-white
-                focus:border-primary-500
-focus:ring-4
-focus:ring-primary-500/10
+                  focus:border-sky-500
+                  focus:ring-4
+                focus:ring-sky-500/10
                   transition-all
                 "
               />
@@ -587,9 +584,9 @@ focus:ring-primary-500/10
                     text-slate-700
                     focus:outline-none
                     focus:bg-white
-                    focus:border-primary-500
-focus:ring-4
-focus:ring-primary-500/10
+                    focus:border-sky-500
+                    focus:ring-4
+                    focus:ring-sky-500/10
                   "
                 >
                   <option value="ALL">All Departments</option>
@@ -636,10 +633,10 @@ focus:ring-primary-500/10
             grid-cols-[2fr_1fr_1.2fr_1.2fr_1.1fr_1fr_110px]
             gap-4
             px-6 py-3.5
-           bg-primary-50
-          border-b border-primary-100
-           rounded-t-2xl
-          text-primary-800
+            bg-gradient-to-r from-sky-600 to-sky-700
+            border-b border-sky-500
+            rounded-t-2xl
+          text-white
           "
           >
             <TableHeader
@@ -702,8 +699,8 @@ focus:ring-primary-500/10
                 className="
                 h-11 w-11
                 rounded-xl
-                bg-primary-50
-                text-primary-600
+                bg-sky-50
+                text-sky-600
                 flex items-center
                 justify-center
                 mb-4
@@ -746,8 +743,8 @@ focus:ring-primary-500/10
                 className="
                 h-16 w-16
                 rounded-2xl
-                bg-primary-50
-                text-primary-600
+                bg-sky-50
+                text-sky-600
                 flex items-center
                 justify-center
                 mb-4
@@ -787,9 +784,9 @@ focus:ring-primary-500/10
                     inline-flex
                     items-center
                     gap-2
-                    bg-primary-600
-                    hover:bg-primary-700
-                    text-white
+                   bg-sky-600
+                   hover:bg-sky-700
+                   text-white
                     px-4 py-2.5
                     rounded-xl
                     text-sm
@@ -823,7 +820,7 @@ focus:ring-primary-500/10
                       group
                       px-4 sm:px-6
                       py-4
-                      hover:bg-primary-50/50
+                      hover:bg-sky-50/70
                       transition-colors
                     "
                   >
@@ -848,7 +845,7 @@ focus:ring-primary-500/10
                           h-10 w-10
                           flex-shrink-0
                           rounded-xl
-                          bg-primary-600
+                          bg-sky-600
                           text-white
                           font-bold
                           text-sm
@@ -869,7 +866,7 @@ focus:ring-primary-500/10
                               text-sm
                               font-semibold
                               text-slate-800
-                              hover:text-primary-600
+                              hover:text-sky-600
                               truncate
                               text-left
                               block
@@ -924,7 +921,7 @@ focus:ring-primary-500/10
                         <Building2
                           size={14}
                           className="
-                            text-primary-600
+                            text-sky-600
                             flex-shrink-0
                           "
                         />
@@ -1029,8 +1026,8 @@ focus:ring-primary-500/10
                             flex items-center
                             justify-center
                             text-slate-400
-                            hover:text-primary-600
-                            hover:bg-primary-50
+                            hover:text-sky-600
+                            hover:bg-sky-50
                             transition-colors
                           "
                         >
@@ -1047,8 +1044,8 @@ focus:ring-primary-500/10
                             flex items-center
                             justify-center
                             text-slate-400
-                           hover:text-primary-600
-                           hover:bg-primary-50
+                           hover:text-sky-600
+                           hover:bg-sky-50
                             transition-colors
                           "
                         >
@@ -1102,8 +1099,8 @@ focus:ring-primary-500/10
                             flex-shrink-0
                             rounded-xl
                             bg-gradient-to-br
-                          from-primary-600
-                          to-primary-700
+                          from-sky-700
+                          to-sky-600
                             text-white
                             font-bold
                             text-sm
@@ -1307,9 +1304,9 @@ focus:ring-primary-500/10
                             py-2 px-2.5
                             rounded-xl
                             bg-slate-50
-                            hover:bg-primary-50
+                            hover:bg-sky-50
                             text-slate-600
-                            hover:text-primary-600
+                            hover:text-sky-600
                             border
                             border-slate-200
                             text-xs
@@ -1332,9 +1329,9 @@ focus:ring-primary-500/10
                             py-2 px-2.5
                             rounded-xl
                             bg-slate-50
-                            hover:bg-primary-50
+                            hover:bg-sky-50
                             text-slate-600
-                            hover:text-primary-600
+                            hover:text-sky-600
                             border
                             border-slate-200
                             text-xs
@@ -1441,8 +1438,8 @@ focus:ring-primary-500/10
               className="
               p-6
               bg-gradient-to-br
-            from-primary-600
-            to-primary-700
+            from-sky-700
+            to-sky-600
               text-white
               relative
             "
@@ -1501,7 +1498,7 @@ focus:ring-primary-500/10
 
                   <p
                     className="
-                    text-primary-100
+                    text-sky-100
                     text-sm
                     mt-0.5
                   "
@@ -1677,8 +1674,8 @@ focus:ring-primary-500/10
                 className="
                     px-4 py-2
                     rounded-xl
-                   bg-primary-600
-                   hover:bg-primary-700
+                   bg-sky-600
+                   hover:bg-sky-700
                    text-white
                     text-sm
                     font-semibold
@@ -1903,8 +1900,8 @@ const TableHeader = ({ children, className = "", onClick, sortDir }) => (
       font-bold
       uppercase
       tracking-wider
-      text-primary-800
-${onClick ? "flex items-center gap-1 cursor-pointer select-none hover:text-primary-600" : ""}
+      text-white
+       ${onClick ? "flex items-center gap-1 cursor-pointer select-none hover:text-sky-100" : ""}
       ${className}
     `}
   >
@@ -1921,7 +1918,6 @@ ${onClick ? "flex items-center gap-1 cursor-pointer select-none hover:text-prima
       ))}
   </div>
 );
-
 
 const SummaryCard = ({
   icon,
@@ -1953,9 +1949,9 @@ const SummaryCard = ({
       shadow-sm
       hover:shadow-lg
       transition-all duration-300
-      min-h-[140px]
-      ${onClick ? "cursor-pointer hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-300" : ""}
+           min-h-[140px]
       ${className}
+      ${onClick ? "cursor-pointer hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300" : ""}
     `}
   >
     {/* Decorative background circles */}
@@ -1968,14 +1964,10 @@ const SummaryCard = ({
           {title}
         </p>
 
-        <p className="mt-3 text-3xl font-bold text-white">
-          {value}
-        </p>
+        <p className="mt-3 text-3xl font-bold text-white">{value}</p>
 
         {description && (
-          <p className="mt-2 text-xs text-white/80">
-            {description}
-          </p>
+          <p className="mt-2 text-xs text-white/80">{description}</p>
         )}
       </div>
 
@@ -1985,7 +1977,6 @@ const SummaryCard = ({
     </div>
   </div>
 );
-
 
 const DetailItem = ({ icon, label, value }) => (
   <div
@@ -2104,7 +2095,7 @@ const PaginationBar = ({
                 transition-colors
                 ${
                   p === currentPage
-                    ? "bg-primary-600 text-white shadow-sm"
+                    ? "bg-sky-600 text-white shadow-sm"
                     : "text-slate-600 border border-slate-200 hover:bg-slate-50"
                 }
               `}

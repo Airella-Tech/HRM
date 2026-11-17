@@ -184,16 +184,16 @@ const HRProfile = () => {
         )}
 
         {/* Hero */}
-        <div className="relative overflow-hidden bg-gradient-to-r from-primary-100 via-primary-50 to-white rounded-2xl p-8 border border-primary-200 shadow-sm">
+        <div className="relative overflow-hidden bg-gradient-to-r from-sky-400 via-sky-150 to-sky-700 rounded-2xl p-8 border border-sky-200 shadow-sm transition-shadow hover:shadow-md">
           <div className="flex items-center gap-6">
-            <div className="h-24 w-24 bg-primary-600 text-white rounded-2xl flex items-center justify-center text-4xl font-bold shadow-md border-4 border-white">
+            <div className="h-24 w-24 bg-sky-600 text-white rounded-2xl flex items-center justify-center text-4xl font-bold shadow-md border-4 border-white">
               {initials}
             </div>
             <div>
               <h2 className="text-3xl font-bold mb-1 text-slate-800">
                 {loading ? "Loading profile..." : profile.fullName}
               </h2>
-              <p className="text-primary-700 text-base font-medium mb-3">
+              <p className="text-sky-700 text-base font-medium mb-3">
                 {profile.designation || "—"}
               </p>
               <div className="flex flex-wrap gap-4 text-sm text-slate-600">
@@ -215,7 +215,7 @@ const HRProfile = () => {
         </div>
 
         {/* Tabs */}
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden transition-shadow hover:shadow-md">
           <div className="flex gap-2 p-4 border-b border-slate-200 overflow-x-auto">
             {tabs.map(([key, label, TabIcon]) => (
               <button
@@ -223,8 +223,8 @@ const HRProfile = () => {
                 onClick={() => setActiveTab(key)}
                 className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold whitespace-nowrap transition-all duration-200 ${
                   activeTab === key
-                    ? "bg-primary-600 text-white shadow-sm"
-                    : "text-slate-600 hover:bg-primary-50 hover:text-primary-700"
+                    ? "bg-sky-600 text-white shadow-sm"
+                    : "text-slate-600 hover:bg-sky-50 hover:text-sky-700"
                 }`}
               >
                 <TabIcon size={15} /> {label}
@@ -235,7 +235,7 @@ const HRProfile = () => {
           <div className="p-5 sm:p-7">
             {activeTab === "personal" && (
               <div className="space-y-5">
-                <SectionTitle icon={User} tone="bg-primary-50 text-primary-700">
+                <SectionTitle icon={User} tone="bg-sky-50 text-sky-700">
                   Personal Details
                 </SectionTitle>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -243,7 +243,7 @@ const HRProfile = () => {
                     label="Full Name"
                     value={profile.fullName}
                     icon={User}
-                    tone="text-teal-500"
+                    tone="text-sky-500"
                   />
                   <Field
                     label="Email Address"
@@ -279,7 +279,7 @@ const HRProfile = () => {
               <div className="space-y-5">
                 <SectionTitle
                   icon={Briefcase}
-                  tone="bg-primary-50 text-primary-700"
+                  tone="bg-sky-50 text-sky-700"
                 >
                   Employment Details
                 </SectionTitle>
@@ -300,7 +300,7 @@ const HRProfile = () => {
                     label="Designation"
                     value={profile.designation}
                     icon={Briefcase}
-                    tone="text-teal-500"
+                    tone="text-sky-500"
                   />
                   <Field
                     label="Employment Type"

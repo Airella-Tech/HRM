@@ -39,7 +39,7 @@ const money2 = (v) =>
   `Rs.${num(v).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
 const headerBtn =
-  "inline-flex items-center gap-2 bg-primary-600 hover:bg-primary-700 text-white px-4 py-2.5 rounded-xl text-sm font-semibold shadow-sm transition-all duration-200";
+  "inline-flex items-center gap-2 bg-sky-600 hover:bg-sky-700 text-white px-4 py-2.5 rounded-xl text-sm font-semibold shadow-sm transition-all duration-200";
 
 const HRPayslip = () => {
   const navigate = useNavigate();
@@ -424,7 +424,7 @@ const HRPayslip = () => {
   const statusBadge = (s) =>
     ({
       Configured: "bg-emerald-100 text-emerald-700",
-      Adjusted: "bg-primary-100 text-primary-700",
+      Adjusted: "bg-sky-100 text-sky-700",
     })[s] || "bg-amber-100 text-amber-700";
 
   if (!user) return null;
@@ -458,7 +458,7 @@ const HRPayslip = () => {
           <button
             onClick={handleGenerateAll}
             disabled={generating}
-            className="inline-flex items-center gap-2 bg-primary-600 hover:bg-primary-700 disabled:opacity-60 text-white px-4 py-2.5 rounded-xl text-sm font-semibold shadow-sm transition-all duration-200"
+            className="inline-flex items-center gap-2 bg-sky-600 hover:bg-sky-700 disabled:opacity-60 text-white px-4 py-2.5 rounded-xl text-sm font-semibold shadow-sm transition-all duration-200"
           >
             {generating ? (
               <Loader2 size={15} className="animate-spin" />
@@ -472,13 +472,13 @@ const HRPayslip = () => {
     >
       <div className="space-y-6">
         {message && (
-          <div className="flex items-center gap-3 p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 text-sm font-medium">
+          <div className="p-4 rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm">
             <Check size={18} className="shrink-0" />
             {message}
           </div>
         )}
         {loadError && (
-          <div className="p-4 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm">
+          <div className="p-4 rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm">
             {loadError}
           </div>
         )}
@@ -514,28 +514,28 @@ const HRPayslip = () => {
               label: "Employees",
               value: stats.total,
               subtitle: "Total employees in payroll",
-              color: "bg-primary-600",
+              color: "bg-gradient-to-br from-sky-600 to-sky-700",
               icon: Users,
             },
             {
               label: "Total Net Pay",
               value: `Rs.${(stats.payroll / 1000).toFixed(0)}K`,
               subtitle: "Combined employee net salary",
-              color: "bg-primary-500",
+              color: "bg-gradient-to-br from-sky-500 to-sky-600",
               icon: DollarSign,
             },
             {
               label: "Configured",
               value: stats.configured,
               subtitle: "Employees with salary setup",
-              color: "bg-primary-700",
+              color: "bg-gradient-to-br from-sky-700 to-sky-800",
               icon: Check,
             },
             {
               label: "Pending Setup",
               value: stats.pending,
               subtitle: "Employees awaiting salary setup",
-              color: "bg-primary-800",
+              color: "bg-gradient-to-br from-sky-800 to-sky-900",
               icon: Calendar,
             },
           ].map((s) => {
@@ -544,7 +544,7 @@ const HRPayslip = () => {
             return (
               <div
                 key={s.label}
-                className={`${s.color} relative overflow-hidden p-6 rounded-2xl text-white shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300`}
+                className={`${s.color} relative overflow-hidden p-6 rounded-2xl text-white shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-300`}
               >
                 {/* Decorative circles */}
                 <div className="absolute -right-6 -top-8 w-28 h-28 rounded-full bg-white/10" />
@@ -578,8 +578,8 @@ const HRPayslip = () => {
               onClick={() => setActiveTab(t.key)}
               className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${
                 activeTab === t.key
-                  ? "bg-primary-600 text-white shadow-sm"
-                  : "text-slate-600 hover:bg-primary-50 hover:text-primary-700"
+                   ? "bg-sky-600 text-white shadow-sm"
+                   : "text-slate-600 hover:bg-sky-50 hover:text-sky-700"
               }`}
             >
               <t.icon size={15} /> {t.label}
@@ -588,7 +588,7 @@ const HRPayslip = () => {
         </div>
 
         {/* SEARCH & FILTER CONTROLS */}
-        <div className="overflow-visible bg-white rounded-2xl border border-slate-200 shadow-sm">
+        <div className="overflow-visible bg-white rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow duration-200">
           <div className="px-5 py-4 border-b border-slate-100">
             <h3 className="text-sm font-bold text-slate-900">
               Find Payroll Records
@@ -613,7 +613,7 @@ const HRPayslip = () => {
                     ? "Search by department, job role, employment type or set by…"
                     : "Search by name, ID, department, department code or designation…"
                 }
-                className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:bg-white focus:border-primary-500 focus:ring-4 focus:ring-primary-500/10 transition-all"
+                className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:bg-white focus:border-sky-500 focus:ring-4 focus:ring-sky-500/10 transition-all"
               />
             </div>
 
@@ -628,7 +628,7 @@ const HRPayslip = () => {
                   <select
                     value={deptFilter}
                     onChange={(e) => setDeptFilter(e.target.value)}
-                    className="w-full pl-9 pr-8 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-700 font-medium focus:outline-none focus:bg-white focus:border-primary-500 focus:ring-4 focus:ring-primary-500/10 transition-all min-w-[200px]"
+                    className="w-full pl-9 pr-8 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-700 font-medium focus:outline-none focus:bg-white focus:border-sky-500 focus:ring-4 focus:ring-sky-500/10 transition-all min-w-[200px]"
                   >
                     <option value="">All departments</option>
                     {deptOptions.map((d) => (
@@ -650,7 +650,7 @@ const HRPayslip = () => {
                     type="month"
                     value={filterMonth}
                     onChange={(e) => setFilterMonth(e.target.value)}
-                    className="w-full pl-9 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-700 focus:outline-none focus:bg-white focus:border-primary-500 focus:ring-4 focus:ring-primary-500/10 transition-all"
+                    className="w-full pl-9 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-700 focus:outline-none focus:bg-white focus:border-sky-500 focus:ring-4 focus:ring-sky-500/10 transition-all"
                   />
                 </div>
 
@@ -660,7 +660,7 @@ const HRPayslip = () => {
                     onClick={() => setExportOpen((o) => !o)}
                     aria-haspopup="menu"
                     aria-expanded={exportOpen}
-                    className="inline-flex items-center gap-2 bg-primary-600 hover:bg-primary-700 text-white px-4 py-2.5 rounded-xl text-sm font-semibold shadow-sm transition-all duration-200"
+                    className="inline-flex items-center gap-2 bg-sky-600 hover:bg-sky-700 text-white px-4 py-2.5 rounded-xl text-sm font-semibold shadow-sm transition-all duration-200"
                   >
                     <Download size={15} />
                     Export
@@ -688,7 +688,7 @@ const HRPayslip = () => {
                         <button
                           role="menuitem"
                           onClick={() => handleExport("xls")}
-                          className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-slate-700 hover:bg-primary-50 text-left transition-colors"
+                          className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-slate-700 hover:bg-sky-50 hover:text-sky-700 text-left transition-colors"
                         >
                           <FileSpreadsheet
                             size={16}
@@ -705,9 +705,9 @@ const HRPayslip = () => {
                         <button
                           role="menuitem"
                           onClick={() => handleExport("csv")}
-                          className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-slate-700 hover:bg-primary-50 text-left transition-colors"
+                          className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-slate-700 hover:bg-sky-50 text-left transition-colors"
                         >
-                          <FileText size={16} className="text-primary-600" />
+                          <FileText size={16} className="text-sky-600" />
                           <span>
                             <b className="font-semibold">CSV</b>{" "}
                             <span className="text-slate-400">· plain data</span>
@@ -723,10 +723,10 @@ const HRPayslip = () => {
         </div>
 
         {activeTab === "roles" && (
-          <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+          <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden hover:shadow-md transition-shadow duration-200">
             <div className="px-5 py-4 border-b border-slate-200 flex items-center justify-between">
               <h2 className="text-base font-semibold text-slate-800 flex items-center gap-2">
-                <Briefcase size={18} className="text-primary-600" /> Job Role
+                <Briefcase size={18} className="text-sky-600" /> Job Role
                 Salaries
                 <span className="text-xs font-normal text-slate-400">
                   · added through “Add Salaries for Job Roles”
@@ -736,7 +736,7 @@ const HRPayslip = () => {
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="bg-primary-700 text-white text-xs">
+                  <tr className="bg-gradient-to-r from-sky-600 to-sky-700 text-white text-xs">
                     {[
                       "Department",
                       "Job Role",
@@ -764,7 +764,7 @@ const HRPayslip = () => {
                   {paginatedRoles.map((r, i) => (
                     <tr
                       key={r.id}
-                      className={`hover:bg-primary-50/60 transition-colors ${i % 2 === 1 ? "bg-slate-50/40" : ""}`}
+                      className={`hover:bg-sky-50/60 transition-colors ${i % 2 === 1 ? "bg-slate-50/40" : ""}`}
                     >
                       <td className="px-5 py-3 text-slate-600">
                         {r.departmentName}
@@ -787,7 +787,7 @@ const HRPayslip = () => {
                       <td className="px-5 py-3 text-red-600 font-semibold whitespace-nowrap">
                         -{money2(r.deduction)}
                       </td>
-                      <td className="px-5 py-3 font-bold text-primary-700 whitespace-nowrap">
+                      <td className="px-5 py-3 font-bold text-sky-700 whitespace-nowrap">
                         {money2(r.totalSalary)}
                       </td>
                       <td className="px-5 py-3 text-slate-600">
@@ -827,7 +827,7 @@ const HRPayslip = () => {
                             <button
                               onClick={() => editRoleSalary(r)}
                               title="Edit this salary row"
-                              className="p-1.5 text-slate-400 hover:text-primary-700 hover:bg-primary-50 rounded-lg transition-colors"
+                              className="p-1.5 text-slate-400 hover:text-sky-700 hover:bg-sky-50 rounded-lg transition-colors"
                             >
                               <Pencil size={14} />
                             </button>
@@ -877,7 +877,7 @@ const HRPayslip = () => {
                     onClick={() => setRolePage((p) => Math.max(1, p - 1))}
                     disabled={rolePage === 1}
                     aria-label="Previous page"
-                    className="h-8 w-8 rounded-lg flex items-center justify-center text-slate-600 border border-slate-200 hover:bg-primary-50 hover:text-primary-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                    className="h-8 w-8 rounded-lg flex items-center justify-center text-slate-600 border border-slate-200 hover:bg-sky-50 hover:text-sky-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                   >
                     <ChevronLeft size={15} />
                   </button>
@@ -889,7 +889,7 @@ const HRPayslip = () => {
                       key={pg}
                       type="button"
                       onClick={() => setRolePage(pg)}
-                      className={`h-8 min-w-[2rem] px-2 rounded-lg text-xs font-semibold transition-colors ${pg === rolePage ? "bg-primary-600 text-white shadow-sm" : "text-slate-600 border border-slate-200 hover:bg-primary-50 hover:text-primary-700"}`}
+                      className={`h-8 min-w-[2rem] px-2 rounded-lg text-xs font-semibold transition-colors ${pg === rolePage ? "bg-sky-600 text-white shadow-sm" : "text-slate-600 border border-slate-200 hover:bg-sky-50 hover:text-sky-700"}`}
                     >
                       {pg}
                     </button>
@@ -901,7 +901,7 @@ const HRPayslip = () => {
                     }
                     disabled={rolePage === roleTotalPages}
                     aria-label="Next page"
-                    className="h-8 w-8 rounded-lg flex items-center justify-center text-slate-600 border border-slate-200 hover:bg-primary-50 hover:text-primary-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                    className="h-8 w-8 rounded-lg flex items-center justify-center text-slate-600 border border-slate-200 hover:bg-sky-50 hover:text-sky-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                   >
                     <ChevronRight size={15} />
                   </button>
@@ -924,11 +924,11 @@ const HRPayslip = () => {
         )}
 
         {activeTab === "employees" && (
-          <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+          <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden hover:shadow-md transition-shadow duration-200">
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="bg-primary-700 text-white text-xs">
+                  <tr className="bg-gradient-to-r from-sky-600 to-sky-700 text-white text-xs">
                     {[
                       "Emp ID",
                       "Employee",
@@ -954,7 +954,7 @@ const HRPayslip = () => {
                   {paginated.map((p, i) => (
                     <tr
                       key={p.email}
-                      className={`hover:bg-primary-50/60 transition-colors ${i % 2 === 1 ? "bg-slate-50/40" : ""}`}
+                      className={`hover:bg-sky-50/60 transition-colors ${i % 2 === 1 ? "bg-slate-50/40" : ""}`}
                     >
                       <td className="px-5 py-3.5 font-mono font-semibold text-slate-700">
                         {p.empId}
@@ -986,7 +986,7 @@ const HRPayslip = () => {
                       <td className="px-5 py-3.5 text-red-600 font-semibold whitespace-nowrap">
                         -{money(p.deductions)}
                       </td>
-                      <td className="px-5 py-3.5 font-bold text-primary-700 whitespace-nowrap">
+                      <td className="px-5 py-3.5 font-bold text-sky-700 whitespace-nowrap">
                         {money(p.netSalary)}
                       </td>
                       <td className="px-5 py-3.5">
@@ -1001,7 +1001,7 @@ const HRPayslip = () => {
                           <button
                             onClick={() => setViewingPayslip(p)}
                             title="View Payslip"
-                            className="p-1.5 text-slate-400 hover:text-primary-700 hover:bg-primary-50 rounded-lg transition-colors"
+                            className="p-1.5 text-slate-400 hover:text-sky-700 hover:bg-sky-50 rounded-lg transition-colors"
                           >
                             <Eye size={14} />
                           </button>
@@ -1013,7 +1013,7 @@ const HRPayslip = () => {
                             }
                             title="Edit allowances & deductions"
                             aria-label="Edit allowances & deductions"
-                            className="p-1.5 text-slate-400 hover:text-primary-700 hover:bg-primary-50 rounded-lg transition-colors"
+                            className="p-1.5 text-slate-400 hover:text-sky-700 hover:bg-sky-50 rounded-lg transition-colors"
                           >
                             <Pencil size={14} />
                           </button>
@@ -1066,7 +1066,7 @@ const HRPayslip = () => {
                     type="button"
                     onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                     disabled={currentPage === 1}
-                    className="h-8 w-8 rounded-lg flex items-center justify-center text-slate-600 border border-slate-200 hover:bg-primary-50 hover:text-primary-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                    className="h-8 w-8 rounded-lg flex items-center justify-center text-slate-600 border border-slate-200 hover:bg-sky-50 hover:text-sky-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                     aria-label="Previous page"
                   >
                     <ChevronLeft size={15} />
@@ -1079,8 +1079,8 @@ const HRPayslip = () => {
                         onClick={() => setCurrentPage(p)}
                         className={`h-8 min-w-[2rem] px-2 rounded-lg text-xs font-semibold transition-colors ${
                           p === currentPage
-                            ? "bg-primary-600 text-white shadow-sm"
-                            : "text-slate-600 border border-slate-200 hover:bg-primary-50 hover:text-primary-700"
+                            ? "bg-sky-600 text-white shadow-sm"
+                            : "text-slate-600 border border-slate-200 hover:bg-sky-50 hover:text-sky-700"
                         }`}
                       >
                         {p}
@@ -1093,7 +1093,7 @@ const HRPayslip = () => {
                       setCurrentPage((p) => Math.min(totalPages, p + 1))
                     }
                     disabled={currentPage === totalPages}
-                    className="h-8 w-8 rounded-lg flex items-center justify-center text-slate-600 border border-slate-200 hover:bg-primary-50 hover:text-primary-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                    className="h-8 w-8 rounded-lg flex items-center justify-center text-slate-600 border border-slate-200 hover:bg-sky-50 hover:text-sky-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                     aria-label="Next page"
                   >
                     <ChevronRight size={15} />
@@ -1122,12 +1122,12 @@ const HRPayslip = () => {
           return (
             <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
               <div className="bg-white rounded-2xl shadow-2xl w-full max-w-xl max-h-[90vh] overflow-y-auto">
-                <div className="flex items-start justify-between p-6 bg-gradient-to-br from-primary-600 to-primary-700 text-white rounded-t-2xl">
+                <div className="flex items-start justify-between p-6 bg-gradient-to-br from-sky-700 to-sky-600 text-white rounded-t-2xl">
                   <div>
                     <h3 className="text-xl font-bold">
                       Payslip – {viewingPayslip.month}
                     </h3>
-                    <p className="text-primary-100 text-sm">
+                    <p className="text-sky-100 text-sm">
                       {viewingPayslip.name} · {viewingPayslip.empId}
                     </p>
                   </div>
@@ -1223,9 +1223,9 @@ const HRPayslip = () => {
                       </div>
                     </div>
                   </div>
-                  <div className="bg-gradient-to-r from-primary-700 to-primary-800 text-white p-5 rounded-2xl flex items-center justify-between shadow-sm">
+                  <div className="bg-gradient-to-r from-sky-700 to-sky-800 text-white p-5 rounded-2xl flex items-center justify-between shadow-sm">
                     <div>
-                      <p className="text-primary-100 text-xs mb-0.5">
+                      <p className="text-sky-100 text-xs mb-0.5">
                         Net Salary
                       </p>
                       <p className="text-3xl font-bold">
@@ -1264,7 +1264,7 @@ const HRPayslip = () => {
                             sending ||
                             viewingPayslip.status === "Not Configured"
                           }
-                          className="flex-1 bg-primary-600 hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed text-white py-3 rounded-xl font-semibold text-sm shadow-sm transition-colors flex items-center justify-center gap-2"
+                          className="flex-1 bg-sky-600 hover:bg-sky-700 disabled:opacity-50 disabled:cursor-not-allowed text-white py-3 rounded-xl font-semibold text-sm shadow-sm transition-colors flex items-center justify-center gap-2"
                         >
                           {sending ? (
                             <Loader2 size={15} className="animate-spin" />

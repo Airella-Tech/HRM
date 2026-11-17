@@ -12,6 +12,9 @@ import {
   UserX,
   ChevronLeft,
   ChevronRight,
+  ArrowUpDown,
+  ChevronUp,
+  ChevronDown,
 } from "lucide-react";
 import { PageLayout } from "../../components/PageLayout";
 import { hrApi, userHrApi } from "../../services/api";
@@ -54,6 +57,8 @@ const HRAttendance = () => {
     toLocalDateString(new Date()),
   );
   const [filterStatus, setFilterStatus] = useState("all");
+  const [sortKey, setSortKey] = useState(null);
+  const [sortDir, setSortDir] = useState("asc");
   const [rawSessions, setRawSessions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -93,15 +98,71 @@ const HRAttendance = () => {
       (filterStatus === "all" || r.status === filterStatus),
   );
 
-  const totalPages = Math.max(1, Math.ceil(filtered.length / ROWS_PER_PAGE));
-  const paginated = filtered.slice(
+  // SORTING
+  const toggleSort = (key) => {
+    if (sortKey === key) {
+      setSortDir((dir) => (dir === "asc" ? "desc" : "asc"));
+    } else {
+      setSortKey(key);
+      setSortDir("asc");
+    }
+  };
+
+  const sortedRows = useMemo(() => {
+    if (!sortKey) return filtered;
+
+    const getValue = (row) => {
+      switch (sortKey) {
+        case "empId":
+          return row.empId || "";
+        case "name":
+          return row.name || "";
+        case "department":
+          return row.department || "";
+        case "date":
+          return row.date || "";
+        case "clockInTime":
+          return row.clockInTime || "";
+        case "clockOutTime":
+          return row.clockOutTime || "";
+        case "hours":
+          return row.totalWorkingMinutes ?? 0;
+        case "status":
+          return row.status || "";
+        default:
+          return "";
+      }
+    };
+
+    return [...filtered].sort((a, b) => {
+      const aValue = getValue(a);
+      const bValue = getValue(b);
+
+      let comparison;
+
+      if (typeof aValue === "number" && typeof bValue === "number") {
+        comparison = aValue - bValue;
+      } else {
+        comparison = String(aValue).localeCompare(String(bValue), undefined, {
+          numeric: true,
+          sensitivity: "base",
+        });
+      }
+
+      return sortDir === "asc" ? comparison : -comparison;
+    });
+  }, [filtered, sortKey, sortDir]);
+
+  // PAGINATION
+  const totalPages = Math.max(1, Math.ceil(sortedRows.length / ROWS_PER_PAGE));
+  const paginated = sortedRows.slice(
     (currentPage - 1) * ROWS_PER_PAGE,
     currentPage * ROWS_PER_PAGE,
   );
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, filterDate, filterStatus]);
+  }, [searchTerm, filterDate, filterStatus, sortKey, sortDir]);
 
   useEffect(() => {
     if (currentPage > totalPages) setCurrentPage(totalPages);
@@ -243,7 +304,7 @@ const HRAttendance = () => {
       actions={
         <button
           onClick={exportCsv}
-          className="flex items-center gap-2 bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-xl text-sm font-semibold transition-colors"
+          className="flex items-center gap-2 bg-sky-600 hover:bg-sky-700 text-white px-4 py-2 rounded-xl text-sm font-semibold transition-colors"
         >
           <Download size={16} /> Export
         </button>
@@ -263,28 +324,28 @@ const HRAttendance = () => {
               label: "Total Employees",
               value: totalEmployees,
               description: "Registered in employee database",
-              color: "bg-primary-600",
+              color: "bg-gradient-to-r from-sky-600 to-sky-700",
               icon: <Users size={22} />,
             },
             {
               label: "Today Present",
               value: stats.present,
               description: "Employees with attendance records",
-              color: "bg-primary-500",
+              color: "bg-gradient-to-r from-sky-500 to-sky-600",
               icon: <UserCheck size={22} />,
             },
             {
               label: "On Leave Today",
               value: onLeaveToday,
               description: "Employees on approved leave",
-              color: "bg-primary-700",
+              color: "bg-gradient-to-r from-sky-700 to-sky-800",
               icon: <CalendarOff size={22} />,
             },
             {
               label: "Absent Today",
               value: absentToday,
               description: "Employees not present or on leave",
-              color: "bg-primary-800",
+              color: "bg-gradient-to-r from-sky-800 to-sky-900",
               icon: <UserX size={22} />,
             },
           ].map((s) => (
@@ -318,7 +379,7 @@ const HRAttendance = () => {
         </div>
 
         {/* Attendance Overview */}
-        <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
+        <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5 transition-shadow hover:shadow-md">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div>
               <h3 className="text-base font-semibold text-slate-800">
@@ -349,7 +410,7 @@ const HRAttendance = () => {
 
             <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden">
               <div
-                className="h-full bg-primary-600 rounded-full transition-all duration-500"
+                className="h-full bg-gradient-to-r from-sky-600 to-sky-700 rounded-full transition-all duration-500"
                 style={{ width: `${attendanceRate}%` }}
               />
             </div>
@@ -379,7 +440,7 @@ const HRAttendance = () => {
 
             <div>
               <p className="text-xs text-slate-500">On Leave</p>
-              <p className="text-lg font-semibold text-primary-600">
+              <p className="text-lg font-semibold text-sky-700">
                 {onLeaveToday}
               </p>
             </div>
@@ -412,7 +473,7 @@ const HRAttendance = () => {
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 placeholder="Search by name, ID, department…"
-                className="w-full pl-9 pr-4 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-700 bg-white focus:outline-none focus:border-primary-500 focus:ring-4 focus:ring-primary-500/10 transition-all"
+                className="w-full pl-9 pr-4 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-700 bg-white focus:outline-none focus:border-sky-500 focus:ring-4 focus:ring-sky-500/10 transition-all"
               />
             </div>
 
@@ -425,7 +486,7 @@ const HRAttendance = () => {
                 type="date"
                 value={filterDate}
                 onChange={(e) => setFilterDate(e.target.value)}
-                className="pl-9 pr-4 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-700 bg-white focus:outline-none focus:border-primary-500 focus:ring-4 focus:ring-primary-500/10 transition-all"
+                className="pl-9 pr-4 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-700 bg-white focus:outline-none focus:border-sky-500 focus:ring-4 focus:ring-sky-500/10 transition-all"
               />
             </div>
 
@@ -437,7 +498,7 @@ const HRAttendance = () => {
               <select
                 value={filterStatus}
                 onChange={(e) => setFilterStatus(e.target.value)}
-                className="pl-9 pr-8 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-700 bg-white focus:outline-none focus:border-primary-500 focus:ring-4 focus:ring-primary-500/10 transition-all appearance-none"
+                className="pl-9 pr-8 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-700 bg-white focus:outline-none focus:border-sky-500 focus:ring-4 focus:ring-sky-500/10 transition-all appearance-none"
               >
                 <option value="all">All Status</option>
                 <option value="PRESENT">Present</option>
@@ -454,22 +515,74 @@ const HRAttendance = () => {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="bg-primary-50 border-b border-primary-100 text-primary-800 text-xs">
-                  {[
-                    "Emp ID",
-                    "Employee",
-                    "Department",
-                    "Date",
-                    "Check In",
-                    "Check Out",
-                    "Hours",
-                    "Location",
-                    "Status",
-                  ].map((h) => (
-                    <th key={h} className="px-5 py-4 text-left font-semibold">
-                      {h}
-                    </th>
-                  ))}
+                <tr className="bg-gradient-to-r from-sky-600 to-sky-700 border-b border-sky-500 text-white text-xs">
+                  <TableHeader
+                    label="Emp ID"
+                    columnKey="empId"
+                    activeSortKey={sortKey}
+                    sortDir={sortDir}
+                    onSort={toggleSort}
+                  />
+
+                  <TableHeader
+                    label="Employee"
+                    columnKey="name"
+                    activeSortKey={sortKey}
+                    sortDir={sortDir}
+                    onSort={toggleSort}
+                  />
+
+                  <TableHeader
+                    label="Department"
+                    columnKey="department"
+                    activeSortKey={sortKey}
+                    sortDir={sortDir}
+                    onSort={toggleSort}
+                  />
+
+                  <TableHeader
+                    label="Date"
+                    columnKey="date"
+                    activeSortKey={sortKey}
+                    sortDir={sortDir}
+                    onSort={toggleSort}
+                  />
+
+                  <TableHeader
+                    label="Check In"
+                    columnKey="clockInTime"
+                    activeSortKey={sortKey}
+                    sortDir={sortDir}
+                    onSort={toggleSort}
+                  />
+
+                  <TableHeader
+                    label="Check Out"
+                    columnKey="clockOutTime"
+                    activeSortKey={sortKey}
+                    sortDir={sortDir}
+                    onSort={toggleSort}
+                  />
+
+                  <TableHeader
+                    label="Hours"
+                    columnKey="hours"
+                    activeSortKey={sortKey}
+                    sortDir={sortDir}
+                    onSort={toggleSort}
+                  />
+
+                  <th className="px-5 py-4 text-left font-semibold">
+                    Location
+                  </th>
+
+                  <TableHeader
+                    label="Status"
+                    columnKey="status"
+                    activeSortKey={sortKey}
+                    sortDir={sortDir}
+                    onSort={toggleSort}
+                  />
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -477,7 +590,7 @@ const HRAttendance = () => {
                   <tr>
                     <td colSpan={9} className="text-center py-12">
                       <div className="flex justify-center">
-                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-sky-600"></div>
                       </div>
                     </td>
                   </tr>
@@ -504,7 +617,7 @@ const HRAttendance = () => {
                   paginated.map((r, i) => (
                     <tr
                       key={r.employeeId ?? i}
-                      className={`hover:bg-primary-50/40 transition-colors ${i % 2 === 1 ? "bg-slate-50/40" : ""}`}
+                      className={`hover:bg-sky-50/50 transition-colors ${i % 2 === 1 ? "bg-slate-50/40" : ""}`}
                     >
                       <td className="px-5 py-3.5 font-mono font-semibold text-slate-700">
                         {r.empId}
@@ -512,7 +625,7 @@ const HRAttendance = () => {
                       <td className="px-5 py-3.5 font-medium text-slate-800">
                         {r.name}
                         {r.sessionCount > 1 && (
-                          <span className="ml-1.5 text-xs font-semibold text-primary-700 bg-primary-50 px-1.5 py-0.5 rounded-full align-middle">
+                          <span className="ml-1.5 text-xs font-semibold text-sky-700 bg-sky-50 px-1.5 py-0.5 rounded-full align-middle">
                             ×{r.sessionCount}
                           </span>
                         )}
@@ -539,7 +652,7 @@ const HRAttendance = () => {
                               target="_blank"
                               rel="noopener noreferrer"
                               title="Clock-in location"
-                              className="h-8 w-8 rounded-lg bg-primary-50 text-primary-600 hover:bg-primary-100 flex items-center justify-center transition-colors"
+                              className="h-8 w-8 rounded-lg bg-sky-50 text-sky-700 hover:bg-sky-100 flex items-center justify-center transition-colors"
                             >
                               <MapPin size={15} />
                             </a>
@@ -551,7 +664,7 @@ const HRAttendance = () => {
                               target="_blank"
                               rel="noopener noreferrer"
                               title="Clock-out location"
-                              className="h-8 w-8 rounded-lg bg-slate-100 text-slate-500 hover:bg-slate-200 hover:text-primary-700 flex items-center justify-center transition-colors"
+                              className="h-8 w-8 rounded-lg bg-slate-100 text-slate-500 hover:bg-slate-200 hover:text-sky-700 flex items-center justify-center transition-colors"
                             >
                               <MapPin size={15} />
                             </a>
@@ -609,7 +722,7 @@ const HRAttendance = () => {
                       onClick={() => setCurrentPage(p)}
                       className={`h-8 min-w-[2rem] px-2 rounded-lg text-xs font-semibold transition-colors ${
                         p === currentPage
-                          ? "bg-primary-600 text-white shadow-sm"
+                          ? "bg-sky-600 text-white shadow-sm"
                           : "text-slate-600 border border-slate-200 hover:bg-slate-50"
                       }`}
                     >
@@ -645,4 +758,39 @@ const HRAttendance = () => {
     </PageLayout>
   );
 };
+
+const TableHeader = ({
+  label,
+  columnKey,
+  activeSortKey,
+  sortDir,
+  onSort,
+}) => {
+  const isActive = activeSortKey === columnKey;
+
+  return (
+    <th className="px-5 py-4 text-left font-semibold whitespace-nowrap">
+      <button
+        type="button"
+        onClick={() => onSort(columnKey)}
+        className="inline-flex items-center gap-1 cursor-pointer select-none hover:text-sky-100 transition-colors"
+        aria-label={`Sort by ${label}`}
+      >
+        {label}
+
+        {isActive ? (
+          sortDir === "asc" ? (
+            <ChevronUp size={13} />
+          ) : (
+            <ChevronDown size={13} />
+          )
+        ) : (
+          <ArrowUpDown size={12} className="opacity-60" />
+        )}
+      </button>
+    </th>
+  );
+};
+
+
 export default HRAttendance;

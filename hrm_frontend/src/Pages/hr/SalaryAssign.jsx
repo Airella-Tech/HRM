@@ -43,8 +43,7 @@ const newRow = () => ({
 });
 
 const fieldCls =
-  "w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-700 focus:outline-none focus:ring-4 focus:ring-primary-500/10 focus:border-primary-500 bg-slate-50 focus:bg-white transition-all";
-
+  "w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-700 focus:outline-none focus:ring-4 focus:ring-sky-500/10 focus:border-sky-500 bg-slate-50 focus:bg-white transition-all";
 const SalaryAssign = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -252,7 +251,7 @@ const SalaryAssign = () => {
       actions={
         <button
           onClick={() => navigate("/hr/payslip")}
-          className="inline-flex items-center justify-center gap-2 bg-white border border-slate-200 hover:bg-primary-50 hover:border-primary-200 text-slate-700 hover:text-primary-700 px-4 py-2.5 rounded-xl text-sm font-semibold shadow-sm hover:shadow-md transition-all duration-200"
+          className="inline-flex items-center justify-center gap-2 bg-sky-600 hover:bg-sky-700 text-white px-4 py-2.5 rounded-xl text-sm font-semibold shadow-sm hover:shadow-md transition-all duration-200"
         >
           <ArrowLeft size={16} /> Back to Payroll
         </button>
@@ -272,7 +271,7 @@ const SalaryAssign = () => {
         )}
 
         {/* Department picker */}
-        <div className="bg-gradient-to-br from-primary-700 via-primary-600 to-primary-800 rounded-2xl shadow-sm p-5 relative overflow-hidden">
+        <div className="bg-gradient-to-br from-sky-700 via-sky-600 to-sky-800 rounded-2xl shadow-sm p-5 relative overflow-hidden">
           <div className="absolute -right-8 -top-10 w-36 h-36 rounded-full bg-white/10" />
           <div className="absolute right-20 -bottom-16 w-32 h-32 rounded-full bg-white/10" />
 
@@ -282,7 +281,7 @@ const SalaryAssign = () => {
                 <Building2 size={18} />
                 Select Department
               </label>
-              <p className="text-xs text-primary-100 mt-1">
+              <p className="text-xs text-sky-100 mt-1">
                 Choose a department to view and manage its job role salary
                 structures.
               </p>
@@ -325,7 +324,7 @@ const SalaryAssign = () => {
             <div className="flex items-center justify-between gap-3 mb-5">
               <div>
                 <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
-                  <Briefcase size={18} className="text-primary-600" />
+                  <Briefcase size={18} className="text-sky-600" />
                   Job Roles
                 </h2>
                 <p className="text-xs text-slate-500 mt-1">
@@ -333,7 +332,7 @@ const SalaryAssign = () => {
                 </p>
               </div>
 
-              <span className="px-3 py-1.5 rounded-full bg-primary-50 border border-primary-100 text-primary-700 text-xs font-bold">
+              <span className="px-3 py-1.5 rounded-full bg-sky-50 border border-sky-100 text-sky-700 text-xs font-bold">
                 {jobRoles.length} Roles
               </span>
             </div>
@@ -354,10 +353,10 @@ const SalaryAssign = () => {
                     <button
                       key={role.id}
                       onClick={() => openRole(role)}
-                      className="flex items-center justify-between gap-3 text-left bg-white border border-slate-200 hover:border-primary-300 hover:bg-primary-50/60 rounded-xl p-5 transition-all duration-200 hover:shadow-md hover:-translate-y-0.5 group"
+                      className="flex items-center justify-between gap-3 text-left bg-white border border-slate-200 hover:border-sky-300 hover:bg-sky-50/60 rounded-xl p-5 transition-all duration-200 hover:shadow-md hover:-translate-y-0.5 group"
                     >
                       <div>
-                        <p className="font-bold text-slate-800 text-sm group-hover:text-primary-700 transition-colors">
+                        <p className="font-bold text-slate-800 text-sm group-hover:text-sky-700 transition-colors">
                           {role.jobTitle}
                         </p>
                         <p className="text-xs text-slate-500 mt-1">
@@ -379,7 +378,7 @@ const SalaryAssign = () => {
                         </span>
                         <ChevronRight
                           size={16}
-                          className="text-slate-400 group-hover:text-primary-600 transition-colors"
+                          className="text-slate-400 group-hover:text-sky-600 transition-colors"
                         />
                       </div>
                     </button>
@@ -394,7 +393,7 @@ const SalaryAssign = () => {
         <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
           <div className="px-5 py-4 border-b border-slate-100">
             <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
-              <History size={18} className="text-primary-600" /> Job Role Salary
+              <History size={18} className="text-sky-600" /> Job Role Salary
               History
               <span className="text-xs font-normal text-gray-400">
                 {department ? `· ${department.name}` : "· all departments"}
@@ -404,7 +403,7 @@ const SalaryAssign = () => {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="bg-primary-700 text-white text-xs">
+                <tr className="bg-gradient-to-r from-sky-700 to-sky-600 text-white text-xs">
                   {[
                     "Department",
                     "Job Role",
@@ -432,7 +431,7 @@ const SalaryAssign = () => {
                 {history.map((p, i) => (
                   <tr
                     key={p.id}
-                    className={`hover:bg-primary-50/60 transition-colors ${i % 2 === 1 ? "bg-slate-50/40" : ""}`}
+                    className={`hover:bg-sky-50/70 transition-colors ${i % 2 === 1 ? "bg-slate-50/40" : ""}`}
                   >
                     <td className="px-5 py-3 text-gray-600">
                       {p.departmentName}
@@ -455,7 +454,7 @@ const SalaryAssign = () => {
                     <td className="px-5 py-3 text-red-600 font-semibold whitespace-nowrap">
                       -{money(p.deduction)}
                     </td>
-                    <td className="px-5 py-3 font-bold text-teal-700 whitespace-nowrap">
+                    <td className="px-5 py-3 font-bold text-sky-700 whitespace-nowrap">
                       {money(p.totalSalary)}
                     </td>
                     <td className="px-5 py-3 text-gray-600">
@@ -497,7 +496,7 @@ const SalaryAssign = () => {
                           <button
                             onClick={() => editHistoryRow(p)}
                             title="Edit this salary row"
-                            className="p-1.5 text-slate-400 hover:text-primary-700 hover:bg-primary-50 rounded-lg transition-colors"
+                            className="p-1.5 text-slate-400 hover:text-sky-700 hover:bg-sky-50 rounded-lg transition-colors"
                           >
                             <Pencil size={14} />
                           </button>
@@ -536,12 +535,12 @@ const SalaryAssign = () => {
             onSubmit={handleSave}
             className="bg-white rounded-2xl shadow-2xl w-full max-w-6xl max-h-[90vh] flex flex-col"
           >
-            <div className="flex items-center justify-between p-5 bg-gradient-to-r from-primary-700 to-primary-600 text-white rounded-t-2xl">
+            <div className="flex items-center justify-between p-5 bg-gradient-to-r from-sky-700 to-sky-600 text-white rounded-t-2xl">
               <div>
                 <h3 className="text-lg font-bold">
                   Assign Salaries · {activeRole.jobTitle}
                 </h3>
-                <p className="text-primary-100 text-xs">
+                <p className="text-sky-100 text-xs">
                   {department?.name} · applies to every employee with this job
                   role and employment type
                 </p>
@@ -674,7 +673,7 @@ const SalaryAssign = () => {
                             />
                           </td>
                           <td
-                            className={`px-2 py-2 text-right font-bold whitespace-nowrap ${total < 0 ? "text-red-600" : "text-primary-700"}`}
+                            className={`px-2 py-2 text-right font-bold whitespace-nowrap ${total < 0 ? "text-red-600" : "text-sky-700"}`}
                           >
                             {money(total)}
                           </td>
@@ -699,7 +698,7 @@ const SalaryAssign = () => {
               <button
                 type="button"
                 onClick={() => setRows((prev) => [...prev, newRow()])}
-                className="w-full border-2 border-dashed border-primary-200 hover:border-primary-400 hover:bg-primary-50 text-primary-700 py-2.5 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 transition-colors"
+                className="w-full border-2 border-dashed border-sky-200 hover:border-sky-400 hover:bg-sky-50 text-sky-700 py-2.5 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 transition-colors"
               >
                 <Plus size={16} strokeWidth={2.5} /> Add another employment type
               </button>
@@ -728,7 +727,7 @@ const SalaryAssign = () => {
               <button
                 type="submit"
                 disabled={saving || employmentTypes.length === 0}
-                className="inline-flex items-center gap-2 bg-primary-600 hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed text-white px-5 py-2.5 rounded-xl text-sm font-semibold shadow-sm transition-all"
+                className="inline-flex items-center gap-2 bg-sky-600 hover:bg-sky-700 disabled:opacity-50 disabled:cursor-not-allowed text-white px-5 py-2.5 rounded-xl text-sm font-semibold shadow-sm hover:shadow-md transition-all"
               >
                 <Save size={16} /> {saving ? "Saving..." : "Save Salaries"}
               </button>

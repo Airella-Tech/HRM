@@ -109,7 +109,7 @@ const STATUS_COLORS = {
 };
 
 const selectCls =
-  "border border-gray-200 rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary-500";
+  "border border-slate-200 rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-sky-500";
 
 const Skeleton = () => (
   <div
@@ -835,12 +835,12 @@ const Report = () => {
       : trend.mode === "week"
         ? "Weekly (week starting)"
         : "Monthly";
-  const toneChip = {
-    green: "bg-emerald-50 text-emerald-600",
-    amber: "bg-amber-50 text-amber-600",
-    blue: "bg-sky-50 text-sky-600",
-    violet: "bg-violet-50 text-violet-600",
-  };
+const toneChip = {
+  green: "bg-emerald-50 text-emerald-600",
+  amber: "bg-amber-50 text-amber-600",
+  blue: "bg-sky-50 text-sky-600",
+  violet: "bg-sky-50 text-sky-600",
+};
   const countTone = {
     red: "bg-rose-50 text-rose-600",
     amber: "bg-amber-50 text-amber-600",
@@ -950,7 +950,7 @@ const Report = () => {
                   <li key={a.key}>
                     <button
                       onClick={a.go}
-                      className="w-full flex items-center gap-3 rounded-xl px-2 py-2 text-left hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
+                      className="w-full flex items-center gap-3 rounded-xl px-2 py-2 text-left hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500"
                     >
                       <span
                         className={`min-w-[2rem] h-8 px-1 rounded-lg flex items-center justify-center text-sm font-bold tabular-nums ${countTone[a.tone]}`}
@@ -1314,7 +1314,7 @@ const Report = () => {
           className="flex items-center gap-2 text-sm font-medium text-gray-700 w-full text-left"
           aria-expanded={showRules}
         >
-          <SlidersHorizontal size={15} className="text-primary-600" />
+          <SlidersHorizontal size={15} className="text-sky-600" />
           Attendance rules
           <span className="text-xs font-normal text-gray-400">
             Late after {rules.shiftStart} + {rules.graceMin} min · half day
@@ -1372,7 +1372,7 @@ const Report = () => {
             </label>
             <button
               onClick={() => setRules(DEFAULT_RULES)}
-              className="text-xs text-primary-600 hover:underline pb-2.5"
+              className="text-xs text-sky-600 hover:underline pb-2.5"
             >
               Reset to defaults
             </button>
@@ -1696,7 +1696,7 @@ const Report = () => {
             lv.pending.length > 0 && (
               <button
                 onClick={() => navigate("/hr/leave")}
-                className="text-xs font-medium text-primary-600 hover:underline no-print"
+                className="text-xs font-medium text-sky-600 hover:underline no-print"
               >
                 Review
               </button>
@@ -1855,11 +1855,11 @@ const Report = () => {
       )}
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
         {[
-          ["Basic salary", pay.basic, "text-primary-700"],
-          ["Allowances", pay.allowance, "text-primary-600"],
-          ["Deductions", pay.deduction, "text-primary-700"],
-          ["Net payroll", pay.net, "text-primary-600"],
-        ].map(([label, value, cls]) => (
+  ["Basic salary", pay.basic, "text-sky-700"],
+  ["Allowances", pay.allowance, "text-sky-600"],
+  ["Deductions", pay.deduction, "text-sky-700"],
+  ["Net payroll", pay.net, "text-sky-600"],
+].map(([label, value, cls]) => (
           <div
             key={label}
             className="bg-white rounded-xl border border-slate-200 shadow-sm p-5 break-inside-avoid transition-shadow hover:shadow-md"
@@ -1946,7 +1946,7 @@ const Report = () => {
             pay.pendingReqs.length > 0 && (
               <button
                 onClick={() => navigate("/hr/payslip")}
-                className="text-xs font-medium text-primary-600 hover:underline no-print"
+                className="text-xs font-medium text-sky-600 hover:underline no-print"
               >
                 Review
               </button>
@@ -2080,7 +2080,7 @@ const Report = () => {
           disabled={initialLoading}
           aria-haspopup="dialog"
           aria-expanded={exportOpen}
-          className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-primary-600 hover:bg-primary-700 disabled:opacity-50 text-white text-sm font-semibold transition-colors"
+          className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-sky-600 hover:bg-sky-700 disabled:opacity-50 text-white text-sm font-semibold transition-colors"
         >
           <FileText size={15} /> Export report{" "}
           <ChevronDown
@@ -2120,7 +2120,7 @@ const Report = () => {
                       setExportKind(k);
                       setExportNote(null);
                     }}
-                    className={`flex-1 py-1.5 rounded-lg text-sm font-semibold transition-colors ${exportKind === k ? "bg-white text-primary-700 shadow-sm" : "text-gray-500 hover:text-gray-800"}`}
+                    className={`flex-1 py-1.5 rounded-lg text-sm font-semibold transition-colors ${exportKind === k ? "bg-white text-sky-700 shadow-sm" : "text-gray-500 hover:text-gray-800"}`}
                   >
                     {label}
                   </button>
@@ -2171,7 +2171,7 @@ const Report = () => {
               <button
                 onClick={handlePeriodExport}
                 disabled={exporting}
-                className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-primary-600 hover:bg-primary-700 disabled:opacity-60 text-white text-sm font-semibold transition-colors"
+                className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-sky-600 hover:bg-sky-700 disabled:opacity-60 text-white text-sm font-semibold transition-colors"
               >
                 {exporting ? (
                   <Loader2 size={15} className="animate-spin" />
@@ -2343,7 +2343,7 @@ const Report = () => {
                   role="tab"
                   aria-selected={tab === key}
                   onClick={() => setTab(key)}
-                  className={`px-5 py-3 text-sm font-semibold whitespace-nowrap border-b-2 -mb-px transition-colors focus:outline-none focus-visible:bg-gray-100 ${tab === key ? "text-primary-700 border-primary-500" : "text-gray-500 border-transparent hover:text-gray-800"}`}
+                  className={`px-5 py-3 text-sm font-semibold whitespace-nowrap border-b-2 -mb-px transition-colors focus:outline-none focus-visible:bg-sky-50 ${tab === key ? "text-sky-700 border-sky-500" : "text-gray-500 border-transparent hover:text-gray-800"}`}
                 >
                   {label}
                 </button>

@@ -229,7 +229,7 @@ const HRAllowanceRequests = () => {
       actions={
         <button
           onClick={() => navigate("/hr/payslip")}
-          className="inline-flex items-center gap-2 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 px-4 py-2.5 rounded-xl text-sm font-semibold shadow-sm transition-colors"
+          className="inline-flex items-center gap-2 bg-sky-600 hover:bg-sky-700 text-white px-4 py-2.5 rounded-xl text-sm font-semibold shadow-sm transition-colors"
         >
           <ArrowLeft size={16} /> Back to Payroll
         </button>
@@ -258,15 +258,11 @@ const HRAllowanceRequests = () => {
           </div>
         )}
 
-        
-
-        
-
         {/* Reject comment (inline, no popup) */}
         {rejecting && (
           <form
             onSubmit={confirmReject}
-            className="bg-white rounded-2xl shadow-sm border border-slate-200 p-5"
+            className="bg-white rounded-xl shadow-sm border border-slate-200 p-5 hover:shadow-md transition-shadow duration-200"
           >
             <h2 className="text-base font-bold text-slate-800">
               Reject allowance request
@@ -321,8 +317,8 @@ const HRAllowanceRequests = () => {
                 onClick={() => setStatusFilter(s)}
                 className={`px-4 py-2 rounded-xl text-xs font-semibold transition-colors ${
                   statusFilter === s
-                    ? "bg-primary-600 text-white shadow-sm"
-                    : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                    ? "bg-sky-600 text-white shadow-sm"
+                    : "bg-slate-100 text-slate-600 hover:bg-sky-50 hover:text-sky-700"
                 }`}
               >
                 {s === "ALL" ? "All" : statusLabel(s)} ({counts[s]})
@@ -338,16 +334,16 @@ const HRAllowanceRequests = () => {
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Search employee or allowance…"
-              className="w-full pl-9 pr-4 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-slate-50"
+              className="w-full pl-9 pr-4 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-sky-500/10 focus:border-sky-500 focus:bg-white bg-slate-50 transition-all"
             />
           </div>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden hover:shadow-md transition-shadow duration-200">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="bg-gradient-to-r from-primary-700 via-primary-600 to-primary-700 text-white text-xs">
+                <tr className="bg-gradient-to-r from-sky-600 to-sky-700 text-white text-xs">
                   {[
                     "Employee",
                     "Allowance",
@@ -371,7 +367,7 @@ const HRAllowanceRequests = () => {
                 {filtered.map((r, i) => (
                   <tr
                     key={r.id}
-                    className={`align-top hover:bg-teal-50/40 transition-colors ${i % 2 === 1 ? "bg-gray-50/40" : ""}`}
+                    className={`align-top hover:bg-sky-50/70 transition-colors ${i % 2 === 1 ? "bg-slate-50/40" : ""}`}
                   >
                     <td className="px-4 py-3">
                       <p className="font-medium text-slate-800 whitespace-nowrap">
@@ -384,7 +380,7 @@ const HRAllowanceRequests = () => {
                     <td className="px-4 py-3 font-medium text-slate-800">
                       {r.name}
                     </td>
-                    <td className="px-4 py-3 font-bold text-primary-700 whitespace-nowrap">
+                    <td className="px-4 py-3 font-bold text-sky-700 whitespace-nowrap">
                       {money(r.amount)}
                     </td>
                     <td className="px-4 py-3 text-slate-600 max-w-[260px]">
@@ -409,7 +405,7 @@ const HRAllowanceRequests = () => {
                       <button
                         onClick={() => viewDocument(r)}
                         title={r.documentName}
-                        className="inline-flex items-center gap-1 bg-primary-50 hover:bg-primary-100 text-primary-700 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors"
+                        className="inline-flex items-center gap-1 bg-sky-50 hover:bg-sky-100 text-sky-700 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors"
                       >
                         <FileText size={13} /> View PDF
                       </button>
@@ -427,7 +423,7 @@ const HRAllowanceRequests = () => {
                           <button
                             onClick={() => setViewing(r)}
                             title="View request form"
-                            className="inline-flex items-center gap-1 bg-teal-50 hover:bg-teal-100 text-teal-700 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors"
+                            className="inline-flex items-center gap-1 bg-sky-50 hover:bg-sky-100 text-sky-700 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors"
                           >
                             <Eye size={13} /> View
                           </button>
@@ -455,7 +451,7 @@ const HRAllowanceRequests = () => {
                           <button
                             onClick={() => addToPay(r)}
                             disabled={busyId === r.id}
-                            className="inline-flex items-center gap-1 bg-primary-600 hover:bg-primary-700 disabled:opacity-50 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors whitespace-nowrap"
+                            className="inline-flex items-center gap-1 bg-sky-600 hover:bg-sky-700 disabled:opacity-50 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors whitespace-nowrap"
                           >
                             <Check size={13} /> Add to pay
                           </button>
@@ -491,7 +487,7 @@ const HRAllowanceRequests = () => {
       {viewingNow && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-xl">
-            <div className="flex items-center justify-between p-6 bg-gradient-to-r from-primary-700 via-primary-600 to-primary-700 text-white rounded-t-2xl">
+            <div className="flex items-center justify-between p-6 bg-gradient-to-r from-sky-700 to-sky-600 text-white rounded-t-2xl">
               <h3 className="text-xl font-bold">Allowance Request</h3>
               <button
                 onClick={() => setViewing(null)}
@@ -529,7 +525,7 @@ const HRAllowanceRequests = () => {
               </div>
               <button
                 onClick={() => viewDocument(viewingNow)}
-                className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary-700 bg-primary-50 hover:bg-primary-100 px-3 py-2 rounded-lg transition-colors"
+                className="inline-flex items-center gap-1.5 text-xs font-semibold text-sky-700 bg-sky-50 hover:bg-sky-100 px-3 py-2 rounded-lg transition-colors"
               >
                 <FileText size={14} /> View PDF · {viewingNow.documentName}
               </button>

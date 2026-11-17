@@ -51,7 +51,7 @@ const rowFromAllocation = (a) => ({
 });
 
 const fieldCls =
-  "w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white transition-colors";
+  "w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500 bg-white transition-colors";
 
 const LeaveAssign = () => {
   const navigate = useNavigate();
@@ -340,9 +340,9 @@ const LeaveAssign = () => {
         )}
 
         {/* Department picker */}
-        <div className="bg-gradient-to-r from-primary-700 to-primary-600 rounded-2xl shadow-md border border-primary-700 p-5">
+        <div className="bg-gradient-to-r from-sky-700 to-sky-600 rounded-2xl shadow-md border border-sky-700 p-5">
           <label className="block text-sm font-semibold text-white mb-3 flex items-center gap-2">
-            <Building2 size={16} className="text-primary-600" /> Department
+            <Building2 size={16} className="text-white" /> Department
           </label>
           <select
             value={departmentId}
@@ -389,7 +389,7 @@ const LeaveAssign = () => {
         {department && (
           <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
             <h2 className="text-base font-semibold text-slate-800 flex items-center gap-2 mb-4">
-              <Briefcase size={18} className="text-primary-600" /> Job roles in{" "}
+              <Briefcase size={18} className="text-sky-600" /> Job roles in{" "}
               {department.name}
             </h2>
             {jobRoles.length === 0 ? (
@@ -407,7 +407,7 @@ const LeaveAssign = () => {
                     <button
                       key={role.id}
                       onClick={() => openRole(role)}
-                      className="flex items-center justify-between text-left bg-white border border-primary-100 hover:border-primary-400 hover:bg-primary-50 rounded-xl px-4 py-4 shadow-sm hover:shadow-md transition-all group"
+                     className="flex items-center justify-between text-left bg-white border border-sky-100 hover:border-sky-400 hover:bg-sky-50 rounded-xl px-4 py-4 shadow-sm hover:shadow-md transition-all group"
                     >
                       <div>
                         <p className="font-semibold text-slate-800 text-sm">
@@ -421,7 +421,7 @@ const LeaveAssign = () => {
                       </div>
                       <ChevronRight
                         size={16}
-                        className="text-slate-400 group-hover:text-primary-600"
+                        className="text-slate-400 group-hover:text-sky-600"
                       />
                     </button>
                   );
@@ -437,7 +437,7 @@ const LeaveAssign = () => {
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
               <div>
                 <h2 className="text-base font-semibold text-slate-800 flex items-center gap-2">
-                  <History size={18} className="text-primary-600" />
+                  <History size={18} className="text-sky-600" />
                   Assigned Leave History
                 </h2>
                 <p className="text-xs text-slate-500 mt-1">
@@ -446,7 +446,7 @@ const LeaveAssign = () => {
                 </p>
               </div>
 
-              <span className="inline-flex items-center rounded-full bg-primary-50 text-primary-700 px-3 py-1.5 text-xs font-semibold w-fit">
+              <span className="inline-flex items-center rounded-full bg-sky-50 text-sky-700 px-3 py-1.5 text-xs font-semibold w-fit">
                 {history.length} Total Allocations
               </span>
             </div>
@@ -463,7 +463,7 @@ const LeaveAssign = () => {
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   placeholder="Search department, job role, leave type..."
-                  className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-colors"
+                  className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-colors"
                 />
               </div>
 
@@ -475,7 +475,7 @@ const LeaveAssign = () => {
                 <select
                   value={periodFilter}
                   onChange={(e) => setPeriodFilter(e.target.value)}
-                  className="w-full appearance-none pl-10 pr-8 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500"
+                  className="w-full appearance-none pl-10 pr-8 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500"
                 >
                   <option value="ALL">All Periods</option>
                   <option value="ANNUAL">Annual</option>
@@ -502,7 +502,7 @@ const LeaveAssign = () => {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="bg-primary-50 text-primary-900 text-xs border-b border-primary-100">
+                <tr className="bg-gradient-to-r from-sky-600 to-sky-700 text-white text-xs border-b border-sky-500">
                   {[
                     { label: "Department", key: "departmentName" },
                     { label: "Job Role", key: "jobRoleTitle" },
@@ -522,7 +522,7 @@ const LeaveAssign = () => {
                         <button
                           type="button"
                           onClick={() => toggleSort(column.key)}
-                          className="inline-flex items-center gap-1.5 hover:text-primary-700 transition-colors"
+                          className="inline-flex items-center gap-1.5 hover:text-sky-100 transition-colors"
                         >
                           {column.label}
                           {sortKey === column.key ? (
@@ -546,7 +546,7 @@ const LeaveAssign = () => {
                 {paginatedHistory.map((a, i) => (
                   <tr
                     key={a.id}
-                    className={`hover:bg-primary-50/50 transition-colors ${i % 2 === 1 ? "bg-slate-50/40" : "bg-white"}`}
+                    className={`hover:bg-sky-50/60 transition-colors ${i % 2 === 1 ? "bg-slate-50/40" : "bg-white"}`}
                   >
                     <td className="px-5 py-3 text-gray-600">
                       {a.departmentName}
@@ -580,7 +580,7 @@ const LeaveAssign = () => {
                           type="button"
                           onClick={() => openEditAllocation(a)}
                           title="Edit"
-                          className="p-2 rounded-lg text-slate-400 hover:text-primary-600 hover:bg-primary-50 transition-colors"
+                          className="p-2 rounded-lg text-slate-400 hover:text-sky-600 hover:bg-sky-50 transition-colors"
                         >
                           <Pencil size={15} />
                         </button>
@@ -601,8 +601,8 @@ const LeaveAssign = () => {
                   <tr>
                     <td colSpan={9} className="py-14 text-center">
                       <div className="flex flex-col items-center">
-                        <div className="w-14 h-14 rounded-2xl bg-primary-50 flex items-center justify-center mb-3">
-                          <History size={25} className="text-primary-500" />
+                        <div className="w-14 h-14 rounded-2xl bg-sky-50 flex items-center justify-center mb-3">
+                           <History size={25} className="text-sky-600" />
                         </div>
                         <p className="text-sm font-semibold text-slate-700">
                           {searchTerm || periodFilter !== "ALL"
@@ -787,7 +787,7 @@ const LeaveAssign = () => {
                 <button
                   type="button"
                   onClick={() => setRows((prev) => [...prev, newRow()])}
-                  className="w-full border-2 border-dashed border-primary-200 hover:border-primary-400 hover:bg-primary-50 text-primary-700 py-2.5 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 transition-colors"
+                  className="w-full border-2 border-dashed border-sky-200 hover:border-sky-400 hover:bg-sky-50 text-sky-700 py-2.5 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 transition-colors"
                 >
                   <Plus size={16} strokeWidth={2.5} /> Add another row
                 </button>
@@ -815,7 +815,7 @@ const LeaveAssign = () => {
                   leaveTypes.length === 0 ||
                   employmentTypes.length === 0
                 }
-                className="inline-flex items-center gap-2 bg-primary-600 hover:bg-primary-700 disabled:opacity-60 disabled:cursor-not-allowed text-white px-5 py-2.5 rounded-xl text-sm font-semibold shadow-sm transition-colors"
+                className="inline-flex items-center gap-2 bg-sky-600 hover:bg-sky-700 disabled:opacity-60 disabled:cursor-not-allowed text-white px-5 py-2.5 rounded-xl text-sm font-semibold shadow-sm transition-colors"
               >
                 <Save size={16} />{" "}
                 {saving

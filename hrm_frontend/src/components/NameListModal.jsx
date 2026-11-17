@@ -180,7 +180,7 @@ export const NameListModal = ({
     >
       <div className="bg-white w-full max-w-2xl max-h-[92vh] overflow-y-auto rounded-2xl shadow-2xl flex flex-col">
         {/* Header */}
-        <div className="px-6 py-5 border-b border-slate-200 flex items-center justify-between bg-primary-700 rounded-t-2xl">
+       <div className="px-6 py-5 border-b border-sky-700 flex items-center justify-between bg-gradient-to-r from-sky-700 to-sky-600 rounded-t-2xl">
           <div>
             <h2 className="text-lg font-bold text-white flex items-center gap-2">{Icon && <Icon size={18} />} {title}</h2>
             {subtitle && <p className="text-xs text-white/80 mt-0.5">{subtitle}</p>}
@@ -217,7 +217,7 @@ export const NameListModal = ({
                   }}
                   placeholder={placeholder}
                   maxLength={100}
-                  className="flex-1 border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-slate-50"
+                  className="flex-1 border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500 bg-slate-50 transition-colors"
                 />
                 <button type="button" onClick={() => removeRow(row.key)} disabled={rows.length === 1}
                   title="Remove row"
@@ -228,7 +228,7 @@ export const NameListModal = ({
             ))}
 
             <button type="button" onClick={addRow}
-              className="w-full mt-2 border-2 border-dashed border-primary-200 hover:border-primary-400 hover:bg-primary-50 text-primary-700 py-3 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 transition-colors">
+              className="w-full mt-2 border-2 border-dashed border-sky-200 hover:border-sky-400 hover:bg-sky-50 text-sky-700 py-3 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 transition-colors">
               <Plus size={16} strokeWidth={2.5} /> {addLabel}
             </button>
 
@@ -242,7 +242,7 @@ export const NameListModal = ({
                 Cancel
               </button>
               <button type="submit" disabled={saving}
-                className="inline-flex items-center gap-2 bg-primary-600 hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed text-white px-5 py-2.5 rounded-xl text-sm font-semibold shadow-sm transition-all">
+                className="inline-flex items-center gap-2 bg-sky-600 hover:bg-sky-700 disabled:opacity-60 disabled:cursor-not-allowed text-white px-5 py-2.5 rounded-xl text-sm font-semibold shadow-sm transition-colors">
                 <Save size={16} /> {saving ? "Saving..." : saveLabel}
               </button>
             </div>
@@ -252,12 +252,12 @@ export const NameListModal = ({
           <div className="bg-slate-50 rounded-2xl border border-slate-200 p-5">
             <h3 className="text-sm font-semibold text-slate-800 mb-3">{existingLabel} ({existing.length})</h3>
             {existing.length === 0 ? (
-              <p className="text-sm text-gray-400">{emptyLabel}</p>
+              <p className="text-sm text-slate-400">{emptyLabel}</p>
             ) : !editable ? (
               <div className="flex flex-wrap gap-2">
                 {existing.map(t => (
                   <span key={t.id} title={t.createdByName ? `Added by ${t.createdByName}` : undefined}
-                    className="px-3 py-1.5 bg-primary-50 text-primary-700 border border-primary-100 rounded-xl text-xs font-semibold">
+                    className="px-3 py-1.5 bg-sky-50 text-sky-700 border border-sky-100 rounded-xl text-xs font-semibold">
                     {t.name}
                   </span>
                 ))}
@@ -281,10 +281,10 @@ export const NameListModal = ({
                             }}
                             maxLength={100}
                             disabled={busy}
-                            className="flex-1 border border-slate-200 rounded-lg px-3 py-1.5 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-slate-50"
+                            className="flex-1 border border-slate-200 rounded-lg px-3 py-1.5 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500 bg-slate-50"
                           />
                           <button type="button" onClick={() => saveEdit(item)} disabled={busy}
-                            title="Save" className="p-1.5 rounded-lg text-primary-600 hover:bg-primary-50 disabled:opacity-50 transition-colors">
+                            title="Save" className="p-1.5 rounded-lg text-sky-600 hover:bg-sky-50 disabled:opacity-50 transition-colors">
                             {busy ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} />}
                           </button>
                           <button type="button" onClick={cancelEdit} disabled={busy}
@@ -309,13 +309,13 @@ export const NameListModal = ({
                       ) : (
                         <div className="flex items-center justify-between gap-2">
                           <span title={item.createdByName ? `Added by ${item.createdByName}` : undefined}
-                            className="text-sm font-semibold text-primary-700">
+                            className="text-sm font-semibold text-sky-700">
                             {item.name}
                           </span>
                           <div className="flex items-center gap-1 flex-shrink-0">
                             {onUpdate && (
                               <button type="button" onClick={() => startEdit(item)}
-                                title="Rename" className="p-1.5 rounded-lg text-slate-400 hover:text-primary-700 hover:bg-primary-50 transition-colors">
+                                title="Rename" className="p-1.5 rounded-lg text-slate-400 hover:text-sky-700 hover:bg-sky-50 transition-colors">
                                 <Pencil size={14} />
                               </button>
                             )}

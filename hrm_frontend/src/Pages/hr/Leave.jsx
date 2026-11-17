@@ -239,13 +239,13 @@ const LeaveManagement = ({ role = "hr" }) => {
           <div className="flex items-center gap-2">
             <button
               onClick={() => setShowLeaveTypes(true)}
-              className="inline-flex items-center gap-2 bg-primary-600 hover:bg-primary-700 text-white px-4 py-2.5 rounded-xl text-sm font-semibold shadow-sm transition-colors duration-200"
+              className="inline-flex items-center gap-2 bg-sky-600 hover:bg-sky-700 text-white px-4 py-2.5 rounded-xl text-sm font-semibold shadow-sm transition-colors duration-200"
             >
               <Plus size={17} strokeWidth={2.5} /> Add Leave Types
             </button>
             <button
               onClick={() => navigate("/hr/leave/assign")}
-              className="inline-flex items-center gap-2 bg-primary-600 hover:bg-primary-700 text-white px-4 py-2.5 rounded-xl text-sm font-semibold shadow-sm transition-colors duration-200"
+              className="inline-flex items-center gap-2 bg-sky-600 hover:bg-sky-700 text-white px-4 py-2.5 rounded-xl text-sm font-semibold shadow-sm transition-colors duration-200"
             >
               <Briefcase size={17} strokeWidth={2.5} /> Assign Leaves for Job
               Roles
@@ -265,13 +265,13 @@ const LeaveManagement = ({ role = "hr" }) => {
 
         {/* Leave Management Introduction */}
         {isHR && (
-          <div className="relative overflow-hidden rounded-2xl border border-primary-200 bg-gradient-to-r from-primary-100 via-primary-50 to-white p-6 sm:p-7">
-            <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-primary-200/40" />
-            <div className="absolute -bottom-12 right-28 h-32 w-32 rounded-full bg-primary-100/70" />
+          <div className="relative overflow-hidden rounded-2xl border border-sky-200 bg-gradient-to-r from-sky-100 via-sky-50 to-white p-6 sm:p-7">
+            <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-sky-200/40" />
+            <div className="absolute -bottom-12 right-28 h-32 w-32 rounded-full bg-sky-100/70" />
 
             <div className="relative flex flex-col sm:flex-row sm:items-center sm:justify-between gap-5">
               <div className="flex items-start gap-4">
-                <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-primary-600 text-white shadow-sm">
+                <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-sky-600 text-white shadow-sm">
                   <FileText size={27} />
                 </div>
 
@@ -280,7 +280,7 @@ const LeaveManagement = ({ role = "hr" }) => {
                     <h2 className="text-xl sm:text-2xl font-bold text-slate-900">
                       Leave Management
                     </h2>
-                    <span className="rounded-full border border-primary-200 bg-primary-100 px-3 py-1 text-xs font-semibold text-primary-700">
+                    <span className="rounded-full border border-sky-200 bg-sky-100 px-3 py-1 text-xs font-semibold text-sky-700">
                       HR Workspace
                     </span>
                   </div>
@@ -292,8 +292,8 @@ const LeaveManagement = ({ role = "hr" }) => {
                 </div>
               </div>
 
-              <div className="flex shrink-0 items-center gap-3 rounded-xl border border-primary-200 bg-white px-4 py-3 shadow-sm">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary-50 text-primary-600">
+              <div className="flex shrink-0 items-center gap-3 rounded-xl border border-sky-200 bg-white px-4 py-3 shadow-sm">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-sky-50 text-sky-600">
                   <Users size={20} />
                 </div>
                 <div>
@@ -318,7 +318,7 @@ const LeaveManagement = ({ role = "hr" }) => {
               description: "All submitted leave requests",
               icon: <ClipboardList size={21} />,
               filter: "all",
-              color: "bg-primary-600",
+              color: "bg-gradient-to-br from-sky-600 to-sky-700",
             },
             {
               label: "Pending Requests",
@@ -326,7 +326,7 @@ const LeaveManagement = ({ role = "hr" }) => {
               description: "Waiting for HR approval",
               icon: <CalendarClock size={21} />,
               filter: "pending",
-              color: "bg-primary-500",
+              color: "bg-gradient-to-br from-sky-500 to-sky-600",
             },
             {
               label: "Approved Requests",
@@ -334,7 +334,7 @@ const LeaveManagement = ({ role = "hr" }) => {
               description: "Successfully approved",
               icon: <CalendarCheck size={21} />,
               filter: "approved",
-              color: "bg-primary-700",
+              color: "bg-gradient-to-br from-sky-700 to-sky-800",
             },
             {
               label: "Rejected Requests",
@@ -342,14 +342,14 @@ const LeaveManagement = ({ role = "hr" }) => {
               description: "Requests not approved",
               icon: <CalendarX size={21} />,
               filter: "rejected",
-              color: "bg-primary-800",
+              color: "bg-gradient-to-br from-sky-800 to-sky-900",
             },
           ].map((s) => (
             <div
               key={s.label}
               className={
                 isHR
-                  ? `${s.color} relative overflow-hidden rounded-2xl p-5 text-white shadow-sm transition-all duration-200 hover:shadow-md`
+                  ? `${s.color} relative overflow-hidden rounded-2xl p-5 text-white shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md`
                   : `bg-gradient-to-br ${
                       s.filter === "all"
                         ? "from-indigo-400 to-violet-500"
@@ -440,7 +440,7 @@ const LeaveManagement = ({ role = "hr" }) => {
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 placeholder="Search by name, ID, department, or leave type..."
-                className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:border-primary-500 focus:ring-4 focus:ring-primary-500/10 transition-all"
+                className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:border-sky-500 focus:ring-4 focus:ring-sky-500/10 transition-all"
               />
             </div>
 
@@ -452,7 +452,7 @@ const LeaveManagement = ({ role = "hr" }) => {
               <select
                 value={filterStatus}
                 onChange={(e) => setFilterStatus(e.target.value)}
-                className="w-full appearance-none pl-10 pr-8 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-700 focus:outline-none focus:border-primary-500 focus:ring-4 focus:ring-primary-500/10 transition-all"
+                className="w-full appearance-none pl-10 pr-8 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-700 focus:outline-none focus:border-sky-500 focus:ring-4 focus:ring-sky-500/10 transition-all"
               >
                 <option value="all">All Status</option>
                 <option value="pending">Pending</option>
@@ -476,7 +476,7 @@ const LeaveManagement = ({ role = "hr" }) => {
                 <tr
                   className={`text-xs ${
                     isHR
-                      ? "bg-primary-50 border-b border-primary-100 text-primary-800"
+                      ? "bg-gradient-to-r from-sky-600 to-sky-700 border-b border-sky-500 text-white"
                       : `bg-gradient-to-r ${accentFrom} text-white`
                   }`}
                 >
@@ -501,7 +501,7 @@ const LeaveManagement = ({ role = "hr" }) => {
                           onClick={() => toggleSort(column.key)}
                           className={`inline-flex items-center gap-1.5 transition-colors ${
                             isHR
-                              ? "hover:text-primary-600"
+                              ? "hover:text-sky-100"
                               : "hover:text-white/70"
                           }`}
                         >
@@ -532,7 +532,7 @@ const LeaveManagement = ({ role = "hr" }) => {
                     key={r.id}
                     className={`transition-colors ${
                       isHR
-                        ? `hover:bg-primary-50/50 ${i % 2 === 1 ? "bg-slate-50/40" : "bg-white"}`
+                        ? `hover:bg-sky-50/60 ${i % 2 === 1 ? "bg-slate-50/40" : "bg-white"}`
                         : `hover:bg-teal-50/40 ${i % 2 === 1 ? "bg-slate-50/40" : ""}`
                     }`}
                   >
@@ -570,7 +570,7 @@ const LeaveManagement = ({ role = "hr" }) => {
                           onClick={() => setViewingRequest(r)}
                           className={`flex items-center gap-1 font-semibold text-xs transition-colors ${
                             isHR
-                              ? "text-primary-600 hover:text-primary-800"
+                              ? "text-sky-600 hover:text-sky-800"
                               : "text-teal-600 hover:text-teal-800"
                           }`}
                         >
@@ -634,7 +634,7 @@ const LeaveManagement = ({ role = "hr" }) => {
           >
             <div
               className={`flex items-center justify-between p-6 ${
-                isHR ? "bg-primary-600" : `bg-gradient-to-r ${accentFrom}`
+                isHR ? "bg-sky-600" : `bg-gradient-to-r ${accentFrom}`
               } text-white rounded-t-2xl`}
             >
               <h3 className="text-xl font-bold">Leave Request Details</h3>
@@ -664,7 +664,7 @@ const LeaveManagement = ({ role = "hr" }) => {
                 ))}
               </div>
               <div>
-                <p className="text-xs text-graygray-400 mb-1">Reason</p>
+                <p className="text-xs text-slate-400 mb-1">Reason</p>
                 <p className="bg-gray-50 p-3 rounded-xl text-sm text-slate-700">
                   {viewingRequest.reason}
                 </p>

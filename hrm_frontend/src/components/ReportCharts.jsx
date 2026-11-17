@@ -220,7 +220,7 @@ export const BarChart = ({ labels = [], series = [], stacked = false, height = 2
 };
 
 // ─── Horizontal ranked bars (HTML) ────────────────────────────────────────────
-export const HBars = ({ items = [], format = (v) => v, max, color = COLORS.teal, labelWidth = "8rem", empty = "No data for this selection" }) => {
+export const HBars = ({ items = [], format = (v) => v, max, color = COLORS.sky, labelWidth = "8rem", empty = "No data for this selection" }) => {
     const data = items.filter((i) => i.value != null);
     if (!data.length) return <EmptyState text={empty} />;
     const top = max ?? Math.max(...data.map((d) => d.value), 1);
@@ -228,12 +228,12 @@ export const HBars = ({ items = [], format = (v) => v, max, color = COLORS.teal,
         <ul className="space-y-3">
             {data.map((d) => (
                 <li key={d.label} className="grid items-center gap-3" style={{ gridTemplateColumns: `minmax(0,${labelWidth}) 1fr auto` }}>
-                    <span className="text-xs text-gray-600 truncate" title={d.label}>{d.label}</span>
-                    <div className="h-2.5 rounded-full bg-gray-100 overflow-hidden">
+                    <span className="text-xs text-slate-600 truncate" title={d.label}>{d.label}</span>
+                    <div className="h-2.5 rounded-full bg-slate-100 overflow-hidden">
                         <div className="h-full rounded-full" style={{ width: `${Math.max(2, Math.min(100, (d.value / top) * 100))}%`, background: d.color || color }} />
                     </div>
-                    <span className="text-xs font-semibold text-gray-800 tabular-nums text-right min-w-[2.5rem]">
-                        {format(d.value)}{d.note && <span className="ml-1.5 font-normal text-gray-400">{d.note}</span>}
+                    <span className="text-xs font-semibold text-slate-800 tabular-nums text-right min-w-[2.5rem]">
+                        {format(d.value)}{d.note && <span className="ml-1.5 font-normal text-slate-400">{d.note}</span>}
                     </span>
                 </li>
             ))}
@@ -273,16 +273,16 @@ export const DonutChart = ({ data = [], centerValue, centerLabel, format = (v) =
                         const cls = txt.length <= 5 ? "text-xl" : txt.length <= 8 ? "text-base" : "text-xs";
                         return <span className={`${cls} font-bold text-gray-900 tabular-nums leading-tight`}>{txt}</span>;
                     })()}
-                    <span className="text-[11px] text-gray-400 truncate" style={{ maxWidth: size - thickness * 2 - 10 }}>{hi != null ? items[hi].label : centerLabel || "Total"}</span>
+                    <span className="text-[11px] text-slate-400 truncate" style={{ maxWidth: size - thickness * 2 - 10 }}>{hi != null ? items[hi].label : centerLabel || "Total"}</span>
                 </div>
             </div>
             <ul className="flex-1 min-w-[190px] space-y-1.5">
                 {items.map((d, i) => (
                     <li key={d.label} className={`flex items-center gap-2 text-xs rounded-md px-1.5 py-0.5 ${hi === i ? "bg-gray-50" : ""}`} onMouseEnter={() => setHi(i)} onMouseLeave={() => setHi(null)}>
                         <span className="w-2.5 h-2.5 rounded-sm flex-shrink-0" style={{ background: d.color }} />
-                        <span className="text-gray-600 truncate">{d.label}</span>
-                        <span className="ml-auto font-semibold text-gray-800 tabular-nums">{format(d.value)}</span>
-                        <span className="text-gray-400 tabular-nums w-10 text-right">{((d.value / total) * 100).toFixed(0)}%</span>
+                        <span className="text-slate-600 truncate">{d.label}</span>
+                        <span className="ml-auto font-semibold text-slate-800 tabular-nums">{format(d.value)}</span>
+                        <span className="text-slate-400 tabular-nums w-10 text-right">{((d.value / total) * 100).toFixed(0)}%</span>
                     </li>
                 ))}
             </ul>
@@ -291,7 +291,7 @@ export const DonutChart = ({ data = [], centerValue, centerLabel, format = (v) =
 };
 
 // ─── Sparkline ────────────────────────────────────────────────────────────────
-export const Sparkline = ({ values = [], color = COLORS.teal, width = 92, height = 30 }) => {
+export const Sparkline = ({ values = [], color = COLORS.sky, width = 92, height = 30 }) => {
     const v = values.filter((x) => x != null && isFinite(x));
     if (v.length < 2) return null;
     const lo = Math.min(...v), hi = Math.max(...v), span = hi - lo || 1;
@@ -310,7 +310,7 @@ export const Sparkline = ({ values = [], color = COLORS.teal, width = 92, height
 export const Delta = ({ cur, prev, mode = "pct", good = "up", suffix = "", onDark = false }) => {
     if (cur == null || prev == null || !isFinite(cur) || !isFinite(prev)) return null;
     const diff = cur - prev;
-    const muted = onDark ? "text-white/75" : "text-gray-400";
+    const muted = onDark ? "text-white/75" : "text-slate-400";
     if (Math.abs(diff) < 1e-9) return <span className={`text-[11px] ${muted}`}>No change vs previous</span>;
     let text;
     if (mode === "pts") text = `${Math.abs(diff).toFixed(1)} pts`;
@@ -333,14 +333,14 @@ export const Delta = ({ cur, prev, mode = "pct", good = "up", suffix = "", onDar
 
 export const KpiCard = ({ icon: Icon, tint = "teal", label, value, sub, delta, spark, onClick }) => {
     // Blue summary-card theme matching the Employee page.
-    const grads = {
-        teal: "from-primary-600 to-primary-700",
-        sky: "from-primary-500 to-primary-700",
-        violet: "from-primary-700 to-primary-900",
-        amber: "from-primary-600 to-primary-800",
-        mint: "from-primary-500 to-primary-800",
-        rose: "from-primary-700 to-primary-900",
-    };
+const grads = {
+    teal: "from-sky-600 to-sky-700",
+    sky: "from-sky-500 to-sky-600",
+    violet: "from-sky-700 to-sky-800",
+    amber: "from-sky-600 to-sky-700",
+    mint: "from-sky-500 to-sky-600",
+    rose: "from-sky-800 to-sky-900",
+};
 
     const Tag = onClick ? "button" : "div";
     const d = React.isValidElement(delta)
@@ -354,7 +354,7 @@ export const KpiCard = ({ icon: Icon, tint = "teal", label, value, sub, delta, s
                 grads[tint] || grads.teal
             } text-white rounded-xl shadow-sm p-5 flex flex-col gap-3 min-w-0 break-inside-avoid transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md ${
                 onClick
-                    ? "cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-primary-500"
+                    ? "cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-sky-500"
                     : ""
             }`}
         >
@@ -393,18 +393,18 @@ export const KpiCard = ({ icon: Icon, tint = "teal", label, value, sub, delta, s
 
 export const Badge = ({ tone = "gray", children }) => {
     const tones = {
-        gray: "bg-gray-100 text-gray-600", green: "bg-emerald-100 text-emerald-700", amber: "bg-amber-100 text-amber-700",
+        gray: "bg-slate-100 text-slate-600", green: "bg-emerald-100 text-emerald-700", amber: "bg-amber-100 text-amber-700",
         red: "bg-rose-100 text-rose-700", blue: "bg-sky-100 text-sky-700", violet: "bg-violet-100 text-violet-700",
     };
     return <span className={`inline-block px-2 py-0.5 rounded-full text-[11px] font-semibold whitespace-nowrap ${tones[tone]}`}>{children}</span>;
 };
 
 export const RateBar = ({ value, warnBelow = 90, badBelow = 80 }) => {
-    if (value == null) return <span className="text-xs text-gray-400">—</span>;
-    const color = value < badBelow ? COLORS.rose : value < warnBelow ? COLORS.amber : COLORS.teal;
+    if (value == null) return <span className="text-xs text-slate-400">—</span>;
+    const color = value < badBelow ? COLORS.rose : value < warnBelow ? COLORS.amber : COLORS.sky;
     return (
         <div className="flex items-center gap-2 min-w-[110px]">
-            <div className="flex-1 h-1.5 rounded-full bg-gray-100 overflow-hidden"><div className="h-full rounded-full" style={{ width: `${Math.min(100, value)}%`, background: color }} /></div>
+            <div className="flex-1 h-1.5 rounded-full bg-slate-100 overflow-hidden"><div className="h-full rounded-full" style={{ width: `${Math.min(100, value)}%`, background: color }} /></div>
             <span className="text-xs font-semibold text-gray-700 tabular-nums w-11 text-right">{value.toFixed(1)}%</span>
         </div>
     );
@@ -447,9 +447,9 @@ export const DataTable = ({ columns, rows, pageSize = 8, searchText, initialSort
         <div>
             {searchText && (
                 <div className="relative mb-3 max-w-xs no-print">
-                    <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                    <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                     <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search…" aria-label="Search table"
-                        className="w-full pl-9 pr-3 py-2 text-sm border border-gray-200 rounded-xl bg-gray-50 focus:outline-none focus:ring-2 focus:ring-teal-500" />
+                        className="w-full pl-9 pr-3 py-2 text-sm border border-slate-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-sky-500" />
                 </div>
             )}
             <div className="overflow-x-auto rounded-xl border border-gray-100">
@@ -462,7 +462,7 @@ export const DataTable = ({ columns, rows, pageSize = 8, searchText, initialSort
                                     <th key={c.key} scope="col" className={`px-4 py-3 font-semibold whitespace-nowrap ${c.align === "right" ? "text-right" : "text-left"}`}
                                         aria-sort={active ? (sort.dir === "asc" ? "ascending" : "descending") : undefined}>
                                         {c.sortable === false ? c.label : (
-                                            <button onClick={() => toggle(c)} className={`inline-flex items-center gap-1 hover:text-gray-800 ${c.align === "right" ? "flex-row-reverse" : ""}`}>
+                                            <button onClick={() => toggle(c)} className={`inline-flex items-center gap-1 hover:text-slate-800 ${c.align === "right" ? "flex-row-reverse" : ""}`}>
                                                 {c.label}
                                                 {active ? (sort.dir === "asc" ? <ChevronUp size={12} /> : <ChevronDown size={12} />) : <ChevronDown size={12} className="opacity-25" />}
                                             </button>
@@ -473,7 +473,7 @@ export const DataTable = ({ columns, rows, pageSize = 8, searchText, initialSort
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-50">
-                        {view.length === 0 && <tr><td colSpan={columns.length} className="px-4 py-10 text-center text-xs text-gray-400">{emptyText}</td></tr>}
+                        {view.length === 0 && <tr><td colSpan={columns.length} className="px-4 py-10 text-center text-xs text-slate-400">{emptyText}</td></tr>}
                         {view.map((row, i) => (
                             <tr key={rowKey ? rowKey(row) : i} className="hover:bg-teal-50/40 transition-colors">
                                 {columns.map((c) => (

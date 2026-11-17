@@ -703,13 +703,13 @@ const AddEmployeeModal = ({
     "Strong",
     "Very Strong",
   ];
- const strengthColors = [
+const strengthColors = [
   "bg-red-500",
   "bg-orange-500",
   "bg-yellow-500",
-  "bg-primary-400",
-  "bg-primary-500",
-  "bg-primary-600",
+  "bg-sky-400",
+  "bg-sky-500",
+  "bg-sky-700",
 ];
 
   const selectedRole = USER_ROLES.find((r) => r.value === formData.userRole);
@@ -744,7 +744,7 @@ const AddEmployeeModal = ({
         <div
           className="
             px-6 py-5
-            bg-primary-600
+            bg-sky-700
             flex items-center
             justify-between
           "
@@ -793,9 +793,9 @@ const AddEmployeeModal = ({
                     <div
                       className={`h-9 w-9 rounded-full flex items-center justify-center transition-all duration-300 ${
                         isCompleted
-                          ? "bg-primary-500 text-white"
+                          ? "bg-sky-600 text-white"
                           : isCurrent
-                            ? "bg-primary-600 text-white shadow-md scale-110"
+                            ? "bg-sky-700 text-white shadow-md scale-110"
                             : "bg-slate-100 text-slate-400"
                       }`}
                     >
@@ -807,7 +807,7 @@ const AddEmployeeModal = ({
                     </div>
                     <span
                       className={`text-[11px] mt-1.5 font-semibold ${
-                        isCurrent ? "text-primary-600" : "text-slate-400"
+                        isCurrent ? "text-sky-600" : "text-slate-400"
                       }`}
                     >
                       {step.title}
@@ -817,7 +817,7 @@ const AddEmployeeModal = ({
                     <div
                       className={`flex-1 h-1 mx-2 rounded-full transition-all duration-300 ${
                         currentStep > step.id
-                          ? "bg-primary-500"
+                          ? "	bg-sky-600"
                           : "bg-slate-200"
                       }`}
                     />
@@ -832,14 +832,14 @@ const AddEmployeeModal = ({
         <form onSubmit={handleFormSubmit} className="flex flex-col min-h-0">
           <div className="overflow-y-auto p-6 space-y-5">
             {draftRestored && !isEdit && (
-              <div className="flex items-center justify-between gap-3 bg-primary-50 border border-primary-100 text-primary-700 text-xs rounded-xl px-4 py-3">
+              <div className="flex items-center justify-between gap-3 bg-sky-50 border border-sky-200 text-sky-800 text-xs rounded-xl px-4 py-3">
                 <span>
                   Continuing your unfinished form — nothing you typed was lost.
                 </span>
                 <button
                   type="button"
                   onClick={discardDraft}
-                  className="font-semibold underline decoration-primary-300 hover:decoration-primary-500 flex-shrink-0"
+                  className="font-semibold underline decoration-sky-300 hover:decoration-sky-500 flex-shrink-0"
                 >
                   Discard &amp; start fresh
                 </button>
@@ -859,7 +859,7 @@ const AddEmployeeModal = ({
                       value={formData.firstName}
                       onChange={handleChange}
                       placeholder="John"
-                      className={`w-full px-4 py-2.5 rounded-xl border transition-all duration-200 focus:ring-2 focus:ring-primary-500 outline-none bg-slate-50 ${
+                      className={`w-full px-4 py-2.5 rounded-xl border transition-all duration-200 focus:ring-2 focus:ring-[#4A86C8] outline-none bg-slate-50 ${
                         errors.firstName ? "border-red-500" : "border-slate-300"
                       }`}
                     />
@@ -876,7 +876,7 @@ const AddEmployeeModal = ({
                       value={formData.lastName}
                       onChange={handleChange}
                       placeholder="Doe"
-                      className={`w-full px-4 py-2.5 rounded-xl border transition-all duration-200 focus:ring-2 focus:ring-primary-500 outline-none bg-slate-50 ${
+                      className={`w-full px-4 py-2.5 rounded-xl border transition-all duration-200 focus:ring-2 focus:ring-[#4A86C8] outline-none bg-slate-50 ${
                         errors.lastName ? "border-red-500" : "border-slate-300"
                       }`}
                     />
@@ -896,7 +896,7 @@ const AddEmployeeModal = ({
                       value={formData.email}
                       onChange={handleChange}
                       placeholder="john.doe@company.com"
-                      className={`w-full pl-10 pr-4 py-2.5 rounded-xl border transition-all duration-200 focus:ring-2 focus:ring-primary-500 outline-none bg-slate-50 ${
+                      className={`w-full pl-10 pr-4 py-2.5 rounded-xl border transition-all duration-200 focus:ring-2 focus:ring-[#4A86C8] outline-none bg-slate-50 ${
                         errors.email ? "border-red-500" : "border-slate-300"
                       }`}
                     />
@@ -917,7 +917,7 @@ const AddEmployeeModal = ({
                         value={formData.phone}
                         onChange={handleChange}
                         placeholder="+1 (555) 000-0000"
-                        className={`w-full pl-10 pr-4 py-2.5 rounded-xl border transition-all duration-200 focus:ring-2 focus:ring-primary-500 outline-none bg-slate-50 ${
+                        className={`w-full pl-10 pr-4 py-2.5 rounded-xl border transition-all duration-200 focus:ring-2 focus:ring-[#4A86C8] outline-none bg-slate-50 ${
                           errors.phone ? "border-red-500" : "border-slate-300"
                         }`}
                       />
@@ -936,7 +936,7 @@ const AddEmployeeModal = ({
                         name="dateOfBirth"
                         value={formData.dateOfBirth}
                         onChange={handleChange}
-                        className={`w-full pl-10 pr-4 py-2.5 rounded-xl border transition-all duration-200 focus:ring-2 focus:ring-primary-500 outline-none bg-slate-50 ${
+                        className={`w-full pl-10 pr-4 py-2.5 rounded-xl border transition-all duration-200 focus:ring-2 focus:ring-[#4A86C8] outline-none bg-slate-50 ${
                           errors.dateOfBirth
                             ? "border-red-500"
                             : "border-slate-300"
@@ -959,7 +959,7 @@ const AddEmployeeModal = ({
                       name="gender"
                       value={formData.gender}
                       onChange={handleChange}
-                      className={`w-full pl-10 pr-4 py-2.5 rounded-xl border transition-all duration-200 focus:ring-2 focus:ring-primary-500 outline-none bg-slate-50 appearance-none ${
+                      className={`w-full pl-10 pr-4 py-2.5 rounded-xl border transition-all duration-200 focus:ring-2 focus:ring-[#4A86C8] outline-none bg-slate-50 appearance-none ${
                         errors.gender ? "border-red-500" : "border-slate-300"
                       }`}
                     >
@@ -1002,7 +1002,7 @@ const AddEmployeeModal = ({
                             isDisabled
                               ? "border-slate-200 bg-slate-50 opacity-60 cursor-not-allowed"
                               : isSelected
-                                ? "border-primary-500 bg-primary-50 shadow-sm cursor-pointer"
+                                ? "border-[#4A86C8] bg-[#F2F7FC] shadow-sm cursor-pointer"
                                 : "border-slate-200 hover:border-slate-300 hover:bg-slate-50 cursor-pointer"
                           }`}
                         >
@@ -1012,7 +1012,7 @@ const AddEmployeeModal = ({
                                 isDisabled
                                   ? "bg-slate-200 text-slate-400"
                                   : isSelected
-                                    ? "bg-primary-100 text-primary-700"
+                                    ? "bg-[#E3EEF9] text-[#3F6FA6]"
                                     : "bg-slate-100 text-slate-600"
                               }`}
                             >
@@ -1030,7 +1030,7 @@ const AddEmployeeModal = ({
                                   {role.label}
                                 </h3>
                                 {isSelected && !isDisabled && (
-                                  <Check className="w-4 h-4 text-primary-600" />
+                                  <Check className="w-4 h-4 text-sky-600" />
                                 )}
                                 {isDisabled && (
                                   <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 bg-slate-200 px-1.5 py-0.5 rounded">
@@ -1061,7 +1061,7 @@ const AddEmployeeModal = ({
                     Employee ID *
                   </label>
                   <div
-                    className={`flex items-stretch rounded-xl border transition-all duration-200 bg-slate-50 overflow-hidden focus-within:ring-2 focus-within:ring-primary-500 ${
+                    className={`flex items-stretch rounded-xl border transition-all duration-200 bg-slate-50 overflow-hidden focus-within:ring-2 focus-within:ring-sky-500 ${
                       errors.employeeId ? "border-red-500" : "border-slate-300"
                     }`}
                   >
@@ -1099,7 +1099,7 @@ const AddEmployeeModal = ({
                       <select
                         value={formData.departmentId}
                         onChange={(e) => handleDepartmentSelect(e.target.value)}
-                        className={`w-full pl-10 pr-4 py-2.5 rounded-xl border transition-all duration-200 focus:ring-2 focus:ring-primary-500 outline-none bg-slate-50 appearance-none ${
+                        className={`w-full pl-10 pr-4 py-2.5 rounded-xl border transition-all duration-200 focus:ring-2 focus:ring-[#4A86C8] outline-none bg-slate-50 appearance-none ${
                           errors.departmentId
                             ? "border-red-500"
                             : "border-slate-300"
@@ -1133,7 +1133,7 @@ const AddEmployeeModal = ({
                         value={formData.jobTitle}
                         onChange={(e) => handleJobTitleSelect(e.target.value)}
                         disabled={!formData.departmentId}
-                        className={`w-full pl-10 pr-4 py-2.5 rounded-xl border transition-all duration-200 focus:ring-2 focus:ring-primary-500 outline-none bg-slate-50 appearance-none disabled:opacity-60 disabled:cursor-not-allowed ${
+                        className={`w-full pl-10 pr-4 py-2.5 rounded-xl border transition-all duration-200 focus:ring-2 focus:ring-[#4A86C8] outline-none bg-slate-50 appearance-none disabled:opacity-60 disabled:cursor-not-allowed ${
                           errors.jobTitle
                             ? "border-red-500"
                             : "border-slate-300"
@@ -1171,7 +1171,7 @@ const AddEmployeeModal = ({
                       name="employmentType"
                       value={formData.employmentType}
                       onChange={handleChange}
-                      className={`w-full px-4 py-2.5 rounded-xl border transition-all duration-200 focus:ring-2 focus:ring-primary-500 outline-none bg-slate-50 ${
+                      className={`w-full px-4 py-2.5 rounded-xl border transition-all duration-200 focus:ring-2 focus:ring-[#4A86C8] outline-none bg-slate-50 ${
                         errors.employmentType
                           ? "border-red-500"
                           : "border-slate-300"
@@ -1208,7 +1208,7 @@ const AddEmployeeModal = ({
                         name="workLocation"
                         value={formData.workLocation}
                         onChange={handleChange}
-                        className={`w-full pl-10 pr-4 py-2.5 rounded-xl border transition-all duration-200 focus:ring-2 focus:ring-primary-500 outline-none bg-slate-50 appearance-none ${
+                        className={`w-full pl-10 pr-4 py-2.5 rounded-xl border transition-all duration-200 focus:ring-2 focus:ring-[#4A86C8] outline-none bg-slate-50 appearance-none ${
                           errors.workLocation
                             ? "border-red-500"
                             : "border-slate-300"
@@ -1248,7 +1248,7 @@ const AddEmployeeModal = ({
                       name="hireDate"
                       value={formData.hireDate}
                       onChange={handleChange}
-                      className={`w-full pl-10 pr-4 py-2.5 rounded-xl border transition-all duration-200 focus:ring-2 focus:ring-primary-500 outline-none bg-slate-50 ${
+                      className={`w-full pl-10 pr-4 py-2.5 rounded-xl border transition-all duration-200 focus:ring-2 focus:ring-[#4A86C8] outline-none bg-slate-50 ${
                         errors.hireDate ? "border-red-500" : "border-slate-300"
                       }`}
                     />
@@ -1278,7 +1278,7 @@ const AddEmployeeModal = ({
                       value={formData.password}
                       onChange={handleChange}
                       placeholder="••••••••"
-                      className={`w-full pl-10 pr-12 py-2.5 rounded-xl border transition-all duration-200 focus:ring-2 focus:ring-primary-500 outline-none bg-slate-50 ${
+                      className={`w-full pl-10 pr-12 py-2.5 rounded-xl border transition-all duration-200 focus:ring-2 focus:ring-[#4A86C8] outline-none bg-slate-50 ${
                         errors.password ? "border-red-500" : "border-slate-300"
                       }`}
                     />
@@ -1307,7 +1307,7 @@ const AddEmployeeModal = ({
                               ? "text-red-500"
                               : passwordStrength <= 3
                                 ? "text-yellow-600"
-                                : "text-primary-700"
+                                : "text-sky-700"
                           }`}
                         >
                           {strengthLabels[passwordStrength]}
@@ -1337,7 +1337,7 @@ const AddEmployeeModal = ({
                       value={formData.confirmPassword}
                       onChange={handleChange}
                       placeholder="••••••••"
-                      className={`w-full pl-10 pr-12 py-2.5 rounded-xl border transition-all duration-200 focus:ring-2 focus:ring-primary-500 outline-none bg-slate-50 ${
+                      className={`w-full pl-10 pr-12 py-2.5 rounded-xl border transition-all duration-200 focus:ring-2 focus:ring-[#4A86C8] outline-none bg-slate-50 ${
                         errors.confirmPassword
                           ? "border-red-500"
                           : "border-slate-300"
@@ -1367,11 +1367,11 @@ const AddEmployeeModal = ({
             {/* ============ STEP 4 — REVIEW ============ */}
             {currentStep === 4 && (
               <div className="space-y-5">
-                <div className="bg-primary-50 border border-primary-200 rounded-xl p-4">
-                  <h3 className="font-semibold text-primary-800 mb-1 text-sm">
+                <div className="bg-[#F2F7FC] border border-[#C6DCF1] rounded-xl p-4">
+                  <h3 className="font-semibold text-[#2F5E91] mb-1 text-sm">
                     Almost there!
                   </h3>
-                  <p className="text-primary-700 text-xs">
+                  <p className="text-sky-700 text-xs">
                     {isEdit
                       ? "Review the changes below, then press Update to save them."
                       : "Review the details below, then press Submit to create this employee's account."}
@@ -1384,9 +1384,9 @@ const AddEmployeeModal = ({
                       Role Assignment
                     </h4>
                     <div className="flex items-center gap-3">
-                      <div className="p-2 bg-primary-100 rounded-lg">
+                      <div className="p-2 bg-[#E3EEF9] rounded-lg">
                         {React.createElement(selectedRole.icon, {
-                          className: "w-4.5 h-4.5 text-primary-700",
+                          className: "w-4.5 h-4.5 text-[#3F6FA6]",
                         })}
                       </div>
                       <div>
@@ -1463,7 +1463,7 @@ const AddEmployeeModal = ({
                 key="next-btn"
                 type="button"
                 onClick={handleNext}
-                className="flex items-center gap-1.5 px-5 py-2.5 bg-primary-600 hover:bg-primary-700 text-white text-sm font-semibold rounded-xl transition-all shadow-sm"
+                className="flex items-center gap-1.5 px-5 py-2.5 bg-sky-600 hover:bg-sky-700 text-white text-sm font-semibold rounded-xl transition-all shadow-sm"
               >
                 Next
                 <ChevronRight className="w-4 h-4" />
@@ -1477,7 +1477,7 @@ const AddEmployeeModal = ({
                 className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-white text-sm transition-all shadow-sm ${
                   isSubmitting
                     ? "bg-slate-400 cursor-not-allowed"
-                    : "bg-primary-600 hover:bg-primary-700"
+                    : "bg-sky-600 hover:bg-sky-700"
                 }`}
               >
                 {isSubmitting ? (

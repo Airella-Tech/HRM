@@ -48,7 +48,7 @@ const newRow = () => ({
 });
 
 const fieldCls =
-  "w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-700 focus:outline-none focus:ring-4 focus:ring-primary-500/10 focus:border-primary-500 bg-slate-50 focus:bg-white transition-all";
+  "w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-700 focus:outline-none focus:ring-4 focus:ring-sky-500/10 focus:border-sky-500 bg-slate-50 focus:bg-white transition-all";
 
 const cardCls = "bg-white rounded-2xl shadow-sm border border-slate-200 p-5";
 
@@ -402,7 +402,7 @@ const IndividualAllowance = () => {
       actions={
         <button
           onClick={() => navigate("/hr/payslip")}
-          className="inline-flex items-center justify-center gap-2 bg-white border border-slate-200 hover:bg-primary-50 hover:border-primary-200 text-slate-700 hover:text-primary-700 px-4 py-2.5 rounded-xl text-sm font-semibold shadow-sm hover:shadow-md transition-all duration-200"
+          className="inline-flex items-center justify-center gap-2 bg-sky-600 hover:bg-sky-700 text-white px-4 py-2.5 rounded-xl text-sm font-semibold shadow-sm hover:shadow-md transition-all duration-200"
         >
           <ArrowLeft size={16} /> Back to Payroll
         </button>
@@ -416,7 +416,7 @@ const IndividualAllowance = () => {
         )}
 
         {/* Step 1 & 2: department, then employee */}
-        <div className="mb-5 bg-gradient-to-br from-primary-700 via-primary-600 to-primary-800 rounded-2xl shadow-sm p-5 relative overflow-visible">
+        <div className="mb-5 bg-gradient-to-br from-sky-700 via-sky-600 to-sky-800 rounded-2xl shadow-sm p-5 relative overflow-visible">
           {/* Decorative circles */}
           <div className="absolute -right-8 -top-10 w-36 h-36 rounded-full bg-white/10" />
           <div className="absolute right-20 -bottom-16 w-32 h-32 rounded-full bg-white/10" />
@@ -428,7 +428,7 @@ const IndividualAllowance = () => {
                 <SlidersHorizontal size={19} />
                 Select Employee
               </h2>
-              <p className="text-xs text-primary-100 mt-1">
+              <p className="text-xs text-sky-100 mt-1">
                 Choose a department and job role, then find the employee whose
                 individual salary components you want to manage.
               </p>
@@ -537,7 +537,7 @@ const IndividualAllowance = () => {
                           onMouseEnter={() => setActiveIdx(idx)}
                           className={`w-full text-left px-4 py-3 text-sm transition-colors ${
                             idx === activeIdx
-                              ? "bg-primary-50 text-primary-800"
+                              ? "bg-sky-50 text-sky-800"
                               : "hover:bg-slate-50"
                           } ${e.email === email ? "font-semibold" : ""}`}
                         >
@@ -570,7 +570,7 @@ const IndividualAllowance = () => {
                 )}
 
                 {deptName && (
-                  <p className="text-[11px] text-primary-100 mt-2">
+                  <p className="text-[11px] text-sky-100 mt-2">
                     {roleEmployees.length} employee(s) · type letters of the
                     name or the ID number to find one
                   </p>
@@ -598,13 +598,13 @@ const IndividualAllowance = () => {
             </div>
           ) : sheet?.configured ? (
             <div className={cardCls}>
-              <p className="text-xs font-bold text-primary-700 uppercase tracking-wide mb-4">
+              <p className="text-xs font-bold text-sky-700 uppercase tracking-wide mb-4">
                 Job role salary · {employee.designation}
                 {sheet.employmentType ? ` · ${sheet.employmentType}` : ""}
                 {sheet.period ? ` · ${periodLabel(sheet.period)}` : ""}
               </p>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
-                <div className="bg-primary-50 rounded-xl p-3 border border-primary-100">
+                <div className="bg-sky-50 rounded-xl p-3 border border-sky-100">
                   <p className="text-xs text-slate-400">Basic salary</p>
                   <p className="font-bold text-slate-800">
                     {money(sheet.basicSalary)}
@@ -622,9 +622,9 @@ const IndividualAllowance = () => {
                     -{money(sheet.roleDeduction)}
                   </p>
                 </div>
-                <div className="bg-primary-100 rounded-xl p-3 border border-primary-200">
+               <div className="bg-sky-100 rounded-xl p-3 border border-sky-200">
                   <p className="text-xs text-slate-400">Job role total</p>
-                  <p className="font-bold text-primary-700">
+                  <p className="font-bold text-sky-700">
                     {money(roleTotal)}
                   </p>
                 </div>
@@ -678,7 +678,7 @@ const IndividualAllowance = () => {
         {/* Individual allowances / deductions */}
         <div className={cardCls}>
           <div className="flex items-center gap-3 mb-5">
-            <div className="w-10 h-10 rounded-xl bg-primary-100 text-primary-700 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-xl bg-sky-100 text-sky-700 flex items-center justify-center">
               <Briefcase size={20} />
             </div>
             <div>
@@ -702,7 +702,7 @@ const IndividualAllowance = () => {
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="text-xs text-primary-800 uppercase tracking-wide border-b border-primary-100 bg-primary-50">
+                    <tr className="text-xs text-sky-800 uppercase tracking-wide border-b border-sky-100 bg-sky-50">
                       <th className="text-left px-2 py-2 font-semibold">
                         Name *
                       </th>
@@ -781,13 +781,13 @@ const IndividualAllowance = () => {
               <button
                 type="button"
                 onClick={() => setRows((prev) => [...prev, newRow()])}
-                className="mt-4 w-full border-2 border-dashed border-primary-200 hover:border-primary-400 hover:bg-primary-50 text-primary-700 py-3 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 transition-all duration-200"
+                className="mt-4 w-full border-2 border-dashed border-sky-200 hover:border-sky-400 hover:bg-sky-50 text-sky-700 py-3 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 transition-all duration-200"
               >
                 <Plus size={16} strokeWidth={2.5} /> Add another allowance /
                 deduction
               </button>
 
-              <div className="bg-primary-50 border border-primary-100 rounded-2xl p-5 text-sm space-y-3 mt-5 md:max-w-md md:ml-auto shadow-sm">
+              <div className="bg-sky-50 border border-sky-100 rounded-2xl p-5 text-sm space-y-3 mt-5 md:max-w-md md:ml-auto shadow-sm">
                 <div className="flex justify-between">
                   <span className="text-slate-500">Job role salary</span>
                   <span className="font-semibold text-slate-800">
@@ -806,10 +806,10 @@ const IndividualAllowance = () => {
                     -{money(extraDeduction)}
                   </span>
                 </div>
-                <div className="flex justify-between items-center pt-3 mt-2 border-t border-primary-200">
+                <div className="flex justify-between items-center pt-3 mt-2 border-t border-sky-200">
                   <span className="font-bold text-slate-800">Net Total</span>
                   <span
-                    className={`text-xl font-bold ${netTotal < 0 ? "text-red-600" : "text-primary-700"}`}
+                    className={`text-xl font-bold ${netTotal < 0 ? "text-red-600" : "text-sky-700"}`}
                   >
                     {money(netTotal)}
                   </span>
@@ -836,7 +836,7 @@ const IndividualAllowance = () => {
             <button
               type="submit"
               disabled={saving || !employee}
-              className="inline-flex items-center justify-center gap-2 bg-primary-600 hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed text-white px-5 py-2.5 rounded-xl text-sm font-semibold shadow-sm hover:shadow-md transition-all duration-200"
+              className="inline-flex items-center justify-center gap-2 bg-sky-600 hover:bg-sky-700 disabled:opacity-50 disabled:cursor-not-allowed text-white px-5 py-2.5 rounded-xl text-sm font-semibold shadow-sm hover:shadow-md transition-all duration-200"
             >
               <Save size={16} /> {saving ? "Saving..." : "Save"}
             </button>
