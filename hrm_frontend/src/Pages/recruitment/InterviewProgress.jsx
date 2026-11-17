@@ -11,6 +11,7 @@ import {
   ClipboardCheck,
   Clock,
   CheckCircle2,
+  Check,
   Circle,
   XCircle,
   Eye,
@@ -1098,8 +1099,25 @@ export default function InterviewProgress() {
             />
           </StatCardGrid>
 
-          <section className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
-            <div className="grid grid-cols-2 gap-3 lg:flex lg:flex-row lg:gap-0">
+          <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div className="flex items-center justify-between">
+              <h2 className="text-base font-semibold text-slate-900">
+                Interview pipeline
+              </h2>
+              {(roundFilter !== "All" || statusFilter === "Completed") && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setRoundFilter("All");
+                    setStatusFilter("All");
+                  }}
+                  className="inline-flex items-center gap-1 text-sm font-medium text-slate-500 hover:text-slate-800"
+                >
+                  <X size={14} /> Clear filter
+                </button>
+              )}
+            </div>
+            <div className="mt-4 grid grid-cols-2 gap-3 lg:flex lg:flex-nowrap lg:gap-0">
               {ROUNDS.map((round, index) => {
                 const stageCandidates = candidates.filter((candidate) => {
                   const currentStage = getCurrentStage(candidate);
@@ -1113,54 +1131,134 @@ export default function InterviewProgress() {
                   ),
                 ).length;
 
-                const selected = roundFilter === round;
+                const selected =
+                  roundFilter === round && statusFilter !== "Completed";
 
                 return (
                   <button
                     key={round}
                     type="button"
-                    onClick={() =>
-                      setRoundFilter((current) =>
-                        current === round ? "All" : round,
-                      )
-                    }
+                    onClick={() => {
+                      if (roundFilter === round && statusFilter !== "Completed") {
+                        setRoundFilter("All");
+                      } else {
+                        setRoundFilter(round);
+                        setStatusFilter("All");
+                      }
+                    }}
                     aria-pressed={selected}
-                    title={`${selected ? "Clear" : "Filter by"} ${round}`}
-                    className={`flex-1 rounded-xl py-3.5 text-left text-sm font-semibold transition-colors lg:rounded-none lg:pr-8 ${
+                    className={`h-28 flex-1 rounded-xl py-4 pr-4 text-left transition-colors hover:brightness-95 lg:rounded-none lg:pr-6 ${
                       index === 0
-                        ? "lg:[clip-path:polygon(0_0,calc(100%-22px)_0,100%_50%,calc(100%-22px)_100%,0_100%)] lg:pl-5"
-                        : "lg:[clip-path:polygon(0_0,calc(100%-22px)_0,100%_50%,calc(100%-22px)_100%,0_100%,22px_50%)] lg:pl-9 lg:-ml-2"
+                        ? "lg:[clip-path:polygon(0_0,calc(100%-24px)_0,100%_50%,calc(100%-24px)_100%,0_100%)] lg:pl-8"
+                        : "lg:[clip-path:polygon(0_0,calc(100%-24px)_0,100%_50%,calc(100%-24px)_100%,0_100%,24px_50%)] lg:pl-8 lg:-ml-[18px]"
                     } ${
                       selected
-                        ? "bg-primary-600 text-white"
-                        : "bg-primary-50 text-slate-800 hover:bg-primary-100"
+                        ? "bg-gradient-to-br from-primary-600 to-primary-800 text-white"
+                        : [
+                            "bg-primary-50 text-slate-900",
+                            "bg-primary-100 text-slate-900",
+                            "bg-primary-200 text-slate-900",
+                            "bg-primary-300 text-slate-900",
+                          ][index]
                     }`}
                   >
-                    <span className="block">
-                      {index + 1}. {round}
-                    </span>
-                    <span
-                      className={`mt-1 block text-xs font-normal ${
-                        selected ? "text-primary-100" : "text-slate-500"
-                      }`}
-                    >
-                      <b>{stageCandidates}</b> current · {completed} done
+                    <span className="flex h-full items-center gap-3 px-4 lg:px-0">
+                      <span
+                        className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold ${
+                          selected
+                            ? "bg-white/25 text-white"
+                            : "bg-white text-primary-700"
+                        }`}
+                      >
+                        {index + 1}
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <span
+                          title={round}
+                          className="block truncate text-sm font-semibold"
+                        >
+                          {round}
+                        </span>
+                        <span className="mt-2 flex flex-nowrap gap-1.5">
+                          <span
+                            className={`whitespace-nowrap rounded-full px-2.5 py-0.5 text-xs font-semibold ${
+                              selected
+                                ? "bg-white/20 text-white"
+                                : "bg-white text-primary-700"
+                            }`}
+                          >
+                            {stageCandidates} current
+                          </span>
+                          <span
+                            className={`whitespace-nowrap rounded-full px-2.5 py-0.5 text-xs font-semibold ${
+                              selected
+                                ? "bg-emerald-900/40 text-emerald-200"
+                                : "bg-white text-emerald-700"
+                            }`}
+                          >
+                            {completed} done
+                          </span>
+                        </span>
+                      </span>
                     </span>
                   </button>
                 );
               })}
+              {(() => {
+                const selected = statusFilter === "Completed";
+                return (
+                  <button
+                    type="button"
+                    aria-pressed={selected}
+                    onClick={() => {
+                      if (statusFilter === "Completed") {
+                        setStatusFilter("All");
+                      } else {
+                        setStatusFilter("Completed");
+                        setRoundFilter("All");
+                      }
+                    }}
+                    className={`h-28 flex-1 rounded-xl py-4 pr-4 text-left transition-colors lg:rounded-none lg:pr-6 lg:[clip-path:polygon(0_0,calc(100%-24px)_0,100%_50%,calc(100%-24px)_100%,0_100%,24px_50%)] lg:pl-8 lg:-ml-[18px] ${
+                      selected
+                        ? "bg-gradient-to-br from-primary-600 to-primary-800 text-white hover:brightness-95"
+                        : "bg-emerald-100 text-emerald-900 hover:brightness-95"
+                    }`}
+                  >
+                    <span className="flex h-full items-center gap-3 px-4 lg:px-0">
+                      <span
+                        className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full ${
+                          selected
+                            ? "bg-white/25 text-white"
+                            : "bg-emerald-500 text-white"
+                        }`}
+                      >
+                        <Check size={18} />
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <span
+                          title="All rounds done"
+                          className="block truncate text-sm font-semibold"
+                        >
+                          All rounds done
+                        </span>
+                        <span className="mt-2 flex flex-nowrap">
+                          <span
+                            className={`whitespace-nowrap rounded-full px-2.5 py-0.5 text-xs font-semibold ${
+                              selected
+                                ? "bg-white/20 text-white"
+                                : "bg-white text-emerald-700"
+                            }`}
+                          >
+                            {stats.completed} candidate
+                            {stats.completed === 1 ? "" : "s"}
+                          </span>
+                        </span>
+                      </span>
+                    </span>
+                  </button>
+                );
+              })()}
             </div>
-            {roundFilter !== "All" && (
-              <div className="mt-3 flex justify-end">
-                <button
-                  type="button"
-                  onClick={() => setRoundFilter("All")}
-                  className="inline-flex items-center gap-1 text-sm font-medium text-slate-500 hover:text-slate-800"
-                >
-                  <X size={14} /> Clear filter
-                </button>
-              </div>
-            )}
           </section>
 
           <div className="space-y-6">
@@ -1394,10 +1492,10 @@ export default function InterviewProgress() {
                 })
               )}
 
-              <div className="px-1 text-xs text-slate-500">
+              <div className="border-t border-slate-100 px-4 py-3 text-xs text-slate-500">
                 Showing {loading ? "…" : filteredCandidates.length} of{" "}
-                {candidates.length} applications returned by the backend.
-                Auto-refreshes every 15 seconds.
+                {candidates.length} candidates{" "}
+                <span className="text-slate-400">· Updates automatically</span>
               </div>
             </div>
 
