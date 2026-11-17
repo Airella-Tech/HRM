@@ -140,7 +140,12 @@ export const normalizeNotification = (n, role) => ({
   createdAt: n.createdAt || null,
   refId: n.refId || null,
   // Birthdays never navigate; everything else opens the page named by the backend.
-  link: isBirthday(n) ? null : n.link || (role === "admin" ? "/admin/companies" : null),
+  // A rejected vacancy opens that vacancy in edit mode instead of a blank form.
+  link: isBirthday(n)
+    ? null
+    : (n.type || n.category) === "VACANCY_REJECTED" && n.refId && String(n.link || "").includes("/recruitment/vacancies")
+      ? `/recruitment/vacancies?edit=${n.refId}`
+      : n.link || (role === "admin" ? "/admin/companies" : null),
   subject: {
     name: n.subjectName || null,
     employeeId: n.subjectEmployeeCode || null,

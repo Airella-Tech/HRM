@@ -570,6 +570,14 @@ export default function RecruitmentVacancies() {
       setSearchParams({}, { replace: true });
     }
   }, [view, canCreate, setSearchParams]);
+    // Notification links: ?edit=<vacancy id> opens that vacancy in the edit form
+  const editId = searchParams.get("edit");
+  useEffect(() => {
+    if (!editId || loading || vacancies.length === 0) return;
+    const target = vacancies.find((v) => String(v.id) === String(editId));
+    if (target && canCreate) setModal({ vacancy: target });
+    setSearchParams({}, { replace: true });
+  }, [editId, loading, vacancies, canCreate, setSearchParams]);
 
    const [search, setSearch] = useState("");
 
