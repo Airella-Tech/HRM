@@ -34,11 +34,6 @@ const NotificationPopup = ({ isOpen, onClose, onUnreadCountChange, role = "hr" }
   const allPage = role === "hr" ? "/hr/notifications" : role === "admin" ? "/admin/companies" : null;
   const allLabel = role === "hr" ? "View all notifications →" : role === "admin" ? "Manage Applications & Companies →" : null;
 
-<<<<<<< HEAD
-
-
-=======
->>>>>>> c8a30ed9c9cc30fa444d2b170fd93fd7b0cb119e
   return (
     <>
       <div className="fixed inset-0 bg-black/30 z-40" onClick={onClose} />
