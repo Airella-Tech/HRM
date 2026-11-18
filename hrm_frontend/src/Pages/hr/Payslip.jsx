@@ -700,6 +700,20 @@ const HRPayslip = () => {
           </div>
         )}
 
+        {loadError && (
+          <div className="flex items-start gap-2 p-4 rounded-xl border text-sm font-medium bg-red-50 border-red-200 text-red-700">
+            <X size={18} className="shrink-0 mt-0.5" />
+            <span className="flex-1">{loadError}</span>
+            <button
+              onClick={() => setLoadError("")}
+              className="text-red-500 hover:text-red-700"
+              aria-label="Dismiss"
+            >
+              <X size={15} />
+            </button>
+          </div>
+        )}
+
         {genResult && genResult.skipped.length > 0 && (
           <div className="p-4 rounded-xl bg-amber-50 border border-amber-200 text-sm text-amber-900">
             <div className="flex items-start justify-between gap-3">

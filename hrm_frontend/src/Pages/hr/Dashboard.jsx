@@ -2266,6 +2266,14 @@ const HRDashboard = () => {
     }));
   }, [departments, employees]);
 
+  // Active employees from the real User_Backend employee records
+  const activeEmployeeCount = employees.filter(
+    (emp) => (emp.status || "").toUpperCase() === "ACTIVE",
+  ).length;
+
+  // Employees who are not currently active
+  const nonActiveEmployeeCount = employees.length - activeEmployeeCount;
+
   useEffect(() => {
     if (activeMenu === "Departments") {
       navigate("/hr/departments");
@@ -2506,18 +2514,40 @@ const HRDashboard = () => {
                       Welcome back, {user.fullName?.split(" ")[0]}!
                     </h2>
                     <p className="text-blue-100 text-sm mt-2 max-w-xl">
-                      Here's an overview of your organization's workforce,
-                      attendance, leave requests, and HR activities.
+                      Monitor your workforce, review pending approvals, and
+                      manage your organization's daily HR activities from one
+                      place.
+                    </p>
+
+                    <p className="text-blue-100/80 text-sm mt-3 flex items-center gap-2">
+                      <Calendar size={15} />
+                      {new Date().toLocaleDateString("en-US", {
+                        weekday: "long",
+                        year: "numeric",
+                        month: "long",
+                        day: "numeric",
+                      })}
                     </p>
                   </div>
 
-                  <div className="hidden sm:flex w-16 h-16 rounded-2xl bg-white/20 items-center justify-center">
-                    <LayoutDashboard size={34} />
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={fetchDashboardData}
+                      title="Refresh dashboard data"
+                      className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/15 hover:bg-white/25 border border-white/20 text-white text-sm font-semibold transition"
+                    >
+                      <RefreshCw size={16} />
+                      Refresh
+                    </button>
+
+                    <div className="hidden sm:flex w-16 h-16 rounded-2xl bg-white/20 items-center justify-center">
+                      <LayoutDashboard size={34} />
+                    </div>
                   </div>
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-5">
                 {[
                   {
                     label: "Total Departments",
@@ -2558,6 +2588,16 @@ const HRDashboard = () => {
                     to: "to-sky-900",
                     tc: "text-sky-50",
                     path: "/hr/leave",
+                  },
+                  {
+                    label: "Active Employees",
+                    val: activeEmployeeCount,
+                    sub: "Currently active staff",
+                    icon: UserCheck,
+                    from: "from-sky-500",
+                    to: "to-blue-700",
+                    tc: "text-sky-50",
+                    path: "/hr/employees",
                   },
                 ].map(({ label, val, sub, icon: Icon, from, to, tc, path }) => (
                   <div
@@ -2805,6 +2845,7 @@ const HRDashboard = () => {
                     limit={5}
                   />
                 </div>
+
                 <div className="bg-white p-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300">
                   <h3 className="text-xl font-bold mb-6 flex items-center text-gray-800">
                     <div className="bg-sky-100 p-2 rounded-lg mr-3">
