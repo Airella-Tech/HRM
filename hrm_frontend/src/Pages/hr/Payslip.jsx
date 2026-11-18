@@ -311,12 +311,12 @@ const HRPayslip = () => {
         {(message || loadError) && (
           <div
             className={`flex items-center gap-2 p-4 rounded-xl border text-sm font-medium ${
-              message && messageType === "success"
+              message
                 ? "bg-emerald-50 border-emerald-200 text-emerald-700"
                 : "bg-red-50 border-red-200 text-red-700"
             }`}
           >
-            {message && messageType === "success" ? (
+            {message ? (
               <Check size={18} className="shrink-0" />
             ) : (
               <X size={18} className="shrink-0" />

@@ -491,11 +491,11 @@ const Department = () => {
 
       return sortConfig.direction === "asc"
         ? String(valueA).localeCompare(String(valueB), undefined, {
-            sensitivity: "base",
-          })
+          sensitivity: "base",
+        })
         : String(valueB).localeCompare(String(valueA), undefined, {
-            sensitivity: "base",
-          });
+          sensitivity: "base",
+        });
     });
   }, [filteredDepartments, sortConfig, getEmployeeCount]);
 

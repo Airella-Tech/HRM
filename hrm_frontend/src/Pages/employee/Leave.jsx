@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { CalendarDays, Plus, CheckCircle, XCircle, Clock, FileText, Calendar, AlertCircle, X, Filter, Search } from "lucide-react";
+import { CalendarDays, Plus, Clock, FileText, Calendar, X, Filter, Search } from "lucide-react";
 import { PageLayout } from "../../components/PageLayout";
 import { employeeApi } from "../../services/api";
 import {
@@ -94,15 +94,6 @@ const Leave = () => {
   // API statuses are upper-case enums (PENDING, APPROVED, ...); the UI shows them capitalised
   const statusLabel = (st) => (st ? st.charAt(0) + st.slice(1).toLowerCase() : "");
   const formatAppliedOn = (createdAt) => (createdAt ? createdAt.split("T")[0] : "—");
-
-  const statusStyle = (s) => ({
-    Approved: "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200",
-    Rejected: "bg-red-50 text-red-700 ring-1 ring-red-200",
-    Pending: "bg-amber-50 text-amber-700 ring-1 ring-amber-200",
-    Cancelled: "bg-slate-50 text-slate-600 ring-1 ring-slate-200",
-  }[s] || "bg-slate-50 text-slate-600 ring-1 ring-slate-200");
-
-  const statusIcon = { Approved: <CheckCircle size={14} />, Rejected: <XCircle size={14} />, Pending: <Clock size={14} />, Cancelled: <AlertCircle size={14} /> };
 
   // History search / filter / sort
   const [searchTerm, setSearchTerm] = useState("");
@@ -219,8 +210,8 @@ const Leave = () => {
                   onClick={() => setStatusFilter(tab.id)}
                   type="button"
                   className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all ${active
-                      ? `${tab.activeColor} shadow-xs`
-                      : "bg-slate-50/70 text-slate-600 border-slate-200 hover:bg-slate-100 hover:text-slate-900"
+                    ? `${tab.activeColor} shadow-xs`
+                    : "bg-slate-50/70 text-slate-600 border-slate-200 hover:bg-slate-100 hover:text-slate-900"
                     }`}
                 >
                   {tab.dot && <span className={`w-1.5 h-1.5 rounded-full ${active ? "bg-white" : tab.dot}`} />}
