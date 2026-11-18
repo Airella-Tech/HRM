@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo, useRef } from "react";
 import { X, FileText, Upload, Search, Filter, Clock, CheckCircle, XCircle, Calendar } from "lucide-react";
 import { employeeApi } from "../../services/api";
 import {
-  EmpButton, SearchBar, FilterSelect, ShowingCount, TableCard, TableHeaderRow, TableHeader, TableRows, TableRow, LoadingState, EmptyState,
+  EmpButton, SearchBar, FilterSelect, ShowingCount, TableCard, TableHeaderRow, TableHeader, TableRows, TableRow, LoadingState, EmptyState, StatusChip,
 } from "../../components/EmployeeUI";
 import { EMP_GRADIENT, useSort } from "../../components/employeeTheme";
 
@@ -148,9 +148,7 @@ const AllowanceRequests = ({ showForm, onCloseForm }) => {
   const isFiltering = searchTerm || statusFilter !== "ALL";
 
   const statusPill = (s) => (
-    <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold ${STATUS_STYLE[s] || ""}`}>
-      {STATUS_ICON[s]} {statusLabel(s)}
-    </span>
+    <StatusChip status={s} label={statusLabel(s)} />
   );
 
   const hrResponse = (r) =>

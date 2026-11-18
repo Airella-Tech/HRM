@@ -137,7 +137,7 @@ const EmployeeProfile = () => {
             title="My Profile"
             subtitle="Your personal and employment details (view only)"
         >
-            <div className="space-y-6">
+            <div className="space-y-6 max-w-7xl mx-auto">
                 {message && (
                     <div className="px-4 py-3 rounded-xl border text-sm font-medium bg-rose-50 border-rose-200 text-rose-800">
                         {message}
@@ -166,9 +166,9 @@ const EmployeeProfile = () => {
                     </div>
                 </div>
 
-                {/* Tabs */}
-                <div className="bg-white rounded-xl shadow-sm border border-slate-200/90 overflow-hidden">
-                    <div className="flex gap-2 p-3 border-b border-slate-100 bg-slate-50/50 overflow-x-auto">
+                {/* Tabs & Content */}
+                <div className="bg-white rounded-2xl shadow-[0_2px_12px_rgba(15,23,42,0.035)] border border-slate-200/80 overflow-hidden">
+                    <div className="flex gap-2 p-3.5 border-b border-slate-100 bg-slate-50/70 overflow-x-auto">
                         {tabs.map(([key, label, TabIcon]) => (
                             <button
                                 key={key}

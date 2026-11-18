@@ -4,12 +4,12 @@ import { CalendarDays, Plus, CheckCircle, XCircle, Clock, FileText, Calendar, Al
 import { PageLayout } from "../../components/PageLayout";
 import { employeeApi } from "../../services/api";
 import {
-  EmpButton, SummaryCard, SearchBar, FilterSelect, ShowingCount, TableCard, TableHeaderRow, TableHeader, TableRows, TableRow, LoadingState, EmptyState,
+  EmpButton, SummaryCard, SummaryCardGrid, SearchBar, FilterSelect, ShowingCount, TableCard, TableHeaderRow, TableHeader, TableRows, TableRow, LoadingState, EmptyState, StatusChip,
 } from "../../components/EmployeeUI";
 import { EMP_GRADIENT, CARD_TONES, useSort } from "../../components/employeeTheme";
 
 // Gradients for the per-type balance cards, in the order the API returns the types
-const BALANCE_TONES = [CARD_TONES.blue, CARD_TONES.green, CARD_TONES.yellow];
+const BALANCE_TONES = [CARD_TONES.teal, CARD_TONES.green, CARD_TONES.deep];
 
 const HISTORY_COLS = "grid-cols-[1.5fr_1.5fr_0.7fr_1fr_1.8fr_1fr]";
 
@@ -126,15 +126,9 @@ const Leave = () => {
 
   const isFiltering = searchTerm || statusFilter !== "ALL";
 
-  const statusPill = (status) => {
-    const label = statusLabel(status);
-    return (
-      <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold ${statusStyle(label)}`}>
-        {statusIcon[label]} {label}
-      </span>
-    );
-  };
-
+  const statusPill = (status) => (
+    <StatusChip status={status} label={statusLabel(status)} />
+  );
 
   return (
     <PageLayout
@@ -148,15 +142,15 @@ const Leave = () => {
         </EmpButton>
       }
     >
-      <div className="space-y-6">
+      <div className="space-y-6 max-w-7xl mx-auto">
         {message && (
           <div className={`px-4 py-3 rounded-xl border text-sm font-medium ${message.startsWith("✓") ? "bg-emerald-50 border-emerald-200 text-emerald-800" : "bg-rose-50 border-rose-200 text-rose-800"}`}>
             {message}
           </div>
         )}
 
-        {/* Balance cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+        {/* Balance cards with latest Recruitment gradient pattern */}
+        <SummaryCardGrid cols={4}>
           {[
             ...balances.map((b, i) => ({
               label: b.leaveTypeName,
@@ -170,13 +164,13 @@ const Leave = () => {
               remaining: balances.reduce((sum, b) => sum + (b.remainingDays || 0), 0),
               used: balances.reduce((sum, b) => sum + (b.usedDays || 0), 0),
               total: balances.reduce((sum, b) => sum + (b.totalDays || 0), 0),
-              tone: CARD_TONES.purple,
+              tone: CARD_TONES.darkTeal,
             },
           ].map(b => (
             <SummaryCard key={b.label} icon={<CalendarDays size={20} />} title={b.label} value={b.remaining}
-              description={`Remaining · ${b.used}/${b.total} used`} className={b.tone} />
+              description={`Remaining · ${b.used}/${b.total} used`} tone={b.tone} />
           ))}
-        </div>
+        </SummaryCardGrid>
 
         {/* =====================================================
             SEARCH & FILTER CONTROLS

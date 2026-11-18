@@ -4,7 +4,7 @@ import { DollarSign, Download, Eye, Calendar, TrendingUp, FileText, CreditCard, 
 import { PageLayout } from "../../components/PageLayout";
 import { employeeApi } from "../../services/api";
 import {
-  EmpButton, SummaryCard, SearchBar, FilterSelect, ShowingCount, TableCard, TableHeaderRow, TableHeader, TableRows, TableRow, LoadingState, EmptyState,
+  EmpButton, SummaryCard, SummaryCardGrid, SearchBar, FilterSelect, ShowingCount, TableCard, TableHeaderRow, TableHeader, TableRows, TableRow, LoadingState, EmptyState, StatusChip,
 } from "../../components/EmployeeUI";
 import { EMP_GRADIENT, CARD_TONES, useSort } from "../../components/employeeTheme";
 import AllowanceRequests from "./AllowanceRequests";
@@ -200,7 +200,7 @@ const Payslip = () => {
         </div>
       }
     >
-      <div className="space-y-6">
+      <div className="space-y-6 max-w-7xl mx-auto">
         {loadError && (
           <div role="alert" className="flex items-center justify-between gap-3 text-sm text-red-700 bg-red-50 border border-red-200 rounded-xl px-4 py-3">
             <span>{loadError}</span>
@@ -208,22 +208,22 @@ const Payslip = () => {
           </div>
         )}
 
-        {/* Summary cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5">
+        {/* Summary cards with latest Recruitment gradient pattern */}
+        <SummaryCardGrid cols={4}>
           {[
-            { label: "Last Salary",   value: `Rs. ${lastNet.toLocaleString()}`, icon: <CreditCard size={20} />, tone: CARD_TONES.blue, sub: latest ? `${getMonthName(latest.month)} ${latest.year}` : "No payslip yet" },
-            { label: "Avg. Monthly",  value: `Rs. ${avgNet.toLocaleString()}`, icon: <TrendingUp size={20} />, tone: CARD_TONES.green, sub: payslips.length ? `Across ${payslips.length} payslip${payslips.length === 1 ? "" : "s"}` : "No payslip yet" },
-            { label: "Total Earnings",  value: `Rs. ${ytdNet.toLocaleString()}`, icon: <DollarSign size={20} />, tone: CARD_TONES.yellow, sub: `Net pay in ${thisYear}` },
-            { label: "Total Payslips",value: payslips.length, icon: <FileText size={20} />, tone: CARD_TONES.purple, sub: "Available" },
+            { label: "Last Salary",    value: `Rs. ${lastNet.toLocaleString()}`, icon: <CreditCard size={20} />, tone: CARD_TONES.teal, sub: latest ? `${getMonthName(latest.month)} ${latest.year}` : "No payslip yet" },
+            { label: "Avg. Monthly",   value: `Rs. ${avgNet.toLocaleString()}`, icon: <TrendingUp size={20} />, tone: CARD_TONES.deep, sub: payslips.length ? `Across ${payslips.length} payslip${payslips.length === 1 ? "" : "s"}` : "No payslip yet" },
+            { label: "Total Earnings", value: `Rs. ${ytdNet.toLocaleString()}`, icon: <DollarSign size={20} />, tone: CARD_TONES.darkTeal, sub: `Net pay in ${thisYear}` },
+            { label: "Total Payslips", value: payslips.length, icon: <FileText size={20} />, tone: CARD_TONES.teal, sub: "Available" },
           ].map(s => (
-            <SummaryCard key={s.label} icon={s.icon} title={s.label} value={s.value} description={s.sub} className={s.tone} />
+            <SummaryCard key={s.label} icon={s.icon} title={s.label} value={s.value} description={s.sub} tone={s.tone} />
           ))}
-        </div>
+        </SummaryCardGrid>
 
         {/* =====================================================
             CURRENT SALARY (pay sheet set by HR)
         ====================================================== */}
-        <div className="bg-white rounded-xl border border-slate-200/90 shadow-sm p-6">
+        <div className="bg-white rounded-2xl border border-slate-200/80 shadow-[0_2px_12px_rgba(15,23,42,0.035)] p-6">
           <div className="flex items-center justify-between gap-3 mb-5">
             <h2 className="text-base font-bold text-slate-900 flex items-center gap-3">
               <span className="h-9 w-9 rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-100 flex items-center justify-center">
