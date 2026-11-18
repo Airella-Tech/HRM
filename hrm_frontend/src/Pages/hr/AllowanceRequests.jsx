@@ -12,6 +12,9 @@ import {
   SlidersHorizontal,
   Eye,
   X,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown,
 } from "lucide-react";
 import { PageLayout } from "../../components/PageLayout";
 import { hrApi } from "../../services/api";
@@ -70,6 +73,11 @@ const HRAllowanceRequests = () => {
   const [rejecting, setRejecting] = useState(null); // request being rejected
   const [rejectComment, setRejectComment] = useState("");
   const [rejectError, setRejectError] = useState("");
+
+  const [sortConfig, setSortConfig] = useState({
+    key: null,
+    direction: "asc",
+  });
 
   const load = async () => {
     try {
@@ -138,6 +146,88 @@ const HRAllowanceRequests = () => {
       )
     );
   });
+
+  const sortedRequests = useMemo(() => {
+    if (!sortConfig.key) return filtered;
+
+    return [...filtered].sort((a, b) => {
+      let valueA;
+      let valueB;
+
+      switch (sortConfig.key) {
+        case "employee":
+          valueA = a.employeeName || a.employeeEmail || "";
+          valueB = b.employeeName || b.employeeEmail || "";
+          break;
+
+        case "allowance":
+          valueA = a.name || "";
+          valueB = b.name || "";
+          break;
+
+        case "amount":
+          valueA = Number(a.amount) || 0;
+          valueB = Number(b.amount) || 0;
+          break;
+
+        case "description":
+          valueA = a.description || "";
+          valueB = b.description || "";
+          break;
+
+        case "requestedOn":
+          valueA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+          valueB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+          break;
+
+        case "status":
+          valueA = a.status || "";
+          valueB = b.status || "";
+          break;
+
+        default:
+          return 0;
+      }
+
+      if (typeof valueA === "number" && typeof valueB === "number") {
+        return sortConfig.direction === "asc"
+          ? valueA - valueB
+          : valueB - valueA;
+      }
+
+      return sortConfig.direction === "asc"
+        ? String(valueA).localeCompare(String(valueB), undefined, {
+            sensitivity: "base",
+          })
+        : String(valueB).localeCompare(String(valueA), undefined, {
+            sensitivity: "base",
+          });
+    });
+  }, [filtered, sortConfig]);
+
+  // ---------------------------------------------------------
+  // SORTING
+  // ---------------------------------------------------------
+
+  const handleSort = (key) => {
+    setSortConfig((previous) => ({
+      key,
+      direction:
+        previous.key === key && previous.direction === "asc" ? "desc" : "asc",
+    }));
+  };
+
+  const getSortIcon = (key) => {
+    if (sortConfig.key !== key) {
+      return <ArrowUpDown size={14} className="ml-1 inline-block" />;
+    }
+
+    return sortConfig.direction === "asc" ? (
+      <ArrowUp size={14} className="ml-1 inline-block" />
+    ) : (
+      <ArrowDown size={14} className="ml-1 inline-block" />
+    );
+  };
 
   const viewingNow = viewing
     ? requests.find((r) => r.id === viewing.id) || viewing
@@ -345,26 +435,37 @@ const HRAllowanceRequests = () => {
               <thead>
                 <tr className="bg-gradient-to-r from-sky-600 to-sky-700 text-white text-xs">
                   {[
-                    "Employee",
-                    "Allowance",
-                    "Amount",
-                    "Description",
-                    "Requested On",
-                    "Document",
-                    "Status",
-                    "Actions",
+                    { label: "Employee", key: "employee" },
+                    { label: "Allowance", key: "allowance" },
+                    { label: "Amount", key: "amount" },
+                    { label: "Description", key: "description" },
+                    { label: "Requested On", key: "requestedOn" },
+                    { label: "Document", key: null },
+                    { label: "Status", key: "status" },
+                    { label: "Actions", key: null },
                   ].map((h) => (
                     <th
-                      key={h}
-                      className="px-4 py-3.5 text-left font-semibold whitespace-nowrap "
+                      key={h.label}
+                      className="px-4 py-3.5 text-left font-semibold whitespace-nowrap"
                     >
-                      {h}
+                      {h.key ? (
+                        <button
+                          type="button"
+                          onClick={() => handleSort(h.key)}
+                          className="inline-flex items-center hover:text-sky-100 transition-colors"
+                        >
+                          {h.label}
+                          {getSortIcon(h.key)}
+                        </button>
+                      ) : (
+                        h.label
+                      )}
                     </th>
                   ))}
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {filtered.map((r, i) => (
+              {sortedRequests.map((r, i) => (
                   <tr
                     key={r.id}
                     className={`align-top hover:bg-sky-50/70 transition-colors ${i % 2 === 1 ? "bg-slate-50/40" : ""}`}

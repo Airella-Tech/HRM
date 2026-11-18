@@ -23,6 +23,9 @@ import {
   FileText,
   ChevronDown,
   Check,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown,
 } from "lucide-react";
 import { PageLayout } from "../../components/PageLayout";
 import { hrApi, userHrApi } from "../../services/api";
@@ -62,6 +65,9 @@ const HRPayslip = () => {
   const [loadError, setLoadError] = useState("");
   // A message handed over by the Individual Allowance & Deduction / Allowance Requests pages
   const [message, setMessage] = useState(location.state?.message || "");
+  const [messageType, setMessageType] = useState(
+    location.state?.type || "error",
+  );
   const [currentPage, setCurrentPage] = useState(1);
   const ROWS_PER_PAGE = 5;
 
@@ -71,6 +77,17 @@ const HRPayslip = () => {
   const [departments, setDepartments] = useState([]);
   const [deptFilter, setDeptFilter] = useState("");
   const [rolePage, setRolePage] = useState(1);
+
+  // Separate sorting settings for each table
+  const [roleSortConfig, setRoleSortConfig] = useState({
+    key: null,
+    direction: "asc",
+  });
+
+  const [employeeSortConfig, setEmployeeSortConfig] = useState({
+    key: null,
+    direction: "asc",
+  });
   // Result of the last "Generate All": who got a payslip and who was skipped (with the reason)
   const [genResult, setGenResult] = useState(null);
   const [exportOpen, setExportOpen] = useState(false);
@@ -146,6 +163,7 @@ const HRPayslip = () => {
   }, [user]);
 
   const flash = (text, ms = 6000) => {
+    setMessageType("success");
     setMessage(text);
     setTimeout(() => setMessage(""), ms);
   };
@@ -269,6 +287,7 @@ const HRPayslip = () => {
       setDeletingId(row.id);
       await hrApi.deleteBasicPayment(row.id);
       setConfirmDeleteId(null);
+      setMessageType("success");
       setMessage(
         `✓ Salary row deleted for ${row.jobRoleTitle} (${row.employmentTypeName})`,
       );
@@ -384,6 +403,42 @@ const HRPayslip = () => {
         p.designation.toLowerCase().includes(q)),
   );
 
+  // ---------------------------------------------------------
+  // SORTING FUNCTIONS
+  // ---------------------------------------------------------
+
+  const handleRoleSort = (key) => {
+    setRoleSortConfig((previous) => ({
+      key,
+      direction:
+        previous.key === key && previous.direction === "asc" ? "desc" : "asc",
+    }));
+
+    setRolePage(1);
+  };
+
+  const handleEmployeeSort = (key) => {
+    setEmployeeSortConfig((previous) => ({
+      key,
+      direction:
+        previous.key === key && previous.direction === "asc" ? "desc" : "asc",
+    }));
+
+    setCurrentPage(1);
+  };
+
+  const getSortIcon = (key, config) => {
+    if (config.key !== key) {
+      return <ArrowUpDown size={14} className="ml-1 inline-block" />;
+    }
+
+    return config.direction === "asc" ? (
+      <ArrowUp size={14} className="ml-1 inline-block" />
+    ) : (
+      <ArrowDown size={14} className="ml-1 inline-block" />
+    );
+  };
+
   const filteredRoles = basicPayments.filter(
     (r) =>
       (r.departmentName || "").toLowerCase().includes(q) ||
@@ -391,17 +446,178 @@ const HRPayslip = () => {
       (r.employmentTypeName || "").toLowerCase().includes(q) ||
       (r.createdByName || "").toLowerCase().includes(q),
   );
+
+  const sortedRoles = useMemo(() => {
+    if (!roleSortConfig.key) return filteredRoles;
+
+    return [...filteredRoles].sort((a, b) => {
+      let valueA;
+      let valueB;
+
+      switch (roleSortConfig.key) {
+        case "department":
+          valueA = a.departmentName || "";
+          valueB = b.departmentName || "";
+          break;
+
+        case "jobRole":
+          valueA = a.jobRoleTitle || "";
+          valueB = b.jobRoleTitle || "";
+          break;
+
+        case "employmentType":
+          valueA = a.employmentTypeName || "";
+          valueB = b.employmentTypeName || "";
+          break;
+
+        case "period":
+          valueA = periodLabel(a.period);
+          valueB = periodLabel(b.period);
+          break;
+
+        case "basic":
+          valueA = num(a.basicSalary);
+          valueB = num(b.basicSalary);
+          break;
+
+        case "allowance":
+          valueA = num(a.allowance);
+          valueB = num(b.allowance);
+          break;
+
+        case "deduction":
+          valueA = num(a.deduction);
+          valueB = num(b.deduction);
+          break;
+
+        case "totalSalary":
+          valueA = num(a.totalSalary);
+          valueB = num(b.totalSalary);
+          break;
+
+        case "employees":
+          valueA = num(a.employeeCount);
+          valueB = num(b.employeeCount);
+          break;
+
+        case "setBy":
+          valueA = a.createdByName || "";
+          valueB = b.createdByName || "";
+          break;
+
+        case "lastUpdated":
+          valueA = a.updatedAt ? new Date(a.updatedAt).getTime() : 0;
+          valueB = b.updatedAt ? new Date(b.updatedAt).getTime() : 0;
+          break;
+
+        default:
+          return 0;
+      }
+
+      if (typeof valueA === "number" && typeof valueB === "number") {
+        return roleSortConfig.direction === "asc"
+          ? valueA - valueB
+          : valueB - valueA;
+      }
+
+      return roleSortConfig.direction === "asc"
+        ? String(valueA).localeCompare(String(valueB), undefined, {
+            sensitivity: "base",
+          })
+        : String(valueB).localeCompare(String(valueA), undefined, {
+            sensitivity: "base",
+          });
+    });
+  }, [filteredRoles, roleSortConfig]);
+
   const roleTotalPages = Math.max(
     1,
     Math.ceil(filteredRoles.length / ROWS_PER_PAGE),
   );
-  const paginatedRoles = filteredRoles.slice(
+  const paginatedRoles = sortedRoles.slice(
     (rolePage - 1) * ROWS_PER_PAGE,
     rolePage * ROWS_PER_PAGE,
   );
 
-  const totalPages = Math.max(1, Math.ceil(filtered.length / ROWS_PER_PAGE));
-  const paginated = filtered.slice(
+  const sortedEmployees = useMemo(() => {
+    if (!employeeSortConfig.key) return filtered;
+
+    return [...filtered].sort((a, b) => {
+      let valueA;
+      let valueB;
+
+      switch (employeeSortConfig.key) {
+        case "empId":
+          valueA = a.empId || "";
+          valueB = b.empId || "";
+          break;
+
+        case "employee":
+          valueA = a.name || "";
+          valueB = b.name || "";
+          break;
+
+        case "department":
+          valueA = a.department || "";
+          valueB = b.department || "";
+          break;
+
+        case "designation":
+          valueA = a.designation || "";
+          valueB = b.designation || "";
+          break;
+
+        case "basic":
+          valueA = num(a.basicSalary);
+          valueB = num(b.basicSalary);
+          break;
+
+        case "allowances":
+          valueA = num(a.allowances);
+          valueB = num(b.allowances);
+          break;
+
+        case "deductions":
+          valueA = num(a.deductions);
+          valueB = num(b.deductions);
+          break;
+
+        case "netSalary":
+          valueA = num(a.netSalary);
+          valueB = num(b.netSalary);
+          break;
+
+        case "status":
+          valueA = a.status || "";
+          valueB = b.status || "";
+          break;
+
+        default:
+          return 0;
+      }
+
+      if (typeof valueA === "number" && typeof valueB === "number") {
+        return employeeSortConfig.direction === "asc"
+          ? valueA - valueB
+          : valueB - valueA;
+      }
+
+      return employeeSortConfig.direction === "asc"
+        ? String(valueA).localeCompare(String(valueB), undefined, {
+            sensitivity: "base",
+          })
+        : String(valueB).localeCompare(String(valueA), undefined, {
+            sensitivity: "base",
+          });
+    });
+  }, [filtered, employeeSortConfig]);
+
+  const totalPages = Math.max(
+    1,
+    Math.ceil(sortedEmployees.length / ROWS_PER_PAGE),
+  );
+
+  const paginated = sortedEmployees.slice(
     (currentPage - 1) * ROWS_PER_PAGE,
     currentPage * ROWS_PER_PAGE,
   );
@@ -472,14 +688,15 @@ const HRPayslip = () => {
     >
       <div className="space-y-6">
         {message && (
-          <div className="p-4 rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm">
+          <div
+            className={`flex items-center gap-2 p-4 rounded-xl border text-sm font-medium ${
+              messageType === "success"
+                ? "bg-emerald-50 border-emerald-200 text-emerald-700"
+                : "bg-red-50 border-red-200 text-red-700"
+            }`}
+          >
             <Check size={18} className="shrink-0" />
             {message}
-          </div>
-        )}
-        {loadError && (
-          <div className="p-4 rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm">
-            {loadError}
           </div>
         )}
 
@@ -578,8 +795,8 @@ const HRPayslip = () => {
               onClick={() => setActiveTab(t.key)}
               className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${
                 activeTab === t.key
-                   ? "bg-sky-600 text-white shadow-sm"
-                   : "text-slate-600 hover:bg-sky-50 hover:text-sky-700"
+                  ? "bg-sky-600 text-white shadow-sm"
+                  : "text-slate-600 hover:bg-sky-50 hover:text-sky-700"
               }`}
             >
               <t.icon size={15} /> {t.label}
@@ -738,24 +955,35 @@ const HRPayslip = () => {
                 <thead>
                   <tr className="bg-gradient-to-r from-sky-600 to-sky-700 text-white text-xs">
                     {[
-                      "Department",
-                      "Job Role",
-                      "Employment Type",
-                      "Period",
-                      "Basic",
-                      "Allowance",
-                      "Deduction",
-                      "Total Salary",
-                      "Employees",
-                      "Set By",
-                      "Last Updated",
-                      "Actions",
+                      { label: "Department", key: "department" },
+                      { label: "Job Role", key: "jobRole" },
+                      { label: "Employment Type", key: "employmentType" },
+                      { label: "Period", key: "period" },
+                      { label: "Basic", key: "basic" },
+                      { label: "Allowance", key: "allowance" },
+                      { label: "Deduction", key: "deduction" },
+                      { label: "Total Salary", key: "totalSalary" },
+                      { label: "Employees", key: "employees" },
+                      { label: "Set By", key: "setBy" },
+                      { label: "Last Updated", key: "lastUpdated" },
+                      { label: "Actions", key: null },
                     ].map((h) => (
                       <th
-                        key={h}
+                        key={h.label}
                         className="px-5 py-3.5 text-left font-semibold whitespace-nowrap"
                       >
-                        {h}
+                        {h.key ? (
+                          <button
+                            type="button"
+                            onClick={() => handleRoleSort(h.key)}
+                            className="inline-flex items-center hover:text-sky-100 transition-colors"
+                          >
+                            {h.label}
+                            {getSortIcon(h.key, roleSortConfig)}
+                          </button>
+                        ) : (
+                          h.label
+                        )}
                       </th>
                     ))}
                   </tr>
@@ -930,22 +1158,33 @@ const HRPayslip = () => {
                 <thead>
                   <tr className="bg-gradient-to-r from-sky-600 to-sky-700 text-white text-xs">
                     {[
-                      "Emp ID",
-                      "Employee",
-                      "Dept",
-                      "Designation",
-                      "Basic",
-                      "Allowances",
-                      "Deductions",
-                      "Net Salary",
-                      "Status",
-                      "Actions",
+                      { label: "Emp ID", key: "empId" },
+                      { label: "Employee", key: "employee" },
+                      { label: "Dept", key: "department" },
+                      { label: "Designation", key: "designation" },
+                      { label: "Basic", key: "basic" },
+                      { label: "Allowances", key: "allowances" },
+                      { label: "Deductions", key: "deductions" },
+                      { label: "Net Salary", key: "netSalary" },
+                      { label: "Status", key: "status" },
+                      { label: "Actions", key: null },
                     ].map((h) => (
                       <th
-                        key={h}
+                        key={h.label}
                         className="px-5 py-4 text-left font-semibold whitespace-nowrap"
                       >
-                        {h}
+                        {h.key ? (
+                          <button
+                            type="button"
+                            onClick={() => handleEmployeeSort(h.key)}
+                            className="inline-flex items-center hover:text-sky-100 transition-colors"
+                          >
+                            {h.label}
+                            {getSortIcon(h.key, employeeSortConfig)}
+                          </button>
+                        ) : (
+                          h.label
+                        )}
                       </th>
                     ))}
                   </tr>
@@ -1225,9 +1464,7 @@ const HRPayslip = () => {
                   </div>
                   <div className="bg-gradient-to-r from-sky-700 to-sky-800 text-white p-5 rounded-2xl flex items-center justify-between shadow-sm">
                     <div>
-                      <p className="text-sky-100 text-xs mb-0.5">
-                        Net Salary
-                      </p>
+                      <p className="text-sky-100 text-xs mb-0.5">Net Salary</p>
                       <p className="text-3xl font-bold">
                         {money(viewingPayslip.netSalary)}
                       </p>

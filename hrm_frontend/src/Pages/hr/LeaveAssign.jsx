@@ -64,6 +64,7 @@ const LeaveAssign = () => {
   const [loading, setLoading] = useState(true);
   const [pageError, setPageError] = useState("");
   const [message, setMessage] = useState("");
+  const [allocationToDelete, setAllocationToDelete] = useState(null);
 
   // popup state
   const [activeRole, setActiveRole] = useState(null);
@@ -213,20 +214,22 @@ const LeaveAssign = () => {
     }
   };
 
-  const handleDeleteAllocation = async (a) => {
-    if (
-      !window.confirm(
-        `Remove ${a.leaveTypeName} (${a.employmentTypeName}) from ${a.jobRoleTitle}?`,
-      )
-    )
-      return;
+  const handleDeleteAllocation = async () => {
+    if (!allocationToDelete) return;
+
+    const a = allocationToDelete;
+
     try {
       setDeletingId(a.id);
       setPageError("");
+
       const res = await hrApi.deleteLeaveAllocation(a.id);
+
       setMessage(`✓ ${res.message || "Leave entitlement removed"}`);
       setTimeout(() => setMessage(""), 3000);
-      loadHistory(departmentId);
+
+      setAllocationToDelete(null);
+      await loadHistory(departmentId);
     } catch (e) {
       setPageError(errorText(e, "Failed to remove leave entitlement"));
     } finally {
@@ -407,7 +410,7 @@ const LeaveAssign = () => {
                     <button
                       key={role.id}
                       onClick={() => openRole(role)}
-                     className="flex items-center justify-between text-left bg-white border border-sky-100 hover:border-sky-400 hover:bg-sky-50 rounded-xl px-4 py-4 shadow-sm hover:shadow-md transition-all group"
+                      className="flex items-center justify-between text-left bg-white border border-sky-100 hover:border-sky-400 hover:bg-sky-50 rounded-xl px-4 py-4 shadow-sm hover:shadow-md transition-all group"
                     >
                       <div>
                         <p className="font-semibold text-slate-800 text-sm">
@@ -586,7 +589,7 @@ const LeaveAssign = () => {
                         </button>
                         <button
                           type="button"
-                          onClick={() => handleDeleteAllocation(a)}
+                          onClick={() => setAllocationToDelete(a)}
                           disabled={deletingId === a.id}
                           title="Delete"
                           className="p-2 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 disabled:opacity-40 transition-colors"
@@ -602,7 +605,7 @@ const LeaveAssign = () => {
                     <td colSpan={9} className="py-14 text-center">
                       <div className="flex flex-col items-center">
                         <div className="w-14 h-14 rounded-2xl bg-sky-50 flex items-center justify-center mb-3">
-                           <History size={25} className="text-sky-600" />
+                          <History size={25} className="text-sky-600" />
                         </div>
                         <p className="text-sm font-semibold text-slate-700">
                           {searchTerm || periodFilter !== "ALL"
@@ -621,6 +624,42 @@ const LeaveAssign = () => {
               </tbody>
             </table>
           </div>
+
+          {/* Pagination */}
+          {sortedHistory.length > ROWS_PER_PAGE && (
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-5 py-4 border-t border-slate-200 bg-slate-50">
+              <p className="text-xs text-slate-500">
+                Showing {(currentPage - 1) * ROWS_PER_PAGE + 1}–
+                {Math.min(currentPage * ROWS_PER_PAGE, sortedHistory.length)} of{" "}
+                {sortedHistory.length}
+              </p>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                  className="p-2 rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                  title="Previous page"
+                >
+                  <ChevronLeft size={16} />
+                </button>
+                <span className="text-sm text-slate-600 px-2">
+                  Page {currentPage} of {totalPages}
+                </span>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setCurrentPage((p) => Math.min(totalPages, p + 1))
+                  }
+                  disabled={currentPage === totalPages}
+                  className="p-2 rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                  title="Next page"
+                >
+                  <ChevronRight size={16} />
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
@@ -631,7 +670,7 @@ const LeaveAssign = () => {
             onSubmit={handleSave}
             className="bg-white rounded-2xl shadow-2xl w-full max-w-5xl max-h-[90vh] flex flex-col"
           >
-            <div className="flex items-center justify-between p-5 bg-primary-700 text-white rounded-t-2xl">
+            <div className="flex items-center justify-between p-5 bg-sky-700 text-white rounded-t-2xl">
               <div>
                 <h3 className="text-lg font-bold">
                   {editingAllocation ? "Edit Leave" : "Assign Leaves"} ·{" "}
@@ -826,6 +865,66 @@ const LeaveAssign = () => {
               </button>
             </div>
           </form>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {allocationToDelete && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+          <div className="bg-white w-full max-w-md rounded-2xl shadow-2xl overflow-hidden">
+            <div className="p-6 text-center">
+              <div className="w-14 h-14 mx-auto rounded-full bg-red-50 flex items-center justify-center mb-4">
+                <Trash2 size={26} className="text-red-600" />
+              </div>
+
+              <h3 className="text-lg font-bold text-slate-800">
+                Remove Leave Allocation?
+              </h3>
+
+              <p className="text-sm text-slate-500 mt-2">
+                Are you sure you want to remove
+                <span className="font-semibold text-slate-700">
+                  {" "}
+                  {allocationToDelete.leaveTypeName}
+                </span>{" "}
+                for
+                <span className="font-semibold text-slate-700">
+                  {" "}
+                  {allocationToDelete.employmentTypeName}
+                </span>{" "}
+                from
+                <span className="font-semibold text-slate-700">
+                  {" "}
+                  {allocationToDelete.jobRoleTitle}
+                </span>
+                ?
+              </p>
+
+              <p className="text-xs text-red-500 mt-3">
+                This action cannot be undone.
+              </p>
+            </div>
+
+            <div className="flex justify-center gap-3 px-6 py-4 bg-slate-50 border-t border-slate-200">
+              <button
+                type="button"
+                onClick={() => setAllocationToDelete(null)}
+                disabled={deletingId !== null}
+                className="px-5 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-100 text-slate-700 text-sm font-semibold transition-colors"
+              >
+                Cancel
+              </button>
+
+              <button
+                type="button"
+                onClick={handleDeleteAllocation}
+                disabled={deletingId !== null}
+                className="px-5 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white text-sm font-semibold shadow-sm disabled:opacity-60 transition-colors"
+              >
+                {deletingId !== null ? "Removing..." : "Yes, Remove"}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </PageLayout>

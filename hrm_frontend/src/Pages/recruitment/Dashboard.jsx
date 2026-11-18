@@ -1367,33 +1367,7 @@ const Dashboard = () => {
     )
     .slice(0, 8);
 
-  /* -----------------------------------------------------------------------
-     ATTENTION ITEMS
-  ----------------------------------------------------------------------- */
-
-  const attention = [
-    has("VACANCY_APPROVE") &&
-      canVacancies && {
-        label: "Pending approvals",
-        value: vacancyCounts.PENDING_APPROVAL || 0,
-        filter: "PENDING_APPROVAL",
-      },
-
-    has("VACANCY_PUBLISH") &&
-      canVacancies && {
-        label: "Ready to publish",
-        value: vacancyCounts.APPROVED || 0,
-        filter: "APPROVED",
-      },
-
-    has("VACANCY_CREATE") &&
-      canVacancies && {
-        label: "Draft vacancies",
-        value: vacancyCounts.DRAFT || 0,
-        filter: "DRAFT",
-      },
-  ].filter(Boolean);
-
+  
   /* -----------------------------------------------------------------------
      HIRING FUNNEL
   ----------------------------------------------------------------------- */
