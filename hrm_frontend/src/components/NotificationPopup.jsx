@@ -34,14 +34,6 @@ const NotificationPopup = ({ isOpen, onClose, onUnreadCountChange, role = "hr" }
   const allPage = role === "hr" ? "/hr/notifications" : role === "admin" ? "/admin/companies" : null;
   const allLabel = role === "hr" ? "View all notifications →" : role === "admin" ? "Manage Applications & Companies →" : null;
 
-    const topicCounts = {
-    all: notifications.length,
-    leave: notifications.filter((n) => topicOf(n) === "leave").length,
-    allowance: notifications.filter((n) => topicOf(n) === "allowance").length,
-    birthday: notifications.filter((n) => topicOf(n) === "birthday").length,
-    recruitment: notifications.filter((n) => topicOf(n) === "recruitment").length,
-  };
-
   return (
     <>
       <div className="fixed inset-0 bg-black/30 z-40" onClick={onClose} />

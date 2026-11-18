@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   ClockIcon, CalendarDays, DollarSign, Bell,
@@ -56,7 +56,7 @@ const EmployeeDashboard = () => {
     }
   }, [navigate]);
 
-  const loadDashboardData = async () => {
+  const loadDashboardData = useCallback(async () => {
     if (!user) return;
     const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
     const [notRes, recNotRes, leavesRes, balRes, payRes, attRes] = await Promise.allSettled([
@@ -120,13 +120,13 @@ const EmployeeDashboard = () => {
       lastSalary: latest ? (Number(latest.netSalary) || 0).toLocaleString() : null,
       lastSalaryPeriod: latest ? `${monthNames[latest.month - 1] || ""} ${latest.year}` : "No payslip yet",
     });
-  };
+  }, [user]);
 
   useEffect(() => {
     if (user) {
       loadDashboardData();
     }
-  }, [user]);
+  }, [user, loadDashboardData]);
 
   if (!user) return (
     <div className="flex items-center justify-center h-screen bg-slate-50">
@@ -185,13 +185,13 @@ const EmployeeDashboard = () => {
           </div>
         </div>
 
-        {/* ── Stats Cards (Latest Recruitment StatCard pattern in Employee Teal theme) ── */}
+        {/* ── Stats Cards (Refined Small Color Accent Standard in Employee Teal theme) ── */}
         <SummaryCardGrid cols={4}>
           {[
-            { tone: CARD_TONES.teal,     icon: <ClockIcon size={20} />,    label: "Present Days",   value: stats.presentDays,                                           sub: "This month"        },
-            { tone: CARD_TONES.deep,     icon: <Calendar size={20} />,     label: "Leave Balance",  value: stats.leaveBalance,                                          sub: "Days available"    },
-            { tone: CARD_TONES.darkTeal, icon: <CalendarDays size={20} />, label: "Pending Leaves", value: stats.pendingLeaves,                                         sub: "Awaiting approval" },
-            { tone: CARD_TONES.teal,     icon: <DollarSign size={20} />,   label: "Last Salary",    value: stats.lastSalary != null ? `Rs. ${stats.lastSalary}` : "—", sub: stats.lastSalaryPeriod },
+            { tone: "teal", icon: <ClockIcon size={20} />, label: "Present Days", value: stats.presentDays, sub: "This month" },
+            { tone: "green", icon: <Calendar size={20} />, label: "Leave Balance", value: stats.leaveBalance, sub: "Days available" },
+            { tone: "amber", icon: <CalendarDays size={20} />, label: "Pending Leaves", value: stats.pendingLeaves, sub: "Awaiting approval" },
+            { tone: "deep", icon: <DollarSign size={20} />, label: "Last Salary", value: stats.lastSalary != null ? `Rs. ${stats.lastSalary}` : "—", sub: stats.lastSalaryPeriod },
           ].map(c => (
             <SummaryCard key={c.label} icon={c.icon} title={c.label} value={c.value} description={c.sub} tone={c.tone} />
           ))}

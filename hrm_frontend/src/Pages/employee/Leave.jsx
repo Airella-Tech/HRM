@@ -96,9 +96,9 @@ const Leave = () => {
   const formatAppliedOn = (createdAt) => (createdAt ? createdAt.split("T")[0] : "—");
 
   const statusStyle = (s) => ({
-    Approved:  "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200",
-    Rejected:  "bg-red-50 text-red-700 ring-1 ring-red-200",
-    Pending:   "bg-amber-50 text-amber-700 ring-1 ring-amber-200",
+    Approved: "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200",
+    Rejected: "bg-red-50 text-red-700 ring-1 ring-red-200",
+    Pending: "bg-amber-50 text-amber-700 ring-1 ring-amber-200",
     Cancelled: "bg-slate-50 text-slate-600 ring-1 ring-slate-200",
   }[s] || "bg-slate-50 text-slate-600 ring-1 ring-slate-200");
 
@@ -149,7 +149,7 @@ const Leave = () => {
           </div>
         )}
 
-        {/* Balance cards with latest Recruitment gradient pattern */}
+        {/* Balance cards with Small Color Accent pattern */}
         <SummaryCardGrid cols={4}>
           {[
             ...balances.map((b, i) => ({
@@ -157,14 +157,14 @@ const Leave = () => {
               remaining: b.remainingDays,
               used: b.usedDays,
               total: b.totalDays,
-              tone: BALANCE_TONES[i % BALANCE_TONES.length],
+              tone: ["teal", "green", "deep"][i % 3],
             })),
             {
               label: "Total Balance",
               remaining: balances.reduce((sum, b) => sum + (b.remainingDays || 0), 0),
               used: balances.reduce((sum, b) => sum + (b.usedDays || 0), 0),
               total: balances.reduce((sum, b) => sum + (b.totalDays || 0), 0),
-              tone: CARD_TONES.darkTeal,
+              tone: "teal",
             },
           ].map(b => (
             <SummaryCard key={b.label} icon={<CalendarDays size={20} />} title={b.label} value={b.remaining}
@@ -173,21 +173,67 @@ const Leave = () => {
         </SummaryCardGrid>
 
         {/* =====================================================
-            SEARCH & FILTER CONTROLS
+            SEARCH & FILTER CONTROLS (With Quick Status Pills)
         ====================================================== */}
-        <SearchBar value={searchTerm} onChange={setSearchTerm} placeholder="Search by leave type, reason, or date...">
-          <div className="flex items-center gap-2">
-            <Filter size={15} className="text-slate-400" />
-            <FilterSelect value={statusFilter} onChange={setStatusFilter}>
-              <option value="ALL">All Statuses</option>
-              <option value="PENDING">Pending</option>
-              <option value="APPROVED">Approved</option>
-              <option value="REJECTED">Rejected</option>
-              <option value="CANCELLED">Cancelled</option>
-            </FilterSelect>
+        <div className="bg-white rounded-2xl border border-slate-200/90 shadow-[0_2px_12px_rgba(15,23,42,0.035)] p-4 space-y-3">
+          <div className="flex flex-col sm:flex-row gap-3">
+            <div className="relative flex-1">
+              <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Search by leave type, reason, or date…"
+                className="w-full pl-10 pr-4 h-10 border border-slate-200 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100 bg-slate-50/50 transition-all font-medium"
+              />
+            </div>
+            <div className="relative sm:w-48">
+              <Filter size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className="w-full pl-9 pr-8 h-10 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 focus:outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100 bg-slate-50/50 appearance-none transition-all cursor-pointer"
+              >
+                <option value="ALL">All Statuses ({leaveHistory.length})</option>
+                <option value="PENDING">Pending ({leaveHistory.filter(l => (l.status || '').toUpperCase() === 'PENDING').length})</option>
+                <option value="APPROVED">Approved ({leaveHistory.filter(l => (l.status || '').toUpperCase() === 'APPROVED').length})</option>
+                <option value="REJECTED">Rejected ({leaveHistory.filter(l => (l.status || '').toUpperCase() === 'REJECTED').length})</option>
+                <option value="CANCELLED">Cancelled ({leaveHistory.filter(l => (l.status || '').toUpperCase() === 'CANCELLED').length})</option>
+              </select>
+            </div>
           </div>
-          <ShowingCount shown={sortedHistory.length} total={leaveHistory.length} />
-        </SearchBar>
+
+          {/* Quick Filter Status Pills */}
+          <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-slate-100">
+            {[
+              { id: "ALL", label: "All Leaves", count: leaveHistory.length, activeColor: "bg-teal-600 text-white border-teal-600" },
+              { id: "PENDING", label: "Pending", count: leaveHistory.filter(l => (l.status || '').toUpperCase() === 'PENDING').length, activeColor: "bg-amber-500 text-white border-amber-500", dot: "bg-amber-400" },
+              { id: "APPROVED", label: "Approved", count: leaveHistory.filter(l => (l.status || '').toUpperCase() === 'APPROVED').length, activeColor: "bg-emerald-600 text-white border-emerald-600", dot: "bg-emerald-400" },
+              { id: "REJECTED", label: "Rejected", count: leaveHistory.filter(l => (l.status || '').toUpperCase() === 'REJECTED').length, activeColor: "bg-rose-600 text-white border-rose-600", dot: "bg-rose-400" },
+              { id: "CANCELLED", label: "Cancelled", count: leaveHistory.filter(l => (l.status || '').toUpperCase() === 'CANCELLED').length, activeColor: "bg-slate-700 text-white border-slate-700", dot: "bg-slate-400" },
+            ].map((tab) => {
+              const active = statusFilter === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setStatusFilter(tab.id)}
+                  type="button"
+                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all ${active
+                      ? `${tab.activeColor} shadow-xs`
+                      : "bg-slate-50/70 text-slate-600 border-slate-200 hover:bg-slate-100 hover:text-slate-900"
+                    }`}
+                >
+                  {tab.dot && <span className={`w-1.5 h-1.5 rounded-full ${active ? "bg-white" : tab.dot}`} />}
+                  <span>{tab.label}</span>
+                  <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${active ? "bg-white/25 text-white" : "bg-slate-200/80 text-slate-600"
+                    }`}>
+                    {tab.count}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
 
         {/* =====================================================
             LEAVE HISTORY TABLE
@@ -288,7 +334,7 @@ const Leave = () => {
             <form onSubmit={handleSubmit} className="p-6 space-y-4">
               <div>
                 <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wide mb-1.5">Leave Type *</label>
-                <select value={formData.leaveTypeId} onChange={e => setFormData({...formData, leaveTypeId: e.target.value})}
+                <select value={formData.leaveTypeId} onChange={e => setFormData({ ...formData, leaveTypeId: e.target.value })}
                   className="w-full border border-slate-300 rounded-xl px-3.5 py-2.5 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 bg-white transition-all cursor-pointer" required>
                   <option value="">Select leave type</option>
                   {leaveTypes.map(t => (
@@ -299,18 +345,18 @@ const Leave = () => {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wide mb-1.5">Start Date *</label>
-                  <input type="date" value={formData.startDate} onChange={e => setFormData({...formData, startDate: e.target.value})}
+                  <input type="date" value={formData.startDate} onChange={e => setFormData({ ...formData, startDate: e.target.value })}
                     className="w-full border border-slate-300 rounded-xl px-3.5 py-2.5 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 bg-white transition-all" required />
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wide mb-1.5">End Date *</label>
-                  <input type="date" value={formData.endDate} min={formData.startDate || undefined} onChange={e => setFormData({...formData, endDate: e.target.value})}
+                  <input type="date" value={formData.endDate} min={formData.startDate || undefined} onChange={e => setFormData({ ...formData, endDate: e.target.value })}
                     className="w-full border border-slate-300 rounded-xl px-3.5 py-2.5 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 bg-white transition-all" required />
                 </div>
               </div>
               <div>
                 <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wide mb-1.5">Reason *</label>
-                <textarea value={formData.reason} onChange={e => setFormData({...formData, reason: e.target.value})} rows="3"
+                <textarea value={formData.reason} onChange={e => setFormData({ ...formData, reason: e.target.value })} rows="3"
                   className="w-full border border-slate-300 rounded-xl px-3.5 py-2.5 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 bg-white transition-all resize-none"
                   placeholder="Please provide a brief reason for your leave..." required />
               </div>

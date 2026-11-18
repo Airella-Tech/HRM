@@ -140,13 +140,6 @@ const Attendance = () => {
     return `${displayHour}:${minutes} ${ampm}`;
   };
 
-  const statusBadge = (s) => ({
-    PRESENT: "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200",
-    ABSENT: "bg-yellow-50 text-red-700 ring-1 ring-red-200",
-    HALF_DAY: "bg-violet-50 text-violet-700 ring-1 ring-violet-200",
-    LATE: "bg-amber-50 text-amber-700 ring-1 ring-amber-200",
-  }[s] || "bg-slate-50 text-slate-600 ring-1 ring-slate-200");
-
   const statusLabel = (s) => ({
     PRESENT: "Present",
     ABSENT: "Absent",

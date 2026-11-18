@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import {
   Phone,
   Mail,
@@ -16,7 +15,6 @@ import PublicFooter from "../components/PublicFooter";
 import CompanyRequestModal from "../components/CompanyRequestModal";
 
 const Contact = () => {
-  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     name: "",
     email: "",
