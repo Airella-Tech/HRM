@@ -1,16 +1,11 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  Users, Search, Filter, Eye, CheckCircle2, XCircle, UserCog,
-  Building2, Layers, Table, X, Loader2, ShieldCheck, UserCheck, RefreshCw
+  Users, Search, Filter, Eye, CheckCircle, XCircle, UserCog,
+  Building2, Layers, Table, X, Loader2
 } from "lucide-react";
 import { PageLayout } from "../../components/PageLayout";
 import { ADMIN_URL } from "../../services/api";
-import {
-  Button, Card, StatCard, StatCardGrid, TableToolbar, TableCard,
-  TableHeaderRow, TableHeader, TableRows, TableRow, StatusBadge, Modal,
-  LoadingState, EmptyState, FormGroup, FormSelect
-} from "../../components/common/EnterpriseUI";
 
 const AdminSystemUsers = () => {
   const navigate = useNavigate();
@@ -189,11 +184,18 @@ const AdminSystemUsers = () => {
     setViewingUser(null);
   };
 
-  const roleBadgeStyle = (r) => {
+  const roleBadge = (r) => {
     const norm = (r || "").toUpperCase();
-    if (norm.includes("ADMIN")) return "bg-blue-50 text-blue-700 border-blue-200";
-    if (norm.includes("HR")) return "bg-purple-50 text-purple-700 border-purple-200";
-    return "bg-teal-50 text-teal-700 border-teal-200";
+    if (norm.includes("ADMIN")) return "bg-violet-100 text-violet-700 border border-violet-200";
+    if (norm.includes("HR")) return "bg-indigo-100 text-indigo-700 border border-indigo-200";
+    return "bg-slate-100 text-slate-700 border border-slate-200";
+  };
+
+  const statusBadge = (s) => {
+    const norm = (s || "").toUpperCase();
+    if (norm === "ACTIVE" || norm === "APPROVED") return "bg-emerald-100 text-emerald-700 border border-emerald-200";
+    if (norm === "INACTIVE" || norm === "REJECTED") return "bg-red-100 text-red-700 border border-red-200";
+    return "bg-amber-100 text-amber-700 border border-amber-200";
   };
 
   if (!user) return null;
@@ -203,418 +205,315 @@ const AdminSystemUsers = () => {
       role="admin"
       activePage="System Users"
       title="User & Role Management"
-      subtitle="Directory of system accounts across tenant companies with role assignments"
-      actions={
-        <Button
-          variant="light"
-          size="sm"
-          role="admin"
-          icon={RefreshCw}
-          onClick={() => {
-            fetchUsers();
-            fetchCompanies();
-          }}
-          loading={loading}
-        >
-          Refresh Users
-        </Button>
-      }
+      subtitle="Manage all system users, organized company-wise with role assignment and administration"
     >
-      <div className="space-y-6 max-w-7xl mx-auto animate-fade-in">
+      <div className="space-y-6">
+
         {/* Top Summary Stats */}
-        <StatCardGrid cols={4}>
-          <StatCard
-            role="admin"
-            label="Total Accounts"
-            value={loading ? "..." : stats.total}
-            icon={Users}
-            tone="primary"
-            variant="clean"
-            onClick={() => setFilterRole("all")}
-            active={filterRole === "all"}
-          />
-          <StatCard
-            role="admin"
-            label="HR Managers"
-            value={loading ? "..." : stats.hrManagers}
-            icon={UserCheck}
-            tone="secondary"
-            variant="clean"
-            onClick={() => setFilterRole("hr")}
-            active={filterRole === "hr"}
-          />
-          <StatCard
-            role="admin"
-            label="Administrators"
-            value={loading ? "..." : stats.admins}
-            icon={ShieldCheck}
-            tone="accent"
-            variant="clean"
-            onClick={() => setFilterRole("admin")}
-            active={filterRole === "admin"}
-          />
-          <StatCard
-            role="admin"
-            label="Employees"
-            value={loading ? "..." : stats.employees}
-            icon={Users}
-            tone="slate"
-            variant="clean"
-            onClick={() => setFilterRole("employee")}
-            active={filterRole === "employee"}
-          />
-        </StatCardGrid>
+        <div className="grid grid-cols-2 xl:grid-cols-4 gap-5">
+          {[
+            { label: "Total System Users", value: stats.total, icon: "👥", gradient: "from-indigo-400 to-violet-500" },
+            { label: "HR Managers", value: stats.hrManagers, icon: "🎯", gradient: "from-emerald-400 to-teal-500" },
+            { label: "Administrators", value: stats.admins, icon: "🛡", gradient: "from-violet-400 to-purple-600" },
+            { label: "Employees", value: stats.employees, icon: "👤", gradient: "from-sky-400 to-blue-500" },
+          ].map((s) => (
+            <div key={s.label} className={`bg-gradient-to-br ${s.gradient} p-6 rounded-2xl text-white hover:-translate-y-1 hover:shadow-lg transition-all duration-300`}>
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-white/80 text-xs font-semibold uppercase tracking-wider">{s.label}</p>
+                <span className="text-2xl">{s.icon}</span>
+              </div>
+              <p className="text-4xl font-bold">{loading ? "..." : s.value}</p>
+            </div>
+          ))}
+        </div>
 
         {/* Filters & View Switcher Toolbar */}
-        <TableToolbar
-          role="admin"
-          search={searchTerm}
-          onSearchChange={setSearchTerm}
-          placeholder="Search by user name, email, or company name..."
-          shown={filtered.length}
-          total={systemUsers.length}
-          filters={
-            <>
-              <select
-                value={filterCompany}
-                onChange={(e) => setFilterCompany(e.target.value)}
-                className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 focus:outline-hidden focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 cursor-pointer"
-              >
-                <option value="all">All Companies</option>
-                {companyOptions.map((c) => (
-                  <option key={c} value={c}>{c}</option>
-                ))}
-              </select>
-
-              <select
-                value={filterRole}
-                onChange={(e) => setFilterRole(e.target.value)}
-                className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 focus:outline-hidden focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 cursor-pointer"
-              >
-                <option value="all">All Roles</option>
-                <option value="hr">HR Manager</option>
-                <option value="admin">Admin</option>
-                <option value="employee">Employee</option>
-              </select>
-            </>
-          }
-          actions={
-            <div className="flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200">
-              <button
-                type="button"
-                onClick={() => setViewMode("grouped")}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${viewMode === "grouped"
-                  ? "bg-white text-blue-600 shadow-xs"
-                  : "text-slate-500 hover:text-slate-800"
-                  }`}
-                title="Company-wise Grouped View"
-              >
-                <Layers size={14} /> Company View
-              </button>
-              <button
-                type="button"
-                onClick={() => setViewMode("table")}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${viewMode === "table"
-                  ? "bg-white text-blue-600 shadow-xs"
-                  : "text-slate-500 hover:text-slate-800"
-                  }`}
-                title="Combined Table View"
-              >
-                <Table size={14} /> Full Table
-              </button>
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+          <div className="flex flex-col lg:flex-row gap-4 items-center justify-between">
+            
+            {/* Search Input */}
+            <div className="relative w-full lg:w-96">
+              <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
+              <input
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Search by name, email, or company…"
+                className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-gray-50 font-medium"
+              />
             </div>
-          }
-        />
+
+            <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto">
+              {/* Company Filter Dropdown */}
+              <div className="relative flex-1 lg:flex-initial">
+                <Building2 size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                <select
+                  value={filterCompany}
+                  onChange={(e) => setFilterCompany(e.target.value)}
+                  className="pl-9 pr-8 py-2.5 border border-gray-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-gray-50 appearance-none font-medium text-gray-700 w-full"
+                >
+                  <option value="all">All Companies</option>
+                  {companyOptions.map((c) => (
+                    <option key={c} value={c}>{c}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Role Filter Dropdown */}
+              <div className="relative flex-1 lg:flex-initial">
+                <Filter size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                <select
+                  value={filterRole}
+                  onChange={(e) => setFilterRole(e.target.value)}
+                  className="pl-9 pr-8 py-2.5 border border-gray-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-gray-50 appearance-none font-medium text-gray-700 w-full"
+                >
+                  <option value="all">All Roles</option>
+                  <option value="hr">HR Manager</option>
+                  <option value="admin">Admin</option>
+                  <option value="employee">Employee</option>
+                </select>
+              </div>
+
+              {/* View Mode Toggle Button */}
+              <div className="flex items-center bg-gray-100 p-1 rounded-xl border border-gray-200">
+                <button
+                  type="button"
+                  onClick={() => setViewMode("grouped")}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                    viewMode === "grouped"
+                      ? "bg-white text-indigo-600 shadow-xs"
+                      : "text-gray-500 hover:text-gray-800"
+                  }`}
+                  title="Company-wise Grouped View"
+                >
+                  <Layers size={14} /> Company View
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setViewMode("table")}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                    viewMode === "table"
+                      ? "bg-white text-indigo-600 shadow-xs"
+                      : "text-gray-500 hover:text-gray-800"
+                  }`}
+                  title="Combined Table View"
+                >
+                  <Table size={14} /> Full Table
+                </button>
+              </div>
+            </div>
+
+          </div>
+        </div>
 
         {/* Content Area */}
         {loading ? (
-          <LoadingState
-            role="admin"
-            title="Loading system accounts"
-            subtitle="Fetching registered users from user microservice..."
-          />
+          <div className="bg-white rounded-2xl p-12 text-center text-gray-400 border border-gray-100 shadow-sm">
+            <div className="flex items-center justify-center gap-2">
+              <Loader2 size={20} className="animate-spin text-indigo-600" />
+              <span className="font-medium text-xs">Loading system users by company...</span>
+            </div>
+          </div>
         ) : filtered.length === 0 ? (
-          <EmptyState
-            role="admin"
-            icon={Users}
-            title="No matching system users"
-            subtitle="No user accounts match your specified search keywords or filter criteria."
-            action={
-              <Button
-                variant="outline"
-                size="sm"
-                role="admin"
-                onClick={() => {
-                  setSearchTerm("");
-                  setFilterCompany("all");
-                  setFilterRole("all");
-                }}
-              >
-                Reset All Filters
-              </Button>
-            }
-          />
+          <div className="bg-white rounded-2xl p-12 text-center text-gray-400 border border-gray-100 shadow-sm">
+            No system users match the selected filters.
+          </div>
         ) : viewMode === "grouped" ? (
           /* COMPANY-WISE GROUPED VIEW */
           <div className="space-y-6">
             {companyGroupedUsers.map((group) => (
-              <Card
-                key={group.companyName}
-                role="admin"
-                noPadding
-                className="overflow-hidden"
-              >
+              <div key={group.companyName} className="bg-white rounded-2xl shadow-sm border border-gray-200/80 overflow-hidden transition-all hover:shadow-md">
+                
                 {/* Company Header */}
-                <div className="bg-slate-900 px-6 py-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-white border-b border-slate-800">
+                <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 px-6 py-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-white">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-2xl bg-blue-500/20 border border-blue-400/30 flex items-center justify-center text-blue-400">
+                    <div className="w-10 h-10 rounded-xl bg-indigo-500/20 border border-indigo-400/30 flex items-center justify-center text-indigo-300">
                       <Building2 size={20} />
                     </div>
                     <div>
                       <h3 className="font-bold text-base tracking-tight text-white">{group.companyName}</h3>
-                      <p className="text-slate-400 text-xs">Registered Organization Workspace</p>
+                      <p className="text-indigo-200/80 text-xs">
+                        Registered Organization Account
+                      </p>
                     </div>
                   </div>
 
                   <div className="flex items-center gap-2">
-                    <span className="px-3 py-1 bg-white/10 backdrop-blur-md rounded-full text-xs font-semibold text-slate-200 border border-white/10">
-                      👥 {group.users.length} Users
+                    <span className="px-3 py-1 bg-white/10 backdrop-blur-md rounded-full text-xs font-semibold text-indigo-200 border border-white/10">
+                      👥 {group.users.length} Total Users
                     </span>
-                    <span className="px-3 py-1 bg-purple-500/20 backdrop-blur-md rounded-full text-xs font-semibold text-purple-300 border border-purple-500/30">
+                    <span className="px-3 py-1 bg-emerald-500/20 backdrop-blur-md rounded-full text-xs font-semibold text-emerald-300 border border-emerald-500/30">
                       🎯 {group.hrCount} HR Manager{group.hrCount !== 1 ? "s" : ""}
                     </span>
                   </div>
                 </div>
 
                 {/* User Table for this Company */}
-                <TableCard className="border-0 shadow-none rounded-none">
-                  <TableHeaderRow cols="grid-cols-[2fr_2fr_1.4fr_1.2fr_1fr_100px]">
-                    <TableHeader role="admin">User Name</TableHeader>
-                    <TableHeader role="admin">Email Address</TableHeader>
-                    <TableHeader role="admin">Assigned Role</TableHeader>
-                    <TableHeader role="admin">Registered</TableHeader>
-                    <TableHeader role="admin">Status</TableHeader>
-                    <TableHeader role="admin" className="justify-end">Action</TableHeader>
-                  </TableHeaderRow>
-                  <TableRows>
-                    {group.users.map((u) => (
-                      <TableRow
-                        key={u.id}
-                        cols="grid-cols-[2fr_2fr_1.4fr_1.2fr_1fr_100px]"
-                        mobile={
-                          <div className="space-y-2">
-                            <div className="flex items-center justify-between">
-                              <p className="font-bold text-slate-900 text-sm">{u.fullName || u.name}</p>
-                              <StatusBadge status={u.status || "ACTIVE"} size="sm" />
-                            </div>
-                            <p className="text-xs text-slate-500">{u.email}</p>
-                            <div className="flex items-center justify-between pt-2">
-                              <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase border ${roleBadgeStyle(u.role)}`}>
-                                {u.role}
-                              </span>
-                              <Button
-                                variant="light"
-                                size="sm"
-                                role="admin"
-                                onClick={() => setViewingUser(u)}
-                              >
-                                Manage
-                              </Button>
-                            </div>
-                          </div>
-                        }
-                      >
-                        <p className="font-bold text-slate-900 text-sm truncate">{u.fullName || u.name}</p>
-                        <span className="text-xs text-slate-600 truncate">{u.email}</span>
-                        <div>
-                          <span className={`inline-flex px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase border ${roleBadgeStyle(u.role)}`}>
-                            {u.role}
-                          </span>
-                        </div>
-                        <span className="text-xs text-slate-400">
-                          {u.createdAt ? new Date(u.createdAt).toLocaleDateString() : u.joinedOn || "Active"}
-                        </span>
-                        <div>
-                          <StatusBadge status={u.status || "ACTIVE"} />
-                        </div>
-                        <div className="text-right">
-                          <Button
-                            variant="light"
-                            size="sm"
-                            role="admin"
-                            icon={Eye}
-                            onClick={() => setViewingUser(u)}
-                          >
-                            Manage
-                          </Button>
-                        </div>
-                      </TableRow>
-                    ))}
-                  </TableRows>
-                </TableCard>
-              </Card>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-xs">
+                    <thead>
+                      <tr className="bg-gray-50 border-b border-gray-200/80 text-gray-500 uppercase tracking-wider text-[11px]">
+                        <th className="px-6 py-3 text-left font-semibold">User Name</th>
+                        <th className="px-6 py-3 text-left font-semibold">Email</th>
+                        <th className="px-6 py-3 text-left font-semibold">Role</th>
+                        <th className="px-6 py-3 text-left font-semibold">Joined Date</th>
+                        <th className="px-6 py-3 text-left font-semibold">Status</th>
+                        <th className="px-6 py-3 text-left font-semibold">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                      {group.users.map((u, i) => (
+                        <tr key={u.id || i} className={`hover:bg-indigo-50/40 transition-colors ${i % 2 === 1 ? "bg-gray-50/30" : ""}`}>
+                          <td className="px-6 py-3.5 font-bold text-gray-800">{u.fullName || u.name}</td>
+                          <td className="px-6 py-3.5 text-gray-600">{u.email}</td>
+                          <td className="px-6 py-3.5">
+                            <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase ${roleBadge(u.role)}`}>
+                              {u.role}
+                            </span>
+                          </td>
+                          <td className="px-6 py-3.5 text-gray-400">
+                            {u.createdAt ? new Date(u.createdAt).toLocaleDateString() : u.joinedOn || "Active"}
+                          </td>
+                          <td className="px-6 py-3.5">
+                            <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase ${statusBadge(u.status)}`}>
+                              {u.status || "ACTIVE"}
+                            </span>
+                          </td>
+                          <td className="px-6 py-3.5">
+                            <button
+                              onClick={() => setViewingUser(u)}
+                              className="flex items-center gap-1 text-indigo-600 hover:text-indigo-800 font-semibold text-xs transition-colors"
+                            >
+                              <Eye size={14} /> Manage
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+              </div>
             ))}
           </div>
         ) : (
           /* COMBINED TABLE VIEW */
-          <Card role="admin" noPadding>
-            <TableCard className="border-0 shadow-none rounded-none">
-              <TableHeaderRow cols="grid-cols-[2fr_2fr_1.8fr_1.3fr_1.2fr_1fr_100px]">
-                <TableHeader role="admin">Full Name</TableHeader>
-                <TableHeader role="admin">Email Address</TableHeader>
-                <TableHeader role="admin">Company</TableHeader>
-                <TableHeader role="admin">Role</TableHeader>
-                <TableHeader role="admin">Registered</TableHeader>
-                <TableHeader role="admin">Status</TableHeader>
-                <TableHeader role="admin" className="justify-end">Action</TableHeader>
-              </TableHeaderRow>
-              <TableRows>
-                {filtered.map((u) => (
-                  <TableRow
-                    key={u.id}
-                    cols="grid-cols-[2fr_2fr_1.8fr_1.3fr_1.2fr_1fr_100px]"
-                    mobile={
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between">
-                          <p className="font-bold text-slate-900 text-sm">{u.fullName || u.name}</p>
-                          <StatusBadge status={u.status || "ACTIVE"} size="sm" />
-                        </div>
-                        <p className="text-xs text-slate-500">{u.email} • {getResolvedCompanyName(u)}</p>
-                        <div className="flex items-center justify-between pt-2">
-                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase border ${roleBadgeStyle(u.role)}`}>
-                            {u.role}
-                          </span>
-                          <Button
-                            variant="light"
-                            size="sm"
-                            role="admin"
-                            onClick={() => setViewingUser(u)}
-                          >
-                            Manage
-                          </Button>
-                        </div>
-                      </div>
-                    }
-                  >
-                    <p className="font-bold text-slate-900 text-sm truncate">{u.fullName || u.name}</p>
-                    <span className="text-xs text-slate-600 truncate">{u.email}</span>
-                    <span className="text-xs font-semibold text-slate-700 truncate">{getResolvedCompanyName(u)}</span>
-                    <div>
-                      <span className={`inline-flex px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase border ${roleBadgeStyle(u.role)}`}>
-                        {u.role}
-                      </span>
-                    </div>
-                    <span className="text-xs text-slate-400">
-                      {u.createdAt ? new Date(u.createdAt).toLocaleDateString() : u.joinedOn || "Active"}
-                    </span>
-                    <div>
-                      <StatusBadge status={u.status || "ACTIVE"} />
-                    </div>
-                    <div className="text-right">
-                      <Button
-                        variant="light"
-                        size="sm"
-                        role="admin"
-                        icon={Eye}
-                        onClick={() => setViewingUser(u)}
-                      >
-                        Manage
-                      </Button>
-                    </div>
-                  </TableRow>
-                ))}
-              </TableRows>
-            </TableCard>
-          </Card>
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-xs">
+                <thead>
+                  <tr className="bg-gradient-to-r from-indigo-600 to-violet-600 text-white text-xs">
+                    {["Name", "Email", "Company", "Role", "Joined Date", "Status", "Actions"].map((h) => (
+                      <th key={h} className="px-5 py-4 text-left font-semibold">{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {filtered.map((u, i) => (
+                    <tr key={u.id || i} className={`hover:bg-indigo-50/40 transition-colors ${i % 2 === 1 ? "bg-gray-50/40" : ""}`}>
+                      <td className="px-5 py-3.5 font-bold text-gray-800">{u.fullName || u.name}</td>
+                      <td className="px-5 py-3.5 text-gray-600">{u.email}</td>
+                      <td className="px-5 py-3.5 text-gray-700 font-semibold">{getResolvedCompanyName(u)}</td>
+                      <td className="px-5 py-3.5">
+                        <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase ${roleBadge(u.role)}`}>
+                          {u.role}
+                        </span>
+                      </td>
+                      <td className="px-5 py-3.5 text-gray-400">
+                        {u.createdAt ? new Date(u.createdAt).toLocaleDateString() : u.joinedOn || "Active"}
+                      </td>
+                      <td className="px-5 py-3.5">
+                        <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase ${statusBadge(u.status)}`}>
+                          {u.status || "ACTIVE"}
+                        </span>
+                      </td>
+                      <td className="px-5 py-3.5">
+                        <button
+                          onClick={() => setViewingUser(u)}
+                          className="flex items-center gap-1 text-indigo-600 hover:text-indigo-800 font-semibold text-xs transition-colors"
+                        >
+                          <Eye size={14} /> Manage
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
         )}
       </div>
 
       {/* Manage User Modal */}
       {viewingUser && (
-        <Modal
-          isOpen={Boolean(viewingUser)}
-          onClose={() => {
-            setViewingUser(null);
-            setSelectedRole("");
-          }}
-          title="User Account Details"
-          subtitle={viewingUser.email}
-          icon={UserCog}
-          role="admin"
-          maxWidth="max-w-lg"
-          footer={
-            <div className="flex items-center justify-between w-full">
-              <Button
-                variant="secondary"
-                onClick={() => {
-                  setViewingUser(null);
-                  setSelectedRole("");
-                }}
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
+          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden border border-gray-100">
+            <div className="flex items-center justify-between p-6 bg-gradient-to-r from-indigo-600 to-violet-600 text-white">
+              <div>
+                <h3 className="text-xl font-bold">User Account Details</h3>
+                <p className="text-indigo-200 text-xs mt-0.5">{viewingUser.email}</p>
+              </div>
+              <button onClick={() => { setViewingUser(null); setSelectedRole(""); }} className="p-1.5 hover:bg-white/20 rounded-xl transition-colors">
+                <X size={18} />
+              </button>
+            </div>
+            <div className="p-6 space-y-5 text-xs">
+              <div className="grid grid-cols-2 gap-4 bg-gray-50 p-4 rounded-2xl border border-gray-100">
+                {[
+                  ["Full Name", viewingUser.fullName || viewingUser.name],
+                  ["Email Address", viewingUser.email],
+                  ["Assigned Company", getResolvedCompanyName(viewingUser)],
+                  ["Designation / Title", viewingUser.designation || viewingUser.role || "N/A"],
+                ].map(([l, v]) => (
+                  <div key={l}>
+                    <p className="text-[10px] text-gray-400 font-semibold uppercase tracking-wider mb-0.5">{l}</p>
+                    <p className="font-semibold text-gray-800">{v}</p>
+                  </div>
+                ))}
+              </div>
+
+              <div className="bg-indigo-50/60 p-4 rounded-2xl border border-indigo-100">
+                <p className="text-xs font-bold text-indigo-900 mb-2 flex items-center gap-2">
+                  <UserCog size={16} className="text-indigo-600" /> Assign / Change Role
+                </p>
+                <div className="flex gap-2">
+                  <select
+                    value={selectedRole}
+                    onChange={(e) => setSelectedRole(e.target.value)}
+                    className="flex-1 px-3 py-2 border border-indigo-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+                  >
+                    <option value="">Select a role…</option>
+                    <option value="HR_MANAGER">HR Manager</option>
+                    <option value="ADMIN">Admin</option>
+                    <option value="EMPLOYEE">Employee</option>
+                  </select>
+                  <button
+                    onClick={() => handleAssignRole(viewingUser.id)}
+                    disabled={!selectedRole}
+                    className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40 text-white rounded-xl font-semibold text-xs shadow-xs transition-colors flex items-center gap-1.5"
+                  >
+                    <CheckCircle size={15} /> Assign
+                  </button>
+                </div>
+              </div>
+
+              {viewingUser.status !== "INACTIVE" && (
+                <button
+                  onClick={() => handleDeactivate(viewingUser.id)}
+                  className="w-full bg-red-600 hover:bg-red-700 text-white py-3 rounded-xl font-semibold text-xs transition-colors flex items-center justify-center gap-2 shadow-xs"
+                >
+                  <XCircle size={16} /> Deactivate User Account
+                </button>
+              )}
+
+              <button
+                onClick={() => { setViewingUser(null); setSelectedRole(""); }}
+                className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 py-3 rounded-xl font-semibold text-xs transition-colors"
               >
                 Close
-              </Button>
-              {viewingUser.status !== "INACTIVE" && (
-                <Button
-                  variant="danger"
-                  icon={XCircle}
-                  onClick={() => handleDeactivate(viewingUser.id)}
-                >
-                  Deactivate Account
-                </Button>
-              )}
-            </div>
-          }
-        >
-          <div className="space-y-5 text-xs">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-slate-50 p-4 rounded-2xl border border-slate-200/80">
-              {[
-                ["Full Name", viewingUser.fullName || viewingUser.name],
-                ["Email Address", viewingUser.email],
-                ["Assigned Company", getResolvedCompanyName(viewingUser)],
-                ["Designation / Title", viewingUser.designation || viewingUser.role || "N/A"],
-              ].map(([l, v]) => (
-                <div key={l} className="space-y-0.5">
-                  <span className="text-[10px] uppercase font-bold tracking-wider text-slate-400 block">{l}</span>
-                  <p className="font-semibold text-slate-900 text-xs">{v}</p>
-                </div>
-              ))}
-            </div>
-
-            <div className="bg-blue-50/60 p-4 rounded-2xl border border-blue-200/80 space-y-3">
-              <div className="flex items-center gap-2">
-                <UserCog size={16} className="text-blue-600" />
-                <span className="font-bold text-slate-900 text-xs">Assign or Change Role</span>
-              </div>
-              <div className="flex gap-2.5">
-                <select
-                  value={selectedRole}
-                  onChange={(e) => setSelectedRole(e.target.value)}
-                  className="flex-1 px-3 py-2 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 bg-white focus:outline-hidden focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 cursor-pointer"
-                >
-                  <option value="">Select a role…</option>
-                  <option value="HR_MANAGER">HR Manager</option>
-                  <option value="ADMIN">Admin</option>
-                  <option value="EMPLOYEE">Employee</option>
-                </select>
-                <Button
-                  variant="primary"
-                  size="sm"
-                  role="admin"
-                  icon={CheckCircle2}
-                  disabled={!selectedRole}
-                  onClick={() => handleAssignRole(viewingUser.id)}
-                >
-                  Assign
-                </Button>
-              </div>
-            </div>
-
-            <div className="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-200">
-              <span className="font-bold text-slate-700">Account Status:</span>
-              <StatusBadge status={viewingUser.status || "ACTIVE"} />
+              </button>
             </div>
           </div>
-        </Modal>
+        </div>
       )}
     </PageLayout>
   );
