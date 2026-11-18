@@ -112,13 +112,12 @@ const Toast = ({ toasts, removeToast }) => (
       <div
         key={t.id}
         className={`flex items-center gap-2 px-4 py-3 rounded-xl shadow-lg text-sm font-medium
-        ${
-          t.type === "success"
+        ${t.type === "success"
             ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
             : t.type === "error"
               ? "bg-red-50 text-red-700 border border-red-200"
               : "bg-blue-50 text-blue-700 border border-blue-200"
-        }`}
+          }`}
       >
         {t.type === "success" ? (
           <CheckCircle size={15} />
@@ -181,11 +180,11 @@ const DeptFormModal = ({ open, onClose, onSave, initDept, initRoles }) => {
       setRoles(
         initRoles?.length
           ? initRoles.map((r) => ({
-              _k: String(r.id || Math.random()),
-              id: r.id,
-              title: r.title || "",
-              description: r.description || "",
-            }))
+            _k: String(r.id || Math.random()),
+            id: r.id,
+            title: r.title || "",
+            description: r.description || "",
+          }))
           : [newRole()],
       );
     } else {
@@ -199,7 +198,7 @@ const DeptFormModal = ({ open, onClose, onSave, initDept, initRoles }) => {
       setRoles([newRole()]);
     }
     setErrs({});
-  }, [open, initDept]);
+  }, [open, initDept, initRoles]);
 
   if (!open) return null;
 
@@ -1090,7 +1089,7 @@ const EmployeeSection = ({ toast, onAddClick, refreshKey }) => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [toast]);
 
   useEffect(() => {
     fetchEmployees();
@@ -1344,9 +1343,9 @@ const EmployeeSection = ({ toast, onAddClick, refreshKey }) => {
                       <td className="px-5 py-3.5">
                         {employmentTypeBadge(
                           emp.employmentType ||
-                            emp.employment_type ||
-                            emp.empType ||
-                            emp.type,
+                          emp.employment_type ||
+                          emp.empType ||
+                          emp.type,
                         )}
                       </td>
                       <td className="px-5 py-3.5 text-sm text-gray-500">
@@ -2405,10 +2404,10 @@ const HRDashboard = () => {
                   style={
                     isActive
                       ? {
-                          background: "#0369a1",
-                          boxShadow: "0 2px 12px rgba(7,89,133,0.3)",
-                          borderLeft: "3px solid #38bdf8",
-                        }
+                        background: "#0369a1",
+                        boxShadow: "0 2px 12px rgba(7,89,133,0.3)",
+                        borderLeft: "3px solid #38bdf8",
+                      }
                       : {}
                   }
                   title={!isSidebarOpen ? item.name : undefined}
@@ -2501,16 +2500,20 @@ const HRDashboard = () => {
           {activeMenu === "Overview" && (
             <div className="space-y-6">
               {/* Introduction Banner */}
-              <div className="relative overflow-hidden bg-gradient-to-r from-sky-600 to-sky-700 rounded-2xl p-6 md:p-8 text-white shadow-lg">
-                <div className="absolute -right-10 -top-10 w-48 h-48 bg-white/10 rounded-full" />
-                <div className="absolute right-24 -bottom-16 w-40 h-40 bg-white/10 rounded-full" />
-
+              <div
+                className="relative overflow-hidden rounded-xl p-6 md:p-8 text-white shadow-sm"
+                style={{ background: "linear-gradient(135deg, #7E22CE 0%, #9333EA 50%, #6B21A8 100%)" }}
+              >
+                <div
+                  className="absolute -top-10 -right-10 w-56 h-56 rounded-full opacity-20 pointer-events-none"
+                  style={{ background: "radial-gradient(circle, #E9D5FF, transparent)" }}
+                />
                 <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
                   <div>
-                    <p className="text-blue-100 text-sm font-medium mb-2">
+                    <p className="text-purple-100 text-xs font-semibold uppercase tracking-wider mb-1">
                       Human Resource Management
                     </p>
-                    <h2 className="text-2xl md:text-3xl font-bold">
+                    <h2 className="text-2xl md:text-3xl font-semibold">
                       Welcome back, {user.fullName?.split(" ")[0]}!
                     </h2>
                     <p className="text-blue-100 text-sm mt-2 max-w-xl">
@@ -2554,9 +2557,6 @@ const HRDashboard = () => {
                     val: stats.totalDepartments,
                     sub: "All departments",
                     icon: Building2,
-                    from: "from-sky-600",
-                    to: "to-sky-700",
-                    tc: "text-sky-50",
                     path: "/hr/departments",
                   },
                   {
@@ -2564,9 +2564,6 @@ const HRDashboard = () => {
                     val: stats.totalEmployees,
                     sub: "Across all departments",
                     icon: Users,
-                    from: "from-sky-500",
-                    to: "to-sky-600",
-                    tc: "text-sky-50",
                     path: "/hr/employees",
                   },
                   {
@@ -2574,9 +2571,6 @@ const HRDashboard = () => {
                     val: stats.todayPresent,
                     sub: "Checked in today",
                     icon: UserCheck,
-                    from: "from-sky-700",
-                    to: "to-sky-800",
-                    tc: "text-sky-50",
                     path: "/hr/attendance",
                   },
                   {
@@ -2584,9 +2578,6 @@ const HRDashboard = () => {
                     val: stats.pendingLeaves,
                     sub: "Awaiting approval",
                     icon: Clock,
-                    from: "from-sky-800",
-                    to: "to-sky-900",
-                    tc: "text-sky-50",
                     path: "/hr/leave",
                   },
                   {
@@ -2608,28 +2599,25 @@ const HRDashboard = () => {
                     onKeyDown={(e) => {
                       if (e.key === "Enter" || e.key === " ") navigate(path);
                     }}
-                    className={`bg-gradient-to-br ${from} ${to} p-6 rounded-xl shadow-xl text-white transform hover:scale-105 hover:shadow-2xl transition-all duration-300 cursor-pointer relative overflow-hidden`}
+                    className="bg-white rounded-xl p-5 shadow-sm border border-slate-200 hover:-translate-y-0.5 hover:shadow transition-all duration-200 cursor-pointer"
                   >
-                    <div className="absolute top-0 right-0 w-24 h-24 bg-white opacity-10 rounded-full -mr-12 -mt-12" />
-                    <div className="flex items-center justify-between mb-3 relative z-10">
-                      <div className="bg-white bg-opacity-20 p-3 rounded-lg">
-                        <Icon size={28} />
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-purple-50 text-purple-600 border border-purple-200">
+                        <Icon size={20} />
                       </div>
+                      <span className="text-[11px] font-medium px-2 py-0.5 rounded-md bg-purple-50 text-purple-700 border border-purple-100">
+                        {sub}
+                      </span>
                     </div>
-                    <p
-                      className={`${tc} text-sm font-medium mb-1 relative z-10`}
-                    >
-                      {label}
-                    </p>
-                    <h3 className="text-4xl font-bold relative z-10">{val}</h3>
-                    <p className={`text-sm ${tc} mt-2 relative z-10`}>{sub}</p>
+                    <p className="text-2xl font-bold text-slate-900">{val}</p>
+                    <p className="text-sm font-medium text-slate-500 mt-1">{label}</p>
                   </div>
                 ))}
               </div>
 
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-                <div className="lg:col-span-2 bg-white p-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300">
-                  <h3 className="text-xl font-bold mb-6 flex items-center justify-between text-gray-800">
+                <div className="lg:col-span-2 bg-white p-5 md:p-6 rounded-xl shadow-sm border border-slate-200">
+                  <h3 className="text-base font-semibold mb-5 flex items-center justify-between text-slate-900 border-b border-slate-100 pb-4">
                     <span
                       onClick={() => navigate("/hr/leave")}
                       role="link"
@@ -2638,29 +2626,29 @@ const HRDashboard = () => {
                       onKeyDown={(e) => {
                         if (e.key === "Enter") navigate("/hr/leave");
                       }}
-                      className="flex items-center cursor-pointer hover:text-yellow-700 transition-colors"
+                      className="flex items-center cursor-pointer hover:text-purple-700 transition-colors"
                     >
-                      <div className="bg-sky-100 p-2 rounded-lg mr-3">
-                        <FileText className="text-sky-700" size={24} />
+                      <div className="h-9 w-9 rounded-xl bg-purple-50 text-purple-600 border border-purple-100 flex items-center justify-center mr-3">
+                        <FileText size={18} />
                       </div>
                       Pending Leave Requests
                     </span>
                     <button
                       onClick={() => navigate("/hr/leave")}
                       title="Open Leave Management"
-                      className="text-sm text-gray-500 font-normal bg-sky-100 hover:bg-sky-200 px-3 py-1 rounded-full transition-colors"
+                      className="text-xs text-purple-700 font-medium bg-purple-50 hover:bg-purple-100 border border-purple-200 px-3 py-1 rounded-full transition-colors"
                     >
                       {pendingLeaves.length} pending · View all →
                     </button>
                   </h3>
                   <div className="space-y-3">
                     {pendingLeaves.length === 0 ? (
-                      <div className="text-center py-8 text-gray-400">
+                      <div className="text-center py-8 text-slate-400">
                         <CheckCircle
-                          size={32}
-                          className="mx-auto mb-2 opacity-30"
+                          size={28}
+                          className="mx-auto mb-2 opacity-30 text-emerald-500"
                         />
-                        <p className="text-sm">No pending leave requests</p>
+                        <p className="text-sm font-medium">No pending leave requests</p>
                       </div>
                     ) : (
                       pendingLeaves.slice(0, 5).map((leave) => (
@@ -2668,24 +2656,24 @@ const HRDashboard = () => {
                           key={leave.id}
                           onClick={() => navigate("/hr/leave")}
                           title="Open Leave Management"
-                          className="flex items-center gap-4 p-4 border rounded-lg hover:bg-gray-50 transition cursor-pointer"
+                          className="flex items-center gap-4 p-3.5 border border-slate-200/80 rounded-xl hover:bg-purple-50/40 transition-colors cursor-pointer"
                         >
-                          <div className="h-12 w-12 bg-sky-100 rounded-full flex items-center justify-center font-bold text-sky-600 flex-shrink-0">
+                          <div className="h-10 w-10 bg-purple-100 text-purple-700 rounded-xl flex items-center justify-center font-bold text-sm flex-shrink-0">
                             {leave.employeeName
                               ?.split(" ")
                               .map((n) => n[0])
                               .join("")
                               .slice(0, 2)}
                           </div>
-                          <div className="flex-1">
-                            <p className="font-semibold">
+                          <div className="flex-1 min-w-0">
+                            <p className="text-[13px] font-semibold text-slate-800">
                               {leave.employeeName}
                             </p>
-                            <p className="text-sm text-gray-500">
+                            <p className="text-xs text-slate-500">
                               {leave.leaveTypeName} • {leave.numberOfDays}{" "}
                               day(s)
                             </p>
-                            <p className="text-xs text-gray-400">
+                            <p className="text-[11px] text-slate-400">
                               {leave.startDate} → {leave.endDate}
                             </p>
                           </div>
@@ -2695,18 +2683,18 @@ const HRDashboard = () => {
                                 e.stopPropagation();
                                 handleApproveLeave(leave.id);
                               }}
-                              className="bg-sky-500 text-white px-3 py-1.5 rounded-lg hover:bg-sky-600 transition flex items-center gap-1 text-sm"
+                              className="bg-emerald-600 text-white px-3 py-1.5 rounded-xl hover:bg-emerald-700 transition flex items-center gap-1 text-xs font-medium shadow-sm"
                             >
-                              <CheckCircle size={14} /> Approve
+                              <CheckCircle size={13} /> Approve
                             </button>
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
                                 handleRejectLeave(leave.id);
                               }}
-                              className="bg-red-500 text-white px-3 py-1.5 rounded-lg hover:bg-red-600 transition flex items-center gap-1 text-sm"
+                              className="bg-rose-600 text-white px-3 py-1.5 rounded-xl hover:bg-rose-700 transition flex items-center gap-1 text-xs font-medium shadow-sm"
                             >
-                              <XCircle size={14} /> Reject
+                              <XCircle size={13} /> Reject
                             </button>
                           </div>
                         </div>
@@ -2715,57 +2703,57 @@ const HRDashboard = () => {
                   </div>
                 </div>
 
-                <div className="bg-white p-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300">
-                  <h3 className="text-xl font-bold mb-6 flex items-center text-gray-800">
-                    <div className="bg-blue-100 p-2 rounded-lg mr-3">
-                      <LayoutDashboard className="text-sky-600" size={24} />
+                <div className="bg-white p-5 md:p-6 rounded-xl shadow-sm border border-slate-200">
+                  <h3 className="text-base font-semibold mb-5 flex items-center text-slate-900 border-b border-slate-100 pb-4">
+                    <div className="h-9 w-9 rounded-xl bg-purple-50 text-purple-600 border border-purple-100 flex items-center justify-center mr-3">
+                      <LayoutDashboard size={18} />
                     </div>
                     Quick Actions
                   </h3>
-                  <div className="space-y-3">
+                  <div className="space-y-2.5">
                     <button
                       onClick={() => setShowAddEmployee(true)}
-                      className="w-full bg-sky-300 text-white py-3 px-4 rounded-lg hover:bg-sky-500 transition flex items-center justify-center gap-2 font-medium"
+                      className="w-full h-10 bg-purple-600 text-white rounded-xl hover:bg-purple-700 transition-colors flex items-center justify-center gap-2 text-sm font-medium shadow-sm"
                     >
-                      <UserPlus size={20} /> Add New Employee
+                      <UserPlus size={16} /> Add New Employee
                     </button>
                     <button
                       onClick={() => navigate("/hr/payslip")}
-                      className="w-full bg-sky-700 text-white py-3 px-4 rounded-lg hover:bg-sky-900 transition flex items-center justify-center gap-2 font-medium"
+                      className="w-full h-10 bg-purple-700 text-white rounded-xl hover:bg-purple-800 transition-colors flex items-center justify-center gap-2 text-sm font-medium shadow-sm"
                     >
-                      <DollarSign size={20} /> Generate Payslips
+                      <DollarSign size={16} /> Generate Payslips
                     </button>
                     <button
                       onClick={() => navigate("/hr/report")}
-                      className="w-full bg-sky-600 text-white py-3 px-4 rounded-lg hover:bg-sky-800 transition flex items-center justify-center gap-2 font-medium"
+                      className="w-full h-10 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-colors flex items-center justify-center gap-2 text-sm font-medium shadow-sm"
                     >
-                      <BarChart3 size={20} /> Export Report
+                      <BarChart3 size={16} /> Export Report
                     </button>
                     <button
                       onClick={() => navigate("/hr/departments")}
-                      className="w-full bg-sky-500 text-white py-3 px-4 rounded-lg hover:bg-sky-600 transition flex items-center justify-center gap-2 font-medium"
+                      className="w-full h-10 bg-slate-800 text-white rounded-xl hover:bg-slate-900 transition-colors flex items-center justify-center gap-2 text-sm font-medium shadow-sm"
                     >
-                      <Building2 size={20} /> Manage Departments
+                      <Building2 size={16} /> Manage Departments
                     </button>
                   </div>
                 </div>
               </div>
 
-              <div className="bg-white p-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 mb-6">
-                <h3 className="text-xl font-bold mb-6 flex items-center justify-between text-gray-800">
+              <div className="bg-white p-5 md:p-6 rounded-xl shadow-sm border border-slate-200 mb-6">
+                <h3 className="text-base font-semibold mb-5 flex items-center justify-between text-slate-900 border-b border-slate-100 pb-4">
                   <span className="flex items-center">
-                    <div className="bg-sky-100 p-2 rounded-lg mr-3">
-                      <DollarSign className="text-sky-600" size={24} />
+                    <div className="h-9 w-9 rounded-xl bg-purple-50 text-purple-600 border border-purple-100 flex items-center justify-center mr-3">
+                      <DollarSign size={18} />
                     </div>
                     Pending Allowance Requests
                   </span>
                   <span className="flex items-center gap-3">
-                    <span className="text-sm text-gray-500 font-normal bg-sky-100 px-3 py-1 rounded-full">
+                    <span className="text-xs text-purple-700 font-medium bg-purple-50 border border-purple-200 px-3 py-1 rounded-full">
                       {pendingAllowances.length} pending
                     </span>
                     <button
                       onClick={() => navigate("/hr/payroll/allowance-requests")}
-                      className="text-sm font-semibold text-white bg-sky-500 hover:bg-sky-600 px-3 py-1.5 rounded-lg transition"
+                      className="text-xs font-medium text-white bg-purple-600 hover:bg-purple-700 px-3.5 py-1.5 rounded-xl transition shadow-sm"
                     >
                       Review requests
                     </button>
@@ -2773,20 +2761,20 @@ const HRDashboard = () => {
                 </h3>
                 <div className="space-y-3">
                   {pendingAllowances.length === 0 ? (
-                    <div className="text-center py-8 text-gray-400">
+                    <div className="text-center py-8 text-slate-400">
                       <CheckCircle
-                        size={32}
-                        className="mx-auto mb-2 opacity-30"
+                        size={28}
+                        className="mx-auto mb-2 opacity-30 text-emerald-500"
                       />
-                      <p className="text-sm">No pending allowance requests</p>
+                      <p className="text-sm font-medium">No pending allowance requests</p>
                     </div>
                   ) : (
                     pendingAllowances.slice(0, 5).map((r) => (
                       <div
                         key={r.id}
-                        className="flex items-center gap-4 p-4 border rounded-lg hover:bg-gray-50 transition"
+                        className="flex items-center gap-4 p-3.5 border border-slate-200/80 rounded-xl hover:bg-purple-50/40 transition-colors"
                       >
-                        <div className="h-12 w-12 bg-sky-100 rounded-full flex items-center justify-center font-bold text-sky-600 flex-shrink-0">
+                        <div className="h-10 w-10 bg-purple-100 text-purple-700 rounded-xl flex items-center justify-center font-bold text-sm flex-shrink-0">
                           {(r.employeeName || r.employeeEmail || "?")
                             .split(" ")
                             .map((n) => n[0])
@@ -2794,14 +2782,14 @@ const HRDashboard = () => {
                             .slice(0, 2)}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="font-semibold">
+                          <p className="text-[13px] font-semibold text-slate-800">
                             {r.employeeName || r.employeeEmail}
                           </p>
-                          <p className="text-sm text-gray-500 truncate">
+                          <p className="text-xs text-slate-500 truncate">
                             {r.name} • Rs.
                             {(Number(r.amount) || 0).toLocaleString()}
                           </p>
-                          <p className="text-xs text-gray-400">
+                          <p className="text-[11px] text-slate-400">
                             Requested{" "}
                             {(r.createdAt || "").replace("T", " ").slice(0, 16)}
                           </p>
@@ -2810,7 +2798,7 @@ const HRDashboard = () => {
                           onClick={() =>
                             navigate("/hr/payroll/allowance-requests")
                           }
-                          className="bg-sky-600 text-white px-3 py-1.5 rounded-lg hover:bg-sky-700 transition text-sm"
+                          className="bg-purple-600 text-white px-3 py-1.5 rounded-xl hover:bg-purple-700 transition text-xs font-medium shadow-sm"
                         >
                           Review
                         </button>
@@ -2825,17 +2813,17 @@ const HRDashboard = () => {
                   onClick={() =>
                     departments.length > 0 && setShowDeptModal(true)
                   }
-                  className={`bg-white p-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 ${departments.length > 0 ? "cursor-pointer" : ""}`}
+                  className={`bg-white p-5 md:p-6 rounded-xl shadow-sm border border-slate-200 ${departments.length > 0 ? "cursor-pointer hover:shadow" : ""} transition-all duration-200`}
                 >
-                  <h3 className="text-xl font-bold mb-6 flex items-center justify-between text-gray-800">
+                  <h3 className="text-base font-semibold mb-5 flex items-center justify-between text-slate-900 border-b border-slate-100 pb-4">
                     <span className="flex items-center">
-                      <div className="bg-sky-100 p-2 rounded-lg mr-3">
-                        <Building2 className="text-sky-600" size={24} />
+                      <div className="h-9 w-9 rounded-xl bg-purple-50 text-purple-600 border border-purple-100 flex items-center justify-center mr-3">
+                        <Building2 size={18} />
                       </div>
                       Employee Distribution
                     </span>
                     {departments.length > 5 && (
-                      <span className="text-xs font-medium text-purple-600 bg-purple-50 px-3 py-1 rounded-full">
+                      <span className="text-xs font-medium text-purple-700 bg-purple-50 border border-purple-200 px-3 py-1 rounded-full">
                         View all {departments.length}
                       </span>
                     )}
@@ -2861,8 +2849,8 @@ const HRDashboard = () => {
                         name: "Alice Kim",
                         dept: "Engineering",
                         pct: "98%",
-                        bg: "bg-blue-500",
-                        wrap: "from-yellow-50 to-orange-50",
+                        bg: "bg-purple-600",
+                        wrap: "from-amber-50/60 to-purple-50/40",
                       },
                       {
                         medal: "🥈",
@@ -2871,7 +2859,7 @@ const HRDashboard = () => {
                         dept: "Sales",
                         pct: "95%",
                         bg: "bg-purple-500",
-                        wrap: "bg-gray-50",
+                        wrap: "bg-slate-50/70",
                       },
                       {
                         medal: "🥉",
@@ -2879,23 +2867,23 @@ const HRDashboard = () => {
                         name: "Emma Wilson",
                         dept: "Finance",
                         pct: "93%",
-                        bg: "bg-green-500",
-                        wrap: "bg-gray-50",
+                        bg: "bg-indigo-600",
+                        wrap: "bg-slate-50/70",
                       },
                     ].map((p) => (
                       <div
                         key={p.name}
-                        className={`flex items-center gap-3 p-3 bg-gradient-to-r ${p.wrap} rounded-lg`}
+                        className={`flex items-center gap-3 p-3 bg-gradient-to-r ${p.wrap} rounded-xl border border-slate-200/60`}
                       >
                         <div className="text-2xl">{p.medal}</div>
                         <div
-                          className={`h-10 w-10 ${p.bg} rounded-full flex items-center justify-center font-bold text-white flex-shrink-0`}
+                          className={`h-9 w-9 ${p.bg} rounded-xl flex items-center justify-center font-bold text-white text-xs flex-shrink-0`}
                         >
                           {p.initials}
                         </div>
                         <div className="flex-1">
-                          <p className="font-semibold">{p.name}</p>
-                          <p className="text-sm text-gray-500">
+                          <p className="text-[13px] font-semibold text-slate-800">{p.name}</p>
+                          <p className="text-xs text-slate-500">
                             {p.dept} • {p.pct} Performance
                           </p>
                         </div>

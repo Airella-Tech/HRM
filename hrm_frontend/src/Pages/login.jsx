@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { FcGoogle } from "react-icons/fc";
 import { FaApple } from "react-icons/fa";
@@ -60,7 +60,6 @@ const Login = () => {
   const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [ready, setReady] = useState(false);
 
   // First-time password change modal state
   const [showFirstTimeModal, setShowFirstTimeModal] = useState(false);
@@ -74,11 +73,6 @@ const Login = () => {
   const [pendingUserData, setPendingUserData] = useState(null);
 
   const navigate = useNavigate();
-
-  useEffect(() => {
-    const t = setTimeout(() => setReady(true), 60);
-    return () => clearTimeout(t);
-  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();

@@ -9,6 +9,7 @@ import React from "react";
 // Full class names are written out so Tailwind keeps them in the build.
 const TONES = {
   primary: "from-primary-600 to-primary-700",
+  sky: "from-sky-600 to-sky-700",
   slate: "from-primary-800 to-primary-900",
   green: "from-primary-700 to-primary-800",
   amber: "from-primary-500 to-primary-600",

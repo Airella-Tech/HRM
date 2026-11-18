@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import {
   BookOpen,
   Search,
@@ -16,7 +15,6 @@ import PublicFooter from "../components/PublicFooter";
 import CompanyRequestModal from "../components/CompanyRequestModal";
 
 const Blog = () => {
-  const navigate = useNavigate();
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [readingPost, setReadingPost] = useState(null);

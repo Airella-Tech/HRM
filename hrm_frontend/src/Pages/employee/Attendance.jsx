@@ -4,7 +4,7 @@ import { Clock, Calendar, CheckCircle, XCircle, Download, Filter, MapPin, Timer,
 import { PageLayout } from "../../components/PageLayout";
 import { employeeApi } from "../../services/api";
 import {
-  EmpButton, SummaryCard, SearchBar, FilterSelect, ShowingCount, TableCard, TableHeaderRow, TableHeader, TableRows, TableRow, LoadingState, EmptyState,
+  EmpButton, SummaryCard, SummaryCardGrid, SearchBar, FilterSelect, ShowingCount, TableCard, TableHeaderRow, TableHeader, TableRows, TableRow, LoadingState, EmptyState, StatusChip,
 } from "../../components/EmployeeUI";
 import { EMP_GRADIENT, CARD_TONES, useSort } from "../../components/employeeTheme";
 import {
@@ -140,13 +140,6 @@ const Attendance = () => {
     return `${displayHour}:${minutes} ${ampm}`;
   };
 
-  const statusBadge = (s) => ({
-    PRESENT: "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200",
-    ABSENT: "bg-yellow-50 text-red-700 ring-1 ring-red-200",
-    HALF_DAY: "bg-violet-50 text-violet-700 ring-1 ring-violet-200",
-    LATE: "bg-amber-50 text-amber-700 ring-1 ring-amber-200",
-  }[s] || "bg-slate-50 text-slate-600 ring-1 ring-slate-200");
-
   const statusLabel = (s) => ({
     PRESENT: "Present",
     ABSENT: "Absent",
@@ -199,7 +192,7 @@ const Attendance = () => {
   );
 
   const statusPill = (s) => (
-    <span className={`inline-flex px-2.5 py-1 rounded-full text-xs font-semibold ${statusBadge(s)}`}>{statusLabel(s)}</span>
+    <StatusChip status={s} label={statusLabel(s)} />
   );
 
   return (
@@ -214,7 +207,7 @@ const Attendance = () => {
         </EmpButton>
       }
     >
-      <div className="space-y-6">
+      <div className="space-y-6 max-w-7xl mx-auto">
         {/* Message Alert */}
         {message && (
           <div className={`px-4 py-3 rounded-xl border text-sm font-medium ${message.startsWith("✓") ? "bg-emerald-50 border-emerald-200 text-emerald-800" : "bg-rose-50 border-rose-200 text-rose-800"}`}>
@@ -223,9 +216,9 @@ const Attendance = () => {
         )}
 
         {/* Clock In/Out card */}
-        <div className="bg-white rounded-xl border border-slate-200/90 shadow-sm p-6">
+        <div className="bg-white rounded-2xl border border-slate-200/80 shadow-[0_2px_12px_rgba(15,23,42,0.035)] p-6">
           <h2 className="text-base font-bold text-slate-900 flex items-center gap-3 mb-5">
-            <span className="h-9 w-9 rounded-xl bg-teal-50 text-teal-600 border border-teal-100 flex items-center justify-center">
+            <span className="h-9 w-9 rounded-xl bg-teal-50 text-teal-600 border border-teal-100 flex items-center justify-center shrink-0 shadow-2xs">
               <Timer size={18} />
             </span>
             Today's Attendance
@@ -292,19 +285,19 @@ const Attendance = () => {
           )}
         </div>
 
-        {/* Monthly stat cards */}
-        <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4">
+        {/* Monthly stat cards with latest Recruitment gradient pattern */}
+        <SummaryCardGrid cols={6}>
           {[
-            { label: "Total Days", value: stats.totalDays, tone: CARD_TONES.blue, icon: <Calendar size={18} /> },
+            { label: "Total Days", value: stats.totalDays, tone: CARD_TONES.teal, icon: <Calendar size={18} /> },
             { label: "Present", value: stats.present, tone: CARD_TONES.green, icon: <CheckCircle size={18} /> },
             { label: "Absent", value: stats.absent, tone: CARD_TONES.red, icon: <XCircle size={18} /> },
-            { label: "On Leave", value: stats.leave, tone: CARD_TONES.purple, icon: <Calendar size={18} /> },
+            { label: "On Leave", value: stats.leave, tone: CARD_TONES.deep, icon: <Calendar size={18} /> },
             { label: "Late", value: stats.late, tone: CARD_TONES.yellow, icon: <Clock size={18} /> },
             { label: "Hours", value: stats.workingHours + "h", tone: CARD_TONES.slate, icon: <Timer size={18} /> },
           ].map(s => (
-            <SummaryCard key={s.label} icon={s.icon} title={s.label} value={s.value} className={s.tone} />
+            <SummaryCard key={s.label} icon={s.icon} title={s.label} value={s.value} tone={s.tone} />
           ))}
-        </div>
+        </SummaryCardGrid>
 
         {/* =====================================================
             SEARCH & FILTER CONTROLS
