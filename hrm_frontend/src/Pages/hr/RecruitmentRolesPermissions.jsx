@@ -116,6 +116,38 @@ const systemRoleStyles = {
   ADMIN: "bg-primary-50 text-primary-700",
 };
 
+const ROLE_TONE = {
+  hr: "sky",
+  recruiter: "primary",
+};
+
+const ROLE_TONE_STYLES = {
+  sky: {
+    button: "bg-sky-600 hover:bg-sky-700",
+    cards: [
+      "bg-sky-600",
+      "bg-sky-500",
+      "bg-sky-700",
+    ],
+    tab: "border-sky-600 text-sky-600",
+    icon: "bg-sky-50 text-sky-600",
+    more: "bg-sky-50 text-sky-700 hover:bg-sky-100",
+    focus: "focus:border-sky-400 focus:ring-2 focus:ring-sky-100",
+  },
+  primary: {
+    button: "bg-primary-600 hover:bg-primary-700",
+    cards: [
+      "bg-primary-600",
+      "bg-primary-500",
+      "bg-primary-700",
+    ],
+    tab: "border-primary-600 text-primary-600",
+    icon: "bg-primary-50 text-primary-600",
+    more: "bg-primary-50 text-primary-700 hover:bg-primary-100",
+    focus: "focus:border-primary-400 focus:ring-2 focus:ring-primary-100",
+  },
+};
+
 // Normalizes backend RecruitmentRoleDTO into a consistent object structure.
 const normalizeRole = (r) => {
   if (!r) return null;
@@ -1126,6 +1158,8 @@ const RecruitmentRolesPermissions = () => {
       // Ignore — keep the default layoutRole
     }
   }
+  const tone = ROLE_TONE[layoutRole];
+  const toneStyles = ROLE_TONE_STYLES[tone];
 
   return (
     <PageLayout
@@ -1142,7 +1176,7 @@ const RecruitmentRolesPermissions = () => {
               : () => openAssignmentModal()
           }
           disabled={loading}
-          className="inline-flex items-center gap-2 rounded-xl bg-sky-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-sky-700 disabled:cursor-not-allowed disabled:opacity-50"
+          className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold text-white shadow-sm transition ${toneStyles.button} disabled:cursor-not-allowed disabled:opacity-50`}
         >
           {activeTab === "roles" ? (
             <>
@@ -1197,7 +1231,7 @@ const RecruitmentRolesPermissions = () => {
 <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
 
   {/* Total Roles */}
-  <div className="relative overflow-hidden rounded-2xl bg-sky-600 p-5 text-white shadow-md transition hover:-translate-y-1 hover:shadow-lg">
+  <div className={`relative overflow-hidden rounded-2xl ${toneStyles.cards[0]} p-5 text-white shadow-md transition hover:-translate-y-1 hover:shadow-lg`}>
     <div className="relative z-10 flex items-center justify-between">
       <div>
         <p className="text-sm font-medium text-white/80">
@@ -1215,11 +1249,13 @@ const RecruitmentRolesPermissions = () => {
         <ShieldCheck size={26} />
       </div>
     </div>
-    <div className="pointer-events-none absolute -bottom-8 -right-5 h-28 w-28 rounded-full bg-white/10" />
+    {layoutRole === "hr" && (
+      <div className="pointer-events-none absolute -bottom-8 -right-5 h-28 w-28 rounded-full bg-white/10" />
+    )}
   </div>
 
   {/* Staff with Access */}
-  <div className="relative overflow-hidden rounded-2xl bg-sky-500 p-5 text-white shadow-md transition hover:-translate-y-1 hover:shadow-lg">
+  <div className={`relative overflow-hidden rounded-2xl ${toneStyles.cards[1]} p-5 text-white shadow-md transition hover:-translate-y-1 hover:shadow-lg`}>
     <div className="relative z-10 flex items-center justify-between">
       <div>
         <p className="text-sm font-medium text-white/80">
@@ -1237,11 +1273,13 @@ const RecruitmentRolesPermissions = () => {
         <Users size={26} />
       </div>
     </div>
-    <div className="pointer-events-none absolute -bottom-8 -right-5 h-28 w-28 rounded-full bg-white/10" />
+    {layoutRole === "hr" && (
+      <div className="pointer-events-none absolute -bottom-8 -right-5 h-28 w-28 rounded-full bg-white/10" />
+    )}
   </div>
 
   {/* Total Employees */}
-  <div className="relative overflow-hidden rounded-2xl bg-sky-700 p-5 text-white shadow-md transition hover:-translate-y-1 hover:shadow-lg">
+  <div className={`relative overflow-hidden rounded-2xl ${toneStyles.cards[2]} p-5 text-white shadow-md transition hover:-translate-y-1 hover:shadow-lg`}>
     <div className="relative z-10 flex items-center justify-between">
       <div>
         <p className="text-sm font-medium text-white/80">
@@ -1259,7 +1297,9 @@ const RecruitmentRolesPermissions = () => {
         <UserRound size={26} />
       </div>
     </div>
-    <div className="pointer-events-none absolute -bottom-8 -right-5 h-28 w-28 rounded-full bg-white/10" />
+    {layoutRole === "hr" && (
+      <div className="pointer-events-none absolute -bottom-8 -right-5 h-28 w-28 rounded-full bg-white/10" />
+    )}
   </div>
 
 </section>
@@ -1272,7 +1312,7 @@ const RecruitmentRolesPermissions = () => {
                   onClick={() => setActiveTab("roles")}
                   className={`shrink-0 border-b-2 py-4 text-sm font-semibold transition ${
                     activeTab === "roles"
-                      ? "border-primary-600 text-primary-600"
+                      ? toneStyles.tab
                       : "border-transparent text-slate-500 hover:text-slate-800"
                   }`}
                 >
@@ -1284,7 +1324,7 @@ const RecruitmentRolesPermissions = () => {
                   onClick={() => setActiveTab("employees")}
                   className={`shrink-0 border-b-2 py-4 text-sm font-semibold transition ${
                     activeTab === "employees"
-                      ? "border-primary-600 text-primary-600"
+                      ? toneStyles.tab
                       : "border-transparent text-slate-500 hover:text-slate-800"
                   }`}
                 >
@@ -1309,7 +1349,7 @@ const RecruitmentRolesPermissions = () => {
                         onChange={(event) => setSearch(event.target.value)}
                         placeholder="Search roles, descriptions, or permissions..."
                         aria-label="Search recruitment roles"
-                        className="w-full rounded-xl border border-slate-200 py-3 pl-10 pr-4 text-sm outline-none transition focus:border-primary-400 focus:ring-2 focus:ring-primary-100"
+                        className={`w-full rounded-xl border border-slate-200 py-3 pl-10 pr-4 text-sm outline-none transition ${toneStyles.focus}`}
                       />
                     </div>
 
@@ -1321,7 +1361,7 @@ const RecruitmentRolesPermissions = () => {
                         >
                           <div className="flex items-start justify-between gap-3">
                             <div className="flex min-w-0 items-start gap-3">
-                              <div className="rounded-xl bg-primary-50 p-3 text-sky-600">
+                              <div className={`rounded-xl p-3 ${toneStyles.icon}`}>
                                 <BriefcaseBusiness size={21} />
                               </div>
 
@@ -1380,7 +1420,7 @@ const RecruitmentRolesPermissions = () => {
                               <button
                                 type="button"
                                 onClick={() => setPreviewRole(role)}
-                                className="rounded-lg bg-primary-50 px-2.5 py-1.5 text-xs font-semibold text-primary-700 hover:bg-primary-100"
+                                className={`rounded-lg px-2.5 py-1.5 text-xs font-semibold ${toneStyles.more}`}
                               >
                                 +{role.permissionIds.length - 4} more
                               </button>
