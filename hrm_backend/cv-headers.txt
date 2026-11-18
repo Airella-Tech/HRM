@@ -1,0 +1,17 @@
+HTTP/1.1 200 
+Vary: Origin
+Vary: Access-Control-Request-Method
+Vary: Access-Control-Request-Headers
+Access-Control-Allow-Origin: http://localhost:5173
+Access-Control-Allow-Credentials: true
+Content-Disposition: attachment; filename="=?UTF-8?Q?Manawi=5FCV.pdf?="; filename*=UTF-8''Manawi_CV.pdf
+X-Content-Type-Options: nosniff
+X-XSS-Protection: 0
+Cache-Control: no-cache, no-store, max-age=0, must-revalidate
+Pragma: no-cache
+Expires: 0
+X-Frame-Options: DENY
+Content-Type: application/pdf
+Content-Length: 263794
+Date: Wed, 18 Nov 2026 04:08:17 GMT
+

@@ -12,6 +12,9 @@ import {
   Pencil,
   Trash2,
   Loader2,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown,
 } from "lucide-react";
 import { PageLayout } from "../../components/PageLayout";
 import { hrApi } from "../../services/api";
@@ -67,6 +70,11 @@ const SalaryAssign = () => {
   const [deletingId, setDeletingId] = useState(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState(null);
 
+  const [sortConfig, setSortConfig] = useState({
+    key: null,
+    direction: "asc",
+  });
+
   useEffect(() => {
     const s = localStorage.getItem("user");
     if (!s) {
@@ -113,11 +121,118 @@ const SalaryAssign = () => {
     }
   };
 
+  // ---------------------------------------------------------
+  // SORTING
+  // ---------------------------------------------------------
+
+  const handleSort = (key) => {
+    setSortConfig((previous) => ({
+      key,
+      direction:
+        previous.key === key && previous.direction === "asc" ? "desc" : "asc",
+    }));
+  };
+
+  const getSortIcon = (key) => {
+    if (sortConfig.key !== key) {
+      return <ArrowUpDown size={14} className="ml-1 inline-block" />;
+    }
+
+    return sortConfig.direction === "asc" ? (
+      <ArrowUp size={14} className="ml-1 inline-block" />
+    ) : (
+      <ArrowDown size={14} className="ml-1 inline-block" />
+    );
+  };
+
   const department = useMemo(
     () => departments.find((d) => String(d.id) === String(departmentId)),
     [departments, departmentId],
   );
   const jobRoles = department?.jobRoles || [];
+
+  const sortedHistory = useMemo(() => {
+    if (!sortConfig.key) return history;
+
+    return [...history].sort((a, b) => {
+      let valueA;
+      let valueB;
+
+      switch (sortConfig.key) {
+        case "department":
+          valueA = a.departmentName || "";
+          valueB = b.departmentName || "";
+          break;
+
+        case "jobRole":
+          valueA = a.jobRoleTitle || "";
+          valueB = b.jobRoleTitle || "";
+          break;
+
+        case "employmentType":
+          valueA = a.employmentTypeName || "";
+          valueB = b.employmentTypeName || "";
+          break;
+
+        case "period":
+          valueA = periodLabel(a.period) || "";
+          valueB = periodLabel(b.period) || "";
+          break;
+
+        case "basic":
+          valueA = num(a.basicSalary);
+          valueB = num(b.basicSalary);
+          break;
+
+        case "allowance":
+          valueA = num(a.allowance);
+          valueB = num(b.allowance);
+          break;
+
+        case "deduction":
+          valueA = num(a.deduction);
+          valueB = num(b.deduction);
+          break;
+
+        case "totalSalary":
+          valueA = num(a.totalSalary);
+          valueB = num(b.totalSalary);
+          break;
+
+        case "employees":
+          valueA = num(a.employeeCount);
+          valueB = num(b.employeeCount);
+          break;
+
+        case "setBy":
+          valueA = a.createdByName || "";
+          valueB = b.createdByName || "";
+          break;
+
+        case "lastUpdated":
+          valueA = a.updatedAt ? new Date(a.updatedAt).getTime() : 0;
+          valueB = b.updatedAt ? new Date(b.updatedAt).getTime() : 0;
+          break;
+
+        default:
+          return 0;
+      }
+
+      if (typeof valueA === "number" && typeof valueB === "number") {
+        return sortConfig.direction === "asc"
+          ? valueA - valueB
+          : valueB - valueA;
+      }
+
+      return sortConfig.direction === "asc"
+        ? String(valueA).localeCompare(String(valueB), undefined, {
+            sensitivity: "base",
+          })
+        : String(valueB).localeCompare(String(valueA), undefined, {
+            sensitivity: "base",
+          });
+    });
+  }, [history, sortConfig]);
 
   // The popup starts with what the role already has, so HR edits it instead of re-entering it
   const openRole = (role) => {
@@ -405,30 +520,41 @@ const SalaryAssign = () => {
               <thead>
                 <tr className="bg-gradient-to-r from-sky-700 to-sky-600 text-white text-xs">
                   {[
-                    "Department",
-                    "Job Role",
-                    "Employment Type",
-                    "Period",
-                    "Basic",
-                    "Allowance",
-                    "Deduction",
-                    "Total Salary",
-                    "Employees",
-                    "Set By",
-                    "Last Updated",
-                    "Actions",
+                    { label: "Department", key: "department" },
+                    { label: "Job Role", key: "jobRole" },
+                    { label: "Employment Type", key: "employmentType" },
+                    { label: "Period", key: "period" },
+                    { label: "Basic", key: "basic" },
+                    { label: "Allowance", key: "allowance" },
+                    { label: "Deduction", key: "deduction" },
+                    { label: "Total Salary", key: "totalSalary" },
+                    { label: "Employees", key: "employees" },
+                    { label: "Set By", key: "setBy" },
+                    { label: "Last Updated", key: "lastUpdated" },
+                    { label: "Actions", key: null },
                   ].map((h) => (
                     <th
-                      key={h}
+                      key={h.label}
                       className="px-5 py-3.5 text-left font-semibold whitespace-nowrap"
                     >
-                      {h}
+                      {h.key ? (
+                        <button
+                          type="button"
+                          onClick={() => handleSort(h.key)}
+                          className="inline-flex items-center hover:text-sky-100 transition-colors"
+                        >
+                          {h.label}
+                          {getSortIcon(h.key)}
+                        </button>
+                      ) : (
+                        h.label
+                      )}
                     </th>
                   ))}
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {history.map((p, i) => (
+                {sortedHistory.map((p, i) => (
                   <tr
                     key={p.id}
                     className={`hover:bg-sky-50/70 transition-colors ${i % 2 === 1 ? "bg-slate-50/40" : ""}`}

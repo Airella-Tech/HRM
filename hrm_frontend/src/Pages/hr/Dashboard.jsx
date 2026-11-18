@@ -2630,7 +2630,7 @@ const HRDashboard = () => {
                           title="Open Leave Management"
                           className="flex items-center gap-4 p-4 border rounded-lg hover:bg-gray-50 transition cursor-pointer"
                         >
-                          <div className="h-12 w-12 bg-blue-100 rounded-full flex items-center justify-center font-bold text-blue-600 flex-shrink-0">
+                          <div className="h-12 w-12 bg-sky-100 rounded-full flex items-center justify-center font-bold text-sky-600 flex-shrink-0">
                             {leave.employeeName
                               ?.split(" ")
                               .map((n) => n[0])
@@ -2655,7 +2655,7 @@ const HRDashboard = () => {
                                 e.stopPropagation();
                                 handleApproveLeave(leave.id);
                               }}
-                              className="bg-green-500 text-white px-3 py-1.5 rounded-lg hover:bg-green-600 transition flex items-center gap-1 text-sm"
+                              className="bg-sky-500 text-white px-3 py-1.5 rounded-lg hover:bg-sky-600 transition flex items-center gap-1 text-sm"
                             >
                               <CheckCircle size={14} /> Approve
                             </button>
@@ -2746,7 +2746,7 @@ const HRDashboard = () => {
                         key={r.id}
                         className="flex items-center gap-4 p-4 border rounded-lg hover:bg-gray-50 transition"
                       >
-                        <div className="h-12 w-12 bg-emerald-100 rounded-full flex items-center justify-center font-bold text-emerald-600 flex-shrink-0">
+                        <div className="h-12 w-12 bg-sky-100 rounded-full flex items-center justify-center font-bold text-sky-600 flex-shrink-0">
                           {(r.employeeName || r.employeeEmail || "?")
                             .split(" ")
                             .map((n) => n[0])
@@ -2770,7 +2770,7 @@ const HRDashboard = () => {
                           onClick={() =>
                             navigate("/hr/payroll/allowance-requests")
                           }
-                          className="bg-emerald-500 text-white px-3 py-1.5 rounded-lg hover:bg-emerald-600 transition text-sm"
+                          className="bg-sky-600 text-white px-3 py-1.5 rounded-lg hover:bg-sky-700 transition text-sm"
                         >
                           Review
                         </button>
@@ -2807,8 +2807,8 @@ const HRDashboard = () => {
                 </div>
                 <div className="bg-white p-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300">
                   <h3 className="text-xl font-bold mb-6 flex items-center text-gray-800">
-                    <div className="bg-yellow-100 p-2 rounded-lg mr-3">
-                      <Award className="text-yellow-600" size={24} />
+                    <div className="bg-sky-100 p-2 rounded-lg mr-3">
+                      <Award className="text-sky-600" size={24} />
                     </div>
                     Top Performers This Month
                   </h3>
