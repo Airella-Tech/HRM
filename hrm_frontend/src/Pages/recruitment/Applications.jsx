@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useMemo } from "react";
 import { useLocation, Link } from "react-router-dom";
 import { PageLayout } from "../../components/PageLayout";
+import StatCard, { StatCardGrid } from "../../components/StatCard";
 import { recruitmentApi } from "../../services/api";
 import RecruitmentApplicationReview from "./ApplicationReview";
 import RecruitmentCandidateShortlist from "./CandidateShortlist";
@@ -78,34 +79,34 @@ const STATUS_CONFIG = {
   },
   INTERVIEWING: {
     label: "Interviewing",
-    bg: "bg-purple-50",
-    text: "text-purple-700",
-    border: "border-purple-200",
-    dot: "bg-purple-500",
+    bg: "bg-primary-50",
+    text: "text-primary-700",
+    border: "border-primary-200",
+    dot: "bg-primary-500",
   },
   OFFERED: {
     label: "Offered",
-    bg: "bg-teal-50",
-    text: "text-teal-700",
-    border: "border-teal-200",
-    dot: "bg-teal-500",
+    bg: "bg-green-50",
+    text: "text-green-700",
+    border: "border-green-200",
+    dot: "bg-green-500",
   },
   REJECTED: {
     label: "Rejected",
-    bg: "bg-rose-50",
-    text: "text-rose-700",
-    border: "border-rose-200",
-    dot: "bg-rose-500",
+    bg: "bg-red-50",
+    text: "text-red-700",
+    border: "border-red-200",
+    dot: "bg-red-500",
   },
 };
 
 const AVATAR_GRADIENTS = [
-  "from-primary-500 to-purple-600",
-  "from-sky-400 to-blue-600",
-  "from-emerald-400 to-teal-600",
+  "from-primary-600 to-primary-700",
+  "from-primary-500 to-primary-700",
+  "from-green-600 to-green-700",
   "from-amber-400 to-orange-500",
-  "from-pink-500 to-rose-600",
-  "from-primary-500 to-primary-600",
+  "from-red-600 to-red-700",
+  "from-primary-600 to-primary-700",
 ];
 
 export default function RecruitmentApplications() {
@@ -622,60 +623,17 @@ export default function RecruitmentApplications() {
           </div>
         )}
 
-        {/* ── Metric Summary Cards ── */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm flex items-center justify-between">
-            <div>
-              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                Total Applications
-              </p>
-              <h3 className="text-2xl font-bold text-slate-900 mt-1">{metrics.total}</h3>
-              <p className="text-xs text-slate-400 mt-1">Across all vacancies</p>
-            </div>
-            <div className="w-12 h-12 rounded-xl bg-primary-50 text-primary-600 flex items-center justify-center font-bold">
-              <FileText size={22} />
-            </div>
-          </div>
-
-          <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm flex items-center justify-between">
-            <div>
-              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                Positions Applied
-              </p>
-              <h3 className="text-2xl font-bold text-primary-600 mt-1">{metrics.positionsWithApps}</h3>
-              <p className="text-xs text-slate-400 mt-1">Active job openings</p>
-            </div>
-            <div className="w-12 h-12 rounded-xl bg-primary-50 text-primary-600 flex items-center justify-center font-bold">
-              <Briefcase size={22} />
-            </div>
-          </div>
-
-          <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm flex items-center justify-between">
-            <div>
-              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                New Applicants
-              </p>
-              <h3 className="text-2xl font-bold text-primary-600 mt-1">{metrics.newCount}</h3>
-              <p className="text-xs text-slate-400 mt-1">Awaiting initial review</p>
-            </div>
-            <div className="w-12 h-12 rounded-xl bg-primary-50 text-primary-600 flex items-center justify-center font-bold">
-              <Clock size={22} />
-            </div>
-          </div>
-
-          <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm flex items-center justify-between">
-            <div>
-              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                Shortlisted
-              </p>
-              <h3 className="text-2xl font-bold text-emerald-600 mt-1">{metrics.shortlistedCount}</h3>
-              <p className="text-xs text-slate-400 mt-1">Qualified candidates</p>
-            </div>
-            <div className="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold">
-              <CheckCircle2 size={22} />
-            </div>
-          </div>
-        </div>
+        {/* ── Metric Summary (one joined card) ── */}
+        <StatCardGrid>
+          {[
+            { label: "Total Applications", value: metrics.total, caption: "Across all vacancies", tone: "primary", icon: FileText },
+            { label: "Positions Applied", value: metrics.positionsWithApps, caption: "Active job openings", tone: "primary", icon: Briefcase },
+            { label: "New Applicants", value: metrics.newCount, caption: "Awaiting initial review", tone: "primary", icon: Clock },
+            { label: "Shortlisted", value: metrics.shortlistedCount, caption: "Qualified candidates", tone: "green", icon: Users },
+          ].map((m) => (
+            <StatCard key={m.label} label={m.label} value={m.value} caption={m.caption} tone={m.tone} icon={m.icon} />
+          ))}
+        </StatCardGrid>
 
         {/* ── Search & Filter Controls Toolbar ── */}
         <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm">
@@ -854,51 +812,85 @@ export default function RecruitmentApplications() {
               return (
                 <div
                   key={group.key}
-                  className="bg-white rounded-3xl border-2 border-primary-100 shadow-md overflow-hidden transition-all duration-200 hover:shadow-lg"
+                  className="bg-white rounded-xl border border-slate-200 border-l-4 border-l-primary-600 shadow-sm overflow-hidden transition-shadow hover:shadow-md"
                 >
-                  {/* ── Vacancy Group Header (Prominently Highlighted Position Topic) ── */}
+                  {/* ── Vacancy Group Header ── */}
                   <div
                     onClick={() => toggleGroup(group.key)}
-                    className="p-5 sm:p-6 bg-gradient-to-r from-slate-900 via-primary-950 to-slate-900 text-white flex flex-col md:flex-row md:items-center justify-between gap-4 cursor-pointer hover:from-slate-800 hover:to-primary-900 transition-all border-b border-primary-900/60"
+                    className={`px-6 py-4 flex flex-col lg:flex-row lg:items-center justify-between gap-4 cursor-pointer hover:bg-slate-50/60 transition-colors ${
+                      isCollapsed ? "" : "border-b border-slate-200"
+                    }`}
                   >
-                    {/* Left: Highlighted Position Topic Field */}
-                    <div className="flex items-start sm:items-center gap-4">
-                      <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-gradient-to-br from-primary-500 to-primary-700 text-white flex items-center justify-center shrink-0 shadow-lg shadow-primary-500/30 border border-primary-400/40">
-                        <Briefcase size={24} />
+                    <div className="flex items-center gap-4 min-w-0">
+                      <div className="w-11 h-11 rounded-xl bg-primary-50 text-primary-600 flex items-center justify-center shrink-0">
+                        <Briefcase size={20} />
                       </div>
-                      <div>
-                        {/* Bold Prominent Position Title */}
-                        <h3 className="text-xl sm:text-2xl font-black text-white tracking-tight flex items-center gap-2">
-                          <span>{group.title}</span>
-                        </h3>
+                      <div className="min-w-0">
+                        <h3 className="text-lg font-bold text-slate-900 truncate">{group.title}</h3>
+                        <p className="text-xs text-slate-500 mt-0.5">
+                          {[
+                            group.department,
+                            group.jobType,
+                            group.deadline ? `Closes ${formatDate(group.deadline)}` : null,
+                          ]
+                            .filter(Boolean)
+                            .join(" · ")}
+                        </p>
                       </div>
                     </div>
 
-                    {/* Right: Summary pill & Collapse toggle */}
-                    <div className="flex flex-wrap items-center gap-2 self-end md:self-auto" onClick={(e) => e.stopPropagation()}>
+                    {totalForGroup > 0 && (
+                      <div className="hidden xl:block w-48 shrink-0">
+                        <div className="flex h-1.5 rounded-full overflow-hidden bg-slate-100">
+                          {[
+                            { n: newCount, c: "bg-primary-500" },
+                            { n: reviewCount, c: "bg-amber-500" },
+                            { n: shortlistedCount, c: "bg-emerald-500" },
+                            { n: rejectedCount, c: "bg-red-500" },
+                          ].map((seg) => (
+                            <div
+                              key={seg.c}
+                              className={seg.c}
+                              style={{ width: `${(seg.n / totalForGroup) * 100}%` }}
+                            />
+                          ))}
+                        </div>
+                        <p className="text-[11px] text-slate-500 mt-1.5">
+                          {[
+                            newCount > 0 ? `${newCount} new` : null,
+                            reviewCount > 0 ? `${reviewCount} under review` : null,
+                            shortlistedCount > 0 ? `${shortlistedCount} shortlisted` : null,
+                            rejectedCount > 0 ? `${rejectedCount} rejected` : null,
+                          ]
+                            .filter(Boolean)
+                            .join(" · ")}
+                        </p>
+                      </div>
+                    )}
+
+                    <div className="flex flex-wrap items-center gap-2 self-end lg:self-auto" onClick={(e) => e.stopPropagation()}>
                       {/* Job Offer Status Badge */}
                       {(() => {
                         const offerInfo = getVacancyOfferInfo(group);
                         return offerInfo.hasOffer ? (
                           <span
-                            className="px-3 py-1.5 rounded-xl bg-emerald-500/25 text-emerald-300 border border-emerald-400/40 text-xs font-semibold backdrop-blur-sm shadow-xs flex items-center gap-1.5"
+                            className="px-3 py-1.5 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-semibold flex items-center gap-1.5"
                             title="Job offer created for this opening"
                           >
-                            <CheckCircle2 size={13} className="text-emerald-400" />
-                            <span>Job Offer Created {offerInfo.offerCount > 1 ? `(${offerInfo.offerCount})` : ""}</span>
+                            <CheckCircle2 size={14} />
+                            <span>Offer Created {offerInfo.offerCount > 1 ? `(${offerInfo.offerCount})` : ""}</span>
                           </span>
                         ) : (
                           <span
-                            className="px-3 py-1.5 rounded-xl bg-amber-500/25 text-amber-300 border border-amber-400/40 text-xs font-semibold backdrop-blur-sm shadow-xs flex items-center gap-1.5"
+                            className="px-3 py-1.5 rounded-xl bg-amber-50 text-amber-700 border border-amber-200 text-xs font-semibold flex items-center gap-1.5"
                             title="No job offer has been created yet"
                           >
-                            <Clock size={13} className="text-amber-400" />
-                            <span>Job Offer Not Created Yet</span>
+                            <Clock size={14} />
+                            <span>No Offer Yet</span>
                           </span>
                         );
                       })()}
 
-                      {/* Job Vacancy Details action (before number of applicants) */}
                       <button
                         type="button"
                         onClick={(e) => {
@@ -916,19 +908,18 @@ export default function RecruitmentApplications() {
                             }
                           );
                         }}
-                        className="px-3.5 py-1.5 rounded-xl bg-white/15 hover:bg-white/25 text-white text-xs font-semibold border border-white/20 backdrop-blur-sm shadow-xs transition-all flex items-center gap-1.5 cursor-pointer hover:border-white/40"
+                        className="px-4 py-2 rounded-xl border border-slate-200 bg-white text-slate-700 text-sm font-semibold hover:bg-slate-50 flex items-center gap-2 cursor-pointer"
                         title="Display job vacancy details like public career page"
                       >
-                        <FileText size={14} className="text-primary-300" />
-                        <span>Job Vacancy Details</span>
+                        <FileText size={16} className="text-slate-500" />
+                        <span>Vacancy Details</span>
                       </button>
 
-                      <span className="px-3.5 py-1.5 rounded-xl bg-white/15 text-white text-xs font-bold border border-white/20 backdrop-blur-sm shadow-xs flex items-center gap-1.5">
-                        <Users size={14} className="text-primary-300" />
+                      <span className="px-3 py-1.5 rounded-xl bg-primary-50 text-primary-700 text-xs font-semibold flex items-center gap-1.5">
+                        <Users size={14} />
                         <span>{totalForGroup} {totalForGroup === 1 ? "Applicant" : "Applicants"}</span>
                       </span>
 
-                      {/* Remove Vacancy Button */}
                       <button
                         type="button"
                         onClick={(e) => {
@@ -938,17 +929,16 @@ export default function RecruitmentApplications() {
                             groupKey: group.key,
                           });
                         }}
-                        className="px-3.5 py-1.5 rounded-xl bg-rose-500/20 hover:bg-rose-500/35 text-rose-200 border border-rose-400/40 text-xs font-semibold backdrop-blur-sm shadow-xs transition-all flex items-center gap-1.5 cursor-pointer hover:border-rose-300"
+                        className="px-4 py-2 rounded-xl border border-red-200 bg-white text-red-700 text-sm font-semibold hover:bg-red-50 flex items-center gap-2 cursor-pointer"
                         title="Remove vacancy and move to Applications History"
                       >
-                        <Archive size={13} className="text-rose-300" />
-                        <span>Remove Vacancy</span>
+                        <Archive size={16} />
+                        <span>Remove</span>
                       </button>
 
-                      {/* Collapse/Expand button */}
                       <button
                         onClick={() => toggleGroup(group.key)}
-                        className="p-2 rounded-xl text-slate-300 hover:text-white hover:bg-white/10 transition-colors"
+                        className="p-2 rounded-xl text-slate-500 hover:bg-slate-100 transition-colors"
                         title={isCollapsed ? "Expand table" : "Collapse table"}
                       >
                         {isCollapsed ? <ChevronDown size={18} /> : <ChevronUp size={18} />}
@@ -1026,7 +1016,7 @@ export default function RecruitmentApplications() {
                           </div>
                         ) : (
                           <table className="w-full text-left text-sm text-slate-600">
-                            <thead className="bg-slate-50/80 border-b border-slate-200/80 text-[11px] uppercase font-semibold text-slate-400 tracking-wider">
+                            <thead className="bg-slate-50/80 border-b border-slate-200/80 text-[11px] uppercase font-semibold text-slate-500 tracking-wider">
                               <tr>
                                 <th className="px-6 py-3.5">Candidate Details</th>
                                 <th className="px-6 py-3.5">Experience & Education</th>
@@ -1433,7 +1423,7 @@ export default function RecruitmentApplications() {
             {/* Modal Header */}
             <div className="p-6 border-b border-slate-100 flex items-start justify-between bg-slate-50/50">
               <div className="flex items-center gap-4">
-                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary-500 to-purple-600 text-white font-bold text-lg flex items-center justify-center shadow-md">
+                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary-600 to-primary-700 text-white font-bold text-lg flex items-center justify-center shadow-md">
                   {getInitials(selectedApp.candidateName)}
                 </div>
                 <div>

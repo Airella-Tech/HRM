@@ -134,8 +134,12 @@ const avatarTone = (name) => AVATAR[(name || "?").charCodeAt(0) % AVATAR.length]
 /* ===========================================================================
  * Building blocks
  * ========================================================================= */
-const Card = ({ children, className = "" }) => (
-  <section className={`rounded-2xl border border-slate-200/70 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)] ${className}`}>
+const Card = ({ children, className = "", style, ...props }) => (
+  <section
+    style={style}
+    {...props}
+    className={`rounded-2xl border border-slate-200/80 bg-white shadow-[0_2px_12px_rgba(15,23,42,0.035)] ${className}`}
+  >
     {children}
   </section>
 );
@@ -183,36 +187,96 @@ const Sparkline = ({ data, color }) => {
   );
 };
 
-const Delta = ({ metric, label }) => {
-  if (metric.delta == null) {
-    return <span className="text-xs text-slate-400">{metric.current ? "No previous period" : label}</span>;
-  }
-  const up = metric.delta >= 0;
-  const Icon = up ? TrendingUp : TrendingDown;
+const KpiCard = ({
+  icon: Icon,
+  label,
+  value,
+  metric,
+  color = "#6366f1",
+  tone,
+  footnote,
+  loading,
+}) => {
+  const positive = metric?.delta >= 0;
+
   return (
-    <span className={`inline-flex items-center gap-1 text-xs font-semibold ${up ? "text-emerald-600" : "text-red-500"}`}>
-      <Icon size={13} />
-      {up ? "+" : ""}
-      {metric.delta}%<span className="font-normal text-slate-400">vs previous</span>
-    </span>
+    <Card
+      style={{ borderTop: `3px solid ${color}` }}
+      className="group relative overflow-hidden bg-gradient-to-b from-slate-50/50 to-white p-5 transition-all duration-300 hover:-translate-y-1 hover:shadow-md"
+    >
+      <div
+        className="absolute -right-8 -top-8 h-28 w-28 rounded-full opacity-[0.08] transition-transform duration-300 group-hover:scale-125 pointer-events-none"
+        style={{ backgroundColor: color }}
+      />
+
+      <div className="relative flex items-center justify-between">
+        <div
+          className={`flex h-11 w-11 items-center justify-center rounded-xl border shadow-2xs ${tone}`}
+        >
+          <Icon size={21} />
+        </div>
+
+        {metric && (
+          <Sparkline
+            data={metric.spark}
+            color={color}
+          />
+        )}
+      </div>
+
+      <div className="relative mt-4">
+        <p className="text-3xl font-extrabold tracking-tight text-slate-900 tabular-nums">
+          {loading ? "—" : value ?? 0}
+        </p>
+
+        <p className="mt-1 text-xs font-semibold uppercase tracking-wider text-slate-500">
+          {label}
+        </p>
+      </div>
+
+      <div className="relative mt-4 flex min-h-6 items-center justify-between border-t border-slate-100 pt-3 text-xs">
+        {metric ? (
+          metric.delta === null ? (
+            <span className="text-[11px] text-slate-400">
+              {metric.current
+                ? "No previous period data"
+                : "No activity in this period"}
+            </span>
+          ) : (
+            <div className="flex items-center gap-1.5 w-full justify-between">
+              <span
+                className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full border ${positive
+                  ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                  : "bg-rose-50 text-rose-700 border-rose-200"
+                  }`}
+              >
+                {positive ? (
+                  <TrendingUp size={12} />
+                ) : (
+                  <TrendingDown size={12} />
+                )}
+                {positive ? "+" : ""}
+                {metric.delta}%
+              </span>
+              <span className="text-[11px] font-normal text-slate-400">
+                vs previous period
+              </span>
+            </div>
+          )
+        ) : (
+          <div className="flex items-center justify-between w-full">
+            <span className="text-[11px] text-slate-400 font-medium">Status</span>
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200">
+              <span className="w-1.5 h-1.5 rounded-full bg-indigo-500" />
+              {footnote || "Active"}
+            </span>
+          </div>
+        )}
+      </div>
+    </Card>
   );
 };
 
-const KpiCard = ({ icon: Icon, label, value, metric, color, tone, footnote }) => (
-  <Card className="p-5">
-    <div className="flex items-center justify-between">
-      <span className={`flex h-9 w-9 items-center justify-center rounded-xl ${tone}`}>
-        <Icon size={18} />
-      </span>
-      {metric && <Sparkline data={metric.spark} color={color} />}
-    </div>
-    <p className="mt-4 text-3xl font-bold tracking-tight text-slate-900">{value ?? "-"}</p>
-    <p className="mt-0.5 text-sm text-slate-500">{label}</p>
-    <div className="mt-3 border-t border-slate-100 pt-3">
-      {metric ? <Delta metric={metric} label="No data in range" /> : <span className="text-xs text-slate-400">{footnote}</span>}
-    </div>
-  </Card>
-);
 
 const TrendChart = ({ series, labels }) => {
   const W = 600, H = 180, pad = 10;
@@ -363,7 +427,19 @@ const Dashboard = () => {
   } catch {
     storedUser = {};
   }
-  const effective = access || (storedUser.role === "ADMIN" ? { fullAccess: true, permissions: [] } : null);
+
+  const effective = useMemo(
+    () =>
+      access ||
+      (storedUser.role === "ADMIN"
+        ? {
+          fullAccess: true,
+          permissions: [],
+        }
+        : null),
+    [access, storedUser.role]
+  );
+
   const ready = Boolean(effective);
   const full = Boolean(effective?.fullAccess);
   const permSet = useMemo(() => new Set(effective?.permissions || []), [effective]);
@@ -391,10 +467,10 @@ const Dashboard = () => {
   const [vacancyFilter, setVacancyFilter] = useState("ALL");
   const vacancyRef = useRef(null);
 
-  const apps = applications.data || [];
-  const ivs = interviews.data || [];
-  const ofs = offers.data || [];
-  const vacs = vacancies.data || [];
+  const apps = useMemo(() => applications.data || [], [applications.data]);
+  const ivs = useMemo(() => interviews.data || [], [interviews.data]);
+  const ofs = useMemo(() => offers.data || [], [offers.data]);
+  const vacs = useMemo(() => vacancies.data || [], [vacancies.data]);
 
   const m = useMemo(() => {
     const shortlistedApps = apps.filter((a) => a.status === "SHORTLISTED");
@@ -549,24 +625,24 @@ const Dashboard = () => {
         {anything && (
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
             {canVacancies && (
-              <KpiCard icon={BriefcaseBusiness} tone="bg-indigo-50 text-indigo-600" color="#4f46e5" label="Open vacancies"
+              <KpiCard icon={BriefcaseBusiness} label="Open vacancies"
                 value={vacancies.loading ? "-" : vacancyCounts.PUBLISHED || 0}
                 footnote={`${vacancyCounts.PENDING_APPROVAL || 0} pending approval`} />
             )}
             {canApplications && (
-              <KpiCard icon={FileText} tone="bg-sky-50 text-sky-600" color="#0ea5e9" label="Applications"
+              <KpiCard icon={FileText} label="Applications"
                 value={applications.loading ? "-" : m.apps.current} metric={m.apps} />
             )}
             {canApplications && (
-              <KpiCard icon={Users} tone="bg-emerald-50 text-emerald-600" color="#10b981" label="Shortlisted"
+              <KpiCard icon={Users} label="Shortlisted"
                 value={applications.loading ? "-" : m.shortlisted.current} metric={m.shortlisted} />
             )}
             {canInterviews && (
-              <KpiCard icon={CalendarDays} tone="bg-violet-50 text-violet-600" color="#8b5cf6" label={canInterviewsMine ? "My interviews" : "Interviews"}
+              <KpiCard icon={CalendarDays} label={canInterviewsMine ? "My interviews" : "Interviews"}
                 value={interviews.loading ? "-" : m.interviews.current} metric={m.interviews} />
             )}
             {canOffers && (
-              <KpiCard icon={Handshake} tone="bg-amber-50 text-amber-600" color="#f59e0b" label="Offers"
+              <KpiCard icon={Handshake} label="Offers"
                 value={offers.loading ? "-" : m.offers.current} metric={m.offers} />
             )}
           </div>

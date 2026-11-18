@@ -4,8 +4,10 @@
  */
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { PageLayout } from "../../components/PageLayout";
+import StatCard, { StatCardGrid } from "../../components/StatCard";
 import { recruitmentApi } from "../../services/api";
-import { Activity, Loader2, RefreshCw, Search } from "lucide-react";
+import { avatarColorClass } from "../../utils/avatarColor";
+import { Activity, Loader2, RefreshCw, Search, CalendarDays, BriefcaseBusiness, ShieldCheck } from "lucide-react";
 
 const PAGE_SIZE = 15;
 
@@ -30,6 +32,15 @@ const formatTime = (value) => {
   const d = new Date(value);
   return Number.isNaN(d.getTime()) ? String(value) : d.toLocaleString();
 };
+
+const initials = (name = "") =>
+  name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0])
+    .join("")
+    .toUpperCase();
 
 const selectCls =
   "rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-800 focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-100";
@@ -76,6 +87,16 @@ const AuditLog = () => {
       );
     });
   }, [logs, search, actionFilter, entityFilter]);
+    // Summary numbers describe the records that were loaded (the newest 500)
+  const stats = useMemo(() => {
+    const today = new Date().toDateString();
+    return {
+      total: logs.length,
+      today: logs.filter((l) => l.createdAt && new Date(l.createdAt).toDateString() === today).length,
+      vacancy: logs.filter((l) => l.entity === "JobVacancy").length,
+      roles: logs.filter((l) => l.entity === "RecruitmentRole" || l.entity === "UserRecruitmentRole").length,
+    };
+  }, [logs]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const currentPage = Math.min(page, totalPages);
@@ -89,6 +110,13 @@ const AuditLog = () => {
       subtitle="A record of recruitment actions: who did what, and when"
     >
       <div className="space-y-5">
+                {/* Summary cards */}
+        <StatCardGrid>
+          <StatCard label="Records loaded" value={loading ? "-" : stats.total} caption="Showing the newest 500 records" icon={Activity} tone="primary" />
+          <StatCard label="Today" value={loading ? "-" : stats.today} caption="Since midnight" icon={CalendarDays} tone="primary" />
+          <StatCard label="Vacancy actions" value={loading ? "-" : stats.vacancy} caption="Created, approved, published..." icon={BriefcaseBusiness} tone="green" />
+          <StatCard label="Role changes" value={loading ? "-" : stats.roles} caption="Roles and assignments" icon={ShieldCheck} tone="amber" />
+        </StatCardGrid>
         {/* Filters */}
         <div className="flex flex-wrap items-center gap-3">
           <div className="relative min-w-[220px] flex-1">
@@ -129,7 +157,7 @@ const AuditLog = () => {
             }}
             className={selectCls}
           >
-            <option value="ALL">All items</option>
+            <option value="ALL">All item types</option>
             {entities.map((en) => (
               <option key={en} value={en}>
                 {en}
@@ -184,7 +212,14 @@ const AuditLog = () => {
                   {visible.map((l) => (
                     <tr key={l.id} className="hover:bg-slate-50/60">
                       <td className="whitespace-nowrap px-4 py-3 text-slate-600">{formatTime(l.createdAt)}</td>
-                      <td className="whitespace-nowrap px-4 py-3 font-medium text-slate-800">{l.userName}</td>
+                      <td className="whitespace-nowrap px-4 py-3 font-medium text-slate-800">
+                        <div className="flex items-center gap-2">
+                          <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-tr ${avatarColorClass(l.userName)} text-xs font-bold text-white shadow-sm`}>
+                            {initials(l.userName)}
+                          </div>
+                          {l.userName}
+                        </div>
+                      </td>
                       <td className="whitespace-nowrap px-4 py-3">
                         <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${actionStyle(l.action)}`}>
                           {label(l.action)}

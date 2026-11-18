@@ -4,7 +4,7 @@ import { Clock, Calendar, CheckCircle, XCircle, Download, Filter, MapPin, Timer,
 import { PageLayout } from "../../components/PageLayout";
 import { employeeApi } from "../../services/api";
 import {
-  EmpButton, SummaryCard, SearchBar, FilterSelect, ShowingCount, TableCard, TableHeaderRow, TableHeader, TableRows, TableRow, LoadingState, EmptyState,
+  EmpButton, SummaryCard, SummaryCardGrid, SearchBar, FilterSelect, ShowingCount, TableCard, TableHeaderRow, TableHeader, TableRows, TableRow, LoadingState, EmptyState, StatusChip,
 } from "../../components/EmployeeUI";
 import { EMP_GRADIENT, CARD_TONES, useSort } from "../../components/employeeTheme";
 import {
@@ -140,13 +140,6 @@ const Attendance = () => {
     return `${displayHour}:${minutes} ${ampm}`;
   };
 
-  const statusBadge = (s) => ({
-    PRESENT: "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200",
-    ABSENT: "bg-yellow-50 text-red-700 ring-1 ring-red-200",
-    HALF_DAY: "bg-violet-50 text-violet-700 ring-1 ring-violet-200",
-    LATE: "bg-amber-50 text-amber-700 ring-1 ring-amber-200",
-  }[s] || "bg-slate-50 text-slate-600 ring-1 ring-slate-200");
-
   const statusLabel = (s) => ({
     PRESENT: "Present",
     ABSENT: "Absent",
@@ -199,7 +192,7 @@ const Attendance = () => {
   );
 
   const statusPill = (s) => (
-    <span className={`inline-flex px-2.5 py-1 rounded-full text-xs font-semibold ${statusBadge(s)}`}>{statusLabel(s)}</span>
+    <StatusChip status={s} label={statusLabel(s)} />
   );
 
   return (
@@ -214,37 +207,39 @@ const Attendance = () => {
         </EmpButton>
       }
     >
-      <div className="space-y-6">
+      <div className="space-y-6 max-w-7xl mx-auto">
         {/* Message Alert */}
         {message && (
-          <div className={`p-4 rounded-lg text-white ${message.startsWith("✓") ? "bg-green-500" : "bg-red-500"}`}>
+          <div className={`px-4 py-3 rounded-xl border text-sm font-medium ${message.startsWith("✓") ? "bg-emerald-50 border-emerald-200 text-emerald-800" : "bg-rose-50 border-rose-200 text-rose-800"}`}>
             {message}
           </div>
         )}
 
         {/* Clock In/Out card */}
-        <div className="bg-gradient-to-br from-white to-employee-50 rounded-xl border border-employee-100 shadow-sm p-6">
-          <h2 className="text-lg font-semibold text-slate-800 flex items-center gap-3 mb-5">
-            <span className="bg-indigo-50 p-2 rounded-lg"><Timer className="text-indigo-600" size={20} /></span>
+        <div className="bg-white rounded-2xl border border-slate-200/80 shadow-[0_2px_12px_rgba(15,23,42,0.035)] p-6">
+          <h2 className="text-base font-bold text-slate-900 flex items-center gap-3 mb-5">
+            <span className="h-9 w-9 rounded-xl bg-teal-50 text-teal-600 border border-teal-100 flex items-center justify-center shrink-0 shadow-2xs">
+              <Timer size={18} />
+            </span>
             Today's Attendance
           </h2>
 
           {loading ? (
             <div className="flex justify-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-employee-500"></div>
+              <div className="animate-spin rounded-full h-8 w-8 border-2 border-teal-600 border-t-transparent"></div>
             </div>
           ) : (
             <>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-5">
                 {[
-                  { label: "Last Clock In",  value: formatTime(attendance?.clockInTime),  text: "text-slate-900" },
+                  { label: "Last Clock In", value: formatTime(attendance?.clockInTime), text: "text-slate-900" },
                   { label: "Last Clock Out", value: formatTime(attendance?.clockOutTime), text: "text-slate-900" },
-                  { label: "Working Hours",  value: formatMinutes(attendance?.totalWorkingMinutes || 0, isClockedIn), text: "text-slate-900" },
-                  { label: "Status",         value: !attendance ? "Not Started" : attendance.isClockedIn ? "Clocked In" : "Clocked Out", text: "text-blue-600" },
+                  { label: "Working Hours", value: formatMinutes(attendance?.totalWorkingMinutes || 0, isClockedIn), text: "text-slate-900" },
+                  { label: "Status", value: !attendance ? "Not Started" : attendance.isClockedIn ? "Clocked In" : "Clocked Out", text: attendance?.isClockedIn ? "text-emerald-600" : "text-teal-600" },
                 ].map(t => (
-                  <div key={t.label} className="bg-white/70 border border-employee-100 rounded-lg p-4 text-center">
-                    <p className="text-slate-500 text-xs mb-2">{t.label}</p>
-                    <p className={`text-2xl font-bold ${t.text}`}>{t.value}</p>
+                  <div key={t.label} className="bg-slate-50/70 border border-slate-200/70 rounded-xl p-4 text-center">
+                    <p className="text-slate-500 text-xs font-medium mb-1.5">{t.label}</p>
+                    <p className={`text-2xl font-bold tracking-tight ${t.text}`}>{t.value}</p>
                   </div>
                 ))}
               </div>
@@ -255,32 +250,32 @@ const Attendance = () => {
                 <button
                   onClick={handleClockIn}
                   disabled={clockInLoading || attendance?.isClockedIn}
-                  className={`flex-1 ${EMP_GRADIENT} hover:from-sky-500 hover:to-blue-600 shadow-sm shadow-blue-500/20 text-white disabled:opacity-40 disabled:cursor-not-allowed py-3 rounded-lg flex items-center justify-center gap-2 font-semibold text-sm transition-colors`}
+                  className="flex-1 bg-teal-600 hover:bg-teal-700 shadow-sm shadow-teal-600/20 text-white disabled:opacity-40 disabled:cursor-not-allowed py-3 rounded-xl flex items-center justify-center gap-2 font-semibold text-sm transition-all active:scale-[0.99]"
                 >
                   <CheckCircle size={18} /> {clockInLoading ? "Getting location..." : "Clock In"}
                 </button>
                 <button
                   onClick={handleClockOut}
                   disabled={clockOutLoading || !attendance?.isClockedIn}
-                  className="flex-1 bg-red-700 hover:bg-red-800 disabled:opacity-40 disabled:cursor-not-allowed text-white py-3 rounded-lg flex items-center justify-center gap-2 font-semibold text-sm transition-colors"
+                  className="flex-1 bg-rose-600 hover:bg-rose-700 shadow-sm shadow-rose-600/20 disabled:opacity-40 disabled:cursor-not-allowed text-white py-3 rounded-xl flex items-center justify-center gap-2 font-semibold text-sm transition-all active:scale-[0.99]"
                 >
                   <XCircle size={18} /> {clockOutLoading ? "Getting location..." : "Clock Out"}
                 </button>
               </div>
-              <p className="text-xs text-slate-400 mt-3 flex items-center gap-1.5">
-                <MapPin size={12} /> Your GPS location is captured at clock-in and clock-out. You can clock in and out as many times as needed during the day.
+              <p className="text-xs text-slate-500 mt-3.5 flex items-center gap-1.5">
+                <MapPin size={13} className="text-slate-400 shrink-0" /> Your GPS location is captured at clock-in and clock-out. You can clock in and out as many times as needed during the day.
               </p>
               {(attendance?.clockInLocation || attendance?.clockOutLocation) && (
-                <div className="flex flex-wrap gap-3 mt-3">
+                <div className="flex flex-wrap gap-2.5 mt-3">
                   {attendance?.clockInLocation && (
                     <a href={mapLink(attendance.clockInLocation)} target="_blank" rel="noopener noreferrer"
-                      className="flex items-center gap-1.5 text-xs font-medium text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 px-3 py-1.5 rounded-lg transition-colors">
+                      className="flex items-center gap-1.5 text-xs font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 px-3 py-1.5 rounded-xl transition-colors">
                       <MapPin size={13} /> Clock-in location
                     </a>
                   )}
                   {attendance?.clockOutLocation && (
                     <a href={mapLink(attendance.clockOutLocation)} target="_blank" rel="noopener noreferrer"
-                      className="flex items-center gap-1.5 text-xs font-medium text-slate-700 bg-slate-50 hover:bg-slate-100 border border-slate-200 px-3 py-1.5 rounded-lg transition-colors">
+                      className="flex items-center gap-1.5 text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-200 px-3 py-1.5 rounded-xl transition-colors">
                       <MapPin size={13} /> Clock-out location
                     </a>
                   )}
@@ -290,19 +285,19 @@ const Attendance = () => {
           )}
         </div>
 
-        {/* Monthly stat cards */}
-        <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4">
+        {/* Monthly stat cards with latest Recruitment gradient pattern */}
+        <SummaryCardGrid cols={6}>
           {[
-            { label: "Total Days",     value: stats.totalDays,        tone: CARD_TONES.blue },
-            { label: "Present",        value: stats.present,          tone: CARD_TONES.green },
-            { label: "Absent",         value: stats.absent,           tone: CARD_TONES.red },
-            { label: "On Leave",       value: stats.leave,            tone: CARD_TONES.purple },
-            { label: "Late",           value: stats.late,             tone: CARD_TONES.yellow },
-            { label: "Hours",          value: stats.workingHours+"h", tone: CARD_TONES.slate },
+            { label: "Total Days", value: stats.totalDays, tone: CARD_TONES.teal, icon: <Calendar size={18} /> },
+            { label: "Present", value: stats.present, tone: CARD_TONES.green, icon: <CheckCircle size={18} /> },
+            { label: "Absent", value: stats.absent, tone: CARD_TONES.red, icon: <XCircle size={18} /> },
+            { label: "On Leave", value: stats.leave, tone: CARD_TONES.deep, icon: <Calendar size={18} /> },
+            { label: "Late", value: stats.late, tone: CARD_TONES.yellow, icon: <Clock size={18} /> },
+            { label: "Hours", value: stats.workingHours + "h", tone: CARD_TONES.slate, icon: <Timer size={18} /> },
           ].map(s => (
-            <SummaryCard key={s.label} title={s.label} value={s.value} className={s.tone} />
+            <SummaryCard key={s.label} icon={s.icon} title={s.label} value={s.value} tone={s.tone} />
           ))}
-        </div>
+        </SummaryCardGrid>
 
         {/* =====================================================
             SEARCH & FILTER CONTROLS
@@ -370,7 +365,7 @@ const Attendance = () => {
                   }
                 >
                   <div className="flex items-center gap-3 min-w-0">
-                    <div className={`h-10 w-10 flex-shrink-0 rounded-xl ${EMP_GRADIENT} text-white font-bold text-sm flex items-center justify-center shadow-sm`}>
+                    <div className="h-10 w-10 flex-shrink-0 rounded-xl bg-teal-50 text-teal-700 border border-teal-100 font-bold text-sm flex items-center justify-center shadow-xs">
                       {new Date(r.date).getDate() || "—"}
                     </div>
                     <div className="min-w-0">

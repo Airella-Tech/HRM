@@ -8,7 +8,7 @@ export default {
     extend: {
       colors: {
         // Primary Brand Colors
-                primary: {
+        primary: {
           50: '#f1f3fb',
           100: '#e3e7f5',
           200: '#c9d0ea',
@@ -35,19 +35,29 @@ export default {
           900: '#134e4a',
           950: '#042f2e',
         },
-        // Employee dashboard — calm sky blue, neutral for every role (500 is the primary accent)
+        // Employee dashboard — professional Teal theme (600: #0d9488 is primary, 700: #0f766e is hover)
         employee: {
-          50: '#f0f9ff',
-          100: '#e0f2fe',
-          200: '#bae6fd',
-          300: '#7dd3fc',
-          400: '#38bdf8',
-          500: '#0ea5e9',
-          600: '#0284c7',
-          700: '#0369a1',
-          800: '#075985',
-          900: '#0c4a6e',
-          950: '#082f49',
+          50: '#f0fdfa',
+          100: '#ccfbf1',
+          200: '#99f6e4',
+          300: '#5eead4',
+          400: '#2dd4bf',
+          500: '#14b8a6',
+          600: '#0d9488',
+          700: '#0f766e',
+          800: '#115e59',
+          900: '#134e4a',
+          950: '#042f2e',
+        },
+        // Public website palette
+        pub: {
+          charcoal: '#263238',
+          muted: '#456B78',
+          gold: '#C49A52',
+          cream: '#F7F5EF',
+          light: '#F1F5F5',
+          goldHover: '#b38944',
+          charcoalDark: '#1a2327',
         },
         // Success Color
         success: {

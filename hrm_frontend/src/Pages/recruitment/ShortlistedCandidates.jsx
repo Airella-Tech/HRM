@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 
 import { PageLayout } from "../../components/PageLayout";
+import StatCard, { StatCardGrid } from "../../components/StatCard";
 import { recruitmentApi } from "../../services/api";
 
 const ROUNDS = [
@@ -1646,69 +1647,28 @@ export default function ShortlistedCandidates() {
         )}
 
         {/* SUMMARY CARDS */}
-        <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
-          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-slate-500">
-                  Shortlisted Candidates
-                </p>
-
-                <p className="mt-2 text-3xl font-bold text-slate-800">
-                  {loading ? "—" : candidates.length}
-                </p>
-              </div>
-
-              <div className="rounded-xl bg-primary-50 p-3 text-primary-600">
-                <Users size={23} />
-              </div>
-            </div>
-          </div>
-
-          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-slate-500">
-                  Manager Decisions Pending
-                </p>
-
-                <p className="mt-2 text-3xl font-bold text-slate-800">
-                  {loading ? "—" : managerPendingCount}
-                </p>
-
-                <p className="mt-1 text-xs text-slate-500">
-                  All interviewer evaluations submitted
-                </p>
-              </div>
-
-              <div className="rounded-xl bg-amber-50 p-3 text-amber-600">
-                <Hourglass size={23} />
-              </div>
-            </div>
-          </div>
-
-          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-slate-500">
-                  All Stages Approved
-                </p>
-
-                <p className="mt-2 text-3xl font-bold text-slate-800">
-                  {loading ? "—" : completedAllStages}
-                </p>
-
-                <p className="mt-1 text-xs text-slate-500">
-                  Four rounds approved by Recruitment Manager
-                </p>
-              </div>
-
-              <div className="rounded-xl bg-green-50 p-3 text-green-600">
-                <CheckCircle2 size={23} />
-              </div>
-            </div>
-          </div>
-        </div>
+        <StatCardGrid cols={3}>
+          <StatCard
+            label="Shortlisted Candidates"
+            value={loading ? "—" : candidates.length}
+            icon={Users}
+            tone="primary"
+          />
+          <StatCard
+            label="Manager Decisions Pending"
+            value={loading ? "—" : managerPendingCount}
+            caption="All interviewer evaluations submitted"
+            icon={Hourglass}
+            tone="amber"
+          />
+          <StatCard
+            label="All Stages Approved"
+            value={loading ? "—" : completedAllStages}
+            caption="Four rounds approved by Recruitment Manager"
+            icon={CheckCircle2}
+            tone="green"
+          />
+        </StatCardGrid>
 
         {/* CANDIDATES TABLE */}
         <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">

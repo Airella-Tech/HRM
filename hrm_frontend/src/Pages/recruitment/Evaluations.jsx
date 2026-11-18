@@ -21,9 +21,13 @@ import {
   AlertCircle,
   RefreshCw,
   Download,
+  Info,
 } from "lucide-react";
 import PageLayout from "../../components/PageLayout";
+import StatCard, { StatCardGrid } from "../../components/StatCard";
+import VacancyGroupCard from "./VacancyGroupCard";
 import { recruitmentApi } from "../../services/api";
+import { avatarColorClass } from "../../utils/avatarColor";
 
 // Each round has exactly six criteria.
 // These keys must match InterviewEvaluationService.java.
@@ -395,6 +399,17 @@ const formatDate = (value) => {
       });
 };
 
+const formatTime = (value) => {
+      if (!value) return "";
+      const [hours, mins] = String(value).split(":").map(Number);
+      const date = new Date();
+      date.setHours(hours, mins, 0, 0);
+      return date.toLocaleTimeString("en-US", {
+        hour: "numeric",
+        minute: "2-digit",
+      });
+};
+
 const getScheduledDateTime = (interview) => {
   const dateValue = interview?.date;
   if (!dateValue) return null;
@@ -426,38 +441,18 @@ const formatRecommendation = (value) =>
     ? String(value).replace(/_/g, " ")
     : "Not selected");
 
-function SummaryCard({ label, value, icon: Icon, color }) {
-  const styles = {
-    indigo: "bg-primary-50 text-primary-600",
-    amber: "bg-amber-50 text-amber-600",
-    emerald: "bg-emerald-50 text-emerald-600",
-  };
-
-  return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-      <div className="flex items-center justify-between gap-3">
-        <p className="text-sm text-slate-500">{label}</p>
-        <div className={`rounded-xl p-2.5 ${styles[color]}`}>
-          <Icon size={20} />
-        </div>
-      </div>
-      <p className="mt-4 text-3xl font-bold text-slate-900">{value}</p>
-    </div>
-  );
-}
-
 function StatusBadge({ status }) {
   const submitted = status === "Submitted";
 
   return (
     <span
-      className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold ${
+      className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-bold shadow-xs ${
         submitted
-          ? "bg-emerald-50 text-emerald-700"
-          : "bg-amber-50 text-amber-700"
+          ? "bg-green-50 text-green-700 border-green-200"
+          : "bg-amber-50 text-amber-700 border-amber-200"
       }`}
     >
-      {submitted ? <CheckCircle2 size={13} /> : <Clock size={13} />}
+      <span className="h-1.5 w-1.5 rounded-full bg-current" />
       {status}
     </span>
   );
@@ -465,19 +460,26 @@ function StatusBadge({ status }) {
 
 function InterviewStatusBadge({ status }) {
   const normalized = normalizeInterviewStatus(status);
+  const labels = {
+    COMPLETED: "Completed",
+    SCHEDULED: "Scheduled",
+    CANCELLED: "Cancelled",
+    PENDING: "Pending",
+  };
 
   const style =
     normalized === "COMPLETED"
-      ? "bg-emerald-50 text-emerald-700"
+      ? "bg-green-50 text-green-700 border-green-200"
       : normalized === "CANCELLED"
-        ? "bg-red-50 text-red-700"
-        : "bg-amber-50 text-amber-700";
+        ? "bg-red-50 text-red-700 border-red-200"
+        : "bg-amber-50 text-amber-700 border-amber-200";
 
   return (
     <span
-      className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${style}`}
+      className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-bold shadow-xs ${style}`}
     >
-      {normalized.replace(/_/g, " ")}
+      <span className="h-1.5 w-1.5 rounded-full bg-current" />
+      {labels[normalized] || normalized.replace(/_/g, " ")}
     </span>
   );
 }
@@ -503,6 +505,7 @@ export default function RecruitmentEvaluations() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
   const [roundFilter, setRoundFilter] = useState("All");
+  const [collapsedGroups, setCollapsedGroups] = useState({});
 
   const [selectedInterview, setSelectedInterview] = useState(null);
   const [form, setForm] = useState(emptyEvaluation);
@@ -662,6 +665,45 @@ export default function RecruitmentEvaluations() {
       );
     });
   }, [interviews, evaluations, search, statusFilter, roundFilter]);
+
+  const vacancyGroups = useMemo(() => {
+    const groups = new Map();
+
+    filteredInterviews.forEach((interview) => {
+      const title = interview.jobTitle || "Position not specified";
+      const key = String(
+        interview.vacancyId ??
+          interview.vacancy_id ??
+          interview.jobTitle ??
+          title,
+      );
+
+      if (!groups.has(key)) {
+        groups.set(key, {
+          key,
+          title,
+          department:
+            interview.department ??
+            interview.job?.department ??
+            interview.vacancy?.department ??
+            "Department not specified",
+          rows: [],
+        });
+      }
+
+      groups.get(key).rows.push(interview);
+    });
+
+    return Array.from(groups.values());
+  }, [filteredInterviews]);
+
+  const expandAllGroups = () => setCollapsedGroups({});
+
+  const collapseAllGroups = () => {
+    setCollapsedGroups(
+      Object.fromEntries(vacancyGroups.map((group) => [group.key, true])),
+    );
+  };
 
   const selectedCriteria = selectedInterview
     ? getCriteriaForRound(selectedInterview.round)
@@ -1010,12 +1052,145 @@ export default function RecruitmentEvaluations() {
       ) / selectedCriteria.length
     : 0;
 
+  const renderEvaluationRow = (interview) => {
+    const evaluationStatus = getStatus(interview);
+    const evaluation = getEvaluation(interview.id);
+    const interviewStatus = normalizeInterviewStatus(interview.status);
+    const isCancelled = interviewStatus === "CANCELLED";
+    const isCompleted = interviewStatus === "COMPLETED";
+    const canComplete =
+      hasInterviewEnded(interview) && !isCancelled && !isCompleted;
+
+    return (
+      <tr
+        key={interview.id}
+        className="transition-colors duration-150 hover:bg-slate-50/80"
+      >
+        <td className="whitespace-nowrap px-3 py-3.5">
+          <div className="flex items-center gap-3">
+            <div
+              className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${avatarColorClass(interview.candidateName)} text-xs font-bold text-white shadow-sm`}
+            >
+              {interview.candidateName
+                .split(" ")
+                .map((part) => part[0])
+                .filter(Boolean)
+                .slice(0, 2)
+                .join("")
+                .toUpperCase()}
+            </div>
+            <div>
+              <p className="font-semibold text-slate-900">
+                {interview.candidateName}
+              </p>
+            </div>
+          </div>
+        </td>
+        <td className="whitespace-nowrap px-3 py-3.5">
+          <span className="inline-flex rounded-md bg-primary-50 px-2 py-1 text-xs font-semibold text-primary-700">
+            {interview.round}
+          </span>
+        </td>
+        <td className="whitespace-nowrap px-3 py-3.5 text-slate-600">
+          <div className="flex items-center gap-2">
+            <CalendarDays size={15} className="text-slate-400" />
+            {formatDate(interview.date)}
+          </div>
+          <p className="mt-1 pl-6 text-xs text-slate-400">
+            {interview.time ? formatTime(interview.time) : "Time not set"}
+          </p>
+        </td>
+        <td className="whitespace-nowrap px-3 py-3.5">
+          <InterviewStatusBadge status={interview.status} />
+          {!isCompleted && !isCancelled && (
+            <div className="mt-2">
+              <button
+                type="button"
+                onClick={() => markInterviewCompleted(interview)}
+                disabled={
+                  !canComplete || updatingStatusId === interview.id
+                }
+                title={
+                  canComplete
+                    ? "Mark interview as completed"
+                    : "Available after the scheduled interview date and time"
+                }
+                className="rounded-lg border border-emerald-200 px-2.5 py-1.5 text-xs font-medium text-emerald-700 hover:bg-emerald-50 disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                {updatingStatusId === interview.id
+                  ? "Updating..."
+                  : "Mark Completed"}
+              </button>
+              {!hasInterviewEnded(interview) && (
+                <p className="mt-1 max-w-[180px] text-[11px] text-slate-400">
+                  Available after the interview time
+                </p>
+              )}
+            </div>
+          )}
+        </td>
+        <td className="whitespace-nowrap px-3 py-3.5">
+          <StatusBadge status={evaluationStatus} />
+          {evaluation && (
+            <p className="mt-1 text-xs text-slate-500">
+              Average: {Number(evaluation.averageScore || 0).toFixed(2)}/5
+            </p>
+          )}
+        </td>
+        <td className="whitespace-nowrap px-3 py-3.5 text-right">
+          <div className="inline-flex items-center justify-end gap-2">
+            <button
+              type="button"
+              onClick={() => downloadCandidateCV(interview)}
+              disabled={
+                !interview.applicationId ||
+                downloadingApplicationId === String(interview.applicationId)
+              }
+              title="Download CV"
+              aria-label="Download CV"
+              className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-slate-100 text-slate-700 shadow-xs hover:bg-slate-200 disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              <Download size={15} />
+            </button>
+            <button
+              type="button"
+              onClick={() => openEvaluation(interview)}
+              disabled={!isCompleted && evaluationStatus !== "Submitted"}
+              title={
+                evaluationStatus === "Submitted"
+                  ? "View my evaluation"
+                  : !isCompleted
+                    ? "Mark the interview completed before evaluating"
+                    : "Evaluate interview"
+              }
+              className="inline-flex items-center gap-2 rounded-xl bg-primary-600 px-3 py-2 text-sm font-medium text-white hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              <Eye size={15} />
+              {evaluationStatus === "Submitted" ? "View" : "Evaluate"}
+            </button>
+          </div>
+        </td>
+      </tr>
+    );
+  };
+
   return (
     <PageLayout
       role="recruiter"
       activePage="Evaluations"
       title="Interview Evaluations"
       subtitle="Evaluate candidates assigned to your interviews"
+      actions={
+        <button
+          type="button"
+          onClick={() => loadData()}
+          disabled={loading}
+          className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-60"
+        >
+          <RefreshCw size={16} className={loading ? "animate-spin" : ""} />
+          Refresh
+        </button>
+      }
     >
       <div className="space-y-6">
         {notice && (
@@ -1048,34 +1223,35 @@ export default function RecruitmentEvaluations() {
           </div>
         )}
 
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-          <SummaryCard
-            label="Assigned Interviews"
-            value={interviews.length}
-            icon={ClipboardCheck}
-            color="indigo"
-          />
+        <StatCardGrid cols={3}>
+            <StatCard
+              label="Assigned Interviews"
+              value={interviews.length}
+              caption="Interviews on your panel"
+              icon={ClipboardCheck}
+              tone="primary"
+            />
+            <StatCard
+              label="Pending Evaluations"
+              value={pendingCount}
+              caption="Waiting for you"
+              icon={Clock}
+              tone="amber"
+            />
+            <StatCard
+              label="Submitted Evaluations"
+              value={submittedCount}
+              caption="Already evaluated"
+              icon={CheckCircle2}
+              tone="green"
+            />
+        </StatCardGrid>
 
-          <SummaryCard
-            label="Pending Evaluations"
-            value={pendingCount}
-            icon={Clock}
-            color="amber"
-          />
-
-          <SummaryCard
-            label="Submitted Evaluations"
-            value={submittedCount}
-            icon={CheckCircle2}
-            color="emerald"
-          />
-        </div>
-
-        <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-          <div className="flex flex-col gap-3 lg:flex-row">
-            <div className="relative flex-1">
+        <div className="bg-white rounded-xl border border-slate-200 shadow-sm px-4 py-3">
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="relative flex-1 min-w-[220px]">
               <Search
-                size={18}
+                size={17}
                 className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
               />
 
@@ -1083,25 +1259,35 @@ export default function RecruitmentEvaluations() {
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
                 placeholder="Search candidates or job titles..."
-                className="w-full rounded-xl border border-slate-200 py-2.5 pl-10 pr-4 text-sm outline-none focus:border-primary-400 focus:ring-2 focus:ring-primary-100"
+                className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50 pl-9 pr-3 text-sm text-slate-800 placeholder-slate-400 focus:border-primary-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary-100"
               />
             </div>
-
+            <span
+              title="Only interviews assigned to you are shown. Your evaluation is private to your account."
+              className="inline-flex shrink-0 text-slate-400"
+            >
+              <Info size={14} />
+            </span>
+            <span className="text-sm font-semibold text-slate-600">
+              Status:
+            </span>
             <select
               value={statusFilter}
               onChange={(event) => setStatusFilter(event.target.value)}
-              className="rounded-xl border border-slate-200 px-3 py-2.5 text-sm"
+              className="h-10 w-auto rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-800 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100"
               aria-label="Filter by evaluation status"
             >
               <option value="All">All evaluation statuses</option>
               <option value="Pending">Pending evaluation</option>
               <option value="Submitted">Submitted evaluation</option>
             </select>
-
+            <span className="text-sm font-semibold text-slate-600">
+              Round:
+            </span>
             <select
               value={roundFilter}
               onChange={(event) => setRoundFilter(event.target.value)}
-              className="rounded-xl border border-slate-200 px-3 py-2.5 text-sm"
+              className="h-10 w-auto rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-800 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100"
               aria-label="Filter by interview round"
             >
               <option value="All">All rounds</option>
@@ -1110,28 +1296,114 @@ export default function RecruitmentEvaluations() {
               <option value="Hiring Manager">Hiring Manager</option>
               <option value="Final">Final</option>
             </select>
-
-            <button
-              type="button"
-              onClick={() => loadData()}
-              disabled={loading}
-              className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50"
-            >
-              <RefreshCw size={15} className={loading ? "animate-spin" : ""} />
-              Refresh
-            </button>
+            <span className="ml-auto text-xs text-slate-500">
+              {filteredInterviews.length} interview
+              {filteredInterviews.length !== 1 ? "s" : ""} found
+            </span>
+            {!loading && vacancyGroups.length > 0 && (
+              <div className="flex items-center gap-1 border-l border-slate-200 pl-3">
+                <button
+                  type="button"
+                  onClick={expandAllGroups}
+                  className="rounded-lg px-2 py-1 text-sm font-semibold text-slate-500 hover:bg-slate-50 hover:text-primary-600"
+                >
+                  Expand All
+                </button>
+                <span className="h-4 w-px bg-slate-200" />
+                <button
+                  type="button"
+                  onClick={collapseAllGroups}
+                  className="rounded-lg px-2 py-1 text-sm font-semibold text-slate-500 hover:bg-slate-50 hover:text-primary-600"
+                >
+                  Collapse All
+                </button>
+              </div>
+            )}
           </div>
         </div>
 
-        <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-          <div className="border-b border-slate-100 px-5 py-4">
-            <h2 className="font-bold text-slate-800">My Assigned Interviews</h2>
-            <p className="mt-1 text-sm text-slate-500">
-              Only interviews assigned to the logged-in interviewer are shown.
-              Your evaluation is private to your account.
-            </p>
-          </div>
+        <div className="space-y-4">
+          {loading ? (
+            <div className="flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-6 py-14 text-sm text-slate-500">
+              <RefreshCw size={18} className="animate-spin" />
+              Loading assigned interviews...
+            </div>
+          ) : vacancyGroups.length === 0 ? (
+            <div className="rounded-xl border border-slate-200 bg-white px-6 py-14 text-center">
+              <ClipboardCheck className="mx-auto text-slate-400" size={30} />
+              <h3 className="mt-3 font-semibold text-slate-800">
+                No assigned interviews found
+              </h3>
+              <p className="mx-auto mt-2 max-w-lg text-sm text-slate-500">
+                There are no interviews matching your account and current
+                filters. Check the backend assignment records if you expect
+                interviews here.
+              </p>
+            </div>
+          ) : (
+            vacancyGroups.map((group) => {
+              const expanded = !collapsedGroups[group.key];
+              const pendingCount = group.rows.filter(
+                (interview) => getStatus(interview) === "Pending",
+              ).length;
+              const submittedCount = group.rows.length - pendingCount;
 
+              return (
+                <VacancyGroupCard
+                  key={group.key}
+                  title={group.title}
+                  department={group.department}
+                  meta={`${group.rows.length} ${
+                    group.rows.length === 1 ? "interview" : "interviews"
+                  }`}
+                  badges={[
+                    { label: `${pendingCount} pending`, tone: "amber" },
+                    { label: `${submittedCount} submitted`, tone: "green" },
+                  ]}
+                  expanded={expanded}
+                  onToggle={() =>
+                    setCollapsedGroups((current) => ({
+                      ...current,
+                      [group.key]: expanded ? true : undefined,
+                    }))
+                  }
+                >
+                  <div className="overflow-x-auto">
+                    <table className="w-full min-w-[1050px] table-auto text-left text-sm text-slate-600">
+                      <thead className="border-b border-slate-200 bg-slate-50/80 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+                        <tr>
+                          <th className="w-full whitespace-nowrap px-3 py-3">
+                            Candidate
+                          </th>
+                          <th className="whitespace-nowrap px-3 py-3">
+                            Interview Round
+                          </th>
+                          <th className="whitespace-nowrap px-3 py-3">
+                            Schedule
+                          </th>
+                          <th className="whitespace-nowrap px-3 py-3">
+                            Interview
+                          </th>
+                          <th className="whitespace-nowrap px-3 py-3">
+                            My Evaluation
+                          </th>
+                          <th className="w-[1%] whitespace-nowrap px-3 py-3 text-right">
+                            Action
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100">
+                        {group.rows.map(renderEvaluationRow)}
+                      </tbody>
+                    </table>
+                  </div>
+                </VacancyGroupCard>
+              );
+            })
+          )}
+        </div>
+
+        <div className="hidden overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
           {loading ? (
             <div className="flex items-center justify-center gap-2 px-6 py-14 text-sm text-slate-500">
               <RefreshCw size={18} className="animate-spin" />
@@ -1151,15 +1423,15 @@ export default function RecruitmentEvaluations() {
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[1200px] text-left text-sm">
-                <thead className="bg-slate-50 text-xs uppercase text-slate-500">
+              <table className="w-full min-w-[1050px] table-auto text-left text-sm text-slate-600">
+                <thead className="border-b border-slate-200 bg-slate-50/80 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
                   <tr>
-                    <th className="px-5 py-3">Candidate</th>
-                    <th className="px-5 py-3">Interview Round</th>
-                    <th className="px-5 py-3">Schedule</th>
-                    <th className="px-5 py-3">Interview Status</th>
-                    <th className="px-5 py-3">My Evaluation Status</th>
-                    <th className="px-5 py-3 text-right">Action</th>
+                    <th className="w-full whitespace-nowrap px-3 py-3">Candidate</th>
+                    <th className="whitespace-nowrap px-3 py-3">Interview Round</th>
+                    <th className="whitespace-nowrap px-3 py-3">Schedule</th>
+                    <th className="whitespace-nowrap px-3 py-3">Interview</th>
+                    <th className="whitespace-nowrap px-3 py-3">My Evaluation</th>
+                    <th className="w-[1%] whitespace-nowrap px-3 py-3 text-right">Action</th>
                   </tr>
                 </thead>
 
@@ -1181,24 +1453,33 @@ export default function RecruitmentEvaluations() {
                       !isCompleted;
 
                     return (
-                      <tr key={interview.id} className="hover:bg-slate-50/70">
-                        <td className="px-5 py-4">
-                          <p className="font-semibold text-slate-800">
-                            {interview.candidateName}
-                          </p>
-                          <p className="mt-1 flex items-center gap-1 text-xs text-slate-500">
-                            <BriefcaseBusiness size={12} />
-                            {interview.jobTitle}
-                          </p>
+                      <tr key={interview.id} className="transition-colors duration-150 hover:bg-slate-50/80">
+                        <td className="whitespace-nowrap px-3 py-3.5">
+                          <div className="flex items-center gap-3">
+                            <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${avatarColorClass(interview.candidateName)} text-xs font-bold text-white shadow-sm`}>
+                              {interview.candidateName
+                                .split(" ")
+                                .map((part) => part[0])
+                                .filter(Boolean)
+                                .slice(0, 2)
+                                .join("")
+                                .toUpperCase()}
+                            </div>
+                            <div>
+                              <p className="font-semibold text-slate-900">
+                                {interview.candidateName}
+                              </p>
+                            </div>
+                          </div>
                         </td>
 
-                        <td className="px-5 py-4">
-                          <span className="rounded-lg bg-primary-50 px-2.5 py-1.5 text-xs font-semibold text-primary-700">
+                        <td className="whitespace-nowrap px-3 py-3.5">
+                          <span className="inline-flex rounded-md bg-primary-50 px-2 py-1 text-xs font-semibold text-primary-700">
                             {interview.round}
                           </span>
                         </td>
 
-                        <td className="px-5 py-4 text-slate-600">
+                        <td className="whitespace-nowrap px-3 py-3.5 text-slate-600">
                           <div className="flex items-center gap-2">
                             <CalendarDays
                               size={15}
@@ -1207,11 +1488,13 @@ export default function RecruitmentEvaluations() {
                             {formatDate(interview.date)}
                           </div>
                           <p className="mt-1 pl-6 text-xs text-slate-400">
-                            {interview.time || "Time not set"}
+                            {interview.time
+                              ? formatTime(interview.time)
+                              : "Time not set"}
                           </p>
                         </td>
 
-                        <td className="px-5 py-4">
+                        <td className="whitespace-nowrap px-3 py-3.5">
                           <InterviewStatusBadge status={interview.status} />
 
                           {!isCompleted && !isCancelled && (
@@ -1246,7 +1529,7 @@ export default function RecruitmentEvaluations() {
                           )}
                         </td>
 
-                        <td className="px-5 py-4">
+                        <td className="whitespace-nowrap px-3 py-3.5">
                           <StatusBadge status={evaluationStatus} />
 
                           {evaluation && (
@@ -1258,8 +1541,8 @@ export default function RecruitmentEvaluations() {
                           )}
                         </td>
 
-                        <td className="px-5 py-4">
-                          <div className="flex flex-wrap justify-end gap-2">
+                        <td className="whitespace-nowrap px-3 py-3.5 text-right">
+                          <div className="inline-flex items-center justify-end gap-2">
                             <button
                               type="button"
                               onClick={() => downloadCandidateCV(interview)}
@@ -1268,18 +1551,11 @@ export default function RecruitmentEvaluations() {
                                 downloadingApplicationId ===
                                   String(interview.applicationId)
                               }
-                              title={
-                                !interview.applicationId
-                                  ? "Application ID is missing from the interview response"
-                                  : "Download candidate CV"
-                              }
-                              className="inline-flex items-center gap-2 rounded-xl border border-slate-200 px-3 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+                              title="Download CV"
+                              aria-label="Download CV"
+                              className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-slate-100 text-slate-700 shadow-xs hover:bg-slate-200 disabled:cursor-not-allowed disabled:opacity-40"
                             >
                               <Download size={15} />
-                              {downloadingApplicationId ===
-                              String(interview.applicationId)
-                                ? "Downloading..."
-                                : "Download CV"}
                             </button>
 
                             <button
@@ -1290,16 +1566,16 @@ export default function RecruitmentEvaluations() {
                               }
                               title={
                                 evaluationStatus === "Submitted"
-                                  ? "View your submitted evaluation"
+                                  ? "View my evaluation"
                                   : !isCompleted
                                     ? "Mark the interview completed before evaluating"
                                     : "Evaluate interview"
                               }
-                              className="inline-flex items-center gap-2 rounded-xl bg-primary-600 px-3 py-2 text-xs font-medium text-white hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-40"
+                              className="inline-flex items-center gap-2 rounded-xl bg-primary-600 px-3 py-2 text-sm font-medium text-white hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-40"
                             >
                               <Eye size={15} />
                               {evaluationStatus === "Submitted"
-                                ? "View My Evaluation"
+                                ? "View"
                                 : "Evaluate"}
                             </button>
                           </div>

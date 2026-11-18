@@ -1,15 +1,15 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { CalendarDays, Plus, CheckCircle, XCircle, Clock, FileText, Calendar, AlertCircle, X, Filter, Search } from "lucide-react";
+import { CalendarDays, Plus, Clock, FileText, Calendar, X, Filter, Search } from "lucide-react";
 import { PageLayout } from "../../components/PageLayout";
 import { employeeApi } from "../../services/api";
 import {
-  EmpButton, SummaryCard, SearchBar, FilterSelect, ShowingCount, TableCard, TableHeaderRow, TableHeader, TableRows, TableRow, LoadingState, EmptyState,
+  EmpButton, SummaryCard, SummaryCardGrid, SearchBar, FilterSelect, ShowingCount, TableCard, TableHeaderRow, TableHeader, TableRows, TableRow, LoadingState, EmptyState, StatusChip,
 } from "../../components/EmployeeUI";
 import { EMP_GRADIENT, CARD_TONES, useSort } from "../../components/employeeTheme";
 
 // Gradients for the per-type balance cards, in the order the API returns the types
-const BALANCE_TONES = [CARD_TONES.blue, CARD_TONES.green, CARD_TONES.yellow];
+const BALANCE_TONES = [CARD_TONES.teal, CARD_TONES.green, CARD_TONES.deep];
 
 const HISTORY_COLS = "grid-cols-[1.5fr_1.5fr_0.7fr_1fr_1.8fr_1fr]";
 
@@ -95,15 +95,6 @@ const Leave = () => {
   const statusLabel = (st) => (st ? st.charAt(0) + st.slice(1).toLowerCase() : "");
   const formatAppliedOn = (createdAt) => (createdAt ? createdAt.split("T")[0] : "—");
 
-  const statusStyle = (s) => ({
-    Approved:  "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200",
-    Rejected:  "bg-red-50 text-red-700 ring-1 ring-red-200",
-    Pending:   "bg-amber-50 text-amber-700 ring-1 ring-amber-200",
-    Cancelled: "bg-slate-50 text-slate-600 ring-1 ring-slate-200",
-  }[s] || "bg-slate-50 text-slate-600 ring-1 ring-slate-200");
-
-  const statusIcon = { Approved: <CheckCircle size={14} />, Rejected: <XCircle size={14} />, Pending: <Clock size={14} />, Cancelled: <AlertCircle size={14} /> };
-
   // History search / filter / sort
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL");
@@ -126,15 +117,9 @@ const Leave = () => {
 
   const isFiltering = searchTerm || statusFilter !== "ALL";
 
-  const statusPill = (status) => {
-    const label = statusLabel(status);
-    return (
-      <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold ${statusStyle(label)}`}>
-        {statusIcon[label]} {label}
-      </span>
-    );
-  };
-
+  const statusPill = (status) => (
+    <StatusChip status={status} label={statusLabel(status)} />
+  );
 
   return (
     <PageLayout
@@ -148,52 +133,98 @@ const Leave = () => {
         </EmpButton>
       }
     >
-      <div className="space-y-6">
+      <div className="space-y-6 max-w-7xl mx-auto">
         {message && (
-          <div className={`p-4 rounded-lg text-white ${message.startsWith("✓") ? "bg-green-500" : "bg-red-500"}`}>
+          <div className={`px-4 py-3 rounded-xl border text-sm font-medium ${message.startsWith("✓") ? "bg-emerald-50 border-emerald-200 text-emerald-800" : "bg-rose-50 border-rose-200 text-rose-800"}`}>
             {message}
           </div>
         )}
 
-        {/* Balance cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 xl:grid-cols-4 gap-5">
+        {/* Balance cards with Small Color Accent pattern */}
+        <SummaryCardGrid cols={4}>
           {[
             ...balances.map((b, i) => ({
               label: b.leaveTypeName,
               remaining: b.remainingDays,
               used: b.usedDays,
               total: b.totalDays,
-              tone: BALANCE_TONES[i % BALANCE_TONES.length],
+              tone: ["teal", "green", "deep"][i % 3],
             })),
             {
               label: "Total Balance",
               remaining: balances.reduce((sum, b) => sum + (b.remainingDays || 0), 0),
               used: balances.reduce((sum, b) => sum + (b.usedDays || 0), 0),
               total: balances.reduce((sum, b) => sum + (b.totalDays || 0), 0),
-              tone: CARD_TONES.purple,
+              tone: "teal",
             },
           ].map(b => (
             <SummaryCard key={b.label} icon={<CalendarDays size={20} />} title={b.label} value={b.remaining}
-              description={`Remaining · ${b.used}/${b.total} used`} className={b.tone} />
+              description={`Remaining · ${b.used}/${b.total} used`} tone={b.tone} />
           ))}
-        </div>
+        </SummaryCardGrid>
 
         {/* =====================================================
-            SEARCH & FILTER CONTROLS
+            SEARCH & FILTER CONTROLS (With Quick Status Pills)
         ====================================================== */}
-        <SearchBar value={searchTerm} onChange={setSearchTerm} placeholder="Search by leave type, reason, or date...">
-          <div className="flex items-center gap-2">
-            <Filter size={15} className="text-slate-400" />
-            <FilterSelect value={statusFilter} onChange={setStatusFilter}>
-              <option value="ALL">All Statuses</option>
-              <option value="PENDING">Pending</option>
-              <option value="APPROVED">Approved</option>
-              <option value="REJECTED">Rejected</option>
-              <option value="CANCELLED">Cancelled</option>
-            </FilterSelect>
+        <div className="bg-white rounded-2xl border border-slate-200/90 shadow-[0_2px_12px_rgba(15,23,42,0.035)] p-4 space-y-3">
+          <div className="flex flex-col sm:flex-row gap-3">
+            <div className="relative flex-1">
+              <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Search by leave type, reason, or date…"
+                className="w-full pl-10 pr-4 h-10 border border-slate-200 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100 bg-slate-50/50 transition-all font-medium"
+              />
+            </div>
+            <div className="relative sm:w-48">
+              <Filter size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className="w-full pl-9 pr-8 h-10 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 focus:outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100 bg-slate-50/50 appearance-none transition-all cursor-pointer"
+              >
+                <option value="ALL">All Statuses ({leaveHistory.length})</option>
+                <option value="PENDING">Pending ({leaveHistory.filter(l => (l.status || '').toUpperCase() === 'PENDING').length})</option>
+                <option value="APPROVED">Approved ({leaveHistory.filter(l => (l.status || '').toUpperCase() === 'APPROVED').length})</option>
+                <option value="REJECTED">Rejected ({leaveHistory.filter(l => (l.status || '').toUpperCase() === 'REJECTED').length})</option>
+                <option value="CANCELLED">Cancelled ({leaveHistory.filter(l => (l.status || '').toUpperCase() === 'CANCELLED').length})</option>
+              </select>
+            </div>
           </div>
-          <ShowingCount shown={sortedHistory.length} total={leaveHistory.length} />
-        </SearchBar>
+
+          {/* Quick Filter Status Pills */}
+          <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-slate-100">
+            {[
+              { id: "ALL", label: "All Leaves", count: leaveHistory.length, activeColor: "bg-teal-600 text-white border-teal-600" },
+              { id: "PENDING", label: "Pending", count: leaveHistory.filter(l => (l.status || '').toUpperCase() === 'PENDING').length, activeColor: "bg-amber-500 text-white border-amber-500", dot: "bg-amber-400" },
+              { id: "APPROVED", label: "Approved", count: leaveHistory.filter(l => (l.status || '').toUpperCase() === 'APPROVED').length, activeColor: "bg-emerald-600 text-white border-emerald-600", dot: "bg-emerald-400" },
+              { id: "REJECTED", label: "Rejected", count: leaveHistory.filter(l => (l.status || '').toUpperCase() === 'REJECTED').length, activeColor: "bg-rose-600 text-white border-rose-600", dot: "bg-rose-400" },
+              { id: "CANCELLED", label: "Cancelled", count: leaveHistory.filter(l => (l.status || '').toUpperCase() === 'CANCELLED').length, activeColor: "bg-slate-700 text-white border-slate-700", dot: "bg-slate-400" },
+            ].map((tab) => {
+              const active = statusFilter === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setStatusFilter(tab.id)}
+                  type="button"
+                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all ${active
+                    ? `${tab.activeColor} shadow-xs`
+                    : "bg-slate-50/70 text-slate-600 border-slate-200 hover:bg-slate-100 hover:text-slate-900"
+                    }`}
+                >
+                  {tab.dot && <span className={`w-1.5 h-1.5 rounded-full ${active ? "bg-white" : tab.dot}`} />}
+                  <span>{tab.label}</span>
+                  <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${active ? "bg-white/25 text-white" : "bg-slate-200/80 text-slate-600"
+                    }`}>
+                    {tab.count}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
 
         {/* =====================================================
             LEAVE HISTORY TABLE
@@ -252,7 +283,7 @@ const Leave = () => {
                     }
                   >
                     <div className="flex items-center gap-3 min-w-0">
-                      <div className={`h-10 w-10 flex-shrink-0 rounded-xl ${EMP_GRADIENT} text-white font-bold text-sm flex items-center justify-center shadow-sm`}>
+                      <div className="h-10 w-10 flex-shrink-0 rounded-xl bg-teal-50 text-teal-700 border border-teal-100 font-bold text-sm flex items-center justify-center shadow-xs">
                         {(leave.leaveTypeName || "L").charAt(0).toUpperCase()}
                       </div>
                       <p className="text-sm font-semibold text-slate-800 truncate">{leave.leaveTypeName}</p>
@@ -280,19 +311,22 @@ const Leave = () => {
 
       {/* Apply Form Modal */}
       {showApplyForm && (
-        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl border border-slate-200 shadow-2xl w-full max-w-lg">
-            <div className={`flex items-center justify-between p-6 ${EMP_GRADIENT} text-white rounded-t-xl`}>
-              <h2 className="text-lg font-semibold">Apply for Leave</h2>
-              <button onClick={() => setShowApplyForm(false)} className="h-8 w-8 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors">
+        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl w-full max-w-lg overflow-hidden">
+            <div className="flex items-center justify-between p-6 border-b border-slate-100">
+              <div>
+                <h2 className="text-lg font-bold text-slate-900">Apply for Leave</h2>
+                <p className="text-xs text-slate-500 mt-0.5">Submit your leave request for manager approval</p>
+              </div>
+              <button onClick={() => setShowApplyForm(false)} className="h-8 w-8 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-800 flex items-center justify-center transition-colors">
                 <X size={17} />
               </button>
             </div>
             <form onSubmit={handleSubmit} className="p-6 space-y-4">
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Leave Type *</label>
-                <select value={formData.leaveTypeId} onChange={e => setFormData({...formData, leaveTypeId: e.target.value})}
-                  className="w-full border border-slate-300 rounded-lg px-4 py-3 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-employee-500 focus:border-employee-500 bg-white" required>
+                <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wide mb-1.5">Leave Type *</label>
+                <select value={formData.leaveTypeId} onChange={e => setFormData({ ...formData, leaveTypeId: e.target.value })}
+                  className="w-full border border-slate-300 rounded-xl px-3.5 py-2.5 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 bg-white transition-all cursor-pointer" required>
                   <option value="">Select leave type</option>
                   {leaveTypes.map(t => (
                     <option key={t.id} value={t.id}>{t.name}</option>
@@ -301,28 +335,28 @@ const Leave = () => {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">Start Date *</label>
-                  <input type="date" value={formData.startDate} onChange={e => setFormData({...formData, startDate: e.target.value})}
-                    className="w-full border border-slate-300 rounded-lg px-4 py-3 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-employee-500 focus:border-employee-500 bg-white" required />
+                  <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wide mb-1.5">Start Date *</label>
+                  <input type="date" value={formData.startDate} onChange={e => setFormData({ ...formData, startDate: e.target.value })}
+                    className="w-full border border-slate-300 rounded-xl px-3.5 py-2.5 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 bg-white transition-all" required />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">End Date *</label>
-                  <input type="date" value={formData.endDate} min={formData.startDate || undefined} onChange={e => setFormData({...formData, endDate: e.target.value})}
-                    className="w-full border border-slate-300 rounded-lg px-4 py-3 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-employee-500 focus:border-employee-500 bg-white" required />
+                  <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wide mb-1.5">End Date *</label>
+                  <input type="date" value={formData.endDate} min={formData.startDate || undefined} onChange={e => setFormData({ ...formData, endDate: e.target.value })}
+                    className="w-full border border-slate-300 rounded-xl px-3.5 py-2.5 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 bg-white transition-all" required />
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Reason *</label>
-                <textarea value={formData.reason} onChange={e => setFormData({...formData, reason: e.target.value})} rows="3"
-                  className="w-full border border-slate-300 rounded-lg px-4 py-3 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-employee-500 focus:border-employee-500 bg-white resize-none"
-                  placeholder="Please provide a reason..." required />
+                <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wide mb-1.5">Reason *</label>
+                <textarea value={formData.reason} onChange={e => setFormData({ ...formData, reason: e.target.value })} rows="3"
+                  className="w-full border border-slate-300 rounded-xl px-3.5 py-2.5 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 bg-white transition-all resize-none"
+                  placeholder="Please provide a brief reason for your leave..." required />
               </div>
               {formError && (
-                <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg px-4 py-3">{formError}</div>
+                <div className="bg-rose-50 border border-rose-200 text-rose-700 text-xs font-medium rounded-xl px-4 py-3">{formError}</div>
               )}
               <div className="flex gap-3 pt-2">
-                <EmpButton type="submit" disabled={submitting} className="flex-1">{submitting ? "Submitting..." : "Submit Application"}</EmpButton>
-                <EmpButton type="button" variant="secondary" onClick={() => setShowApplyForm(false)} className="flex-1">Cancel</EmpButton>
+                <EmpButton type="submit" disabled={submitting} className="flex-1 py-2.5">{submitting ? "Submitting..." : "Submit Application"}</EmpButton>
+                <EmpButton type="button" variant="secondary" onClick={() => setShowApplyForm(false)} className="flex-1 py-2.5">Cancel</EmpButton>
               </div>
             </form>
           </div>

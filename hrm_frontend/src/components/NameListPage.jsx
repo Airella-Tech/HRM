@@ -183,7 +183,7 @@ export const NameListPage = ({
         {message && <div className="p-4 rounded-lg text-white bg-green-500">{message}</div>}
 
         <form onSubmit={handleSave} className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-          <div className="px-6 py-4 bg-gradient-to-r from-teal-500 to-emerald-600 text-white">
+          <div className="px-6 py-4 bg-gradient-to-r from-sky-600 to-sky-700 text-white">
             <h2 className="font-semibold flex items-center gap-2">{Icon && <Icon size={18} />} {heading}</h2>
             <p className="text-white/80 text-xs mt-0.5">{hint}</p>
           </div>
@@ -205,7 +205,7 @@ export const NameListPage = ({
                   }}
                   placeholder={placeholder}
                   maxLength={100}
-                  className="flex-1 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 bg-gray-50"
+                  className="flex-1 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 bg-gray-50"
                 />
                 <button type="button" onClick={() => removeRow(row.key)} disabled={rows.length === 1}
                   title="Remove row"
@@ -216,7 +216,7 @@ export const NameListPage = ({
             ))}
 
             <button type="button" onClick={addRow}
-              className="w-full mt-2 border-2 border-dashed border-teal-200 hover:border-teal-400 hover:bg-teal-50 text-teal-600 py-3 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 transition-colors">
+              className="w-full mt-2 border-2 border-dashed border-sky-200 hover:border-sky-400 hover:bg-sky-50 text-sky-600 py-3 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 transition-colors">
               <Plus size={16} strokeWidth={2.5} /> {addLabel}
             </button>
 
@@ -226,7 +226,7 @@ export const NameListPage = ({
 
             <div className="flex justify-end pt-2">
               <button type="submit" disabled={saving}
-                className="inline-flex items-center gap-2 bg-gradient-to-br from-teal-400 to-emerald-500 hover:from-teal-500 hover:to-emerald-600 disabled:opacity-50 disabled:cursor-not-allowed text-white px-5 py-2.5 rounded-xl text-sm font-semibold shadow-sm shadow-teal-500/20 transition-all">
+                className="inline-flex items-center gap-2 bg-sky-600 hover:bg-sky-700 disabled:opacity-50 disabled:cursor-not-allowed text-white px-5 py-2.5 rounded-xl text-sm font-semibold shadow-sm shadow-sky-500/20 transition-all">
                 <Save size={16} /> {saving ? "Saving..." : saveLabel}
               </button>
             </div>
@@ -242,7 +242,7 @@ export const NameListPage = ({
             <div className="flex flex-wrap gap-2">
               {existing.map(t => (
                 <span key={t.id} title={t.createdByName ? `Added by ${t.createdByName}` : undefined}
-                  className="px-3 py-1.5 bg-teal-50 text-teal-700 border border-teal-100 rounded-xl text-xs font-semibold">
+                  className="px-3 py-1.5 bg-sky-50 text-sky-700 border border-sky-100 rounded-xl text-xs font-semibold">
                   {t.name}
                 </span>
               ))}
@@ -252,7 +252,7 @@ export const NameListPage = ({
               {existing.map(item => {
                 const busy = rowBusyId === item.id;
                 return (
-                  <div key={item.id} className="bg-gray-50 border border-teal-100 rounded-xl px-3 py-2.5">
+                  <div key={item.id} className="bg-gray-50 border border-sky-100 rounded-xl px-3 py-2.5">
                     {editingId === item.id ? (
                       <div className="flex items-center gap-2">
                         <input
@@ -265,7 +265,7 @@ export const NameListPage = ({
                           }}
                           maxLength={100}
                           disabled={busy}
-                          className="flex-1 border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 bg-white"
+                          className="flex-1 border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 bg-white"
                         />
                         <button type="button" onClick={() => saveEdit(item)} disabled={busy}
                           title="Save" className="p-1.5 rounded-lg text-emerald-600 hover:bg-emerald-50 disabled:opacity-50 transition-colors">
@@ -293,13 +293,13 @@ export const NameListPage = ({
                     ) : (
                       <div className="flex items-center justify-between gap-2">
                         <span title={item.createdByName ? `Added by ${item.createdByName}` : undefined}
-                          className="text-sm font-semibold text-teal-700">
+                          className="text-sm font-semibold text-sky-700">
                           {item.name}
                         </span>
                         <div className="flex items-center gap-1 flex-shrink-0">
                           {onUpdate && (
                             <button type="button" onClick={() => startEdit(item)}
-                              title="Rename" className="p-1.5 rounded-lg text-gray-400 hover:text-teal-600 hover:bg-teal-50 transition-colors">
+                              title="Rename" className="p-1.5 rounded-lg text-gray-400 hover:text-sky-600 hover:bg-sky-50 transition-colors">
                               <Pencil size={14} />
                             </button>
                           )}

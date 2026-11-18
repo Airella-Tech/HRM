@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Search, Download, Eye, Send, Calendar, X, DollarSign, Plus, SlidersHorizontal, Inbox, ChevronLeft, ChevronRight, Pencil, Trash2, Loader2, Briefcase, Users, Building2, FileSpreadsheet, FileText, ChevronDown, Check } from "lucide-react";
+import { Search, Download, Eye, Send, Calendar, X, DollarSign, Plus, SlidersHorizontal, Inbox, ChevronLeft, ChevronRight, Pencil, Trash2, Loader2, Briefcase, Users, Building2, FileSpreadsheet, FileText, ChevronDown, Check, CheckCircle2, Clock } from "lucide-react";
 import { PageLayout } from "../../components/PageLayout";
 import { hrApi, userHrApi } from "../../services/api";
 import { num, norm, resolveSheet } from "../../utils/payroll";
@@ -93,7 +93,7 @@ const HRPayslip = () => {
       ]);
       setBasicPayments(basicRes.data || []);
       setAdditionalPayments(additionalRes.data || []);
-      hrApi.getDepartments().then(r => setDepartments(r.data || [])).catch(() => {});
+      hrApi.getDepartments().then(r => setDepartments(r.data || [])).catch(() => { });
     } catch (e) {
       console.error("Failed to load payroll data", e);
       setLoadError((e.message || "Failed to load payroll data").replace(/^\d{3}:\s*/, ""));
@@ -308,8 +308,22 @@ const HRPayslip = () => {
       }
     >
       <div className="space-y-6">
-        {message && <div className="p-4 rounded-lg text-white bg-green-500">{message}</div>}
-        {loadError && <div className="p-4 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm">{loadError}</div>}
+        {(message || loadError) && (
+          <div
+            className={`flex items-center gap-2 p-4 rounded-xl border text-sm font-medium ${
+              message
+                ? "bg-emerald-50 border-emerald-200 text-emerald-700"
+                : "bg-red-50 border-red-200 text-red-700"
+            }`}
+          >
+            {message ? (
+              <Check size={18} className="shrink-0" />
+            ) : (
+              <X size={18} className="shrink-0" />
+            )}
+            {message || loadError}
+          </div>
+        )}
 
         {genResult && genResult.skipped.length > 0 && (
           <div className="p-4 rounded-xl bg-amber-50 border border-amber-200 text-sm text-amber-900">
@@ -323,18 +337,29 @@ const HRPayslip = () => {
           </div>
         )}
 
-        <div className="grid grid-cols-2 xl:grid-cols-4 gap-5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5">
           {[
-            { label: "Employees", value: stats.total, gradient: "from-teal-400 to-emerald-500", icon: "👥" },
-            { label: "Total Net Pay", value: `Rs.${(stats.payroll / 1000).toFixed(0)}K`, gradient: "from-emerald-400 to-green-500", icon: "💰" },
-            { label: "Configured", value: stats.configured, gradient: "from-violet-400 to-purple-500", icon: "✅" },
-            { label: "Pending Setup", value: stats.pending, gradient: "from-amber-400 to-orange-500", icon: "⏳" },
-          ].map(s => (
-            <div key={s.label} className={`bg-gradient-to-br ${s.gradient} p-6 rounded-2xl text-white hover:-translate-y-1 transition-all duration-300`}>
-              <div className="flex items-center justify-between mb-1"><p className="text-white/80 text-sm">{s.label}</p><span className="text-xl">{s.icon}</span></div>
-              <p className="text-3xl font-bold">{s.value}</p>
-            </div>
-          ))}
+            { label: "Employees", value: stats.total, icon: Users },
+            { label: "Total Net Pay", value: `Rs.${(stats.payroll / 1000).toFixed(0)}K`, icon: DollarSign },
+            { label: "Configured", value: stats.configured, icon: CheckCircle2 },
+            { label: "Pending Setup", value: stats.pending, icon: Clock },
+          ].map((s) => {
+            const Icon = s.icon;
+            return (
+              <div
+                key={s.label}
+                className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm flex items-start justify-between gap-3 hover:border-slate-300 transition-colors"
+              >
+                <div className="min-w-0">
+                  <p className="text-sm font-medium text-slate-500">{s.label}</p>
+                  <p className="mt-2 text-3xl font-bold text-slate-900 tracking-tight">{s.value}</p>
+                </div>
+                <div className="shrink-0 rounded-xl p-3 bg-[#E3E5F2] text-[#3F4D99]">
+                  <Icon size={22} />
+                </div>
+              </div>
+            );
+          })}
         </div>
 
         <div className="inline-flex bg-white border border-gray-100 shadow-sm rounded-xl p-1 gap-1">
@@ -481,104 +506,104 @@ const HRPayslip = () => {
         )}
 
         {activeTab === "employees" && (
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="bg-gradient-to-r from-teal-500 to-emerald-600 text-white text-xs">
-                  {["Emp ID", "Employee", "Dept", "Designation", "Basic", "Allowances", "Deductions", "Net Salary", "Status", "Actions"].map(h => <th key={h} className="px-5 py-4 text-left font-semibold whitespace-nowrap">{h}</th>)}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-50">
-                {paginated.map((p, i) => (
-                  <tr key={p.email} className={`hover:bg-teal-50/40 transition-colors ${i % 2 === 1 ? "bg-gray-50/40" : ""}`}>
-                    <td className="px-5 py-3.5 font-mono font-semibold text-gray-700">{p.empId}</td>
-                    <td className="px-5 py-3.5 font-medium text-gray-800">{p.name}</td>
-                    <td className="px-5 py-3.5 text-gray-500">{p.department}</td>
-                    <td className="px-5 py-3.5 text-gray-500 text-xs">{p.designation}</td>
-                    <td className="px-5 py-3.5 font-semibold whitespace-nowrap">
-                      {p.missingReason ? (
-                        <>
-                          <span className="text-gray-400">Not set</span>
-                          <p className="text-[11px] font-normal text-amber-600 whitespace-normal max-w-[180px] mt-0.5">{p.missingReason}</p>
-                        </>
-                      ) : money(p.basicSalary)}
-                    </td>
-                    <td className="px-5 py-3.5 text-emerald-600 font-semibold whitespace-nowrap">+{money(p.allowances)}</td>
-                    <td className="px-5 py-3.5 text-red-600 font-semibold whitespace-nowrap">-{money(p.deductions)}</td>
-                    <td className="px-5 py-3.5 font-bold text-teal-600 whitespace-nowrap">{money(p.netSalary)}</td>
-                    <td className="px-5 py-3.5"><span className={`px-2.5 py-1 rounded-full text-xs font-semibold whitespace-nowrap ${statusBadge(p.status)}`}>{p.status}</span></td>
-                    <td className="px-5 py-3.5">
-                      <div className="flex gap-1">
-                        <button onClick={() => setViewingPayslip(p)} title="View Payslip" className="p-1.5 text-gray-400 hover:text-teal-600 hover:bg-teal-50 rounded-lg transition-colors"><Eye size={14} /></button>
-                        <button onClick={() => navigate("/hr/payroll/individual-allowance", { state: { email: p.email } })} title="Edit allowances & deductions" aria-label="Edit allowances & deductions" className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"><Pencil size={14} /></button>
-                      </div>
-                    </td>
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="bg-gradient-to-r from-teal-500 to-emerald-600 text-white text-xs">
+                    {["Emp ID", "Employee", "Dept", "Designation", "Basic", "Allowances", "Deductions", "Net Salary", "Status", "Actions"].map(h => <th key={h} className="px-5 py-4 text-left font-semibold whitespace-nowrap">{h}</th>)}
                   </tr>
-                ))}
-                {!isLoading && paginated.length > 0 && paginated.length < ROWS_PER_PAGE &&
-                  Array.from({ length: ROWS_PER_PAGE - paginated.length }).map((_, idx) => (
-                    <tr key={`filler-${idx}`} aria-hidden="true">
-                      <td colSpan={10} className="px-5 py-3.5">&nbsp;</td>
+                </thead>
+                <tbody className="divide-y divide-gray-50">
+                  {paginated.map((p, i) => (
+                    <tr key={p.email} className={`hover:bg-teal-50/40 transition-colors ${i % 2 === 1 ? "bg-gray-50/40" : ""}`}>
+                      <td className="px-5 py-3.5 font-mono font-semibold text-gray-700">{p.empId}</td>
+                      <td className="px-5 py-3.5 font-medium text-gray-800">{p.name}</td>
+                      <td className="px-5 py-3.5 text-gray-500">{p.department}</td>
+                      <td className="px-5 py-3.5 text-gray-500 text-xs">{p.designation}</td>
+                      <td className="px-5 py-3.5 font-semibold whitespace-nowrap">
+                        {p.missingReason ? (
+                          <>
+                            <span className="text-gray-400">Not set</span>
+                            <p className="text-[11px] font-normal text-amber-600 whitespace-normal max-w-[180px] mt-0.5">{p.missingReason}</p>
+                          </>
+                        ) : money(p.basicSalary)}
+                      </td>
+                      <td className="px-5 py-3.5 text-emerald-600 font-semibold whitespace-nowrap">+{money(p.allowances)}</td>
+                      <td className="px-5 py-3.5 text-red-600 font-semibold whitespace-nowrap">-{money(p.deductions)}</td>
+                      <td className="px-5 py-3.5 font-bold text-teal-600 whitespace-nowrap">{money(p.netSalary)}</td>
+                      <td className="px-5 py-3.5"><span className={`px-2.5 py-1 rounded-full text-xs font-semibold whitespace-nowrap ${statusBadge(p.status)}`}>{p.status}</span></td>
+                      <td className="px-5 py-3.5">
+                        <div className="flex gap-1">
+                          <button onClick={() => setViewingPayslip(p)} title="View Payslip" className="p-1.5 text-gray-400 hover:text-teal-600 hover:bg-teal-50 rounded-lg transition-colors"><Eye size={14} /></button>
+                          <button onClick={() => navigate("/hr/payroll/individual-allowance", { state: { email: p.email } })} title="Edit allowances & deductions" aria-label="Edit allowances & deductions" className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"><Pencil size={14} /></button>
+                        </div>
+                      </td>
                     </tr>
-                  ))
-                }
-                {!isLoading && filtered.length === 0 && (
-                  <tr><td colSpan={10} className="text-center py-10 text-gray-400">{searchTerm || deptFilter ? "No employees match your search / department" : "No employees found"}</td></tr>
-                )}
-                {isLoading && (
-                  <tr><td colSpan={10} className="text-center py-10 text-gray-400">Loading payroll data…</td></tr>
-                )}
-              </tbody>
-            </table>
-          </div>
+                  ))}
+                  {!isLoading && paginated.length > 0 && paginated.length < ROWS_PER_PAGE &&
+                    Array.from({ length: ROWS_PER_PAGE - paginated.length }).map((_, idx) => (
+                      <tr key={`filler-${idx}`} aria-hidden="true">
+                        <td colSpan={10} className="px-5 py-3.5">&nbsp;</td>
+                      </tr>
+                    ))
+                  }
+                  {!isLoading && filtered.length === 0 && (
+                    <tr><td colSpan={10} className="text-center py-10 text-gray-400">{searchTerm || deptFilter ? "No employees match your search / department" : "No employees found"}</td></tr>
+                  )}
+                  {isLoading && (
+                    <tr><td colSpan={10} className="text-center py-10 text-gray-400">Loading payroll data…</td></tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
 
-          {!isLoading && filtered.length > 0 && (
-            <div className="flex flex-col items-center gap-2 px-5 py-4 border-t border-gray-100">
-              <div className="flex items-center justify-center gap-1.5">
-                <button
-                  type="button"
-                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                  disabled={currentPage === 1}
-                  className="h-8 w-8 rounded-lg flex items-center justify-center text-gray-500 border border-gray-200 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                  aria-label="Previous page"
-                >
-                  <ChevronLeft size={15} />
-                </button>
-                {Array.from({ length: totalPages }, (_, idx) => idx + 1).map((p) => (
+            {!isLoading && filtered.length > 0 && (
+              <div className="flex flex-col items-center gap-2 px-5 py-4 border-t border-gray-100">
+                <div className="flex items-center justify-center gap-1.5">
                   <button
-                    key={p}
                     type="button"
-                    onClick={() => setCurrentPage(p)}
-                    className={`h-8 min-w-[2rem] px-2 rounded-lg text-xs font-semibold transition-colors ${p === currentPage
+                    onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                    disabled={currentPage === 1}
+                    className="h-8 w-8 rounded-lg flex items-center justify-center text-gray-500 border border-gray-200 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                    aria-label="Previous page"
+                  >
+                    <ChevronLeft size={15} />
+                  </button>
+                  {Array.from({ length: totalPages }, (_, idx) => idx + 1).map((p) => (
+                    <button
+                      key={p}
+                      type="button"
+                      onClick={() => setCurrentPage(p)}
+                      className={`h-8 min-w-[2rem] px-2 rounded-lg text-xs font-semibold transition-colors ${p === currentPage
                         ? "bg-gradient-to-r from-teal-500 to-emerald-600 text-white shadow-sm"
                         : "text-gray-600 border border-gray-200 hover:bg-gray-50"
-                      }`}
+                        }`}
+                    >
+                      {p}
+                    </button>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                    disabled={currentPage === totalPages}
+                    className="h-8 w-8 rounded-lg flex items-center justify-center text-gray-500 border border-gray-200 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                    aria-label="Next page"
                   >
-                    {p}
+                    <ChevronRight size={15} />
                   </button>
-                ))}
-                <button
-                  type="button"
-                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                  disabled={currentPage === totalPages}
-                  className="h-8 w-8 rounded-lg flex items-center justify-center text-gray-500 border border-gray-200 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                  aria-label="Next page"
-                >
-                  <ChevronRight size={15} />
-                </button>
+                </div>
+                <p className="text-xs text-gray-500 font-medium">
+                  Showing{" "}
+                  <strong className="text-gray-800">
+                    {(currentPage - 1) * ROWS_PER_PAGE + 1}-
+                    {Math.min(currentPage * ROWS_PER_PAGE, filtered.length)}
+                  </strong>{" "}
+                  of <strong className="text-gray-800">{filtered.length}</strong> employees
+                </p>
               </div>
-              <p className="text-xs text-gray-500 font-medium">
-                Showing{" "}
-                <strong className="text-gray-800">
-                  {(currentPage - 1) * ROWS_PER_PAGE + 1}-
-                  {Math.min(currentPage * ROWS_PER_PAGE, filtered.length)}
-                </strong>{" "}
-                of <strong className="text-gray-800">{filtered.length}</strong> employees
-              </p>
-            </div>
-          )}
-        </div>
+            )}
+          </div>
         )}
       </div>
 
