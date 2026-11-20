@@ -154,6 +154,15 @@ export const normalizeNotification = (n, role) => ({
   },
 });
 
+export const topicOf = (n) => {
+  const c = n.category || "";
+  if (c.startsWith("LEAVE")) return "leave";
+  if (c.startsWith("ALLOWANCE")) return "allowance";
+  if (isBirthday(n)) return "birthday";
+  if (["VACANCY", "INTERVIEW", "CANDIDATE", "OFFER", "ROLE"].some((p) => c.startsWith(p))) return "recruitment";
+  return "other";
+};
+
 /** "just now", "5 min ago", "3 h ago", "Yesterday", or a date. */
 export const timeAgo = (iso) => {
   if (!iso) return "Recently";

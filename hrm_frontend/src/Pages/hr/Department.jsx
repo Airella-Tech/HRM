@@ -19,6 +19,9 @@ import {
   AlertCircle,
   CheckCircle2,
   Filter,
+  ArrowUp,
+  ArrowDown,
+  ArrowUpDown,
 } from "lucide-react";
 
 import { PageLayout } from "../../components/PageLayout";
@@ -49,6 +52,10 @@ const Department = () => {
   const [selectedDeptFilter, setSelectedDeptFilter] = useState("ALL");
   const [currentPage, setCurrentPage] = useState(1);
   const [showAddForm, setShowAddForm] = useState(false);
+  const [sortConfig, setSortConfig] = useState({
+    key: "name",
+    direction: "asc",
+  });
 
   const [editingDepartment, setEditingDepartment] = useState(null);
   const [selectedDepartment, setSelectedDepartment] = useState(null);
@@ -71,6 +78,14 @@ const Department = () => {
     ],
   });
 
+  const handleSort = (key) => {
+    setSortConfig((prev) => ({
+      key,
+      direction: prev.key === key && prev.direction === "asc" ? "desc" : "asc",
+    }));
+
+    setCurrentPage(1);
+  };
   // ---------------------------------------------------------
   // AUTHENTICATION
   // ---------------------------------------------------------
@@ -162,7 +177,7 @@ const Department = () => {
       const key = (department?.name || "").trim().toLowerCase();
       return employeeCountByDept[key] || 0;
     },
-    [employeeCountByDept]
+    [employeeCountByDept],
   );
 
   // ---------------------------------------------------------
@@ -237,9 +252,9 @@ const Department = () => {
       jobRoles: prev.jobRoles.map((role, i) =>
         i === index
           ? {
-            ...role,
-            [field]: value,
-          }
+              ...role,
+              [field]: value,
+            }
           : role,
       ),
     }));
@@ -322,7 +337,7 @@ const Department = () => {
       ) {
         alert(
           `Department saved, but only ${storedCount} of ${jobRolesToSave.length} job role(s) were stored. ` +
-          "Please open the department and check its job roles.",
+            "Please open the department and check its job roles.",
         );
       }
 
@@ -331,7 +346,7 @@ const Department = () => {
       console.error("Failed to save department:", error);
       setFormError(
         cleanError(error) ||
-        "Failed to save department to database. Please check your backend connection.",
+          "Failed to save department to database. Please check your backend connection.",
       );
     } finally {
       setSaving(false);
@@ -354,13 +369,13 @@ const Department = () => {
       jobRoles:
         department.jobRoles?.length > 0
           ? department.jobRoles.map((role) => ({
-            jobTitle: role.jobTitle || role.title || "",
-          }))
+              jobTitle: role.jobTitle || role.title || "",
+            }))
           : [
-            {
-              jobTitle: "",
-            },
-          ],
+              {
+                jobTitle: "",
+              },
+            ],
     });
 
     setShowAddForm(true);
@@ -426,6 +441,59 @@ const Department = () => {
   }, [departments, searchTerm, selectedDeptFilter]);
 
   // ---------------------------------------------------------
+  // SORT DEPARTMENTS
+  // ---------------------------------------------------------
+
+  const sortedDepartments = useMemo(() => {
+    const sorted = [...filteredDepartments];
+
+    sorted.sort((a, b) => {
+      let valueA;
+      let valueB;
+
+      switch (sortConfig.key) {
+        case "name":
+          valueA = a.name || "";
+          valueB = b.name || "";
+          break;
+
+        case "code":
+          valueA = a.shortCode || a.code || "";
+          valueB = b.shortCode || b.code || "";
+          break;
+
+        case "jobRoles":
+          valueA = a.jobRoleCount ?? a.jobRoles?.length ?? 0;
+          valueB = b.jobRoleCount ?? b.jobRoles?.length ?? 0;
+          break;
+
+        case "employees":
+          valueA = getEmployeeCount(a);
+          valueB = getEmployeeCount(b);
+          break;
+
+        default:
+          return 0;
+      }
+
+      let comparison;
+
+      if (typeof valueA === "number" && typeof valueB === "number") {
+        comparison = valueA - valueB;
+      } else {
+        comparison = String(valueA).localeCompare(String(valueB), undefined, {
+          numeric: true,
+          sensitivity: "base",
+        });
+      }
+
+      return sortConfig.direction === "asc" ? comparison : -comparison;
+    });
+
+    return sorted;
+  }, [filteredDepartments, sortConfig, getEmployeeCount]);
+
+  // ---------------------------------------------------------
   // PAGINATION — show a fixed number of rows per page, with
   // page navigation controls below the table.
   // ---------------------------------------------------------
@@ -445,11 +513,10 @@ const Department = () => {
       setCurrentPage(totalPages);
     }
   }, [currentPage, totalPages]);
-
   const paginatedDepartments = useMemo(() => {
     const start = (currentPage - 1) * ROWS_PER_PAGE;
-    return filteredDepartments.slice(start, start + ROWS_PER_PAGE);
-  }, [filteredDepartments, currentPage]);
+    return sortedDepartments.slice(start, start + ROWS_PER_PAGE);
+  }, [sortedDepartments, currentPage]);
 
   // ---------------------------------------------------------
   // SUMMARY DATA
@@ -484,13 +551,13 @@ const Department = () => {
           onClick={openCreateForm}
           className="
             inline-flex items-center gap-2
-            bg-purple-600 hover:bg-purple-700
+            bg-sky-600 hover:bg-sky-700
             text-white
             px-4 py-2.5
             rounded-xl
             text-sm font-semibold
             shadow-sm
-            shadow-purple-600/20
+            shadow-sky-600/20
             transition-all
             duration-200
           "
@@ -499,12 +566,8 @@ const Department = () => {
           Add Department
         </button>
       }
-
-
     >
       <div className="space-y-6">
-
-
         {/* =====================================================
       SUMMARY CARDS
   ====================================================== */}
@@ -516,7 +579,7 @@ const Department = () => {
             title="Total Departments"
             value={totalDepartments}
             description="Active in organization"
-            className="bg-gradient-to-br from-purple-700 to-indigo-800 text-white"
+            className="bg-gradient-to-br from-sky-600 to-sky-700 text-white"
           />
 
           {/* Total Job Roles */}
@@ -525,7 +588,7 @@ const Department = () => {
             title="Total Job Roles"
             value={totalJobRoles}
             description="Defined across departments"
-            className="bg-gradient-to-br from-purple-600 to-purple-700 text-white"
+            className="bg-gradient-to-br from-sky-500 to-sky-600 text-white"
           />
 
           {/* Total Employees */}
@@ -534,26 +597,26 @@ const Department = () => {
             title="Total Employees"
             value={totalEmployees}
             description="Assigned to departments"
-            className="bg-gradient-to-br from-indigo-700 to-indigo-800 text-white"
+            className="bg-gradient-to-br from-sky-700 to-sky-800 text-white"
           />
         </div>
 
         {/* DEPARTMENT DIRECTORY INTRO */}
         <div
           className="
-    relative overflow-hidden
-    rounded-2xl
-    border border-purple-100
-    bg-gradient-to-r from-purple-50 via-purple-50/60 to-white
-    p-5 sm:p-6
-  "
+          relative overflow-hidden
+          rounded-2xl
+          border border-sky-100
+          bg-gradient-to-r from-sky-50 via-sky-50/60 to-white
+          p-5 sm:p-6
+          "
         >
           {/* Decorative circles */}
           <div
             className="
       absolute -right-10 -top-12
       h-36 w-36 rounded-full
-      bg-purple-200/40
+      bg-sky-200/40
     "
           />
 
@@ -561,7 +624,7 @@ const Department = () => {
             className="
       absolute right-24 -bottom-16
       h-32 w-32 rounded-full
-      bg-purple-300/20
+      bg-sky-300/20
     "
           />
 
@@ -572,10 +635,10 @@ const Department = () => {
                 className="
           h-12 w-12 shrink-0
           rounded-xl
-          bg-purple-600
+          bg-sky-600
           text-white
           flex items-center justify-center
-          shadow-lg shadow-purple-600/20
+          shadow-lg shadow-sky-600/20
         "
               >
                 <Building2 size={24} />
@@ -589,14 +652,14 @@ const Department = () => {
 
                   <span
                     className="
-              inline-flex items-center gap-1
-              rounded-full
-              bg-purple-100
-              border border-purple-200
-              px-2.5 py-1
-              text-[10px] font-bold uppercase tracking-wider
-              text-purple-700
-            "
+                       inline-flex items-center gap-1
+                       rounded-full
+                       bg-sky-100
+                       border border-sky-200
+                       px-2.5 py-1
+                       text-[10px] font-bold uppercase tracking-wider
+                       text-sky-700
+                     "
                   >
                     <BadgeCheck size={12} />
                     HR Management
@@ -604,8 +667,8 @@ const Department = () => {
                 </div>
 
                 <p className="mt-1.5 text-sm text-slate-600 max-w-xl">
-                  Manage departments, job roles, and organizational team structures
-                  from one central location.
+                  Manage departments, job roles, and organizational team
+                  structures from one central location.
                 </p>
               </div>
             </div>
@@ -615,10 +678,10 @@ const Department = () => {
               className="
         relative flex items-center gap-2
         rounded-xl
-        border border-purple-100
+        border border-sky-100
         bg-white/80
         px-4 py-3
-        text-sm font-semibold text-purple-800
+        text-sm font-semibold text-sky-800
         shadow-sm
         shrink-0
       "
@@ -663,9 +726,9 @@ const Department = () => {
                     placeholder:text-slate-400
                     focus:outline-none
                     focus:bg-white
-                    focus:border-purple-500
+                    focus:border-sky-500
                     focus:ring-4
-                    focus:ring-purple-500/10
+                    focus:ring-sky-500/10
                     transition-all
                   "
                 />
@@ -703,9 +766,9 @@ const Department = () => {
                       text-slate-700
                       focus:outline-none
                       focus:bg-white
-                      focus:border-purple-500
+                      focus:border-sky-500
                       focus:ring-4
-                      focus:ring-purple-500/10
+                      focus:ring-sky-500/10
                     "
                   >
                     <option value="ALL">All Departments</option>
@@ -740,18 +803,46 @@ const Department = () => {
 
         <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
           {/* Desktop Header */}
-          <div className="hidden md:grid grid-cols-[2.2fr_1fr_1fr_1fr_140px] gap-4 px-6 py-3.5 bg-gradient-to-r from-purple-700 to-indigo-800 text-white border-b border-purple-800 rounded-t-xl">
-            <TableHeader>Department</TableHeader>
-            <TableHeader>Code</TableHeader>
-            <TableHeader>Job Roles</TableHeader>
-            <TableHeader>Employees</TableHeader>
+          <div className="hidden md:grid grid-cols-[2.2fr_1fr_1fr_1fr_140px] gap-4 px-6 py-3.5 bg-gradient-to-r from-sky-700 to-sky-800 text-white border-b border-sky-800 rounded-t-xl">
+            <TableHeader
+              sortKey="name"
+              sortConfig={sortConfig}
+              onSort={handleSort}
+            >
+              Department
+            </TableHeader>
+
+            <TableHeader
+              sortKey="code"
+              sortConfig={sortConfig}
+              onSort={handleSort}
+            >
+              Code
+            </TableHeader>
+
+            <TableHeader
+              sortKey="jobRoles"
+              sortConfig={sortConfig}
+              onSort={handleSort}
+            >
+              Job Roles
+            </TableHeader>
+
+            <TableHeader
+              sortKey="employees"
+              sortConfig={sortConfig}
+              onSort={handleSort}
+            >
+              Employees
+            </TableHeader>
+
             <TableHeader className="text-right">Actions</TableHeader>
           </div>
 
           {/* Loading */}
           {loading ? (
             <div className="py-20 flex flex-col items-center justify-center">
-              <div className="h-11 w-11 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center mb-4">
+              <div className="h-11 w-11 rounded-xl bg-sky-50 text-sky-600 flex items-center justify-center mb-4">
                 <Loader2 size={22} className="animate-spin" />
               </div>
 
@@ -766,7 +857,7 @@ const Department = () => {
           ) : filteredDepartments.length === 0 ? (
             /* Empty State */
             <div className="py-20 px-6 flex flex-col items-center justify-center text-center">
-              <div className="h-16 w-16 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center mb-5">
+              <div className="h-16 w-16 rounded-2xl bg-sky-50 text-sky-600 flex items-center justify-center mb-5">
                 {searchTerm ? <Search size={28} /> : <Building2 size={28} />}
               </div>
 
@@ -786,8 +877,8 @@ const Department = () => {
                   className="
                     mt-5
                     inline-flex items-center gap-2
-                    bg-purple-600
-                    hover:bg-purple-700
+                    bg-sky-600
+                    hover:bg-sky-700
                     text-white
                     px-4 py-2.5
                     rounded-xl
@@ -821,7 +912,7 @@ const Department = () => {
                       group relative
                       px-4 sm:px-6
                       py-4
-                      hover:bg-purple-50/40
+                      hover:bg-sky-50/40
                       transition-colors
                       ${openMenu === department.id ? "z-30" : "z-10"}
                     `}
@@ -835,8 +926,8 @@ const Department = () => {
                           h-10 w-10
                           flex-shrink-0
                           rounded-xl
-                          bg-purple-50
-                          text-purple-600
+                          bg-sky-50
+                          text-sky-600
                           flex items-center justify-center
                         "
                         >
@@ -849,7 +940,7 @@ const Department = () => {
                             className="
                               text-sm font-semibold
                               text-slate-800
-                              hover:text-purple-600
+                              hover:text-sky-600
                               truncate
                               text-left
                               transition-colors
@@ -896,8 +987,8 @@ const Department = () => {
                           className="
                           h-8 w-8
                           rounded-lg
-                          bg-purple-50
-                          text-purple-600
+                          bg-sky-50
+                          text-sky-600
                           flex items-center justify-center
                         "
                         >
@@ -1043,9 +1134,10 @@ const Department = () => {
                               rounded-lg
                               flex items-center justify-center
                               transition-colors
-                              ${openMenu === department.id
-                                ? "text-sky-600 bg-sky-50"
-                                : "text-slate-400 hover:bg-slate-100"
+                              ${
+                                openMenu === department.id
+                                  ? "text-sky-600 bg-sky-50"
+                                  : "text-slate-400 hover:bg-slate-100"
                               }
                             `}
                           >
@@ -1727,7 +1819,9 @@ const SummaryCard = ({ icon, title, value, description, className = "" }) => {
       {/* Decorative circles */}
       <div className="absolute -right-8 -top-10 h-32 w-32 rounded-full bg-white/10" />
       <div className="absolute -right-3 -bottom-16 h-28 w-28 rounded-full bg-white/10" />
-      <div className={`relative z-10 ${icon ? "flex items-start justify-between" : ""}`}>
+      <div
+        className={`relative z-10 ${icon ? "flex items-start justify-between" : ""}`}
+      >
         <div>
           <p
             className="
@@ -1788,19 +1882,59 @@ const SummaryCard = ({ icon, title, value, description, className = "" }) => {
 // TABLE HEADER
 // =============================================================
 
-const TableHeader = ({ children, className = "" }) => {
+const TableHeader = ({
+  children,
+  className = "",
+  sortKey,
+  sortConfig,
+  onSort,
+}) => {
+  const isSortable = Boolean(sortKey);
+
+  const isActive = sortConfig?.key === sortKey;
+
   return (
     <div
       className={`
-      text-[11px]
-      font-bold
-      uppercase
-      tracking-wider
-      text-white
-      ${className}
-    `}
+        text-[11px]
+        font-bold
+        uppercase
+        tracking-wider
+        text-white
+        ${className}
+      `}
     >
-      {children}
+      {isSortable ? (
+        <button
+          type="button"
+          onClick={() => onSort(sortKey)}
+          className="
+            inline-flex
+            items-center
+            gap-2
+            hover:text-sky-200
+            transition-colors
+            group
+          "
+        >
+          {children}
+
+          {isActive ? (
+            sortConfig.direction === "asc" ? (
+              <ArrowUp size={14} />
+            ) : (
+              <ArrowDown size={14} />
+            )
+          ) : (
+            <ArrowUpDown
+              size={14}
+              className="opacity-60 group-hover:opacity-100"
+            />
+          )}
+        </button>
+      ) : (
+        children
+      )}
     </div>
   );
 };
@@ -1867,10 +2001,11 @@ const DepartmentMenu = ({
   return (
     <div
       className={`
-      ${mobile
+      ${
+        mobile
           ? "absolute right-0 top-11 w-48"
           : `absolute right-0 ${openUpwards ? "bottom-10" : "top-10"} w-48`
-        }
+      }
       z-50
       bg-white
       rounded-xl
@@ -1888,8 +2023,8 @@ const DepartmentMenu = ({
           flex items-center gap-2.5
           text-sm
           text-slate-700
-          hover:bg-purple-50
-          hover:text-purple-600
+          hover:bg-sky-50
+          hover:text-sky-600
           text-left
           transition-colors
         "
@@ -1982,8 +2117,8 @@ const DepartmentDetailsModal = ({
           className="
           p-6
           bg-gradient-to-br
-          from-purple-700
-          to-indigo-800
+          from-sky-700
+          to-sky-800
           text-white
         "
         >
@@ -2019,7 +2154,7 @@ const DepartmentDetailsModal = ({
 
                 <p
                   className="
-                  text-purple-200
+                  text-sky-200
                   text-sm
                   mt-0.5
                 "
@@ -2050,7 +2185,7 @@ const DepartmentDetailsModal = ({
             <p
               className="
               text-sm
-              text-purple-100
+              text-sky-100
               mt-5
               max-w-2xl
               leading-relaxed
@@ -2154,8 +2289,8 @@ const DepartmentDetailsModal = ({
                         className="
                         h-9 w-9
                         rounded-lg
-                        bg-purple-50
-                        text-purple-600
+                        bg-sky-50
+                        text-sky-600
                         flex items-center
                         justify-center
                       "
@@ -2251,8 +2386,8 @@ const DepartmentDetailsModal = ({
             className="
               px-4 py-2.5
               rounded-xl
-              bg-purple-600
-              hover:bg-purple-700
+              bg-sky-600
+              hover:bg-sky-700
               text-white
               text-sm
               font-semibold
@@ -2392,9 +2527,10 @@ const DeptPaginationBar = ({
                 rounded-lg
                 text-xs font-semibold
                 transition-colors
-                ${p === currentPage
-                  ? "bg-gradient-to-r from-sky-600 to-sky-700 text-white shadow-sm"
-                  : "text-slate-600 border border-slate-200 hover:bg-slate-50"
+                ${
+                  p === currentPage
+                    ? "bg-gradient-to-r from-sky-600 to-sky-700 text-white shadow-sm"
+                    : "text-slate-600 border border-slate-200 hover:bg-slate-50"
                 }
               `}
             >
