@@ -9,13 +9,17 @@ import {
   RefreshCw,
   TrendingUp,
   TrendingDown,
-  Clock3,
   Calendar,
+  CheckCircle2,
+  Send,
+  PencilLine,
 } from "lucide-react";
 import { PageLayout } from "../../components/PageLayout";
 import { recruitmentApi } from "../../services/api";
 import { useRecruitmentAccess } from "../../utils/useRecruitmentAccess";
 import { avatarColorClass } from "../../utils/avatarColor";
+import GreetingCard from "./components/GreetingCard";
+
 
 /* ===========================================================================
  * Permissions (codes from DefaultRecruitmentSeeder)
@@ -531,9 +535,9 @@ const Dashboard = () => {
   const filteredVacancies = vacs.filter((v) => vacancyFilter === "ALL" || v.status === vacancyFilter).slice(0, 8);
 
   const attention = [
-    has("VACANCY_APPROVE") && canVacancies && { label: "to approve", value: vacancyCounts.PENDING_APPROVAL || 0, filter: "PENDING_APPROVAL" },
-    has("VACANCY_PUBLISH") && canVacancies && { label: "ready to publish", value: vacancyCounts.APPROVED || 0, filter: "APPROVED" },
-    has("VACANCY_CREATE") && canVacancies && { label: "drafts", value: vacancyCounts.DRAFT || 0, filter: "DRAFT" },
+    has("VACANCY_APPROVE") && canVacancies && { label: "to approve", value: vacancyCounts.PENDING_APPROVAL || 0, filter: "PENDING_APPROVAL", icon: CheckCircle2 },
+    has("VACANCY_PUBLISH") && canVacancies && { label: "ready to publish", value: vacancyCounts.APPROVED || 0, filter: "APPROVED", icon: Send },
+    has("VACANCY_CREATE") && canVacancies && { label: "drafts", value: vacancyCounts.DRAFT || 0, filter: "DRAFT", icon: PencilLine },
   ].filter(Boolean);
 
   const funnel = [
@@ -543,43 +547,41 @@ const Dashboard = () => {
     canOffers && { label: "Offers", value: m.offers.current, color: "#1b2142" },
   ].filter(Boolean);
 
-  const hour = new Date().getHours();
-  const greeting = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
   const firstName = (storedUser.fullName || "").split(" ")[0];
 
   return (
     <PageLayout role="recruiter" activePage="Overview" title="Recruitment Dashboard" subtitle="Hiring activity and performance">
       <div className="mx-auto max-w-[1400px] space-y-6">
-        {/* Header */}
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <h2 className="text-2xl font-bold tracking-tight text-slate-900">
-              {greeting}
-              {firstName ? `, ${firstName}` : ""}
-            </h2>
-            <p className="mt-1 text-sm text-slate-500">
-              {new Date().toLocaleDateString(undefined, { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
-            <div role="group" aria-label="Date range" className="flex rounded-xl border border-slate-200 bg-slate-50 p-1">
-              {RANGES.map((r) => (
-                <button
-                  key={r.days}
-                  type="button"
-                  aria-pressed={days === r.days}
-                  onClick={() => setDays(r.days)}
-                  className={`rounded-lg px-3.5 py-1.5 text-xs font-semibold transition ${days === r.days ? "bg-primary-600 text-white shadow-sm" : "text-slate-500 hover:bg-white hover:text-slate-800"}`}
-                >
-                  {r.label}
-                </button>
-              ))}
-            </div>
-            <button type="button" onClick={reloadAll} aria-label="Refresh data" className="rounded-xl border border-slate-200 bg-white p-2.5 text-slate-500 hover:text-slate-800">
-              <RefreshCw size={16} />
-            </button>
-          </div>
-        </div>
+        {/* Greeting */}
+        <GreetingCard
+          name={firstName}
+          date={new Date().toLocaleDateString(undefined, { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
+          attention={attention}
+          onChipClick={(item) => {
+            setVacancyFilter(item.filter);
+            vacancyRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+          }}
+          controls={
+            <>
+              <div role="group" aria-label="Date range" className="flex rounded-xl border border-slate-200 bg-white/80 p-1 backdrop-blur">
+                {RANGES.map((r) => (
+                  <button
+                    key={r.days}
+                    type="button"
+                    aria-pressed={days === r.days}
+                    onClick={() => setDays(r.days)}
+                    className={`rounded-lg px-3.5 py-1.5 text-xs font-semibold transition ${days === r.days ? "bg-primary-600 text-white shadow-sm" : "text-slate-500 hover:bg-white hover:text-slate-800"}`}
+                  >
+                    {r.label}
+                  </button>
+                ))}
+              </div>
+              <button type="button" onClick={reloadAll} aria-label="Refresh data" className="grid h-10 w-10 place-items-center rounded-xl border border-slate-200 bg-white text-slate-500 hover:text-slate-800">
+                <RefreshCw size={16} />
+              </button>
+            </>
+          }
+        />
 
         {!ready && <Card><Skeleton rows={4} /></Card>}
 
@@ -591,30 +593,9 @@ const Dashboard = () => {
           </Card>
         )}
 
-        {/* Needs attention */}
-        {attention.some((a) => a.value > 0) && (
-          <div className="flex flex-wrap items-center gap-2 rounded-xl border border-primary-100 bg-primary-50 px-4 py-2.5 text-primary-800">
-            <Clock3 size={16} className="text-primary-700" />
-            <span className="text-sm font-semibold text-primary-800">Needs your attention</span>
-            {attention.filter((a) => a.value > 0).map((a) => (
-              <button
-                key={a.label}
-                type="button"
-                onClick={() => {
-                  setVacancyFilter(a.filter);
-                  vacancyRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-                }}
-                className="rounded-full border border-primary-200 bg-white px-3 py-1 text-xs font-semibold text-primary-800 hover:bg-primary-50"
-              >
-                {a.value} {a.label}
-              </button>
-            ))}
-          </div>
-        )}
-
         {/* KPIs */}
         {anything && (
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-5">
+          <div className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-5">
             {canVacancies && (
               <KpiCard icon={BriefcaseBusiness} label="Open vacancies"
                 value={vacancies.loading ? "-" : vacancyCounts.PUBLISHED || 0}
