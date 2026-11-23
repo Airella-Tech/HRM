@@ -1,4 +1,5 @@
 import RecruitmentModal, { ModalButton } from "./components/RecruitmentModal";
+import ViewButton from "./components/ViewButton";
 
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
@@ -7,7 +8,6 @@ import {
   Search,
   Filter,
   RefreshCw,
-  Eye,
   X,
   CalendarDays,
   Clock3,
@@ -857,17 +857,13 @@ export default function InterviewEmails() {
 
                       <td className="px-5 py-4">
                         <div className="flex items-center gap-1">
-                          <button
-                            type="button"
+                          <ViewButton
                             onClick={() => setSelectedEmail(email)}
                             title="View email details"
                             aria-label={`View notification for ${
                               email.recipientEmail || "recipient"
                             }`}
-                            className="rounded-lg p-2 text-slate-500 hover:bg-primary-50 hover:text-primary-600"
-                          >
-                            <Eye size={17} />
-                          </button>
+                          />
 
                           {(email.status === "Failed" ||
                             email.status === "Pending") && (

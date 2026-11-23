@@ -1,4 +1,5 @@
 import RecruitmentModal, { ModalButton } from "./components/RecruitmentModal";
+import ViewButton from "./components/ViewButton";
 import React, {
   useCallback,
   useEffect,
@@ -15,7 +16,6 @@ import {
   Check,
   Circle,
   XCircle,
-  Eye,
   X,
   UserRound,
   CalendarDays,
@@ -982,13 +982,12 @@ export default function InterviewProgress() {
       </td>
       <td className="whitespace-nowrap px-4 py-3.5">
         <div className="flex justify-end">
-          <button
-            type="button"
+          <ViewButton
             onClick={() => setSelectedCandidate(candidate)}
             className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-xl border border-slate-200 bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-xs hover:bg-slate-200"
-          >
-            <Eye size={15} /> View Progress <ArrowRight size={14} />
-          </button>
+            label="View Progress"
+          />
+          <ArrowRight size={14} />
         </div>
       </td>
     </tr>
@@ -1541,14 +1540,12 @@ export default function InterviewProgress() {
 
                         <td className="whitespace-nowrap px-4 py-3.5">
                           <div className="flex justify-end">
-                            <button
-                              type="button"
+                            <ViewButton
                               onClick={() => setSelectedCandidate(candidate)}
                               className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-xl border border-slate-200 bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-xs hover:bg-slate-200"
-                            >
-                              <Eye size={15} /> View Progress{" "}
-                              <ArrowRight size={14} />
-                            </button>
+                              label="View Progress"
+                            />
+                            <ArrowRight size={14} />
                           </div>
                         </td>
                       </tr>

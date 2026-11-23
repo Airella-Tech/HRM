@@ -1,9 +1,9 @@
 import RecruitmentModal, { ModalButton } from "./components/RecruitmentModal";
+import ViewButton from "./components/ViewButton";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Search,
   RefreshCw,
-  Eye,
   X,
   CheckCircle2,
   XCircle,
@@ -1223,14 +1223,11 @@ export default function InterviewEvaluationReview() {
                                       </span>
                                     </td>
                                     <td className="whitespace-nowrap px-4 py-3.5 text-right">
-                                      <button
-                                        type="button"
+                                      <ViewButton
                                         onClick={() => openReview(interview)}
                                         className="inline-flex items-center gap-2 whitespace-nowrap rounded-xl bg-primary-600 px-3 py-2 text-sm font-semibold text-white hover:bg-primary-700"
-                                      >
-                                        <Eye size={15} />
-                                        View Reviews
-                                      </button>
+                                        label="View Reviews"
+                                      />
                                     </td>
                                   </tr>
                                 );

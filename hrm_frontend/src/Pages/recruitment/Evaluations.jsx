@@ -1,4 +1,5 @@
 import RecruitmentModal, { ModalButton } from "./components/RecruitmentModal";
+import ViewButton from "./components/ViewButton";
 import React, {
   useCallback,
   useEffect,
@@ -11,7 +12,6 @@ import {
   ClipboardCheck,
   Clock,
   CheckCircle2,
-  Eye,
   X,
   Star,
   UserRound,
@@ -1153,22 +1153,29 @@ export default function RecruitmentEvaluations() {
             >
               <Download size={15} />
             </button>
-            <button
-              type="button"
-              onClick={() => openEvaluation(interview)}
-              disabled={!isCompleted && evaluationStatus !== "Submitted"}
-              title={
-                evaluationStatus === "Submitted"
-                  ? "View my evaluation"
-                  : !isCompleted
+            {evaluationStatus === "Submitted" ? (
+              <ViewButton
+                label="View"
+                onClick={() => openEvaluation(interview)}
+                disabled={!isCompleted && evaluationStatus !== "Submitted"}
+                title="View my evaluation"
+              />
+            ) : (
+              <button
+                type="button"
+                onClick={() => openEvaluation(interview)}
+                disabled={!isCompleted && evaluationStatus !== "Submitted"}
+                title={
+                  !isCompleted
                     ? "Mark the interview completed before evaluating"
                     : "Evaluate interview"
-              }
-              className="inline-flex items-center gap-2 rounded-xl bg-primary-600 px-3 py-2 text-sm font-medium text-white hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-40"
-            >
-              <Eye size={15} />
-              {evaluationStatus === "Submitted" ? "View" : "Evaluate"}
-            </button>
+                }
+                className="inline-flex items-center gap-2 rounded-xl bg-primary-600 px-3 py-2 text-sm font-medium text-white hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                <Eye size={15} />
+                Evaluate
+              </button>
+            )}
           </div>
         </td>
       </tr>
@@ -1559,26 +1566,33 @@ export default function RecruitmentEvaluations() {
                               <Download size={15} />
                             </button>
 
-                            <button
-                              type="button"
-                              onClick={() => openEvaluation(interview)}
-                              disabled={
-                                !isCompleted && evaluationStatus !== "Submitted"
-                              }
-                              title={
-                                evaluationStatus === "Submitted"
-                                  ? "View my evaluation"
-                                  : !isCompleted
+                            {evaluationStatus === "Submitted" ? (
+                              <ViewButton
+                                label="View"
+                                onClick={() => openEvaluation(interview)}
+                                disabled={
+                                  !isCompleted && evaluationStatus !== "Submitted"
+                                }
+                                title="View my evaluation"
+                              />
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={() => openEvaluation(interview)}
+                                disabled={
+                                  !isCompleted && evaluationStatus !== "Submitted"
+                                }
+                                title={
+                                  !isCompleted
                                     ? "Mark the interview completed before evaluating"
                                     : "Evaluate interview"
-                              }
-                              className="inline-flex items-center gap-2 rounded-xl bg-primary-600 px-3 py-2 text-sm font-medium text-white hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-40"
-                            >
-                              <Eye size={15} />
-                              {evaluationStatus === "Submitted"
-                                ? "View"
-                                : "Evaluate"}
-                            </button>
+                                }
+                                className="inline-flex items-center gap-2 rounded-xl bg-primary-600 px-3 py-2 text-sm font-medium text-white hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-40"
+                              >
+                                <Eye size={15} />
+                                Evaluate
+                              </button>
+                            )}
                           </div>
                         </td>
                       </tr>

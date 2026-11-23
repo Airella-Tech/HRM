@@ -10,6 +10,7 @@ import { formatSalary, formatDate } from "../../utils/careersFormat";
 import RecruitmentModal, {
   ModalButton,
 } from "./components/RecruitmentModal";
+import ViewButton from "./components/ViewButton";
 import {
   isRemovedFromApplications,
   setRemovedFromApplications,
@@ -19,7 +20,6 @@ import {
   Search,
   Filter,
   Download,
-  Eye,
   CheckCircle2,
   Clock,
   Briefcase,
@@ -1169,16 +1169,13 @@ export default function RecruitmentApplications() {
                                         </button>
 
                                         {/* Inspect Profile modal */}
-                                        <button
+                                        <ViewButton
                                           onClick={() => {
                                             setSelectedApp(app);
                                             setShowResumeText(false);
                                           }}
                                           title="View Full Profile"
-                                          className="p-1.5 rounded-xl text-slate-400 hover:text-primary-600 hover:bg-primary-50 transition-colors"
-                                        >
-                                          <Eye size={17} />
-                                        </button>
+                                        />
                                       </div>
                                     </td>
                                   </tr>
@@ -1388,16 +1385,13 @@ export default function RecruitmentApplications() {
                               <span>Resume</span>
                             </button>
 
-                            <button
+                            <ViewButton
                               onClick={() => {
                                 setSelectedApp(app);
                                 setShowResumeText(false);
                               }}
                               title="View Application Details"
-                              className="p-1.5 rounded-xl text-slate-400 hover:text-primary-600 hover:bg-primary-50 transition-colors"
-                            >
-                              <Eye size={17} />
-                            </button>
+                            />
                           </div>
                         </td>
                       </tr>

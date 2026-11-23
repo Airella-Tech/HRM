@@ -12,6 +12,7 @@ import RecruitmentModal, {
   modalInputClass,
   modalTextareaClass,
 } from "./components/RecruitmentModal";
+import ViewButton from "./components/ViewButton";
 import {
   isRemovedFromShortlist,
   setRemovedFromShortlist,
@@ -38,7 +39,6 @@ import {
   Loader2,
   CheckSquare,
   Square,
-  Eye,
   SlidersHorizontal,
   Settings,
   Info,
@@ -1575,15 +1575,11 @@ export default function RecruitmentCandidateShortlist() {
 
                                       {/* 5. Action - View Details */}
                                       <td className="py-3.5 px-4 text-right whitespace-nowrap">
-                                        <button
-                                          type="button"
+                                        <ViewButton
+                                          label="View"
                                           onClick={() => setBreakdownCandidate(cand)}
-                                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-primary-700 hover:text-primary-900 bg-primary-50 hover:bg-primary-100 border border-primary-200 transition-all cursor-pointer shadow-xs"
                                           title="View matching details: what matched and what did not match"
-                                        >
-                                          <Eye size={13} />
-                                          <span>View</span>
-                                        </button>
+                                        />
                                       </td>
                                     </tr>
                                   );

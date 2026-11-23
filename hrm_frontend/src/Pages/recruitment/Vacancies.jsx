@@ -1,16 +1,21 @@
 /**
  * Job Vacancies — recruitment page for creating and managing job vacancies.
- * List with status filter; create / edit drafts in a pop-up; delete drafts.
- * Buttons are shown only for what the logged-in user is allowed to do, and the
- * sidebar links (?view=create | approve | publish) open the matching view.
+ * One component, three pages (set with the `mode` prop from the router):
+ *   mode="create"   -> drafts: create, edit, delete, submit for approval
+ *   mode="approval" -> vacancies waiting for approval: approve / reject
+ *   mode="publish"  -> approved / published / closed: publish and close
+ * With no mode it behaves like the old combined page. Old sidebar links
+ * (?view=create | approve | publish) are redirected to the matching page.
+ * Buttons are shown only for what the logged-in user is allowed to do.
  */
 import React, { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { PageLayout } from "../../components/PageLayout";
-import StatCard, { StatCardGrid } from "../../components/StatCard";
+import StatCard from "../../components/StatCard";
 import { recruitmentApi, hrApi } from "../../services/api";
 import { formatSalary, formatDate } from "../../utils/careersFormat";
 import { useRecruitmentAccess, fetchRecruitmentAccess } from "../../utils/useRecruitmentAccess";
+import ViewButton from "./components/ViewButton";
 import { Plus, Pencil, Trash2, BriefcaseBusiness, Loader2, Save, AlertTriangle, Send, CheckCircle2, XCircle, Megaphone, Ban, Search, Clock, FileText, Users, CalendarDays, Banknote, Award } from "lucide-react";
 import RecruitmentModal, {
   modalLabelClass,
@@ -22,28 +27,83 @@ import RecruitmentModal, {
 
 const FILTERS = ["ALL", "DRAFT", "PENDING_APPROVAL", "APPROVED", "PUBLISHED", "CLOSED"];
 const JOB_TYPES = ["Full-time", "Part-time", "Contract", "Internship"];
+const PUBLISH_ORDER = { APPROVED: 0, PUBLISHED: 1, CLOSED: 2 };
 
-// Sidebar links open the page with ?view=... — each one starts on a matching filter
-const VIEW_FILTER = {
-  create: "DRAFT",
-  approve: "PENDING_APPROVAL",
-  publish: "APPROVED",
+// What each page shows. `statuses: null` means every status (the old combined page).
+const MODES = {
+  create: {
+    activePage: "Create Vacancies",
+    title: "Create Vacancies",
+    subtitle: "Draft new vacancies and submit them for approval",
+    statuses: ["DRAFT"],
+    filters: ["ALL", "REJECTED"],
+    allLabel: "All drafts",
+    emptyCreate: 'Click "New vacancy" to create a draft.',
+    emptyOther: "You have no drafts right now.",
+  },
+  approval: {
+    activePage: "Vacancy Approval",
+    title: "Vacancy Approval",
+    subtitle: "Review vacancies waiting for approval",
+    statuses: ["PENDING_APPROVAL"],
+    filters: ["ALL"],
+    allLabel: "Pending approval",
+    emptyCreate: "No vacancies are waiting for approval.",
+    emptyOther: "No vacancies are waiting for approval.",
+  },
+  publish: {
+    activePage: "Publish Vacancies",
+    title: "Publish Vacancies",
+    subtitle: "Publish approved vacancies and close finished ones",
+    statuses: ["APPROVED", "PUBLISHED", "CLOSED"],
+    filters: ["ALL", "APPROVED", "PUBLISHED", "CLOSED"],
+    allLabel: "All",
+    emptyCreate: "Nothing to publish or close right now.",
+    emptyOther: "Nothing to publish or close right now.",
+  },
+};
+
+const DEFAULT_MODE = {
+  activePage: "Job Vacancies",
+  title: "Job Vacancies",
+  subtitle: "Create and manage job vacancies",
+  statuses: null,
+  filters: FILTERS,
+  allLabel: "All",
+  emptyCreate: 'Click "New vacancy" to create a draft.',
+  emptyOther: "Nothing to show for this filter right now.",
+};
+
+// Old sidebar links used ?view=... on the combined page; send them to the new pages
+const VIEW_PATH = {
+  create: "/recruitment/vacancies/create?new=1",
+  approve: "/recruitment/vacancies/approval",
+  publish: "/recruitment/vacancies/publish",
 };
 
 const STATUS_STYLE = {
   DRAFT: "bg-slate-100 text-slate-700",
   PENDING_APPROVAL: "bg-amber-100 text-amber-700",
-  APPROVED: "bg-emerald-100 text-emerald-700",
+  APPROVED: "bg-sky-100 text-sky-700",
   PUBLISHED: "bg-emerald-100 text-emerald-700",
   CLOSED: "bg-red-100 text-red-700",
 };
 
 const statusLabel = (s) => s.replace(/_/g, " ").toLowerCase().replace(/^\w/, (c) => c.toUpperCase());
+
+// Label for a filter pill
+const filterLabel = (f, cfg) => {
+  if (f === "ALL") return cfg.allLabel;
+  if (f === "REJECTED") return "Sent back";
+  if (f === "APPROVED" && cfg.statuses) return "Ready to publish";
+  return statusLabel(f);
+};
+
 // Coloured stripe on the left of each row, by status
 const STRIPE = {
   DRAFT: "border-l-slate-400",
   PENDING_APPROVAL: "border-l-amber-400",
-  APPROVED: "border-l-emerald-400",
+  APPROVED: "border-l-sky-400",
   PUBLISHED: "border-l-emerald-500",
   CLOSED: "border-l-red-400",
 };
@@ -267,7 +327,6 @@ const VacancyModal = ({ vacancy, onClose, onSaved }) => {
   );
 };
 
-// ─── Delete confirmation pop-up ───────────────────────────────
 // ─── Vacancy details pop-up (opens when a row is clicked) ─────
 const VacancyDetailsModal = ({ vacancy: v, canEdit, onClose, onEdit }) => {
   const due = deadlineInfo(v.deadline, v.status);
@@ -363,6 +422,7 @@ const VacancyDetailsModal = ({ vacancy: v, canEdit, onClose, onEdit }) => {
   );
 };
 
+// ─── Delete confirmation pop-up ───────────────────────────────
 const DeleteConfirmModal = ({ vacancy, busy, onCancel, onConfirm }) => (
   <RecruitmentModal
     open
@@ -469,13 +529,16 @@ const CloseConfirmModal = ({ vacancy, busy, onCancel, onConfirm }) => (
 );
 
 // ─── Page ─────────────────────────────────────────────────────
-export default function RecruitmentVacancies() {
+export default function RecruitmentVacancies({ mode }) {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const view = searchParams.get("view");
+  const wantsNew = searchParams.get("new");
+  const cfg = MODES[mode] || DEFAULT_MODE;
 
   const [vacancies, setVacancies] = useState([]);
-  const [filter, setFilter] = useState(VIEW_FILTER[view] || "ALL");
+  const [filter, setFilter] = useState("ALL");
+  const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [busyId, setBusyId] = useState(null);
@@ -499,15 +562,26 @@ export default function RecruitmentVacancies() {
     fetchRecruitmentAccess(true);
   }, []);
 
-  // Sidebar links: ?view=create | approve | publish
+  // Switching between the three pages keeps this component mounted, so reset the list controls
   useEffect(() => {
-    if (VIEW_FILTER[view]) setFilter(VIEW_FILTER[view]);
-    if (view === "create" && canCreate) {
+    setFilter("ALL");
+    setSearch("");
+  }, [mode]);
+
+  // Old sidebar links (?view=create | approve | publish) -> the matching page
+  useEffect(() => {
+    if (!mode && VIEW_PATH[view]) navigate(VIEW_PATH[view], { replace: true });
+  }, [mode, view, navigate]);
+
+  // /recruitment/vacancies/create?new=1 opens the "New vacancy" form straight away
+  useEffect(() => {
+    if (wantsNew && mode === "create" && canCreate) {
       setModal({ vacancy: null });
       setSearchParams({}, { replace: true });
     }
-  }, [view, canCreate, setSearchParams]);
-    // Notification links: ?edit=<vacancy id> opens that vacancy in the edit form
+  }, [wantsNew, mode, canCreate, setSearchParams]);
+
+  // Notification links: ?edit=<vacancy id> opens that vacancy in the edit form
   const editId = searchParams.get("edit");
   useEffect(() => {
     if (!editId || loading || vacancies.length === 0) return;
@@ -515,8 +589,6 @@ export default function RecruitmentVacancies() {
     if (target && canCreate) setModal({ vacancy: target });
     setSearchParams({}, { replace: true });
   }, [editId, loading, vacancies, canCreate, setSearchParams]);
-
-   const [search, setSearch] = useState("");
 
   // Load all vacancies once; the filter pills and search work on this list
   const load = async () => {
@@ -610,25 +682,73 @@ export default function RecruitmentVacancies() {
     (v.status === "DRAFT" && canCreate) ||
     (v.status === "PENDING_APPROVAL" && canApprove) ||
     ((v.status === "APPROVED" || v.status === "PUBLISHED") && canPublish);
-      const counts = vacancies.reduce((acc, v) => {
+
+  // Count by status over every vacancy (the stat cards use this)
+  const counts = vacancies.reduce((acc, v) => {
     acc[v.status] = (acc[v.status] || 0) + 1;
     return acc;
   }, {});
+  const sentBack = vacancies.filter((v) => v.status === "DRAFT" && v.rejectionReason).length;
 
-  const visible = vacancies.filter((v) => {
-    if (filter !== "ALL" && v.status !== filter) return false;
+  // Only the vacancies that belong on this page
+  const pageVacancies = cfg.statuses
+    ? vacancies.filter((v) => cfg.statuses.includes(v.status))
+    : vacancies;
+
+  const filterCount = (f) => {
+    if (f === "ALL") return pageVacancies.length;
+    if (f === "REJECTED") return sentBack;
+    return counts[f] || 0;
+  };
+
+  const visible = pageVacancies.filter((v) => {
+    if (filter === "REJECTED") {
+      if (!(v.status === "DRAFT" && v.rejectionReason)) return false;
+    } else if (filter !== "ALL" && v.status !== filter) {
+      return false;
+    }
     const q = search.trim().toLowerCase();
     return !q || `${v.title} ${v.department}`.toLowerCase().includes(q);
-  });
+  }).sort((a, b) => mode === "publish" ? PUBLISH_ORDER[a.status] - PUBLISH_ORDER[b.status] : 0);
+
+  // Summary cards for each page
+  const stats =
+    mode === "create"
+      ? [
+          { label: "Drafts", value: counts.DRAFT || 0, caption: "Not submitted yet", icon: FileText, tone: "primary" },
+          { label: "Sent back", value: sentBack, caption: "Need changes", icon: AlertTriangle, tone: "red" },
+          { label: "Waiting for approval", value: counts.PENDING_APPROVAL || 0, caption: "Already submitted", icon: Clock, tone: "slate" },
+        ]
+      : mode === "approval"
+        ? [
+            { label: "Pending approval", value: counts.PENDING_APPROVAL || 0, caption: "Waiting for you", icon: Clock, tone: "amber" },
+            { label: "Approved", value: counts.APPROVED || 0, caption: "Ready to publish", icon: CheckCircle2, tone: "primary" },
+            { label: "Sent back", value: sentBack, caption: "Returned to draft", icon: XCircle, tone: "slate" },
+          ]
+        : mode === "publish"
+          ? [
+              { label: "Ready to publish", value: counts.APPROVED || 0, caption: "Approved", icon: Send, tone: "primary" },
+              { label: "Published", value: counts.PUBLISHED || 0, caption: "Open for applications", icon: Megaphone, tone: "green" },
+              { label: "Closed", value: counts.CLOSED || 0, caption: "Ended or filled", icon: Ban, tone: "slate" },
+            ]
+          : [
+              { label: "Total vacancies", value: vacancies.length, caption: "All vacancies", icon: BriefcaseBusiness, tone: "primary" },
+              { label: "Pending approval", value: counts.PENDING_APPROVAL || 0, caption: "Waiting for an approver", icon: Clock, tone: "amber" },
+              { label: "Published", value: counts.PUBLISHED || 0, caption: "Open for applications", icon: Megaphone, tone: "green" },
+              { label: "Drafts", value: counts.DRAFT || 0, caption: "Not submitted yet", icon: FileText, tone: "slate" },
+            ];
+
+  // "New vacancy" only belongs on the create page (and the old combined page)
+  const showNewButton = canCreate && (!mode || mode === "create");
 
   return (
     <PageLayout
       role="recruiter"
-      activePage="Job Vacancies"
-      title="Job Vacancies"
-      subtitle="Create and manage job vacancies"
+      activePage={cfg.activePage}
+      title={cfg.title}
+      subtitle={cfg.subtitle}
       actions={
-        canCreate ? (
+        showNewButton ? (
           <button
             onClick={() => setModal({ vacancy: null })}
             className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-primary-600 hover:bg-primary-700 text-white text-sm font-semibold shadow-sm"
@@ -638,41 +758,24 @@ export default function RecruitmentVacancies() {
         ) : null
       }
     >
-            <div className="p-6 space-y-5">
-                      {/* Summary cards: click one to filter the list */}
-        <StatCardGrid>
-          <StatCard
-            label="Total vacancies"
-            value={loading ? "-" : vacancies.length}
-            caption="All vacancies"
-            icon={BriefcaseBusiness}
-            tone="primary"
-          />
-          <StatCard
-            label="Pending approval"
-            value={loading ? "-" : counts.PENDING_APPROVAL || 0}
-            caption="Waiting for an approver"
-            icon={Clock}
-            tone="amber"
-          />
-          <StatCard
-            label="Published"
-            value={loading ? "-" : counts.PUBLISHED || 0}
-            caption="Open for applications"
-            icon={Megaphone}
-            tone="green"
-          />
-          <StatCard
-            label="Drafts"
-            value={loading ? "-" : counts.DRAFT || 0}
-            caption="Not submitted yet"
-            icon={FileText}
-            tone="slate"
-          />
-        </StatCardGrid>
+      <div className="p-6 space-y-5">
+        {/* Summary cards */}
+        <div className={`grid grid-cols-1 sm:grid-cols-2 gap-4 ${stats.length === 3 ? "lg:grid-cols-3" : "lg:grid-cols-4"}`}>
+          {stats.map((s) => (
+            <StatCard
+              key={s.label}
+              label={s.label}
+              value={loading ? "-" : s.value}
+              caption={s.caption}
+              icon={s.icon}
+              tone={s.tone}
+            />
+          ))}
+        </div>
+
         {/* Filters + search */}
         <div className="flex flex-wrap items-center gap-2">
-          {FILTERS.map((f) => (
+          {cfg.filters.map((f) => (
             <button
               key={f}
               onClick={() => setFilter(f)}
@@ -682,9 +785,9 @@ export default function RecruitmentVacancies() {
                   : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"
               }`}
             >
-              {f === "ALL" ? "All" : statusLabel(f)}
+              {filterLabel(f, cfg)}
               <span className={`ml-1.5 text-xs ${filter === f ? "text-white/70" : "text-slate-400"}`}>
-                {f === "ALL" ? vacancies.length : counts[f] || 0}
+                {filterCount(f)}
               </span>
             </button>
           ))}
@@ -719,8 +822,8 @@ export default function RecruitmentVacancies() {
               {search
                 ? "Nothing matches your search."
                 : canCreate
-                  ? 'Click "New vacancy" to create a draft.'
-                  : "Nothing to show for this filter right now."}
+                  ? cfg.emptyCreate
+                  : cfg.emptyOther}
             </p>
           </div>
         ) : (
@@ -731,8 +834,7 @@ export default function RecruitmentVacancies() {
               return (
                 <div
                   key={v.id}
-                  onClick={() => setViewing(v)}
-                  className={`flex flex-wrap items-center gap-x-5 gap-y-3 bg-white rounded-xl border border-slate-200 border-l-4 ${STRIPE[v.status] || STRIPE.DRAFT} px-5 py-4 shadow-sm hover:shadow-md cursor-pointer transition-shadow`}
+                  className={`flex flex-wrap items-center gap-x-5 gap-y-3 bg-white rounded-xl border border-slate-200 border-l-4 ${STRIPE[v.status] || STRIPE.DRAFT} px-5 py-4 shadow-sm hover:shadow-md transition-shadow`}
                 >
                   {/* Title + details */}
                   <div className="flex-1 min-w-[200px]">
@@ -766,7 +868,8 @@ export default function RecruitmentVacancies() {
                   </span>
 
                   {/* Actions */}
-                  <div className="flex items-center justify-end gap-1.5 min-w-[130px]" onClick={(e) => e.stopPropagation()}>
+                  <div className="flex flex-wrap items-center justify-end gap-1.5 min-w-[130px]" onClick={(e) => e.stopPropagation()}>
+                    <ViewButton onClick={() => setViewing(v)} />
                     {v.status === "DRAFT" && canCreate && (
                       <>
                         <button

@@ -1,4 +1,5 @@
 import RecruitmentModal, { ModalButton } from "./components/RecruitmentModal";
+import ViewButton from "./components/ViewButton";
 
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
@@ -14,7 +15,6 @@ import {
   RefreshCw,
   LoaderCircle,
   Ban,
-  Eye,
   Info,
 } from "lucide-react";
 import PageLayout from "../../components/PageLayout";
@@ -1236,16 +1236,15 @@ export default function AssignInterviewers() {
                                 </td>
                                 <td className="whitespace-nowrap px-4 py-3.5 text-right">
                                   {locked ? (
-                                    <button
-                                      type="button"
+                                    <ViewButton
                                       onClick={() =>
                                         openAssignmentModal(interview)
                                       }
                                       className="inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100"
-                                    >
-                                      <Eye size={14} />
-                                      View
-                                    </button>
+                                      title="View"
+                                      disabled={locked}
+                                      label="View"
+                                    />
                                   ) : !locked ? (
                                     <button
                                       type="button"

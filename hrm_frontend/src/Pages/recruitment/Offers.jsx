@@ -1,4 +1,5 @@
 import RecruitmentModal, { ModalButton } from "./components/RecruitmentModal";
+import ViewButton from "./components/ViewButton";
 
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import PageLayout from "../../components/PageLayout";
@@ -12,7 +13,6 @@ import {
   Clock,
   CheckCircle2,
   XCircle,
-  Eye,
   Pencil,
   Send,
   Ban,
@@ -1052,15 +1052,13 @@ export default function JobOffers() {
                               </td>
                               <td className="whitespace-nowrap px-4 py-3.5 text-right">
                                 <div className="inline-flex items-center justify-end gap-1">
-                                  <button
-                                    type="button"
+                                  <ViewButton
                                     title="View offer details"
                                     aria-label="View offer details"
                                     onClick={() => openDetails(offer)}
                                     className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-slate-100 text-slate-700 shadow-xs hover:bg-slate-200"
-                                  >
-                                    <Eye size={17} />
-                                  </button>
+                                    label="View"
+                                  />
                                   <button
                                     type="button"
                                     title="Edit draft offer"
