@@ -1,3 +1,4 @@
+import RecruitmentModal, { ModalButton } from "./components/RecruitmentModal";
 
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import PageLayout from "../../components/PageLayout";
@@ -1139,46 +1140,27 @@ export default function JobOffers() {
         </div>
 
         {(modal === "create" || modal === "edit") && (
-          <div
-            className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4"
-            onClick={closeModal}
-          >
-            <div
-              role="dialog"
-              aria-modal="true"
-              aria-labelledby="offer-form-title"
-              className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white shadow-2xl"
-              onClick={(event) => event.stopPropagation()}
-            >
-              <div className="sticky top-0 z-10 flex items-center justify-between border-b bg-white px-6 py-4">
-                <div>
-                  <h2
-                    id="offer-form-title"
-                    className="text-lg font-bold text-slate-900"
-                  >
-                    {modal === "create"
-                      ? "Create Job Offer"
-                      : "Edit Job Offer"}
-                  </h2>
-
-                  <p className="mt-1 text-sm text-slate-500">
-                    {modal === "create"
-                      ? "Select an eligible candidate and create an offer."
-                      : "Only draft offers can be edited."}
-                  </p>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={closeModal}
-                  disabled={saving}
-                  className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 disabled:opacity-50"
+          <RecruitmentModal
+            open
+            onClose={closeModal}
+            size="lg"
+            title={modal === "create" ? "Create Job Offer" : "Edit Job Offer"}
+            subtitle={modal === "create" ? "Select an eligible candidate and create an offer." : "Only draft offers can be edited."}
+            footer={
+              <>
+                <ModalButton onClick={closeModal} disabled={saving}>Cancel</ModalButton>
+                <ModalButton
+                  variant="primary"
+                  type="submit"
+                  form="job-offer-form"
+                  disabled={saving || (modal === "create" && (!form.applicationId || eligibleLoading))}
                 >
-                  <X size={20} />
-                </button>
-              </div>
-
-              <form onSubmit={saveOffer} className="space-y-5 p-6">
+                  {saving ? "Saving..." : modal === "create" ? "Create Offer" : "Save Changes"}
+                </ModalButton>
+              </>
+            }
+          >
+              <form id="job-offer-form" onSubmit={saveOffer} className="space-y-5">
                 {modal === "create" && (
                   <div>
                     <label className="mb-1.5 block text-sm font-medium text-slate-700">
@@ -1405,94 +1387,69 @@ export default function JobOffers() {
                   </p>
                 )}
 
-                <div className="flex justify-end gap-3 border-t pt-4">
-                  <button
-                    type="button"
-                    onClick={closeModal}
-                    disabled={saving}
-                    className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50"
-                  >
-                    Cancel
-                  </button>
-
-                  <button
-                    type="submit"
-                    disabled={
-                      saving ||
-                      (modal === "create" &&
-                        (!form.applicationId || eligibleLoading))
-                    }
-                    className="rounded-xl bg-primary-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-primary-700 disabled:cursor-wait disabled:opacity-60"
-                  >
-                    {saving
-                      ? "Saving..."
-                      : modal === "create"
-                        ? "Create Offer"
-                        : "Save Changes"}
-                  </button>
-                </div>
               </form>
-            </div>
-          </div>
+          </RecruitmentModal>
         )}
 
         {/* VIEW OFFER / SEND EMAIL MODAL */}
         {modal === "view" && selectedOffer && (
-          <div
-            className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4"
-            onClick={closeModal}
-          >
-            <div
-              role="dialog"
-              aria-modal="true"
-              aria-labelledby="offer-detail-title"
-              className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white shadow-2xl"
-              onClick={(event) => event.stopPropagation()}
-            >
-              <div className="sticky top-0 z-10 flex items-center justify-between border-b bg-white px-6 py-5">
-                <div>
-                  <h2
-                    id="offer-detail-title"
-                    className="text-lg font-bold text-slate-900"
+          <RecruitmentModal
+            open
+            onClose={closeModal}
+            size="xl"
+            title={selectedOffer.candidateName}
+            subtitle={`${selectedOffer.email} • Offer ID: OFF-${String(selectedOffer.id).padStart(3, "0")}`}
+            badge={selectedOffer.status}
+            footer={
+              <>
+                {selectedOffer.status === "Draft" && (
+                  <ModalButton
+                    variant="primary"
+                    onClick={sendOfferEmail}
+                    disabled={emailSending || !selectedOffer.email}
                   >
-                    Job Offer Details
-                  </h2>
-
-                  <p className="mt-1 text-sm text-slate-500">
-                    Offer ID: OFF-{String(selectedOffer.id).padStart(3, "0")}
-                  </p>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={closeModal}
-                  disabled={emailSending}
-                  className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 disabled:opacity-50"
-                  aria-label="Close offer details"
-                >
-                  <X size={20} />
-                </button>
-              </div>
-
-              <div className="space-y-5 p-6">
-                <div className="flex items-center gap-4">
-                  <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-primary-100 text-lg font-bold text-primary-700">
-                    {getInitials(selectedOffer.candidateName)}
-                  </div>
-
-                  <div className="min-w-0 flex-1">
-                    <h3 className="text-lg font-semibold text-slate-900">
-                      {selectedOffer.candidateName}
-                    </h3>
-
-                    <p className="break-all text-sm text-slate-500">
-                      {selectedOffer.email}
-                    </p>
-                  </div>
-
-                  <StatusBadge status={selectedOffer.status} />
-                </div>
-
+                    {emailSending ? <RefreshCw size={16} className="animate-spin" /> : <Send size={16} />}
+                    {emailSending ? "Sending Email..." : "Send Offer Email"}
+                  </ModalButton>
+                )}
+                {["Sent", "Pending"].includes(selectedOffer.status) && (
+                  <>
+                    <ModalButton
+                      variant="primary"
+                      disabled={actionId === selectedOffer.id}
+                      onClick={() => changeStatus(selectedOffer, "Accepted")}
+                    >
+                      <CheckCircle2 size={16} /> Mark Accepted
+                    </ModalButton>
+                    <ModalButton
+                      variant="danger"
+                      disabled={actionId === selectedOffer.id}
+                      onClick={() => changeStatus(selectedOffer, "Rejected")}
+                    >
+                      <XCircle size={16} /> Mark Rejected
+                    </ModalButton>
+                    <ModalButton
+                      disabled={actionId === selectedOffer.id}
+                      onClick={() => changeStatus(selectedOffer, "Withdrawn")}
+                    >
+                      <Ban size={16} /> Withdraw
+                    </ModalButton>
+                  </>
+                )}
+                {selectedOffer.status === "Draft" && (
+                  <ModalButton
+                    variant="danger"
+                    disabled={actionId === selectedOffer.id}
+                    onClick={() => deleteOffer(selectedOffer)}
+                  >
+                    <Trash2 size={16} /> Delete Draft
+                  </ModalButton>
+                )}
+                <ModalButton onClick={closeModal} disabled={emailSending}>Close</ModalButton>
+              </>
+            }
+          >
+              <div className="space-y-5">
                 <div className="grid gap-4 sm:grid-cols-2">
                   {[
                     {
@@ -1610,22 +1567,6 @@ export default function JobOffers() {
                         </p>
                       )}
 
-                      <button
-                        type="button"
-                        onClick={sendOfferEmail}
-                        disabled={emailSending || !selectedOffer.email}
-                        className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-50"
-                      >
-                        {emailSending ? (
-                          <RefreshCw size={16} className="animate-spin" />
-                        ) : (
-                          <Send size={16} />
-                        )}
-
-                        {emailSending
-                          ? "Sending Email..."
-                          : "Send Offer Email"}
-                      </button>
                     </div>
                   ) : (
                     <div className="rounded-lg border border-slate-200 bg-white p-4">
@@ -1650,66 +1591,11 @@ export default function JobOffers() {
                   )}
                 </div>
 
-                {["Sent", "Pending"].includes(selectedOffer.status) && (
-                  <div className="flex flex-wrap gap-3 border-t pt-4">
-                    <button
-                      type="button"
-                      disabled={actionId === selectedOffer.id}
-                      onClick={() =>
-                        changeStatus(selectedOffer, "Accepted")
-                      }
-                      className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
-                    >
-                      <CheckCircle2 size={16} />
-                      Mark Accepted
-                    </button>
-
-                    <button
-                      type="button"
-                      disabled={actionId === selectedOffer.id}
-                      onClick={() =>
-                        changeStatus(selectedOffer, "Rejected")
-                      }
-                      className="inline-flex items-center gap-2 rounded-lg bg-rose-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-rose-700 disabled:opacity-50"
-                    >
-                      <XCircle size={16} />
-                      Mark Rejected
-                    </button>
-
-                    <button
-                      type="button"
-                      disabled={actionId === selectedOffer.id}
-                      onClick={() =>
-                        changeStatus(selectedOffer, "Withdrawn")
-                      }
-                      className="inline-flex items-center gap-2 rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
-                    >
-                      <Ban size={16} />
-                      Withdraw
-                    </button>
-                  </div>
-                )}
-
-                {selectedOffer.status === "Draft" && (
-                  <div className="flex justify-end border-t pt-4">
-                    <button
-                      type="button"
-                      disabled={actionId === selectedOffer.id}
-                      onClick={() => deleteOffer(selectedOffer)}
-                      className="inline-flex items-center gap-2 rounded-lg border border-rose-200 px-4 py-2.5 text-sm font-semibold text-rose-700 hover:bg-rose-50 disabled:opacity-50"
-                    >
-                      <Trash2 size={16} />
-                      Delete Draft
-                    </button>
-                  </div>
-                )}
-
                 <p className="text-xs text-slate-400">
                   Created on {formatDate(selectedOffer.createdDate)}
                 </p>
               </div>
-            </div>
-          </div>
+          </RecruitmentModal>
         )}
       </>
     </PageLayout>

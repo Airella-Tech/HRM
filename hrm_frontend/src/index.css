@@ -171,6 +171,13 @@
   0%, 100% { opacity: .25; }
   50%      { opacity: 1; }
 }
+@keyframes greetingSpin {
+  to { transform: rotate(360deg); }
+}
+@keyframes greetingDrift {
+  0%, 100% { transform: translateX(-8px); }
+  50%      { transform: translateX(8px); }
+}
 @keyframes greetingText {
   from { opacity: 0; transform: translateY(8px); }
   to   { opacity: 1; transform: translateY(0); }
@@ -180,8 +187,11 @@
 .greeting-ring    { animation: greetingBreathe 7s ease-in-out infinite; }
 .greeting-glow    { animation: greetingGlow 4s ease-in-out infinite; }
 .greeting-twinkle { animation: greetingTwinkle 3s ease-in-out infinite; }
+.greeting-spin    { animation: greetingSpin 80s linear infinite; }
+.greeting-drift   { animation: greetingDrift 12s ease-in-out infinite; }
 .greeting-text    { animation: greetingText .6s ease both; }
 @media (prefers-reduced-motion: reduce) {
   .greeting-rise, .greeting-float, .greeting-ring,
-  .greeting-glow, .greeting-twinkle, .greeting-text { animation: none; }
+    .greeting-glow, .greeting-twinkle, .greeting-text,
+  .greeting-spin, .greeting-drift { animation: none; }
 }

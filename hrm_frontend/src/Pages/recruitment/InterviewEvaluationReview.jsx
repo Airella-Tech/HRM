@@ -1,3 +1,4 @@
+import RecruitmentModal, { ModalButton } from "./components/RecruitmentModal";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Search,
@@ -1251,7 +1252,7 @@ export default function InterviewEvaluationReview() {
         ================================================= */}
 
         {selectedInterview && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-3 sm:p-6">
+          <RecruitmentModal open={true} onClose={closeReview} size="2xl">
             <div className="flex max-h-[94vh] w-full max-w-5xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl">
               {/* Modal header */}
               <div className="flex items-start justify-between border-b border-slate-200 p-5 sm:p-6">
@@ -1731,7 +1732,7 @@ export default function InterviewEvaluationReview() {
                 </button>
               </div>
             </div>
-          </div>
+          </RecruitmentModal>
         )}
       </>
     </PageLayout>

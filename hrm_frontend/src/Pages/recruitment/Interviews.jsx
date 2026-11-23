@@ -1,3 +1,4 @@
+import RecruitmentModal, { ModalButton } from "./components/RecruitmentModal";
 import React, {
   useCallback,
   useEffect,
@@ -2135,23 +2136,14 @@ export default function RecruitmentInterviews() {
 
         {/* Backend shortlisted-candidate picker */}
         {pickerOpen && (
-          <div className="fixed inset-0 z-[55] flex items-center justify-center bg-slate-950/50 p-4">
-            <div
-              role="dialog"
-              aria-modal="true"
-              className="w-full max-w-5xl overflow-hidden rounded-2xl bg-white shadow-2xl"
-            >
-              <div className="flex items-center justify-between border-b p-5">
-                <div>
-                  <h2 className="text-xl font-bold">Shortlisted Candidates</h2>
-                  <p className="mt-1 text-sm text-slate-500">
-                    Select a candidate to schedule an interview.
-                  </p>
-                </div>
-                <button onClick={() => setPickerOpen(false)} aria-label="Close">
-                  <X />
-                </button>
-              </div>
+          <RecruitmentModal
+            open={true}
+            title="Shortlisted Candidates"
+            subtitle="Select a candidate to schedule an interview."
+            onClose={() => setPickerOpen(false)}
+            size="2xl"
+            footer={<ModalButton onClick={() => setPickerOpen(false)}>Close</ModalButton>}
+          >
               <div className="border-b p-5">
                 <input
                   value={candidateSearch}
@@ -2244,49 +2236,28 @@ export default function RecruitmentInterviews() {
                   </table>
                 )}
               </div>
-              <div className="border-t bg-slate-50 p-4 text-right">
-                <button
-                  onClick={() => setPickerOpen(false)}
-                  className="rounded-xl border bg-white px-4 py-2 text-sm"
-                >
-                  Close
-                </button>
-              </div>
-            </div>
-          </div>
+          </RecruitmentModal>
         )}
 
         {/* Create / edit / reschedule form */}
         {modalOpen && editingId == null && (
-          <div
-            className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-slate-950/50 p-4 backdrop-blur-sm"
-            onMouseDown={(event) => {
-              if (event.target === event.currentTarget) closeForm();
-            }}
+          <RecruitmentModal
+            open={true}
+            title={editingId !== null ? "Edit / Reschedule Interview" : "Schedule Interview"}
+            subtitle="Assign the interview stage and one or more interviewers."
+            onClose={closeForm}
+            size="lg"
+            footer={
+              <>
+                <ModalButton onClick={closeForm} disabled={saving}>Cancel</ModalButton>
+                <ModalButton variant="primary" type="submit" form="interview-form" disabled={saving}>
+                  <CalendarCheck size={17} />
+                  {saving ? "Saving..." : editingId !== null ? "Save Changes" : "Schedule Interview"}
+                </ModalButton>
+              </>
+            }
           >
-            <div
-              role="dialog"
-              aria-modal="true"
-              aria-labelledby="interview-form-title"
-              className="my-auto w-full max-w-3xl overflow-visible rounded-2xl bg-white shadow-2xl"
-            >
-              <div className="flex items-center justify-between border-b p-5 sm:px-6">
-                <div>
-                  <h2 id="interview-form-title" className="text-xl font-bold">
-                    {editingId !== null
-                      ? "Edit / Reschedule Interview"
-                      : "Schedule Interview"}
-                  </h2>
-                  <p className="mt-1 text-sm text-slate-500">
-                    Assign the interview stage and one or more interviewers.
-                  </p>
-                </div>
-                <button onClick={closeForm} aria-label="Close form">
-                  <X />
-                </button>
-              </div>
-
-              <form onSubmit={submit}>
+              <form id="interview-form" onSubmit={submit}>
                 <div className="grid max-h-[68vh] grid-cols-1 gap-5 overflow-y-auto p-5 sm:grid-cols-2 sm:p-6">
                   <label className="text-sm font-medium text-slate-700">
                     Candidate name *
@@ -2677,78 +2648,36 @@ export default function RecruitmentInterviews() {
                   )}
                 </div>
 
-                <div className="flex flex-col-reverse gap-3 border-t bg-slate-50 p-4 sm:flex-row sm:justify-end sm:px-6">
-                  <button
-                    type="button"
-                    onClick={closeForm}
-                    disabled={saving}
-                    className="rounded-xl border bg-white px-5 py-2.5 text-sm font-semibold disabled:opacity-50"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={saving}
-                    className="rounded-xl bg-primary-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-60"
-                  >
-                    <CalendarCheck className="mr-2 inline" size={17} />
-                    {saving
-                      ? "Saving..."
-                      : editingId !== null
-                        ? "Save Changes"
-                        : "Schedule Interview"}
-                  </button>
-                </div>
               </form>
-            </div>
-          </div>
+          </RecruitmentModal>
         )}
 
         {/* Interview details */}
         {selected && (
-          <div
-            className="fixed inset-0 z-[52] flex items-center justify-center overflow-y-auto bg-slate-950/50 p-4"
-            onMouseDown={(event) => {
-              if (event.target === event.currentTarget) {
-                setSelected(null);
-                setStatusError("");
-                setDetailsEditMode(false);
-                setEditingId(null);
-                setFormError("");
-                setConflictError("");
-              }
-            }}
+          <RecruitmentModal
+            open={true}
+            title="Interview Details"
+            subtitle={selected.round}
+            onClose={() => setSelected(null)}
+            size="sm"
+            footer={
+              detailsEditMode ? (
+                <>
+                  <ModalButton onClick={() => { setDetailsEditMode(false); setEditingId(null); setFormError(""); setConflictError(""); setStatusError(""); setInterviewerSearch(""); setInterviewerPickerOpen(false); }} disabled={saving}>Cancel</ModalButton>
+                  <ModalButton variant="primary" type="submit" form="interview-details-form" disabled={saving}><Save size={15} />{saving ? "Saving..." : "Save Changes"}</ModalButton>
+                </>
+              ) : (
+                <>
+                  <ModalButton onClick={() => setSelected(null)}>Close</ModalButton>
+                  <ModalButton variant="danger" onClick={() => setDeleteTarget(selected)}><Trash2 size={15} />Delete</ModalButton>
+                </>
+              )
+            }
           >
-            <div
-              role="dialog"
-              aria-modal="true"
-              className="my-auto w-full max-w-xl overflow-hidden rounded-2xl bg-white shadow-2xl"
-            >
-              <div className="flex items-center justify-between border-b p-5">
-                <div>
-                  <h2 className="text-xl font-bold">Interview Details</h2>
-                  <p className="mt-1 text-sm text-slate-500">
-                    {selected.round}
-                  </p>
-                </div>
-                <button
-                  onClick={() => {
-                    setSelected(null);
-                    setStatusError("");
-                    setDetailsEditMode(false);
-                    setEditingId(null);
-                    setFormError("");
-                    setConflictError("");
-                  }}
-                  aria-label="Close details"
-                >
-                  <X />
-                </button>
-              </div>
 
               <div className="max-h-[72vh] space-y-5 overflow-y-auto p-5">
                 {detailsEditMode ? (
-                  <form onSubmit={submit} className="space-y-4">
+                  <form id="interview-details-form" onSubmit={submit} className="space-y-4">
                     <p className="text-sm text-slate-500">
                       Edit the interview details below. Changes will be saved
                       without opening a separate scheduling form.
@@ -2938,32 +2867,6 @@ export default function RecruitmentInterviews() {
                         {formError}
                       </div>
                     )}
-                    <div className="flex flex-wrap justify-end gap-2 border-t pt-4">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setDetailsEditMode(false);
-                          setEditingId(null);
-                          setFormError("");
-                          setConflictError("");
-                          setStatusError("");
-                          setInterviewerSearch("");
-                          setInterviewerPickerOpen(false);
-                        }}
-                        disabled={saving}
-                        className="rounded-xl border px-4 py-2 text-sm font-semibold disabled:opacity-50"
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        type="submit"
-                        disabled={saving}
-                        className="rounded-xl bg-primary-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
-                      >
-                        <Save className="mr-1 inline" size={15} />
-                        {saving ? "Saving..." : "Save Changes"}
-                      </button>
-                    </div>
                   </form>
                 ) : (
                   <>
@@ -3102,48 +3005,22 @@ export default function RecruitmentInterviews() {
                         </p>
                       )}
                     </div>
-                    <div className="flex flex-wrap justify-end gap-2 border-t pt-4">
-                      <button
-                        type="button"
-                        onClick={() => setDeleteTarget(selected)}
-                        className="rounded-xl border border-red-200 px-4 py-2 text-sm font-semibold text-red-600"
-                      >
-                        <Trash2 className="mr-1 inline" size={15} />
-                        Delete
-                      </button>
-                    </div>
                   </>
                 )}
               </div>
-            </div>
-          </div>
+          </RecruitmentModal>
         )}
 
         {/* Interview history */}
         {historyOpen && (
-          <div className="fixed inset-0 z-[55] flex items-center justify-center bg-slate-950/50 p-4">
-            <div
-              role="dialog"
-              aria-modal="true"
-              className="w-full max-w-2xl overflow-hidden rounded-2xl bg-white shadow-2xl"
-            >
-              <div className="flex items-center justify-between border-b p-5">
-                <div>
-                  <h2 className="flex items-center gap-2 text-xl font-bold">
-                    <History className="text-primary-600" />
-                    Interview History
-                  </h2>
-                  <p className="mt-1 text-sm text-slate-500">
-                    Changes recorded during this page session.
-                  </p>
-                </div>
-                <button
-                  onClick={() => setHistoryOpen(false)}
-                  aria-label="Close history"
-                >
-                  <X />
-                </button>
-              </div>
+          <RecruitmentModal
+            open={true}
+            title="Interview History"
+            subtitle="Changes recorded during this page session."
+            onClose={() => setHistoryOpen(false)}
+            size="lg"
+            footer={<ModalButton onClick={() => setHistoryOpen(false)}>Close</ModalButton>}
+          >
               <div className="border-b p-4">
                 <select
                   value={historyFilter}
@@ -3202,43 +3079,37 @@ export default function RecruitmentInterviews() {
                 This history is session-only; backend audit history is not
                 configured in this page.
               </div>
-            </div>
-          </div>
+          </RecruitmentModal>
         )}
 
         {/* Delete confirmation */}
         {deleteTarget && (
-          <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/60 p-4">
-            <div
-              role="alertdialog"
-              aria-modal="true"
-              className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl"
-            >
+          <RecruitmentModal
+            open={true}
+            title="Delete interview?"
+            subtitle={`Delete the interview for ${deleteTarget.candidate}? This cannot be undone.`}
+            onClose={() => setDeleteTarget(null)}
+            size="sm"
+            tone="danger"
+            footer={
+              <>
+                <ModalButton onClick={() => setDeleteTarget(null)}>Cancel</ModalButton>
+                <ModalButton variant="danger" onClick={confirmDelete}>Delete interview</ModalButton>
+              </>
+            }
+          >
               <div className="flex items-center gap-3 text-red-600">
                 <Trash2 size={24} />
-                <h2 className="text-xl font-bold text-slate-800">
-                  Delete interview?
-                </h2>
+                <p className="text-sm font-semibold">Confirm deletion</p>
               </div>
               <p className="mt-3 text-sm leading-6 text-slate-600">
                 Are you sure you want to delete the interview for{" "}
                 <strong>{deleteTarget.candidate}</strong>? This cannot be
                 undone.
               </p>
-              <div className="mt-6 flex justify-end gap-3">
-                <button
-                  onClick={() => setDeleteTarget(null)}
-                  className="rounded-xl border px-4 py-2.5 text-sm font-semibold"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={confirmDelete}
-                  className="rounded-xl bg-red-600 px-4 py-2.5 text-sm font-semibold text-white"
-                >
-                  Delete interview</button>
- </div></div>
-          </div> )}</div>
+          </RecruitmentModal>
+        )}
+      </div>
     </PageLayout>
   );
 }

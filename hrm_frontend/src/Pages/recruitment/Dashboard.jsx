@@ -553,35 +553,39 @@ const Dashboard = () => {
     <PageLayout role="recruiter" activePage="Overview" title="Recruitment Dashboard" subtitle="Hiring activity and performance">
       <div className="mx-auto max-w-[1400px] space-y-6">
         {/* Greeting */}
-        <GreetingCard
-          name={firstName}
-          date={new Date().toLocaleDateString(undefined, { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
-          attention={attention}
-          onChipClick={(item) => {
-            setVacancyFilter(item.filter);
-            vacancyRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-          }}
-          controls={
-            <>
-              <div role="group" aria-label="Date range" className="flex rounded-xl border border-slate-200 bg-white/80 p-1 backdrop-blur">
-                {RANGES.map((r) => (
-                  <button
-                    key={r.days}
-                    type="button"
-                    aria-pressed={days === r.days}
-                    onClick={() => setDays(r.days)}
-                    className={`rounded-lg px-3.5 py-1.5 text-xs font-semibold transition ${days === r.days ? "bg-primary-600 text-white shadow-sm" : "text-slate-500 hover:bg-white hover:text-slate-800"}`}
-                  >
-                    {r.label}
-                  </button>
-                ))}
-              </div>
-              <button type="button" onClick={reloadAll} aria-label="Refresh data" className="grid h-10 w-10 place-items-center rounded-xl border border-slate-200 bg-white text-slate-500 hover:text-slate-800">
-                <RefreshCw size={16} />
-              </button>
-            </>
-          }
-        />
+        <div
+          className="[&>section]:!rounded-2xl [&>section]:!border-primary-200 [&>section]:!bg-gradient-to-r [&>section]:!from-primary-100 [&>section]:!via-primary-50 [&>section]:!to-white [&>section]:!p-6 [&>section]:md:!p-7 [&>section]:!text-primary-950 [&>section]:!shadow-sm [&>section_h2]:!text-primary-950 [&>section_.greeting-text]:text-slate-600 [&>section_.greeting-text.text-sm]:!text-slate-600 [&>section_.greeting-text_svg]:!text-primary-600 [&>section_button.inline-flex]:!rounded-xl [&>section_button.inline-flex]:!border-primary-200 [&>section_button.inline-flex]:!bg-white [&>section_button.inline-flex]:!px-3.5 [&>section_button.inline-flex]:!py-2 [&>section_button.inline-flex]:!text-sm [&>section_button.inline-flex]:!font-semibold [&>section_button.inline-flex]:!text-primary-800 [&>section_button.inline-flex]:!shadow-sm [&>section_button.inline-flex>span]:!bg-primary-600 [&>section_button.inline-flex>span]:!text-white"
+        >
+          <GreetingCard
+            name={firstName}
+            date={new Date().toLocaleDateString(undefined, { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
+            attention={attention}
+            onChipClick={(item) => {
+              setVacancyFilter(item.filter);
+              vacancyRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+            }}
+            controls={
+              <>
+                <div role="group" aria-label="Date range" className="flex rounded-xl border border-slate-200 bg-white p-1">
+                  {RANGES.map((r) => (
+                    <button
+                      key={r.days}
+                      type="button"
+                      aria-pressed={days === r.days}
+                      onClick={() => setDays(r.days)}
+                      className={`rounded-lg px-3.5 py-1.5 text-xs transition ${days === r.days ? "bg-primary-600 text-white font-semibold shadow-sm" : "text-slate-600 font-semibold hover:bg-primary-50"}`}
+                    >
+                      {r.label}
+                    </button>
+                  ))}
+                </div>
+                <button type="button" onClick={reloadAll} aria-label="Refresh data" className="grid h-10 w-10 place-items-center rounded-xl border border-slate-200 bg-white text-slate-600 hover:bg-primary-50">
+                  <RefreshCw size={16} />
+                </button>
+              </>
+            }
+          />
+        </div>
 
         {!ready && <Card><Skeleton rows={4} /></Card>}
 

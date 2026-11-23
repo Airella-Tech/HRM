@@ -11,7 +11,13 @@ import StatCard, { StatCardGrid } from "../../components/StatCard";
 import { recruitmentApi, hrApi } from "../../services/api";
 import { formatSalary, formatDate } from "../../utils/careersFormat";
 import { useRecruitmentAccess, fetchRecruitmentAccess } from "../../utils/useRecruitmentAccess";
-import { Plus, Pencil, Trash2, BriefcaseBusiness, Loader2, X, Save, AlertTriangle, Send, CheckCircle2, XCircle, Megaphone, Ban, Search, Clock, FileText, Users, CalendarDays, Banknote, Award } from "lucide-react";
+import { Plus, Pencil, Trash2, BriefcaseBusiness, Loader2, Save, AlertTriangle, Send, CheckCircle2, XCircle, Megaphone, Ban, Search, Clock, FileText, Users, CalendarDays, Banknote, Award } from "lucide-react";
+import RecruitmentModal, {
+  modalLabelClass,
+  modalInputClass,
+  modalTextareaClass,
+  ModalButton,
+} from "./components/RecruitmentModal";
 
 
 const FILTERS = ["ALL", "DRAFT", "PENDING_APPROVAL", "APPROVED", "PUBLISHED", "CLOSED"];
@@ -62,9 +68,6 @@ const deadlineInfo = (deadline, status) => {
 // Server errors come back as "400: <reason>"; show just the reason
 const errorText = (error, fallback) => (error?.message || fallback).replace(/^\d{3}:\s*/, "");
 
-const inputCls =
-  "w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm text-slate-800 bg-white focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-100";
-
 // Tomorrow as yyyy-mm-dd in local time (the deadline must be in the future)
 const tomorrow = () => {
   const d = new Date();
@@ -103,8 +106,8 @@ const formFromVacancy = (v) => ({
 
 const Field = ({ label, hint, required, children }) => (
   <label className="block">
-    <span className="block text-sm font-semibold text-slate-700 mb-1.5">
-      {label} {required && <span className="text-red-500">*</span>}
+    <span className={modalLabelClass}>
+      {label} {required && <span className="text-red-600">*</span>}
     </span>
     {children}
     {hint && <span className="block text-xs text-slate-400 mt-1">{hint}</span>}
@@ -183,32 +186,37 @@ const VacancyModal = ({ vacancy, onClose, onSaved }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto">
-        <div className="flex items-start justify-between px-6 py-4 border-b border-slate-100 sticky top-0 bg-white rounded-t-2xl">
-          <div>
-            <h2 className="text-lg font-bold text-slate-900">{editing ? "Edit vacancy" : "New vacancy"}</h2>
-            <p className="text-sm text-slate-500">Saved as a draft until it is submitted for approval</p>
-          </div>
-          <button onClick={onClose} className="p-2 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100">
-            <X size={18} />
-          </button>
-        </div>
-
-        <form onSubmit={handleSubmit} className="p-6 space-y-5">
+    <RecruitmentModal
+      open
+      title={editing ? "Edit vacancy" : "New vacancy"}
+      subtitle="Saved as a draft until it is submitted for approval"
+      icon={BriefcaseBusiness}
+      onClose={onClose}
+      size="lg"
+      footer={
+        <>
+          <ModalButton onClick={onClose}>Cancel</ModalButton>
+          <ModalButton variant="primary" type="submit" form="vacancy-form" disabled={saving}>
+            {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+            {editing ? "Save changes" : "Save as draft"}
+          </ModalButton>
+        </>
+      }
+    >
+        <form id="vacancy-form" onSubmit={handleSubmit} className="space-y-4">
           {error && (
-            <div className="px-4 py-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm font-medium">
+            <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-xl px-4 py-3">
               {error}
             </div>
           )}
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Field label="Job title" required>
-              <input className={inputCls} value={form.title} onChange={set("title")} maxLength={120} placeholder="e.g. Senior Java Developer" />
+              <input className={modalInputClass} value={form.title} onChange={set("title")} maxLength={120} placeholder="e.g. Senior Java Developer" />
             </Field>
             <Field label="Department" required>
               {departments.length > 0 ? (
-                <select className={inputCls} value={form.department} onChange={set("department")}>
+                <select className={modalInputClass} value={form.department} onChange={set("department")}>
                   <option value="">Select a department</option>
                   {form.department && !departments.includes(form.department) && (
                     <option value={form.department}>{form.department}</option>
@@ -218,75 +226,50 @@ const VacancyModal = ({ vacancy, onClose, onSaved }) => {
                   ))}
                 </select>
               ) : (
-                <input className={inputCls} value={form.department} onChange={set("department")} maxLength={100} placeholder="e.g. Engineering" />
+                <input className={modalInputClass} value={form.department} onChange={set("department")} maxLength={100} placeholder="e.g. Engineering" />
               )}
             </Field>
             <Field label="Job type" required>
-              <select className={inputCls} value={form.jobType} onChange={set("jobType")}>
+              <select className={modalInputClass} value={form.jobType} onChange={set("jobType")}>
                 {JOB_TYPES.map((t) => (
                   <option key={t} value={t}>{t}</option>
                 ))}
               </select>
             </Field>
             <Field label="Number of openings" required>
-              <input type="number" min="1" className={inputCls} value={form.vacancyCount} onChange={set("vacancyCount")} />
+              <input type="number" min="1" className={modalInputClass} value={form.vacancyCount} onChange={set("vacancyCount")} />
             </Field>
             <Field label="Experience level">
-              <input className={inputCls} value={form.experienceLevel} onChange={set("experienceLevel")} maxLength={50} placeholder="e.g. 3+ years" />
+              <input className={modalInputClass} value={form.experienceLevel} onChange={set("experienceLevel")} maxLength={50} placeholder="e.g. 3+ years" />
             </Field>
             <Field label="Application deadline" required>
-              <input type="date" min={tomorrow()} className={inputCls} value={form.deadline} onChange={set("deadline")} />
+              <input type="date" min={tomorrow()} className={modalInputClass} value={form.deadline} onChange={set("deadline")} />
             </Field>
             <Field label="Minimum salary">
-              <input type="number" min="0" className={inputCls} value={form.salaryMin} onChange={set("salaryMin")} placeholder="Optional" />
+              <input type="number" min="0" className={modalInputClass} value={form.salaryMin} onChange={set("salaryMin")} placeholder="Optional" />
             </Field>
             <Field label="Maximum salary">
-              <input type="number" min="0" className={inputCls} value={form.salaryMax} onChange={set("salaryMax")} placeholder="Optional" />
+              <input type="number" min="0" className={modalInputClass} value={form.salaryMax} onChange={set("salaryMax")} placeholder="Optional" />
             </Field>
           </div>
 
           <Field label="Description and responsibilities" required>
-            <textarea rows={4} className={inputCls} value={form.description} onChange={set("description")} placeholder="What will this person do?" />
+            <textarea rows={4} className={modalTextareaClass} value={form.description} onChange={set("description")} placeholder="What will this person do?" />
           </Field>
           <Field label="Minimum qualifications" required>
-            <textarea rows={3} className={inputCls} value={form.qualifications} onChange={set("qualifications")} placeholder="Education, certificates, experience..." />
+            <textarea rows={3} className={modalTextareaClass} value={form.qualifications} onChange={set("qualifications")} placeholder="Education, certificates, experience..." />
           </Field>
           <Field label="Required skills" hint="Separate skills with commas, e.g. Java, Spring Boot, PostgreSQL">
-            <input className={inputCls} value={form.skills} onChange={set("skills")} />
+            <input className={modalInputClass} value={form.skills} onChange={set("skills")} />
           </Field>
-
-          <div className="flex justify-end gap-3 pt-2">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-5 py-2.5 rounded-xl border border-slate-200 text-slate-700 text-sm font-semibold hover:bg-slate-50"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={saving}
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary-600 hover:bg-primary-700 disabled:opacity-60 text-white text-sm font-semibold shadow-sm"
-            >
-              {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
-              {editing ? "Save changes" : "Save as draft"}
-            </button>
-          </div>
         </form>
-      </div>
-    </div>
+    </RecruitmentModal>
   );
 };
 
 // ─── Delete confirmation pop-up ───────────────────────────────
 // ─── Vacancy details pop-up (opens when a row is clicked) ─────
 const VacancyDetailsModal = ({ vacancy: v, canEdit, onClose, onEdit }) => {
-  useEffect(() => {
-    const onKey = (e) => e.key === "Escape" && onClose();
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [onClose]);
-
   const due = deadlineInfo(v.deadline, v.status);
   const salary = formatSalary(v.salaryMin, v.salaryMax);
   const skills = v.requiredSkills || [];
@@ -303,37 +286,32 @@ const VacancyDetailsModal = ({ vacancy: v, canEdit, onClose, onEdit }) => {
   ];
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4" onClick={onClose}>
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="vacancy-details-title"
-        className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="flex items-start justify-between gap-4 px-6 py-4 border-b border-slate-200 sticky top-0 bg-white rounded-t-2xl">
-          <div className="min-w-0">
-            <div className="flex flex-wrap items-center gap-2">
-              <h2 id="vacancy-details-title" className="text-lg font-bold text-slate-900">{v.title}</h2>
-              <span className={`inline-block px-2.5 py-1 rounded-full text-xs font-semibold ${STATUS_STYLE[v.status] || STATUS_STYLE.DRAFT}`}>
-                {statusLabel(v.status)}
-              </span>
-            </div>
-            <p className="text-sm text-slate-500 mt-0.5">{v.department}</p>
-          </div>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Close"
-            className="p-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100"
-          >
-            <X size={18} />
-          </button>
-        </div>
-
-        <div className="p-6 space-y-6">
+    <RecruitmentModal
+      open
+      title={v.title}
+      subtitle={v.department}
+      icon={BriefcaseBusiness}
+      badge={
+        <span className={`inline-block px-2.5 py-1 rounded-full text-xs font-semibold ${STATUS_STYLE[v.status] || STATUS_STYLE.DRAFT}`}>
+          {statusLabel(v.status)}
+        </span>
+      }
+      onClose={onClose}
+      size="lg"
+      closeOnBackdrop
+      footer={
+        <>
+          <ModalButton onClick={onClose}>Close</ModalButton>
+          {canEdit && (
+            <ModalButton variant="primary" onClick={() => onEdit(v)}>
+              Edit vacancy
+            </ModalButton>
+          )}
+        </>
+      }
+    >
           {v.status === "DRAFT" && v.rejectionReason && (
-            <div className="flex items-start gap-2 px-4 py-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm font-medium">
+            <div className="flex items-start gap-2 bg-red-50 border border-red-200 text-red-700 text-sm rounded-xl px-4 py-3">
               <AlertTriangle size={16} className="mt-0.5 shrink-0" />
               <span>Sent back: {v.rejectionReason}</span>
             </div>
@@ -381,65 +359,34 @@ const VacancyDetailsModal = ({ vacancy: v, canEdit, onClose, onEdit }) => {
               <p className="text-sm text-slate-500">No skills listed.</p>
             )}
           </section>
-        </div>
-
-        <div className="flex justify-end gap-3 px-6 py-4 border-t border-slate-200">
-          <button
-            type="button"
-            onClick={onClose}
-            className="px-5 py-2.5 rounded-xl border border-slate-200 text-slate-700 text-sm font-semibold hover:bg-slate-50"
-          >
-            Close
-          </button>
-          {canEdit && (
-            <button
-              type="button"
-              onClick={() => onEdit(v)}
-              className="px-5 py-2.5 rounded-xl bg-primary-600 hover:bg-primary-700 text-white text-sm font-semibold shadow-sm"
-            >
-              Edit vacancy
-            </button>
-          )}
-        </div>
-      </div>
-    </div>
+    </RecruitmentModal>
   );
 };
 
 const DeleteConfirmModal = ({ vacancy, busy, onCancel, onConfirm }) => (
-  <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
-    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
-      <div className="flex items-start gap-4">
-        <div className="h-11 w-11 shrink-0 rounded-full bg-red-100 text-red-600 flex items-center justify-center">
-          <AlertTriangle size={22} />
-        </div>
-        <div>
-          <h3 className="text-lg font-bold text-slate-900">Delete this draft?</h3>
-          <p className="text-sm text-slate-500 mt-1">
-            <span className="font-semibold text-slate-700">"{vacancy.title}"</span> will be removed permanently.
-            This can't be undone.
-          </p>
-        </div>
-      </div>
-      <div className="flex justify-end gap-3 mt-6">
-        <button
-          onClick={onCancel}
-          disabled={busy}
-          className="px-5 py-2.5 rounded-xl border border-slate-200 text-slate-700 text-sm font-semibold hover:bg-slate-50 disabled:opacity-60"
-        >
-          Cancel
-        </button>
-        <button
-          onClick={onConfirm}
-          disabled={busy}
-          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 disabled:opacity-60 text-white text-sm font-semibold shadow-sm"
-        >
+  <RecruitmentModal
+    open
+    title="Delete this draft?"
+    subtitle="This draft will be removed permanently."
+    icon={Trash2}
+    onClose={onCancel}
+    size="sm"
+    tone="danger"
+    footer={
+      <>
+        <ModalButton onClick={onCancel} disabled={busy}>Cancel</ModalButton>
+        <ModalButton variant="danger" onClick={onConfirm} disabled={busy}>
           {busy ? <Loader2 size={16} className="animate-spin" /> : <Trash2 size={16} />}
           Delete
-        </button>
-      </div>
-    </div>
-  </div>
+        </ModalButton>
+      </>
+    }
+  >
+    <p className="text-sm text-slate-500">
+      <span className="font-semibold text-slate-700">"{vacancy.title}"</span> will be removed permanently.
+      This can't be undone.
+    </p>
+  </RecruitmentModal>
 );
 
 // ─── Reject pop-up (asks for a reason) ────────────────────────
@@ -456,79 +403,69 @@ const RejectModal = ({ vacancy, busy, onCancel, onConfirm }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
-        <h3 className="text-lg font-bold text-slate-900">Reject this vacancy?</h3>
-        <p className="text-sm text-slate-500 mt-1">
-          <span className="font-semibold text-slate-700">"{vacancy.title}"</span> goes back to draft
-          with your reason attached.
-        </p>
+    <RecruitmentModal
+      open
+      title="Reject this vacancy?"
+      subtitle="Send this vacancy back to draft"
+      icon={XCircle}
+      onClose={onCancel}
+      size="sm"
+      tone="danger"
+      footer={
+        <>
+          <ModalButton onClick={onCancel} disabled={busy}>Cancel</ModalButton>
+          <ModalButton variant="danger" onClick={submit} disabled={busy}>
+            {busy ? <Loader2 size={16} className="animate-spin" /> : <XCircle size={16} />}
+            Reject
+          </ModalButton>
+        </>
+      }
+    >
+      <p className="text-sm text-slate-500">
+        <span className="font-semibold text-slate-700">"{vacancy.title}"</span> goes back to draft
+        with your reason attached.
+      </p>
+      <label>
+        <span className={modalLabelClass}>Reason</span>
         <textarea
           rows={4}
           maxLength={500}
           value={reason}
           onChange={(e) => { setReason(e.target.value); setError(""); }}
           placeholder="e.g. Please add a salary range"
-          className="mt-4 w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm text-slate-800 focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-100"
+          className={modalTextareaClass}
         />
-        {error && <p className="text-xs text-red-600 mt-1">{error}</p>}
-        <div className="flex justify-end gap-3 mt-5">
-          <button
-            onClick={onCancel}
-            disabled={busy}
-            className="px-5 py-2.5 rounded-xl border border-slate-200 text-slate-700 text-sm font-semibold hover:bg-slate-50 disabled:opacity-60"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={submit}
-            disabled={busy}
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 disabled:opacity-60 text-white text-sm font-semibold shadow-sm"
-          >
-            {busy ? <Loader2 size={16} className="animate-spin" /> : <XCircle size={16} />}
-            Reject
-          </button>
-        </div>
-      </div>
-    </div>
+      </label>
+      {error && <p className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-xl px-4 py-3">{error}</p>}
+    </RecruitmentModal>
   );
 };
 
 // ─── Close confirmation pop-up ────────────────────────────────
 const CloseConfirmModal = ({ vacancy, busy, onCancel, onConfirm }) => (
-  <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
-    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
-      <div className="flex items-start gap-4">
-        <div className="h-11 w-11 shrink-0 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center">
-          <Ban size={22} />
-        </div>
-        <div>
-          <h3 className="text-lg font-bold text-slate-900">Close this vacancy?</h3>
-          <p className="text-sm text-slate-500 mt-1">
-            <span className="font-semibold text-slate-700">"{vacancy.title}"</span> will stop accepting
-            applications. This can't be undone.
-          </p>
-        </div>
-      </div>
-      <div className="flex justify-end gap-3 mt-6">
-        <button
-          onClick={onCancel}
-          disabled={busy}
-          className="px-5 py-2.5 rounded-xl border border-slate-200 text-slate-700 text-sm font-semibold hover:bg-slate-50 disabled:opacity-60"
-        >
-          Cancel
-        </button>
-        <button
-          onClick={onConfirm}
-          disabled={busy}
-          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 disabled:opacity-60 text-white text-sm font-semibold shadow-sm"
-        >
+  <RecruitmentModal
+    open
+    title="Close this vacancy?"
+    subtitle="Stop accepting applications"
+    icon={Ban}
+    onClose={onCancel}
+    size="sm"
+    tone="danger"
+    footer={
+      <>
+        <ModalButton onClick={onCancel} disabled={busy}>Cancel</ModalButton>
+        <ModalButton variant="danger" onClick={onConfirm} disabled={busy}>
           {busy ? <Loader2 size={16} className="animate-spin" /> : <Ban size={16} />}
           Close vacancy
-        </button>
-      </div>
-    </div>
-  </div>
+        </ModalButton>
+      </>
+    }
+  >
+    <p className="text-sm text-slate-500">
+      <span className="font-semibold text-slate-700">"{vacancy.title}"</span> will stop accepting
+      applications. This can't be undone.
+    </p>
+  </RecruitmentModal>
 );
 
 // ─── Page ─────────────────────────────────────────────────────

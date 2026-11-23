@@ -1,3 +1,4 @@
+import RecruitmentModal, { ModalButton } from "./components/RecruitmentModal";
 import React, {
   useCallback,
   useEffect,
@@ -1590,47 +1591,46 @@ export default function RecruitmentEvaluations() {
         </div>
 
         {selectedInterview && (
-          <div
-            className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4"
-            onMouseDown={(event) => {
-              if (event.target === event.currentTarget && !saving) {
-                setSelectedInterview(null);
-              }
-            }}
-          >
-            <div
-              role="dialog"
-              aria-modal="true"
-              aria-labelledby="evaluation-modal-title"
-              className="max-h-[92vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white shadow-2xl"
-            >
-              <div className="sticky top-0 z-10 flex items-start justify-between border-b border-slate-100 bg-white px-6 py-4">
-                <div>
-                  <h2
-                    id="evaluation-modal-title"
-                    className="text-lg font-bold text-slate-900"
+          <RecruitmentModal
+            open={true}
+            onClose={() => setSelectedInterview(null)}
+            size="lg"
+            title="Interview Evaluation"
+            subtitle={`${selectedInterview.candidateName} · ${selectedInterview.round}`}
+            footer={
+              selectedEvaluation?.submitted ? (
+                <ModalButton onClick={() => setSelectedInterview(null)}>
+                  Close
+                </ModalButton>
+              ) : (
+                <>
+                  <ModalButton
+                    onClick={() => setSelectedInterview(null)}
+                    disabled={saving}
                   >
-                    Interview Evaluation
-                  </h2>
-                  <p className="mt-1 text-sm text-slate-500">
-                    {selectedInterview.candidateName} ·{" "}
-                    {selectedInterview.round}
-                  </p>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={() => setSelectedInterview(null)}
-                  disabled={saving}
-                  className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 disabled:opacity-50"
-                  aria-label="Close evaluation"
-                >
-                  <X size={20} />
-                </button>
-              </div>
+                    Cancel
+                  </ModalButton>
+                  <ModalButton
+                    type="submit"
+                    variant="primary"
+                    form="evaluation-form"
+                    disabled={
+                      saving ||
+                      normalizeInterviewStatus(selectedInterview.status) !==
+                        "COMPLETED" ||
+                      selectedCriteria.length !== 6
+                    }
+                  >
+                    <Send size={15} />
+                    {saving ? "Submitting..." : "Submit Evaluation"}
+                  </ModalButton>
+                </>
+              )
+            }
+          >
 
               {selectedEvaluation?.submitted ? (
-                <div className="space-y-5 p-6">
+                <div className="space-y-5">
                   <div className="rounded-xl bg-emerald-50 p-4 text-sm text-emerald-800">
                     <CheckCircle2 className="mr-2 inline" size={17} />
                     Your evaluation has been submitted and is read-only.
@@ -1739,18 +1739,13 @@ export default function RecruitmentEvaluations() {
                     </p>
                   </div>
 
-                  <div className="flex justify-end">
-                    <button
-                      type="button"
-                      onClick={() => setSelectedInterview(null)}
-                      className="rounded-xl border border-slate-200 px-4 py-2 text-sm"
-                    >
-                      Close
-                    </button>
-                  </div>
                 </div>
               ) : (
-                <form onSubmit={saveEvaluation} className="space-y-6 p-6">
+                <form
+                  id="evaluation-form"
+                  onSubmit={saveEvaluation}
+                  className="space-y-6"
+                >
                   <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                     <InfoItem
                       icon={UserRound}
@@ -1974,34 +1969,9 @@ export default function RecruitmentEvaluations() {
                     </select>
                   </div>
 
-                  <div className="flex justify-end gap-3 border-t border-slate-100 pt-4">
-                    <button
-                      type="button"
-                      onClick={() => setSelectedInterview(null)}
-                      disabled={saving}
-                      className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-medium text-slate-600 disabled:opacity-50"
-                    >
-                      Cancel
-                    </button>
-
-                    <button
-                      type="submit"
-                      disabled={
-                        saving ||
-                        normalizeInterviewStatus(selectedInterview.status) !==
-                          "COMPLETED" ||
-                        selectedCriteria.length !== 6
-                      }
-                      className="inline-flex items-center gap-2 rounded-xl bg-primary-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-primary-700 disabled:opacity-50"
-                    >
-                      <Send size={15} />
-                      {saving ? "Submitting..." : "Submit Evaluation"}
-                    </button>
-                  </div>
                 </form>
               )}
-            </div>
-          </div>
+          </RecruitmentModal>
         )}
       </div>
     </PageLayout>

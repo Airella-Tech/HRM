@@ -26,6 +26,7 @@ import {
 import { PageLayout } from "../../components/PageLayout";
 import StatCard, { StatCardGrid } from "../../components/StatCard";
 import { recruitmentApi } from "../../services/api";
+import RecruitmentModal, { ModalButton } from "./components/RecruitmentModal";
 
 const ROUNDS = [
   "Technical Interview",
@@ -2099,49 +2100,53 @@ export default function ShortlistedCandidates() {
 
         {/* CANDIDATE WORKFLOW MODAL */}
         {selectedCandidate && (
-          <div
-            className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4"
-            onMouseDown={(event) => {
-              if (event.target === event.currentTarget) {
-                setSelectedCandidate(null);
-              }
-            }}
-          >
-            <div
-              role="dialog"
-              aria-modal="true"
-              aria-labelledby="workflow-title"
-              className="w-full max-w-lg overflow-hidden rounded-2xl bg-white shadow-2xl"
-            >
-              <div className="flex items-center justify-between border-b p-5">
-                <div>
-                  <h2
-                    id="workflow-title"
-                    className="text-xl font-bold text-slate-800"
-                  >
-                    Candidate Interview Workflow
-                  </h2>
-
-                  <p className="mt-1 text-sm text-slate-500">
-                    {selectedCandidate.name}
-                  </p>
-
-                  <p className="mt-1 text-xs text-slate-500">
-                    {selectedCandidate.vacancy}
-                  </p>
-                </div>
-
-                <button
+          <RecruitmentModal
+            open
+            title="Candidate Interview Workflow"
+            subtitle={`${selectedCandidate.name} • ${selectedCandidate.vacancy}`}
+            size="lg"
+            onClose={() => setSelectedCandidate(null)}
+            closeOnBackdrop
+            footer={
+              <>
+                <ModalButton
+                  variant="primary"
                   type="button"
-                  onClick={() => setSelectedCandidate(null)}
-                  aria-label="Close workflow"
-                  className="rounded-lg p-2 text-slate-500 hover:bg-slate-100"
+                  onClick={() => scheduleNextStage(selectedCandidate)}
+                  disabled={
+                    !getNextRound(selectedCandidate) ||
+                    !isValidApplicationId(selectedCandidate.applicationId) ||
+                    hasExistingRoundSchedule(
+                      selectedCandidate,
+                      getNextRound(selectedCandidate),
+                    )
+                  }
                 >
-                  <X size={19} />
-                </button>
-              </div>
-
-              <div className="space-y-3 p-5">
+                  {getNextRound(selectedCandidate) &&
+                  getPendingEvaluation(
+                    selectedCandidate,
+                    getNextRound(selectedCandidate),
+                  )
+                    ? "Evaluations pending"
+                    : getNextRound(selectedCandidate) &&
+                        getPendingManagerDecision(
+                          selectedCandidate,
+                          getNextRound(selectedCandidate),
+                        )
+                      ? "Manager approval pending"
+                      : getNextRound(selectedCandidate) &&
+                          hasExistingRoundSchedule(
+                            selectedCandidate,
+                            getNextRound(selectedCandidate),
+                          )
+                        ? "Already scheduled"
+                        : "Schedule next stage"}
+                </ModalButton>
+                <ModalButton type="button" onClick={() => setSelectedCandidate(null)}>Close</ModalButton>
+              </>
+            }
+          >
+              <div className="space-y-3">
                 {ROUNDS.map((round, index) => {
                   const state = getRoundState(selectedCandidate, round);
 
@@ -2303,52 +2308,8 @@ export default function ShortlistedCandidates() {
                   );
                 })}
 
-                <div className="flex justify-end gap-2 pt-2">
-                  <button
-                    type="button"
-                    onClick={() => setSelectedCandidate(null)}
-                    className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50"
-                  >
-                    Close
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => scheduleNextStage(selectedCandidate)}
-                    disabled={
-                      !getNextRound(selectedCandidate) ||
-                      !isValidApplicationId(selectedCandidate.applicationId) ||
-                      hasExistingRoundSchedule(
-                        selectedCandidate,
-                        getNextRound(selectedCandidate),
-                      )
-                    }
-                    className="rounded-xl bg-primary-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-primary-700 disabled:cursor-not-allowed disabled:bg-slate-300"
-                  >
-                    {getNextRound(selectedCandidate) &&
-                    getPendingEvaluation(
-                      selectedCandidate,
-                      getNextRound(selectedCandidate),
-                    )
-                      ? "Evaluations pending"
-                      : getNextRound(selectedCandidate) &&
-                          getPendingManagerDecision(
-                            selectedCandidate,
-                            getNextRound(selectedCandidate),
-                          )
-                        ? "Manager approval pending"
-                        : getNextRound(selectedCandidate) &&
-                            hasExistingRoundSchedule(
-                              selectedCandidate,
-                              getNextRound(selectedCandidate),
-                            )
-                          ? "Already scheduled"
-                          : "Schedule next stage"}
-                  </button>
-                </div>
               </div>
-            </div>
-          </div>
+          </RecruitmentModal>
         )}
       </div>
     </PageLayout>
