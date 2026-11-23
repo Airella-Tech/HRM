@@ -1862,8 +1862,11 @@ export default function RecruitmentInterviews() {
                     ).length;
 
                     return (
-                      <VacancyGroupCard
+                      <div
                         key={group.key}
+                        className="[&>div>div:first-child]:bg-gradient-to-r [&>div>div:first-child]:from-primary-50 [&>div>div:first-child]:via-slate-50 [&>div>div:first-child]:to-white [&>div>div:first-child]:border-b [&>div>div:first-child]:border-primary-100 [&>div>div:first-child]:px-6 [&>div>div:first-child]:py-5 [&>div>div:first-child>div:first-child>div:first-child]:h-12 [&>div>div:first-child>div:first-child>div:first-child]:w-12 [&>div>div:first-child>div:first-child>div:first-child]:rounded-2xl [&>div>div:first-child>div:first-child>div:first-child]:bg-primary-600 [&>div>div:first-child>div:first-child>div:first-child]:text-white [&>div>div:first-child>div:first-child>div:first-child]:shadow-md [&>div>div:first-child>div:first-child>div:first-child]:shadow-primary-600/25 [&>div>div:first-child>div:first-child>div:first-child]:flex [&>div>div:first-child>div:first-child>div:first-child]:items-center [&>div>div:first-child>div:first-child>div:first-child]:justify-center [&>div>div:first-child>div:first-child>div:first-child]:shrink-0 [&>div>div:first-child>div:first-child>div:nth-child(2)>h3]:text-xl [&>div>div:first-child>div:first-child>div:nth-child(2)>h3]:font-bold [&>div>div:first-child>div:first-child>div:nth-child(2)>h3]:tracking-tight [&>div>div:first-child>div:first-child>div:nth-child(2)>h3]:text-slate-900 [&>div>div:first-child>div:first-child>div:nth-child(2)>p]:text-sm [&>div>div:first-child>div:first-child>div:nth-child(2)>p]:text-slate-500"
+                      >
+                      <VacancyGroupCard
                         title={group.title}
                         department="Interview schedule"
                         meta={`${group.rows.length} ${
@@ -1916,6 +1919,7 @@ export default function RecruitmentInterviews() {
                           </table>
                         </div>
                       </VacancyGroupCard>
+                      </div>
                     );
                   })
                 ) : (
@@ -2983,7 +2987,7 @@ export default function RecruitmentInterviews() {
                         .map((entry) => (
                           <div
                             key={entry.id}
-                            className="mb-3 border-l-2 border-primary-200 pl-3"
+                            className="mb-3 pl-3"
                           >
                             <p className="text-sm font-semibold">
                               {entry.action}

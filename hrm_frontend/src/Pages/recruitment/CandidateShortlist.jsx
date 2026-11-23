@@ -1106,42 +1106,46 @@ export default function RecruitmentCandidateShortlist() {
               return (
                 <div
                   key={vacKey}
-                  className="bg-white rounded-xl border border-slate-200 border-l-4 border-l-primary-600 shadow-sm overflow-hidden transition-shadow hover:shadow-md"
+                  className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden transition-shadow hover:shadow-md"
                 >
                   {/* ── Vacancy Header & Full-Width Controls Bar ── */}
-                  <div className={`px-6 py-5 relative ${isCollapsed ? "" : "border-b border-slate-200"}`}>
+                  <div className="px-6 py-5 relative bg-gradient-to-r from-[#d5dbf5] to-[#e6e9f9] border-b border-[#cfd5ee] text-slate-900">
                     {/* Top Row: Title, Applicants Count, Last Screened Status & Collapse Button */}
                     <div className="flex items-start justify-between gap-4">
-                      <div className="flex flex-col gap-1.5 min-w-0">
-                        <div className="flex items-center gap-2.5 flex-wrap">
-                          <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-                            {group.title}
-                          </h3>
-                          <span className="text-xs px-2.5 py-0.5 rounded-full bg-primary-50 text-primary-700 font-semibold">
-                            {vacTotal} Applicants
-                          </span>
-                          {/* Job Offer Status Badge */}
-                          {(() => {
-                            const offerInfo = getVacancyOfferInfo(vacKey, group.candidates, group.title);
-                            return offerInfo.hasOffer ? (
-                              <span
-                                className="text-xs px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 font-semibold border border-emerald-200 flex items-center gap-1.5"
-                                title="Job offer created for this position"
-                              >
-                                <CheckCircle2 size={13} className="text-emerald-600 shrink-0" />
-                                <span>Job Offer Created {offerInfo.offerCount > 1 ? `(${offerInfo.offerCount})` : ""}</span>
-                              </span>
-                            ) : (
-                              <span
-                                className="text-xs px-3 py-1 rounded-full bg-amber-50 text-amber-700 font-semibold border border-amber-200 flex items-center gap-1.5"
-                                title="No job offer created yet for this position"
-                              >
-                                <Clock size={13} className="text-amber-600 shrink-0" />
-                                <span>Job Offer Not Created Yet</span>
-                              </span>
-                            );
-                          })()}
+                      <div className="flex items-center gap-4 min-w-0">
+                        <div className="h-12 w-12 rounded-2xl bg-primary-600 text-white shadow-md shadow-primary-600/25 flex items-center justify-center shrink-0">
+                          <Briefcase size={22} />
                         </div>
+                        <div className="flex flex-col gap-1.5 min-w-0">
+                          <div className="flex items-center gap-2.5 flex-wrap">
+                            <h3 className="text-xl font-bold tracking-tight text-[#1b2142] flex items-center gap-2">
+                              {group.title}
+                            </h3>
+                            <span className="text-xs px-2.5 py-0.5 rounded-full bg-primary-50 text-primary-700 font-semibold">
+                              {vacTotal} Applicants
+                            </span>
+                            {/* Job Offer Status Badge */}
+                            {(() => {
+                              const offerInfo = getVacancyOfferInfo(vacKey, group.candidates, group.title);
+                              return offerInfo.hasOffer ? (
+                                <span
+                                  className="text-xs px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 font-semibold border border-emerald-200 flex items-center gap-1.5"
+                                  title="Job offer created for this position"
+                                >
+                                  <CheckCircle2 size={13} className="text-emerald-600 shrink-0" />
+                                  <span>Job Offer Created {offerInfo.offerCount > 1 ? `(${offerInfo.offerCount})` : ""}</span>
+                                </span>
+                              ) : (
+                                <span
+                                  className="text-xs px-3 py-1 rounded-full bg-amber-50 text-amber-700 font-semibold border border-amber-200 flex items-center gap-1.5"
+                                  title="No job offer created yet for this position"
+                                >
+                                  <Clock size={13} className="text-amber-600 shrink-0" />
+                                  <span>Job Offer Not Created Yet</span>
+                                </span>
+                              );
+                            })()}
+                          </div>
                         {/* Persisted Last Run Details from database */}
                         {vacConfig?.lastScreenedAt ? (
                           <div className="flex flex-wrap items-center gap-1.5 text-xs text-slate-500">
@@ -1163,6 +1167,7 @@ export default function RecruitmentCandidateShortlist() {
                             <span>Auto-shortlist has not been run yet for this vacancy</span>
                           </div>
                         )}
+                      </div>
                       </div>
 
                       {/* Collapse/Expand Toggle */}

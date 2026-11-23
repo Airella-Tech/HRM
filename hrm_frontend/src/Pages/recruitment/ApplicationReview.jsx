@@ -844,21 +844,19 @@ export default function RecruitmentApplicationReview() {
               return (
                 <div
                   key={group.vacancyKey}
-                  className="bg-white rounded-xl border border-slate-200 border-l-4 border-l-primary-600 shadow-sm overflow-hidden transition-shadow hover:shadow-md"
+                  className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden transition-shadow hover:shadow-md"
                 >
                   {/* ── Vacancy Header ── */}
                   <div
-                    className={`px-6 py-4 flex flex-col lg:flex-row lg:items-center justify-between gap-4 ${
-                      isCollapsed ? "" : "border-b border-slate-200"
-                    }`}
+                    className="px-6 py-5 flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-gradient-to-r from-[#d5dbf5] to-[#e6e9f9] border-b border-[#cfd5ee] text-slate-900"
                   >
                     <div className="flex items-center gap-4 min-w-0">
-                      <div className="w-11 h-11 rounded-xl bg-primary-50 text-primary-600 flex items-center justify-center shrink-0">
-                        <Briefcase size={20} />
+                      <div className="h-12 w-12 rounded-2xl bg-primary-600 text-white shadow-md shadow-primary-600/25 flex items-center justify-center shrink-0">
+                        <Briefcase size={22} />
                       </div>
                       <div className="min-w-0">
-                        <h3 className="text-lg font-bold text-slate-900 truncate">{group.title}</h3>
-                        <p className="text-xs text-slate-500 mt-0.5 flex flex-wrap items-center gap-x-2">
+                        <h3 className="text-xl font-bold tracking-tight text-[#1b2142] truncate">{group.title}</h3>
+                        <p className="text-sm text-slate-600 mt-0.5 flex flex-wrap items-center gap-x-2">
                           <span className="inline-flex items-center gap-1">
                             <Building2 size={12} />
                             <span>{group.department}</span>

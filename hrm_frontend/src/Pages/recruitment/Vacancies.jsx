@@ -99,15 +99,6 @@ const filterLabel = (f, cfg) => {
   return statusLabel(f);
 };
 
-// Coloured stripe on the left of each row, by status
-const STRIPE = {
-  DRAFT: "border-l-slate-400",
-  PENDING_APPROVAL: "border-l-amber-400",
-  APPROVED: "border-l-sky-400",
-  PUBLISHED: "border-l-emerald-500",
-  CLOSED: "border-l-red-400",
-};
-
 // "Nov 19" + a hint like "tomorrow" / "overdue"
 const deadlineInfo = (deadline, status) => {
   if (!deadline) return { date: "—", hint: "", tone: "text-slate-400" };
@@ -834,7 +825,7 @@ export default function RecruitmentVacancies({ mode }) {
               return (
                 <div
                   key={v.id}
-                  className={`flex flex-wrap items-center gap-x-5 gap-y-3 bg-white rounded-xl border border-slate-200 border-l-4 ${STRIPE[v.status] || STRIPE.DRAFT} px-5 py-4 shadow-sm hover:shadow-md transition-shadow`}
+                  className="flex flex-wrap items-center gap-x-5 gap-y-3 bg-white rounded-xl border border-slate-200 px-5 py-4 shadow-sm hover:shadow-md transition-shadow"
                 >
                   {/* Title + details */}
                   <div className="flex-1 min-w-[200px]">

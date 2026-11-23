@@ -24,7 +24,7 @@ export default function VacancyGroupCard({
   children,
 }) {
   return (
-    <div className="overflow-hidden rounded-xl border border-slate-200 border-l-4 border-l-primary-600 bg-white shadow-sm">
+    <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
       <div
         className={`flex flex-col justify-between gap-4 px-5 py-4 lg:flex-row lg:items-center ${
           expanded ? "border-b border-slate-200" : ""

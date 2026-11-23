@@ -815,22 +815,20 @@ export default function RecruitmentApplications() {
               return (
                 <div
                   key={group.key}
-                  className="bg-white rounded-xl border border-slate-200 border-l-4 border-l-primary-600 shadow-sm overflow-hidden transition-shadow hover:shadow-md"
+                  className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden transition-shadow hover:shadow-md"
                 >
                   {/* ── Vacancy Group Header ── */}
                   <div
                     onClick={() => toggleGroup(group.key)}
-                    className={`px-6 py-4 flex flex-col lg:flex-row lg:items-center justify-between gap-4 cursor-pointer hover:bg-slate-50/60 transition-colors ${
-                      isCollapsed ? "" : "border-b border-slate-200"
-                    }`}
+                    className="px-6 py-5 flex flex-col lg:flex-row lg:items-center justify-between gap-4 cursor-pointer bg-gradient-to-r from-[#d5dbf5] to-[#e6e9f9] border-b border-[#cfd5ee] text-slate-900"
                   >
                     <div className="flex items-center gap-4 min-w-0">
-                      <div className="w-11 h-11 rounded-xl bg-primary-50 text-primary-600 flex items-center justify-center shrink-0">
-                        <Briefcase size={20} />
+                      <div className="h-12 w-12 rounded-2xl bg-primary-600 text-white shadow-md shadow-primary-600/25 flex items-center justify-center shrink-0">
+                        <Briefcase size={22} />
                       </div>
                       <div className="min-w-0">
-                        <h3 className="text-lg font-bold text-slate-900 truncate">{group.title}</h3>
-                        <p className="text-xs text-slate-500 mt-0.5">
+                        <h3 className="text-xl font-bold tracking-tight text-[#1b2142] truncate">{group.title}</h3>
+                        <p className="text-sm text-slate-600 mt-0.5">
                           {[
                             group.department,
                             group.jobType,
@@ -844,7 +842,7 @@ export default function RecruitmentApplications() {
 
                     {totalForGroup > 0 && (
                       <div className="hidden xl:block w-48 shrink-0">
-                        <div className="flex h-1.5 rounded-full overflow-hidden bg-slate-100">
+                        <div className="flex h-1.5 rounded-full overflow-hidden bg-white/70">
                           {[
                             { n: newCount, c: "bg-primary-500" },
                             { n: reviewCount, c: "bg-amber-500" },
@@ -858,7 +856,7 @@ export default function RecruitmentApplications() {
                             />
                           ))}
                         </div>
-                        <p className="text-[11px] text-slate-500 mt-1.5">
+                        <p className="text-sm text-slate-600 mt-1.5">
                           {[
                             newCount > 0 ? `${newCount} new` : null,
                             reviewCount > 0 ? `${reviewCount} under review` : null,
