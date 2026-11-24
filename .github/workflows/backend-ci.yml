@@ -1,11 +1,11 @@
 name: Backend CI
 
 on:
+  # No path filter on pull_request: the backend checks are required by branch
+  # protection, so they must always report. Steps are skipped when the PR
+  # doesn't touch the backend (see the `changes` job).
   pull_request:
     branches: [master]
-    paths:
-      - 'hrm_backend/**'
-      - '.github/workflows/backend-ci.yml'
   push:
     branches: [master]
     paths:
@@ -13,8 +13,34 @@ on:
       - '.github/workflows/backend-ci.yml'
 
 jobs:
+  changes:
+    name: Detect backend changes
+    runs-on: ubuntu-latest
+    outputs:
+      backend: ${{ steps.diff.outputs.backend }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check for backend changes
+        id: diff
+        run: |
+          if [ "${{ github.event_name }}" != "pull_request" ]; then
+            echo "backend=true" >> "$GITHUB_OUTPUT"
+          elif git diff --name-only "origin/${{ github.base_ref }}...HEAD" | grep -qE '^(hrm_backend/|\.github/workflows/backend-ci\.yml)'; then
+            echo "backend=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "backend=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  # Always runs so the required checks (Admin_Backend, ...) report on every PR.
+  # Do NOT use a job-level `if` here: a skipped matrix job reports an unresolved
+  # name and would not satisfy the required status checks.
   test:
     name: ${{ matrix.service }}
+    needs: changes
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -29,15 +55,18 @@ jobs:
         working-directory: hrm_backend/${{ matrix.service }}
     steps:
       - name: Checkout
+        if: needs.changes.outputs.backend == 'true'
         uses: actions/checkout@v4
 
       - name: Set up JDK 17
+        if: needs.changes.outputs.backend == 'true'
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '17'
 
       - name: Cache Gradle
+        if: needs.changes.outputs.backend == 'true'
         uses: actions/cache@v4
         with:
           path: |
@@ -48,13 +77,15 @@ jobs:
             gradle-${{ matrix.service }}-
 
       - name: Grant execute permission to gradlew
+        if: needs.changes.outputs.backend == 'true'
         run: chmod +x gradlew
 
       - name: Build and run unit tests
+        if: needs.changes.outputs.backend == 'true'
         run: ./gradlew test --no-daemon
 
       - name: Upload test reports
-        if: always()
+        if: always() && needs.changes.outputs.backend == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: test-reports-${{ matrix.service }}
