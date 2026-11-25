@@ -31,8 +31,8 @@ const NotificationPopup = ({ isOpen, onClose, onUnreadCountChange, role = "hr" }
     }
   };
 
-  const allPage = role === "hr" ? "/hr/notifications" : role === "employee" ? "/employee/notifications" : role === "admin" ? "/admin/companies" : null;
-  const allLabel = role === "hr" || role === "employee" ? "View all notifications →" : role === "admin" ? "Manage Applications & Companies →" : null;
+  const allPage = role === "hr" ? "/hr/notifications" : role === "admin" ? "/admin/companies" : null;
+  const allLabel = role === "hr" ? "View all notifications →" : role === "admin" ? "Manage Applications & Companies →" : null;
 
   return (
     <>
