@@ -1056,7 +1056,6 @@ export default function JobOffers() {
                                     title="View offer details"
                                     aria-label="View offer details"
                                     onClick={() => openDetails(offer)}
-                                    className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-slate-100 text-slate-700 shadow-xs hover:bg-slate-200"
                                     label="View"
                                   />
                                   <button
