@@ -26,10 +26,12 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 
 @Service
 @Transactional
@@ -192,6 +194,194 @@ public class InterviewEmailService {
     }
 
     /**
+     * Sends cancellation notifications to the candidate and all
+     * interviewers assigned to the interview.
+     *
+     * Each email address receives only one cancellation notification.
+     * A failure for one recipient does not prevent attempts for
+     * the remaining recipients.
+     */
+    public void sendCancellationNotification(Interview interview) {
+
+        if (interview == null) {
+            log.warn("Cannot send cancellation emails for a null interview.");
+            return;
+        }
+
+        Long companyId = interview.getCompanyId();
+
+        String subject = "Interview Cancelled - "
+                + interview.getVacancyTitle();
+
+        // Track notified email addresses to prevent duplicates.
+        Set<String> notifiedEmails = new HashSet<>();
+
+        // 1. Send the cancellation email to the candidate.
+        String candidateEmail = interview.getCandidateEmail();
+
+        if (candidateEmail != null && !candidateEmail.isBlank()) {
+
+            notifiedEmails.add(
+                    candidateEmail.trim().toLowerCase(Locale.ROOT));
+
+            try {
+                sendToRecipient(
+                        interview,
+                        candidateEmail,
+                        subject,
+                        buildCandidateCancellationEmailBody(interview));
+
+            } catch (Exception exception) {
+                log.error(
+                        "Could not process cancellation email for candidate "
+                                + "of interview ID {}: {}",
+                        interview.getId(),
+                        exception.getMessage(),
+                        exception);
+            }
+
+        } else {
+            // Still create an email log for the missing candidate address.
+            try {
+                sendToRecipient(
+                        interview,
+                        candidateEmail,
+                        subject,
+                        buildCandidateCancellationEmailBody(interview));
+
+            } catch (Exception exception) {
+                log.error(
+                        "Could not log candidate cancellation email "
+                                + "for interview ID {}: {}",
+                        interview.getId(),
+                        exception.getMessage(),
+                        exception);
+            }
+        }
+
+        // 2. Find interviewers assigned to this interview.
+        List<InterviewEvaluatorAssignment> assignments;
+
+        try {
+            assignments =
+                    assignmentRepository.findByCompanyIdAndInterviewId(
+                            companyId,
+                            interview.getId());
+
+        } catch (Exception exception) {
+            log.error(
+                    "Could not retrieve assigned interviewers for "
+                            + "cancelled interview ID {}: {}",
+                    interview.getId(),
+                    exception.getMessage(),
+                    exception);
+            return;
+        }
+
+        if (assignments == null || assignments.isEmpty()) {
+            log.info(
+                    "No interviewers are assigned to cancelled interview ID {}",
+                    interview.getId());
+            return;
+        }
+
+        // 3. Resolve assigned employee IDs to employee details.
+        Map<Long, UserSummaryDTO> usersById = new LinkedHashMap<>();
+
+        try {
+            List<UserSummaryDTO> users =
+                    employeeDirectory.findByCompanyRef(
+                            authService.getCurrentCompanyRef());
+
+            if (users != null) {
+                for (UserSummaryDTO user : users) {
+                    if (user != null && user.getId() != null) {
+                        usersById.put(user.getId(), user);
+                    }
+                }
+            }
+
+        } catch (Exception exception) {
+            log.error(
+                    "Could not retrieve interviewer details for "
+                            + "cancelled interview ID {}: {}",
+                    interview.getId(),
+                    exception.getMessage(),
+                    exception);
+            return;
+        }
+
+        // 4. Send a cancellation email to each assigned interviewer.
+        for (InterviewEvaluatorAssignment assignment : assignments) {
+
+            if (assignment == null || assignment.getEmployeeId() == null) {
+                continue;
+            }
+
+            UserSummaryDTO user =
+                    usersById.get(assignment.getEmployeeId());
+
+            if (user == null) {
+                log.warn(
+                        "Assigned interviewer ID {} was not found for "
+                                + "cancelled interview ID {}",
+                        assignment.getEmployeeId(),
+                        interview.getId());
+                continue;
+            }
+
+            String interviewerEmail = user.getEmail();
+
+            if (interviewerEmail == null || interviewerEmail.isBlank()) {
+                log.warn(
+                        "Assigned interviewer {} has no email address "
+                                + "for cancelled interview ID {}",
+                        user.getFullName(),
+                        interview.getId());
+                continue;
+            }
+
+            String normalizedEmail =
+                    interviewerEmail.trim().toLowerCase(Locale.ROOT);
+
+            // Skip duplicate addresses, including the candidate's address.
+            if (!notifiedEmails.add(normalizedEmail)) {
+                log.info(
+                        "Skipping duplicate cancellation email to {} "
+                                + "for interview ID {}",
+                        interviewerEmail,
+                        interview.getId());
+                continue;
+            }
+
+            String interviewerName =
+                    user.getFullName() == null
+                            || user.getFullName().isBlank()
+                            ? "Interviewer"
+                            : user.getFullName();
+
+            try {
+                sendToRecipient(
+                        interview,
+                        interviewerEmail,
+                        subject,
+                        buildInterviewerCancellationEmailBody(
+                                interview,
+                                interviewerName));
+
+            } catch (Exception exception) {
+                log.error(
+                        "Could not process cancellation email to interviewer {} "
+                                + "for interview ID {}: {}",
+                        interviewerEmail,
+                        interview.getId(),
+                        exception.getMessage(),
+                        exception);
+            }
+        }
+    }
+
+    /**
      * Sends an email to one recipient and saves the result.
      */
     private InterviewEmailDTO sendToRecipient(
@@ -261,7 +451,6 @@ public class InterviewEmailService {
 
             emailLog.setStatus("Failed");
 
-            // FIX: truncate() is defined at the bottom of this class.
             emailLog.setErrorMessage(truncate(
                     exception.getMessage() == null
                             ? "Email sending failed."
@@ -301,6 +490,9 @@ public class InterviewEmailService {
         return toDto(saved);
     }
 
+    /**
+     * Builds the candidate invitation or rescheduling email body.
+     */
     private String buildCandidateEmailBody(
             Interview interview,
             boolean rescheduled) {
@@ -330,6 +522,9 @@ public class InterviewEmailService {
         return body.toString();
     }
 
+    /**
+     * Builds the interviewer invitation or rescheduling email body.
+     */
     private String buildInterviewerEmailBody(
             Interview interview,
             String interviewerName,
@@ -364,6 +559,70 @@ public class InterviewEmailService {
         return body.toString();
     }
 
+    /**
+     * Builds the cancellation email body sent to the candidate.
+     */
+    private String buildCandidateCancellationEmailBody(
+            Interview interview) {
+
+        StringBuilder body = new StringBuilder();
+
+        body.append("Dear ")
+                .append(interview.getCandidateName())
+                .append(",\n\n");
+
+        body.append(
+                "We regret to inform you that your scheduled interview "
+                        + "has been cancelled.\n\n");
+
+        body.append("Interview details:\n");
+        appendInterviewDetails(body, interview);
+
+        body.append(
+                        "\nWe apologize for any inconvenience caused. "
+                                + "Please contact the recruitment team "
+                                + "if you have any questions.")
+                .append("\n\nKind regards,\nRecruitment Team");
+
+        return body.toString();
+    }
+
+    /**
+     * Builds the cancellation email body sent to an assigned interviewer.
+     */
+    private String buildInterviewerCancellationEmailBody(
+            Interview interview,
+            String interviewerName) {
+
+        StringBuilder body = new StringBuilder();
+
+        body.append("Dear ")
+                .append(interviewerName)
+                .append(",\n\n");
+
+        body.append(
+                "Please be informed that the following interview "
+                        + "assigned to you has been cancelled.\n\n");
+
+        body.append("Candidate: ")
+                .append(interview.getCandidateName())
+                .append("\n\n");
+
+        body.append("Interview details:\n");
+        appendInterviewDetails(body, interview);
+
+        body.append(
+                        "\nPlease take note of this cancellation. "
+                                + "Contact the recruitment team if you need "
+                                + "any further information.")
+                .append("\n\nKind regards,\nRecruitment Team");
+
+        return body.toString();
+    }
+
+    /**
+     * Appends the interview details to an email body.
+     */
     private void appendInterviewDetails(
             StringBuilder body,
             Interview interview) {

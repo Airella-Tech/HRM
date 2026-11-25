@@ -30,15 +30,7 @@ const STAGES = [
   "Final Interview",
 ];
 
-const LOCKED_STATUSES = new Set([
-  "completed",
-  "complete",
-  "cancelled",
-  "canceled",
-  "evaluated",
-  "submitted",
-  "finished",
-]);
+const LOCKED_STATUSES = new Set(["cancelled", "canceled"]);
 
 const unwrapList = (response) => {
   let value = response;
@@ -1235,15 +1227,7 @@ export default function AssignInterviewers() {
                                   {statusBadge(interview)}
                                 </td>
                                 <td className="whitespace-nowrap px-4 py-3.5 text-right">
-                                                                    {locked ? (
-                                    <ViewButton
-                                      onClick={() =>
-                                        openAssignmentModal(interview)
-                                      }
-                                      title="View assigned interviewers"
-                                      label="View"
-                                    />
-                                  ) : !locked ? (
+                                  {!locked ? (
                                     <button
                                       type="button"
                                       onClick={() =>

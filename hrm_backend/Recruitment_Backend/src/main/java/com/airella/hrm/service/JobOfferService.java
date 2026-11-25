@@ -7,13 +7,18 @@ import com.airella.hrm.dto.JobOfferRequestDTO;
 import com.airella.hrm.exception.BusinessException;
 import com.airella.hrm.exception.ResourceNotFoundException;
 import com.airella.hrm.model.Interview;
+import com.airella.hrm.model.InterviewEvaluation;
+import com.airella.hrm.model.InterviewEvaluatorAssignment;
 import com.airella.hrm.model.InterviewRoundDecision;
 import com.airella.hrm.model.JobOffer;
 import com.airella.hrm.model.JobOfferStatus;
+import com.airella.hrm.repository.InterviewEvaluationRepository;
+import com.airella.hrm.repository.InterviewEvaluatorAssignmentRepository;
 import com.airella.hrm.repository.InterviewRepository;
 import com.airella.hrm.repository.InterviewRoundDecisionRepository;
 import com.airella.hrm.repository.JobOfferRepository;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.MailException;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -25,6 +30,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 
 @Service
 @Transactional
@@ -33,6 +39,8 @@ public class JobOfferService {
     private final JobOfferRepository jobOfferRepository;
     private final InterviewRepository interviewRepository;
     private final InterviewRoundDecisionRepository decisionRepository;
+    private final InterviewEvaluatorAssignmentRepository assignmentRepository;
+    private final InterviewEvaluationRepository evaluationRepository;
     private final AuthService authService;
     private final JavaMailSender mailSender;
     private final RecruitmentNotificationService notificationService;
@@ -44,30 +52,31 @@ public class JobOfferService {
             "Final Interview"
     );
 
-    @org.springframework.beans.factory.annotation.Autowired
+    private static final Set<String> PASSING_RECOMMENDATIONS = Set.of(
+            "HIRE",
+            "STRONG_HIRE"
+    );
+
+    @Autowired
     public JobOfferService(
             JobOfferRepository jobOfferRepository,
             AuthService authService,
             JavaMailSender mailSender,
             InterviewRepository interviewRepository,
             InterviewRoundDecisionRepository decisionRepository,
-            @org.springframework.beans.factory.annotation.Autowired(required = false) RecruitmentNotificationService notificationService) {
+            InterviewEvaluatorAssignmentRepository assignmentRepository,
+            InterviewEvaluationRepository evaluationRepository,
+            @Autowired(required = false)
+            RecruitmentNotificationService notificationService) {
 
         this.jobOfferRepository = jobOfferRepository;
         this.authService = authService;
         this.mailSender = mailSender;
         this.interviewRepository = interviewRepository;
         this.decisionRepository = decisionRepository;
+        this.assignmentRepository = assignmentRepository;
+        this.evaluationRepository = evaluationRepository;
         this.notificationService = notificationService;
-    }
-
-    public JobOfferService(
-            JobOfferRepository jobOfferRepository,
-            AuthService authService,
-            JavaMailSender mailSender,
-            InterviewRepository interviewRepository,
-            InterviewRoundDecisionRepository decisionRepository) {
-        this(jobOfferRepository, authService, mailSender, interviewRepository, decisionRepository, null);
     }
 
     // ------------------------------------------------------------
@@ -80,9 +89,15 @@ public class JobOfferService {
 
         Long companyId = authService.getCurrentCompanyId();
 
-        // Prevent duplicate offers for the same application.
-        if (request.applicationId() != null
-                && jobOfferRepository.existsByCompanyIdAndApplicationId(
+        // An application is mandatory for every job offer.
+        if (request.applicationId() == null) {
+            throw new BusinessException(
+                    "An application must be selected before creating a job offer."
+            );
+        }
+
+        // Prevent duplicate job offers for the same application.
+        if (jobOfferRepository.existsByCompanyIdAndApplicationId(
                 companyId,
                 request.applicationId())) {
 
@@ -90,6 +105,12 @@ public class JobOfferService {
                     "A job offer already exists for this application."
             );
         }
+
+        // All four interview rounds must pass.
+        validateJobOfferEligibility(
+                companyId,
+                request.applicationId()
+        );
 
         JobOffer offer = new JobOffer();
 
@@ -99,6 +120,7 @@ public class JobOfferService {
         applyRequest(offer, request);
 
         JobOffer saved = jobOfferRepository.save(offer);
+
         if (notificationService != null) {
             notificationService.offerCreated(saved);
         }
@@ -108,12 +130,6 @@ public class JobOfferService {
 
     // ------------------------------------------------------------
     // GET CANDIDATES ELIGIBLE FOR JOB OFFERS
-    //
-    // A candidate must have:
-    // 1. Completed Technical Interview + manager approval.
-    // 2. Completed HR Interview + manager approval.
-    // 3. Completed Hiring Manager Interview + manager approval.
-    // 4. Completed Final Interview + manager approval.
     // ------------------------------------------------------------
 
     @Transactional(readOnly = true)
@@ -154,60 +170,43 @@ public class JobOfferService {
 
             Interview firstInterview = candidateInterviews.get(0);
 
-            List<String> approvedRounds = new ArrayList<>();
-
-            // Every round must be completed and approved
-            // by the Recruitment Manager.
-            for (String round : INTERVIEW_ROUNDS) {
-
-                boolean roundApproved = candidateInterviews.stream()
-
-                        // Match the required interview round.
-                        .filter(interview ->
-                                interview.getInterviewRound() != null
-                                        && normalizeRound(
-                                        interview.getInterviewRound()
-                                ).equals(normalizeRound(round)))
-
-                        // The interview must be completed.
-                        .filter(interview ->
-                                interview.getStatus() != null
-                                        && interview.getStatus()
-                                        .equalsIgnoreCase("Completed"))
-
-                        // The Recruitment Manager must approve it.
-                        .anyMatch(interview ->
-                                decisionRepository
-                                        .existsByCompanyIdAndInterviewIdAndDecision(
-                                                companyId,
-                                                interview.getId(),
-                                                InterviewRoundDecision.Decision.APPROVED
-                                        ));
-
-                if (roundApproved) {
-                    approvedRounds.add(round);
-                }
-            }
-
-            // All four rounds must be approved.
-            if (approvedRounds.size() != INTERVIEW_ROUNDS.size()) {
-                continue;
-            }
+            Long applicationId = firstInterview.getApplicationId();
 
             // Exclude applications that already have a job offer.
             boolean alreadyHasOffer =
                     jobOfferRepository.existsByCompanyIdAndApplicationId(
                             companyId,
-                            firstInterview.getApplicationId()
+                            applicationId
                     );
 
             if (alreadyHasOffer) {
                 continue;
             }
 
+            // Every one of the four rounds must pass.
+            List<String> approvedRounds = new ArrayList<>();
+
+            for (String round : INTERVIEW_ROUNDS) {
+
+                boolean roundEligible = isRoundEligible(
+                        companyId,
+                        candidateInterviews,
+                        round
+                );
+
+                if (roundEligible) {
+                    approvedRounds.add(round);
+                }
+            }
+
+            // The candidate is eligible only after all four rounds pass.
+            if (approvedRounds.size() != INTERVIEW_ROUNDS.size()) {
+                continue;
+            }
+
             eligibleCandidates.add(
                     new EligibleCandidateDTO(
-                            firstInterview.getApplicationId(),
+                            applicationId,
                             firstInterview.getVacancyId(),
                             firstInterview.getCandidateName(),
                             firstInterview.getCandidateEmail(),
@@ -218,6 +217,173 @@ public class JobOfferService {
         }
 
         return eligibleCandidates;
+    }
+
+    // ------------------------------------------------------------
+    // VALIDATE JOB OFFER ELIGIBILITY
+    //
+    // All four rounds must:
+    // 1. Exist.
+    // 2. Be completed.
+    // 3. Have at least one assigned interviewer per interview.
+    // 4. Have a submitted evaluation from every assigned interviewer.
+    // 5. Have HIRE or STRONG_HIRE from every assigned interviewer.
+    // 6. Have Recruitment Manager approval for every interview.
+    // ------------------------------------------------------------
+
+    private void validateJobOfferEligibility(
+            Long companyId,
+            Long applicationId) {
+
+        List<Interview> candidateInterviews =
+                interviewRepository
+                        .findByCompanyIdOrderByInterviewDateAscInterviewTimeAsc(
+                                companyId
+                        )
+                        .stream()
+                        .filter(interview ->
+                                applicationId.equals(
+                                        interview.getApplicationId()
+                                )
+                        )
+                        .toList();
+
+        for (String requiredRound : INTERVIEW_ROUNDS) {
+
+            boolean roundEligible = isRoundEligible(
+                    companyId,
+                    candidateInterviews,
+                    requiredRound
+            );
+
+            if (!roundEligible) {
+
+                throw new BusinessException(
+                        "The candidate is not eligible for a job offer. "
+                                + requiredRound
+                                + " must be completed, every assigned interviewer "
+                                + "must submit a HIRE or STRONG_HIRE recommendation, "
+                                + "and the Recruitment Manager must approve every "
+                                + "interview in the round."
+                );
+            }
+        }
+    }
+
+    // ------------------------------------------------------------
+    // CHECK WHETHER EVERY INTERVIEW IN A ROUND IS ELIGIBLE
+    // ------------------------------------------------------------
+
+    private boolean isRoundEligible(
+            Long companyId,
+            List<Interview> candidateInterviews,
+            String requiredRound) {
+
+        List<Interview> roundInterviews = candidateInterviews.stream()
+                .filter(interview ->
+                        interview.getInterviewRound() != null
+                                && normalizeRound(interview.getInterviewRound())
+                                .equals(normalizeRound(requiredRound))
+                )
+                .toList();
+
+        // The required round must have at least one interview.
+        if (roundInterviews.isEmpty()) {
+            return false;
+        }
+
+        // Every interview record in this round must pass.
+        return roundInterviews.stream()
+                .allMatch(interview ->
+                        isInterviewRoundEligible(companyId, interview)
+                );
+    }
+
+    // ------------------------------------------------------------
+    // CHECK WHETHER ONE INTERVIEW IS FULLY ELIGIBLE
+    // ------------------------------------------------------------
+
+    private boolean isInterviewRoundEligible(
+            Long companyId,
+            Interview interview) {
+
+        // The interview must be completed.
+        if (interview.getStatus() == null
+                || !"Completed".equalsIgnoreCase(
+                interview.getStatus().trim())) {
+
+            return false;
+        }
+
+        Long interviewId = interview.getId();
+
+        // The Recruitment Manager must approve this interview.
+        boolean managerApproved =
+                decisionRepository
+                        .existsByCompanyIdAndInterviewIdAndDecision(
+                                companyId,
+                                interviewId,
+                                InterviewRoundDecision.Decision.APPROVED
+                        );
+
+        if (!managerApproved) {
+            return false;
+        }
+
+        // Get every assigned interviewer.
+        List<InterviewEvaluatorAssignment> assignments =
+                assignmentRepository.findByCompanyIdAndInterviewId(
+                        companyId,
+                        interviewId
+                );
+
+        // An interview without assigned evaluators cannot pass.
+        if (assignments.isEmpty()) {
+            return false;
+        }
+
+        // Get all evaluations for this interview.
+        List<InterviewEvaluation> evaluations =
+                evaluationRepository
+                        .findByCompanyIdAndInterviewIdOrderByCreatedAtAsc(
+                                companyId,
+                                interviewId
+                        );
+
+        // Every assigned interviewer must have a passing evaluation.
+        return assignments.stream().allMatch(assignment -> {
+
+            Long evaluatorId = assignment.getEmployeeId();
+
+            if (evaluatorId == null) {
+                return false;
+            }
+
+            return evaluations.stream().anyMatch(evaluation -> {
+
+                if (!evaluatorId.equals(evaluation.getEvaluatorId())) {
+                    return false;
+                }
+
+                if (!"SUBMITTED".equalsIgnoreCase(
+                        evaluation.getStatus())) {
+                    return false;
+                }
+
+                if (evaluation.getSubmittedAt() == null) {
+                    return false;
+                }
+
+                String recommendation =
+                        normalizeRecommendation(
+                                evaluation.getRecommendation()
+                        );
+
+                return PASSING_RECOMMENDATIONS.contains(
+                        recommendation
+                );
+            });
+        });
     }
 
     // ------------------------------------------------------------
@@ -233,6 +399,21 @@ public class JobOfferService {
         return round.trim()
                 .replaceAll("\\s+", " ")
                 .toLowerCase(Locale.ROOT);
+    }
+
+    // ------------------------------------------------------------
+    // NORMALIZE EVALUATION RECOMMENDATIONS
+    // ------------------------------------------------------------
+
+    private String normalizeRecommendation(String recommendation) {
+
+        if (recommendation == null) {
+            return "";
+        }
+
+        return recommendation.trim()
+                .replaceAll("[\\s-]+", "_")
+                .toUpperCase(Locale.ROOT);
     }
 
     // ------------------------------------------------------------
@@ -284,10 +465,15 @@ public class JobOfferService {
 
         validateDates(request);
 
+        // An application is mandatory.
+        if (request.applicationId() == null) {
+            throw new BusinessException(
+                    "An application must be selected before updating a job offer."
+            );
+        }
+
         // Prevent linking another offer to the same application.
-        if (request.applicationId() != null
-                && !request.applicationId().equals(
-                offer.getApplicationId())
+        if (!request.applicationId().equals(offer.getApplicationId())
                 && jobOfferRepository
                 .existsByCompanyIdAndApplicationIdAndIdNot(
                         offer.getCompanyId(),
@@ -299,9 +485,16 @@ public class JobOfferService {
             );
         }
 
+        // Recheck eligibility before updating.
+        validateJobOfferEligibility(
+                offer.getCompanyId(),
+                request.applicationId()
+        );
+
         applyRequest(offer, request);
 
         JobOffer saved = jobOfferRepository.save(offer);
+
         if (notificationService != null) {
             notificationService.offerCreated(saved);
         }
@@ -324,6 +517,23 @@ public class JobOfferService {
         }
 
         JobOffer offer = findOffer(id);
+
+        // Prevent bypassing eligibility by directly changing
+        // a DRAFT offer to SENT.
+        if (newStatus == JobOfferStatus.SENT) {
+
+            if (offer.getApplicationId() == null) {
+                throw new BusinessException(
+                        "This job offer is not linked to an application."
+                );
+            }
+
+            validateJobOfferEligibility(
+                    offer.getCompanyId(),
+                    offer.getApplicationId()
+            );
+        }
+
         JobOfferStatus currentStatus = offer.getStatus();
 
         boolean allowed = switch (currentStatus) {
@@ -352,6 +562,7 @@ public class JobOfferService {
         offer.setStatus(newStatus);
 
         JobOffer saved = jobOfferRepository.save(offer);
+
         if (notificationService != null) {
             notificationService.offerStatusUpdated(saved, prev);
         }
@@ -372,6 +583,19 @@ public class JobOfferService {
                     "Only draft job offers can be emailed."
             );
         }
+
+        // An application must be linked to the offer.
+        if (offer.getApplicationId() == null) {
+            throw new BusinessException(
+                    "This job offer is not linked to an application."
+            );
+        }
+
+        // Recheck eligibility before sending the offer.
+        validateJobOfferEligibility(
+                offer.getCompanyId(),
+                offer.getApplicationId()
+        );
 
         String candidateEmail = offer.getCandidateEmail();
 
@@ -468,6 +692,7 @@ public class JobOfferService {
         offer.setStatus(JobOfferStatus.SENT);
 
         JobOffer saved = jobOfferRepository.save(offer);
+
         if (notificationService != null) {
             notificationService.offerStatusUpdated(saved, prev);
         }
@@ -509,7 +734,6 @@ public class JobOfferService {
 
     // ------------------------------------------------------------
     // VALIDATE JOB OFFER DATES
-    // Offer expiry date must be before the proposed start date.
     // ------------------------------------------------------------
 
     private void validateDates(JobOfferRequestDTO request) {

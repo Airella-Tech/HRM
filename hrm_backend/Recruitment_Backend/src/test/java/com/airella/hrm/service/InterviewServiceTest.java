@@ -1443,6 +1443,155 @@ class InterviewServiceTest {
         );
     }
 
+
+    // ------------------------------------------------------------
+    // INTERVIEWER SCHEDULING CONFLICT VALIDATION
+    // ------------------------------------------------------------
+
+    @Test
+    void createShouldRejectOverlappingInterviewForSameInterviewer() {
+
+        Long interviewerId = 101L;
+        LocalDate interviewDate = LocalDate.now().plusDays(2);
+
+        Interview existingInterview = createInterview(
+                20L, "Technical Interview", "Scheduled"
+        );
+        existingInterview.setInterviewDate(interviewDate);
+        existingInterview.setInterviewTime(LocalTime.of(10, 0));
+        existingInterview.setDurationMinutes(60);
+
+        InterviewEvaluatorAssignment existingAssignment =
+                new InterviewEvaluatorAssignment(
+                        COMPANY_ID, 20L, interviewerId, USER_ID
+                );
+
+        UserSummaryDTO interviewer =
+                createUser(interviewerId, "Interviewer One");
+
+        when(interviewRepository
+                .findByCompanyIdAndInterviewDateOrderByInterviewTimeAsc(
+                        COMPANY_ID, interviewDate
+                )).thenReturn(List.of(existingInterview));
+
+        when(assignmentRepository.findByCompanyIdAndInterviewId(
+                COMPANY_ID, 20L
+        )).thenReturn(List.of(existingAssignment));
+
+        when(employeeDirectory.findByCompanyRef(COMPANY_REF))
+                .thenReturn(List.of(interviewer));
+
+        InterviewRequestDTO request = createRequest(
+                11L, "Another Candidate", "another@example.com", 20L,
+                "Software Engineer", "Technical Interview",
+                interviewDate, LocalTime.of(10, 30),
+                60, "Interviewer One", "Online", null, null, null,
+                List.of(interviewerId)
+        );
+
+        assertThrows(
+                BusinessException.class,
+                () -> interviewService.create(request)
+        );
+
+        verify(interviewRepository, never())
+                .save(any(Interview.class));
+    }
+
+    @Test
+    void createShouldAllowBackToBackInterviewsForSameInterviewer() {
+
+        Long interviewerId = 101L;
+        LocalDate interviewDate = LocalDate.now().plusDays(2);
+
+        Interview existingInterview = createInterview(
+                20L, "Technical Interview", "Scheduled"
+        );
+        existingInterview.setInterviewDate(interviewDate);
+        existingInterview.setInterviewTime(LocalTime.of(10, 0));
+        existingInterview.setDurationMinutes(60);
+
+        InterviewEvaluatorAssignment existingAssignment =
+                new InterviewEvaluatorAssignment(
+                        COMPANY_ID, 20L, interviewerId, USER_ID
+                );
+
+        UserSummaryDTO interviewer =
+                createUser(interviewerId, "Interviewer One");
+
+        when(interviewRepository
+                .findByCompanyIdAndInterviewDateOrderByInterviewTimeAsc(
+                        COMPANY_ID, interviewDate
+                )).thenReturn(List.of(existingInterview));
+
+        when(assignmentRepository.findByCompanyIdAndInterviewId(
+                COMPANY_ID, 20L
+        )).thenReturn(List.of(existingAssignment));
+
+        when(employeeDirectory.findByCompanyRef(COMPANY_REF))
+                .thenReturn(List.of(interviewer));
+
+        InterviewRequestDTO request = createRequest(
+                11L, "Another Candidate", "another@example.com", 20L,
+                "Software Engineer", "Technical Interview",
+                interviewDate, LocalTime.of(11, 0),
+                60, "Interviewer One", "Online", null, null, null,
+                List.of(interviewerId)
+        );
+
+        assertDoesNotThrow(
+                () -> interviewService.create(request)
+        );
+    }
+
+    @Test
+    void createShouldAllowOverlappingInterviewsForDifferentInterviewers() {
+
+        Long newInterviewerId = 102L;
+        Long existingInterviewerId = 101L;
+        LocalDate interviewDate = LocalDate.now().plusDays(2);
+
+        Interview existingInterview = createInterview(
+                20L, "Technical Interview", "Scheduled"
+        );
+        existingInterview.setInterviewDate(interviewDate);
+        existingInterview.setInterviewTime(LocalTime.of(10, 0));
+        existingInterview.setDurationMinutes(60);
+
+        InterviewEvaluatorAssignment existingAssignment =
+                new InterviewEvaluatorAssignment(
+                        COMPANY_ID, 20L, existingInterviewerId, USER_ID
+                );
+
+        UserSummaryDTO newInterviewer =
+                createUser(newInterviewerId, "Interviewer Two");
+
+        when(interviewRepository
+                .findByCompanyIdAndInterviewDateOrderByInterviewTimeAsc(
+                        COMPANY_ID, interviewDate
+                )).thenReturn(List.of(existingInterview));
+
+        when(assignmentRepository.findByCompanyIdAndInterviewId(
+                COMPANY_ID, 20L
+        )).thenReturn(List.of(existingAssignment));
+
+        when(employeeDirectory.findByCompanyRef(COMPANY_REF))
+                .thenReturn(List.of(newInterviewer));
+
+        InterviewRequestDTO request = createRequest(
+                11L, "Another Candidate", "another@example.com", 20L,
+                "Software Engineer", "Technical Interview",
+                interviewDate, LocalTime.of(10, 30),
+                60, "Interviewer Two", "Online", null, null, null,
+                List.of(newInterviewerId)
+        );
+
+        assertDoesNotThrow(
+                () -> interviewService.create(request)
+        );
+    }
+
+
     // ------------------------------------------------------------
     // HELPER METHODS
     // ------------------------------------------------------------
