@@ -190,6 +190,7 @@ export default function JobOffers() {
   const [eligibleLoading, setEligibleLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [actionId, setActionId] = useState(null);
+    const [confirmDialog, setConfirmDialog] = useState(null);
 
   const [apiError, setApiError] = useState("");
   const [eligibleError, setEligibleError] = useState("");
@@ -543,7 +544,7 @@ export default function JobOffers() {
   // DELETE DRAFT OFFER
   // ----------------------------------------------------------
 
-  const deleteOffer = async (offer) => {
+    const deleteOffer = async (offer, skipConfirm = false) => {
     if (!offer?.id) {
       setApiError("This offer does not have a valid ID.");
       return;
@@ -554,11 +555,15 @@ export default function JobOffers() {
       return;
     }
 
-    const confirmed = window.confirm(
-      `Are you sure you want to delete the draft offer for ${offer.candidateName}?`
-    );
-
-    if (!confirmed) return;
+      if (!skipConfirm) {
+      setConfirmDialog({
+        title: "Delete draft offer",
+        message: `Are you sure you want to delete the draft offer for ${offer.candidateName}?`,
+        confirmLabel: "Delete",
+        onConfirm: () => deleteOffer(offer, true),
+      });
+      return;
+    }
 
     setApiError("");
     setSuccessMessage("");
@@ -1101,15 +1106,14 @@ export default function JobOffers() {
                                       title="Withdraw offer"
                                       aria-label="Withdraw offer"
                                       disabled={actionId === offer.id}
-                                      onClick={() => {
-                                        if (
-                                          window.confirm(
-                                            `Withdraw the offer for ${offer.candidateName}?`,
-                                          )
-                                        ) {
-                                          changeStatus(offer, "Withdrawn");
-                                        }
-                                      }}
+                                                                            onClick={() =>
+                                        setConfirmDialog({
+                                          title: "Withdraw offer",
+                                          message: `Withdraw the offer for ${offer.candidateName}? The offer will be marked as withdrawn.`,
+                                          confirmLabel: "Withdraw",
+                                          onConfirm: () => changeStatus(offer, "Withdrawn"),
+                                        })
+                                      }
                                       className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-slate-100 text-slate-700 shadow-xs hover:bg-slate-200 disabled:opacity-50"
                                     >
                                       <Ban size={17} />
@@ -1595,6 +1599,32 @@ export default function JobOffers() {
           </RecruitmentModal>
         )}
       </>
+            {confirmDialog && (
+        <RecruitmentModal
+          open
+          onClose={() => setConfirmDialog(null)}
+          size="sm"
+          tone="danger"
+          title={confirmDialog.title}
+          footer={
+            <>
+              <ModalButton onClick={() => setConfirmDialog(null)}>Cancel</ModalButton>
+              <ModalButton
+                variant="danger"
+                onClick={() => {
+                  const run = confirmDialog.onConfirm;
+                  setConfirmDialog(null);
+                  run();
+                }}
+              >
+                {confirmDialog.confirmLabel}
+              </ModalButton>
+            </>
+          }
+        >
+          <p className="text-sm text-slate-600">{confirmDialog.message}</p>
+        </RecruitmentModal>
+      )}
     </PageLayout>
   );
 }
