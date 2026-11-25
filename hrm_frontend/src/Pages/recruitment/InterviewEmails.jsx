@@ -1,3 +1,5 @@
+import RecruitmentModal, { ModalButton } from "./components/RecruitmentModal";
+import ViewButton from "./components/ViewButton";
 
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
@@ -6,7 +8,6 @@ import {
   Search,
   Filter,
   RefreshCw,
-  Eye,
   X,
   CalendarDays,
   Clock3,
@@ -856,17 +857,13 @@ export default function InterviewEmails() {
 
                       <td className="px-5 py-4">
                         <div className="flex items-center gap-1">
-                          <button
-                            type="button"
+                          <ViewButton
                             onClick={() => setSelectedEmail(email)}
                             title="View email details"
                             aria-label={`View notification for ${
                               email.recipientEmail || "recipient"
                             }`}
-                            className="rounded-lg p-2 text-slate-500 hover:bg-primary-50 hover:text-primary-600"
-                          >
-                            <Eye size={17} />
-                          </button>
+                          />
 
                           {(email.status === "Failed" ||
                             email.status === "Pending") && (
@@ -925,44 +922,19 @@ export default function InterviewEmails() {
         </section>
 
         {selectedEmail && (
-          <div
-            className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-slate-950/50 p-4 backdrop-blur-sm"
-            onMouseDown={(event) => {
-              if (event.target === event.currentTarget) {
-                setSelectedEmail(null);
-              }
-            }}
+          <RecruitmentModal
+            open={true}
+            onClose={() => setSelectedEmail(null)}
+            size="xl"
+            title="Email notification details"
+            subtitle="Details returned by the Recruitment backend."
+            footer={
+              <ModalButton onClick={() => setSelectedEmail(null)}>
+                Close
+              </ModalButton>
+            }
           >
-            <div
-              role="dialog"
-              aria-modal="true"
-              aria-labelledby="email-details-title"
-              className="my-auto w-full max-w-xl overflow-hidden rounded-2xl bg-white shadow-2xl"
-            >
-              <div className="flex items-center justify-between border-b border-slate-200 p-5">
-                <div>
-                  <h2
-                    id="email-details-title"
-                    className="text-xl font-bold text-slate-800"
-                  >
-                    Email notification details
-                  </h2>
-                  <p className="mt-1 text-sm text-slate-500">
-                    Details returned by the Recruitment backend.
-                  </p>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={() => setSelectedEmail(null)}
-                  aria-label="Close email details"
-                  className="rounded-lg p-2 text-slate-400 hover:bg-slate-100"
-                >
-                  <X size={20} />
-                </button>
-              </div>
-
-              <div className="max-h-[70vh] space-y-4 overflow-y-auto p-5 sm:p-6">
+              <div className="space-y-4">
                 {[
                   ["Recipient type", selectedEmail.recipientType],
                   ["Recipient name", selectedEmail.recipientName],
@@ -1019,18 +991,7 @@ export default function InterviewEmails() {
                   reached the recipient’s inbox.
                 </div>
               </div>
-
-              <div className="flex justify-end border-t border-slate-200 bg-slate-50 p-4">
-                <button
-                  type="button"
-                  onClick={() => setSelectedEmail(null)}
-                  className="rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-100"
-                >
-                  Close
-                </button>
-              </div>
-            </div>
-          </div>
+          </RecruitmentModal>
         )}
       </div>
     </PageLayout>

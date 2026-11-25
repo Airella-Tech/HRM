@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { PageLayout } from "../../components/PageLayout";
 import { recruitmentApi } from "../../services/api";
 import { formatSalary, formatDate } from "../../utils/careersFormat";
+import RecruitmentModal, { ModalButton } from "./components/RecruitmentModal";
 import {
   isRemovedFromShortlist,
   setRemovedFromShortlist,
@@ -583,72 +584,45 @@ export default function CandidateShortlistHistory() {
 
       {/* Confirmation Modal: Restore Vacancy */}
       {confirmRestoreModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
-          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200 space-y-4">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-2xl bg-primary-50 text-primary-600 flex items-center justify-center shrink-0">
-                <RotateCcw size={22} />
-              </div>
-              <div>
-                <h3 className="text-base font-bold text-slate-900">Restore Vacancy</h3>
-                <p className="text-xs text-slate-500">Reopen vacancy to Active Shortlisting</p>
-              </div>
-            </div>
+        <RecruitmentModal
+          open
+          title="Restore Vacancy"
+          subtitle="Reopen vacancy to Active Shortlisting"
+          size="sm"
+          onClose={() => setConfirmRestoreModal(null)}
+          footer={
+            <>
+              <ModalButton variant="primary" disabled={actionInProgress} onClick={() => handleRestore(confirmRestoreModal)}>
+                {actionInProgress ? <Loader2 size={14} className="animate-spin" /> : <RotateCcw size={14} />}
+                <span>Confirm & Restore</span>
+              </ModalButton>
+              <ModalButton disabled={actionInProgress} onClick={() => setConfirmRestoreModal(null)}>Cancel</ModalButton>
+            </>
+          }
+        >
             <p className="text-xs text-slate-600 leading-relaxed">
               Are you sure you want to restore <span className="font-bold text-slate-900">{confirmRestoreModal.title}</span>?
               This vacancy will be reopened and moved back to the <span className="font-semibold text-primary-700">Active Shortlisting</span> page.
             </p>
-            <div className="flex items-center justify-end gap-2.5 pt-2">
-              <button
-                type="button"
-                disabled={actionInProgress}
-                onClick={() => setConfirmRestoreModal(null)}
-                className="px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 transition-colors cursor-pointer"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                disabled={actionInProgress}
-                onClick={() => handleRestore(confirmRestoreModal)}
-                className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-semibold text-white bg-primary-600 hover:bg-primary-700 transition-colors shadow-xs cursor-pointer disabled:opacity-50"
-              >
-                {actionInProgress ? <Loader2 size={14} className="animate-spin" /> : <RotateCcw size={14} />}
-                <span>Confirm & Restore</span>
-              </button>
-            </div>
-          </div>
-        </div>
+        </RecruitmentModal>
       )}
 
       {/* Candidate Shortlist Details Modal */}
       {selectedCandidateModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
-          <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="text-base font-bold text-slate-900">Candidate Shortlist Record</h3>
-              <button
-                onClick={() => setSelectedCandidateModal(null)}
-                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 transition-colors"
-              >
-                ✕
-              </button>
-            </div>
-
+        <RecruitmentModal
+          open
+          title="Candidate Shortlist Record"
+          subtitle={`${selectedCandidateModal.candidateName} • ${selectedCandidateModal.email}`}
+          badge={selectedCandidateModal.trackingCode || "N/A"}
+          size="md"
+          onClose={() => setSelectedCandidateModal(null)}
+          footer={<ModalButton onClick={() => setSelectedCandidateModal(null)}>Close</ModalButton>}
+        >
             <div className="space-y-3 text-xs">
-              <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/80 space-y-2">
-                <p className="text-sm font-bold text-slate-900">{selectedCandidateModal.candidateName}</p>
-                <div className="flex flex-wrap items-center gap-4 text-slate-600">
-                  <span className="flex items-center gap-1"><Mail size={12} /> {selectedCandidateModal.email}</span>
-                  {selectedCandidateModal.phone && <span className="flex items-center gap-1"><Phone size={12} /> {selectedCandidateModal.phone}</span>}
-                </div>
-                <div className="pt-2 flex items-center gap-2 text-[11px] text-slate-500">
-                  <span className="font-mono bg-white px-2 py-0.5 rounded border border-slate-200">
-                    Code: {selectedCandidateModal.trackingCode || "N/A"}
-                  </span>
-                  <span>Match Score: {selectedCandidateModal.matchScore || 0}%</span>
-                </div>
-              </div>
+              {selectedCandidateModal.phone && (
+                <p className="flex items-center gap-1 text-slate-600"><Phone size={12} /> {selectedCandidateModal.phone}</p>
+              )}
+              <p className="text-[11px] text-slate-500">Match Score: {selectedCandidateModal.matchScore || 0}%</p>
 
               <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 space-y-1.5">
                 <p className="font-semibold text-slate-700">Final Candidate Status:</p>
@@ -675,17 +649,7 @@ export default function CandidateShortlistHistory() {
                 )}
               </div>
             </div>
-
-            <div className="flex items-center justify-end pt-2">
-              <button
-                onClick={() => setSelectedCandidateModal(null)}
-                className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 transition-colors"
-              >
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
+        </RecruitmentModal>
       )}
     </PageLayout>
   );

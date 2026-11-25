@@ -1,8 +1,9 @@
+import RecruitmentModal, { ModalButton } from "./components/RecruitmentModal";
+import ViewButton from "./components/ViewButton";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Search,
   RefreshCw,
-  Eye,
   X,
   CheckCircle2,
   XCircle,
@@ -1222,14 +1223,11 @@ export default function InterviewEvaluationReview() {
                                       </span>
                                     </td>
                                     <td className="whitespace-nowrap px-4 py-3.5 text-right">
-                                      <button
-                                        type="button"
+                                      <ViewButton
                                         onClick={() => openReview(interview)}
                                         className="inline-flex items-center gap-2 whitespace-nowrap rounded-xl bg-primary-600 px-3 py-2 text-sm font-semibold text-white hover:bg-primary-700"
-                                      >
-                                        <Eye size={15} />
-                                        View Reviews
-                                      </button>
+                                        label="View Reviews"
+                                      />
                                     </td>
                                   </tr>
                                 );
@@ -1251,7 +1249,7 @@ export default function InterviewEvaluationReview() {
         ================================================= */}
 
         {selectedInterview && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-3 sm:p-6">
+          <RecruitmentModal open={true} onClose={closeReview} size="2xl">
             <div className="flex max-h-[94vh] w-full max-w-5xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl">
               {/* Modal header */}
               <div className="flex items-start justify-between border-b border-slate-200 p-5 sm:p-6">
@@ -1731,7 +1729,7 @@ export default function InterviewEvaluationReview() {
                 </button>
               </div>
             </div>
-          </div>
+          </RecruitmentModal>
         )}
       </>
     </PageLayout>

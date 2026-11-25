@@ -7,6 +7,10 @@ import RecruitmentApplicationReview from "./ApplicationReview";
 import RecruitmentCandidateShortlist from "./CandidateShortlist";
 import { DeadlineMeter } from "../careers/careersShared";
 import { formatSalary, formatDate } from "../../utils/careersFormat";
+import RecruitmentModal, {
+  ModalButton,
+} from "./components/RecruitmentModal";
+import ViewButton from "./components/ViewButton";
 import {
   isRemovedFromApplications,
   setRemovedFromApplications,
@@ -16,7 +20,6 @@ import {
   Search,
   Filter,
   Download,
-  Eye,
   CheckCircle2,
   Clock,
   Briefcase,
@@ -812,22 +815,20 @@ export default function RecruitmentApplications() {
               return (
                 <div
                   key={group.key}
-                  className="bg-white rounded-xl border border-slate-200 border-l-4 border-l-primary-600 shadow-sm overflow-hidden transition-shadow hover:shadow-md"
+                  className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden transition-shadow hover:shadow-md"
                 >
                   {/* ── Vacancy Group Header ── */}
                   <div
                     onClick={() => toggleGroup(group.key)}
-                    className={`px-6 py-4 flex flex-col lg:flex-row lg:items-center justify-between gap-4 cursor-pointer hover:bg-slate-50/60 transition-colors ${
-                      isCollapsed ? "" : "border-b border-slate-200"
-                    }`}
+                    className="px-6 py-5 flex flex-col lg:flex-row lg:items-center justify-between gap-4 cursor-pointer bg-gradient-to-r from-[#d5dbf5] to-[#e6e9f9] border-b border-[#cfd5ee] text-slate-900"
                   >
                     <div className="flex items-center gap-4 min-w-0">
-                      <div className="w-11 h-11 rounded-xl bg-primary-50 text-primary-600 flex items-center justify-center shrink-0">
-                        <Briefcase size={20} />
+                      <div className="h-12 w-12 rounded-2xl bg-primary-600 text-white shadow-md shadow-primary-600/25 flex items-center justify-center shrink-0">
+                        <Briefcase size={22} />
                       </div>
                       <div className="min-w-0">
-                        <h3 className="text-lg font-bold text-slate-900 truncate">{group.title}</h3>
-                        <p className="text-xs text-slate-500 mt-0.5">
+                        <h3 className="text-xl font-bold tracking-tight text-[#1b2142] truncate">{group.title}</h3>
+                        <p className="text-sm text-slate-600 mt-0.5">
                           {[
                             group.department,
                             group.jobType,
@@ -841,7 +842,7 @@ export default function RecruitmentApplications() {
 
                     {totalForGroup > 0 && (
                       <div className="hidden xl:block w-48 shrink-0">
-                        <div className="flex h-1.5 rounded-full overflow-hidden bg-slate-100">
+                        <div className="flex h-1.5 rounded-full overflow-hidden bg-white/70">
                           {[
                             { n: newCount, c: "bg-primary-500" },
                             { n: reviewCount, c: "bg-amber-500" },
@@ -855,7 +856,7 @@ export default function RecruitmentApplications() {
                             />
                           ))}
                         </div>
-                        <p className="text-[11px] text-slate-500 mt-1.5">
+                        <p className="text-sm text-slate-600 mt-1.5">
                           {[
                             newCount > 0 ? `${newCount} new` : null,
                             reviewCount > 0 ? `${reviewCount} under review` : null,
@@ -1166,16 +1167,13 @@ export default function RecruitmentApplications() {
                                         </button>
 
                                         {/* Inspect Profile modal */}
-                                        <button
+                                        <ViewButton
                                           onClick={() => {
                                             setSelectedApp(app);
                                             setShowResumeText(false);
                                           }}
                                           title="View Full Profile"
-                                          className="p-1.5 rounded-xl text-slate-400 hover:text-primary-600 hover:bg-primary-50 transition-colors"
-                                        >
-                                          <Eye size={17} />
-                                        </button>
+                                        />
                                       </div>
                                     </td>
                                   </tr>
@@ -1385,16 +1383,13 @@ export default function RecruitmentApplications() {
                               <span>Resume</span>
                             </button>
 
-                            <button
+                            <ViewButton
                               onClick={() => {
                                 setSelectedApp(app);
                                 setShowResumeText(false);
                               }}
                               title="View Application Details"
-                              className="p-1.5 rounded-xl text-slate-400 hover:text-primary-600 hover:bg-primary-50 transition-colors"
-                            >
-                              <Eye size={17} />
-                            </button>
+                            />
                           </div>
                         </td>
                       </tr>
@@ -1418,55 +1413,40 @@ export default function RecruitmentApplications() {
 
       {/* ── Candidate Profile & Resume Inspection Modal ── */}
       {selectedApp && (
-        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto animate-fadeIn">
-          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col border border-slate-100">
-            {/* Modal Header */}
-            <div className="p-6 border-b border-slate-100 flex items-start justify-between bg-slate-50/50">
-              <div className="flex items-center gap-4">
-                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary-600 to-primary-700 text-white font-bold text-lg flex items-center justify-center shadow-md">
-                  {getInitials(selectedApp.candidateName)}
-                </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <h3 className="text-xl font-bold text-slate-900">{selectedApp.candidateName}</h3>
-                    {selectedApp.trackingCode && (
-                      <button
-                        onClick={(e) => handleCopyCode(selectedApp.trackingCode, e)}
-                        className="font-mono text-xs font-semibold px-2 py-0.5 rounded-md bg-primary-50 text-primary-700 border border-primary-100 hover:bg-primary-100 inline-flex items-center gap-1"
-                        title="Click to copy tracking code"
-                      >
-                        <span>{selectedApp.trackingCode}</span>
-                        {copiedCode === selectedApp.trackingCode ? (
-                          <Check size={11} className="text-emerald-600" />
-                        ) : (
-                          <Copy size={11} className="opacity-60" />
-                        )}
-                      </button>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2 mt-1">
-                    <span className="text-sm font-semibold text-primary-600">
-                      {selectedApp.jobTitle || selectedApp.vacancyTitle || "General Role"}
-                    </span>
-                    {selectedApp.department && (
-                      <>
-                        <span className="text-slate-300">•</span>
-                        <span className="text-xs text-slate-500">{selectedApp.department}</span>
-                      </>
-                    )}
-                  </div>
-                </div>
-              </div>
-              <button
-                onClick={() => setSelectedApp(null)}
-                className="p-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-200/50 transition-colors"
+        <RecruitmentModal
+          open
+          title={selectedApp.candidateName}
+          subtitle={`${selectedApp.jobTitle || selectedApp.vacancyTitle || "General Role"}${selectedApp.department ? ` • ${selectedApp.department}` : ""}`}
+          badge={selectedApp.trackingCode && (
+            <button
+              onClick={(e) => handleCopyCode(selectedApp.trackingCode, e)}
+              className="font-mono text-xs inline-flex items-center gap-1"
+              title="Click to copy tracking code"
+            >
+              <span>{selectedApp.trackingCode}</span>
+              {copiedCode === selectedApp.trackingCode ? (
+                <Check size={11} className="text-emerald-200" />
+              ) : (
+                <Copy size={11} className="opacity-60" />
+              )}
+            </button>
+          )}
+          onClose={() => setSelectedApp(null)}
+          size="xl"
+          footer={
+            <>
+              <Link
+                to={`/recruitment/applications/review${selectedApp.id ? `?id=${selectedApp.id}` : ""}`}
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-primary-50 text-primary-700 hover:bg-primary-100 transition-colors"
               >
-                <X size={18} />
-              </button>
-            </div>
-
-            {/* Modal Body */}
-            <div className="p-6 space-y-6 overflow-y-auto flex-1">
+                <ClipboardCheck size={14} />
+                Screen & Review Candidate
+              </Link>
+              <ModalButton onClick={() => setSelectedApp(null)}>Close</ModalButton>
+            </>
+          }
+        >
+            <div className="space-y-6">
               {/* Contact details grid */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-4 bg-slate-50 rounded-2xl text-xs text-slate-600 border border-slate-100">
                 <div className="flex items-center gap-2.5">
@@ -1636,80 +1616,31 @@ export default function RecruitmentApplications() {
                 )}
               </div>
             </div>
-
-            {/* Modal Footer */}
-            <div className="p-4 border-t border-slate-100 bg-slate-50/50 flex items-center justify-between">
-              <Link
-                to={`/recruitment/applications/review${selectedApp.id ? `?id=${selectedApp.id}` : ""}`}
-                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-primary-50 text-primary-700 hover:bg-primary-100 transition-colors"
-              >
-                <ClipboardCheck size={14} />
-                <span>Screen & Review Candidate</span>
-              </Link>
-              <button
-                onClick={() => setSelectedApp(null)}
-                className="px-5 py-2.5 rounded-xl bg-slate-200 hover:bg-slate-300 text-slate-800 text-xs font-semibold transition-colors"
-              >
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
+        </RecruitmentModal>
       )}
       {/* ── Job Vacancy Details Modal (Styled like Public Career Page Added Vacancy Details) ── */}
       {selectedVacancyModal && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto animate-fadeIn">
-          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col border border-slate-100 animate-scaleUp">
-            {/* Header: Dark Navy banner styled like Public Careers layout */}
-            <div className="p-6 bg-gradient-to-r from-primary-900 via-primary-800 to-primary-900 text-white flex items-start justify-between border-b border-primary-900/40 relative">
-              <div className="space-y-3 max-w-xl">
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="px-2.5 py-0.5 rounded-full bg-primary-500/30 border border-primary-400/40 text-primary-200 text-[10px] font-extrabold uppercase tracking-widest flex items-center gap-1 shadow-xs">
-                    <Sparkles size={11} className="text-amber-400" />
-                    Career Vacancy Details
-                  </span>
-                  {selectedVacancyModal.status && (
-                    <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 text-[11px] font-semibold flex items-center gap-1">
-                      <CheckCircle2 size={12} />
-                      {selectedVacancyModal.status}
-                    </span>
-                  )}
-                </div>
-
-                <h3 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight leading-tight">
-                  {selectedVacancyModal.title}
-                </h3>
-
-                {/* Hero Chips: Department & Job Type */}
-                <div className="flex flex-wrap items-center gap-2 pt-1">
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-xs font-medium text-primary-100 border border-white/15">
-                    <Building2 size={13} className="text-primary-300" />
-                    {selectedVacancyModal.department || "General"}
-                  </span>
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-xs font-medium text-primary-100 border border-white/15">
-                    <Clock size={13} className="text-primary-300" />
-                    {selectedVacancyModal.jobType || "Full-time"}
-                  </span>
-                  {selectedVacancyModal.vacancyCount && (
-                    <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-xs font-medium text-primary-100 border border-white/15">
-                      <Users size={13} className="text-primary-300" />
-                      {selectedVacancyModal.vacancyCount} {selectedVacancyModal.vacancyCount === 1 ? "Opening" : "Openings"}
-                    </span>
-                  )}
-                </div>
-              </div>
-
-              <button
-                onClick={() => setSelectedVacancyModal(null)}
-                className="p-2 rounded-xl text-slate-300 hover:text-white hover:bg-white/10 transition-colors"
-                title="Close modal"
+        <RecruitmentModal
+          open
+          title={selectedVacancyModal.title}
+          subtitle="Career Vacancy Details"
+          badge={selectedVacancyModal.status}
+          onClose={() => setSelectedVacancyModal(null)}
+          size="xl"
+          footer={
+            <>
+              <Link
+                to="/recruitment/vacancies"
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold text-primary-700 bg-primary-50 hover:bg-primary-100 border border-primary-200/80 transition-colors"
               >
-                <X size={20} />
-              </button>
-            </div>
-
-            {/* Modal Body: 2-Column Responsive Layout like CareerJob.jsx */}
-            <div className="p-6 space-y-6 overflow-y-auto flex-1">
+                <Briefcase size={14} />
+                Manage Vacancy Postings
+              </Link>
+              <ModalButton onClick={() => setSelectedVacancyModal(null)}>Close</ModalButton>
+            </>
+          }
+        >
+            <div className="space-y-6">
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
                 {/* Left/Main Column (2 cols): Description, Qualifications, Skills */}
                 <div className="lg:col-span-2 space-y-6">
@@ -1864,65 +1795,33 @@ export default function RecruitmentApplications() {
                 </div>
               </div>
             </div>
-
-            {/* Modal Footer */}
-            <div className="p-4 border-t border-slate-100 bg-slate-50/50 flex items-center justify-between">
-              <Link
-                to="/recruitment/vacancies"
-                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold text-primary-700 bg-primary-50 hover:bg-primary-100 border border-primary-200/80 transition-colors"
-              >
-                <Briefcase size={14} />
-                <span>Manage Vacancy Postings</span>
-              </Link>
-              <button
-                onClick={() => setSelectedVacancyModal(null)}
-                className="px-5 py-2.5 rounded-xl bg-slate-200 hover:bg-slate-300 text-slate-800 text-xs font-semibold transition-colors"
-              >
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
+        </RecruitmentModal>
       )}
 
       {/* Confirmation Modal: Remove Vacancy to Applications History */}
       {confirmArchiveModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
-          <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-200 space-y-4">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center shrink-0">
-                <Archive size={22} />
-              </div>
-              <div>
-                <h3 className="text-base font-bold text-slate-900">Remove Vacancy</h3>
-                <p className="text-xs text-slate-500">Move opening to Applications History</p>
-              </div>
-            </div>
+        <RecruitmentModal
+          open
+          title="Remove Vacancy"
+          subtitle="Move opening to Applications History"
+          tone="danger"
+          onClose={() => setConfirmArchiveModal(null)}
+          size="sm"
+          footer={
+            <>
+              <ModalButton disabled={actionInProgress} onClick={() => setConfirmArchiveModal(null)}>Cancel</ModalButton>
+              <ModalButton variant="danger" disabled={actionInProgress} onClick={handleArchiveVacancy}>
+                {actionInProgress ? <Loader2 size={14} className="animate-spin" /> : <Archive size={14} />}
+                Confirm & Remove
+              </ModalButton>
+            </>
+          }
+        >
             <p className="text-xs text-slate-600 leading-relaxed">
               Are you sure you want to remove <span className="font-bold text-slate-900">{confirmArchiveModal.vacancy?.title}</span> from active applications?
               This vacancy and all its submitted applications will be moved to the <span className="font-semibold text-primary-700">Applications History</span> view.
             </p>
-            <div className="flex items-center justify-end gap-2.5 pt-2">
-              <button
-                type="button"
-                disabled={actionInProgress}
-                onClick={() => setConfirmArchiveModal(null)}
-                className="px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 transition-colors cursor-pointer"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                disabled={actionInProgress}
-                onClick={handleArchiveVacancy}
-                className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-semibold text-white bg-rose-600 hover:bg-rose-700 transition-colors shadow-sm cursor-pointer disabled:opacity-50"
-              >
-                {actionInProgress ? <Loader2 size={14} className="animate-spin" /> : <Archive size={14} />}
-                <span>Confirm & Remove</span>
-              </button>
-            </div>
-          </div>
-        </div>
+        </RecruitmentModal>
       )}
 
     </PageLayout>

@@ -149,3 +149,49 @@
   .nav-active-anim,
   .nav-marker-anim { animation: none; }
 }
+
+/* ─── Recruitment dashboard greeting card ─── */
+@keyframes greetingRise {
+  from { opacity: 0; transform: translateY(70px) scale(.9); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes greetingFloat {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-5px); }
+}
+@keyframes greetingBreathe {
+  0%, 100% { transform: scale(1); opacity: .9; }
+  50%      { transform: scale(1.04); opacity: 1; }
+}
+@keyframes greetingGlow {
+  0%, 100% { opacity: .55; }
+  50%      { opacity: 1; }
+}
+@keyframes greetingTwinkle {
+  0%, 100% { opacity: .25; }
+  50%      { opacity: 1; }
+}
+@keyframes greetingSpin {
+  to { transform: rotate(360deg); }
+}
+@keyframes greetingDrift {
+  0%, 100% { transform: translateX(-8px); }
+  50%      { transform: translateX(8px); }
+}
+@keyframes greetingText {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.greeting-rise    { animation: greetingRise 1.4s cubic-bezier(.22, 1, .36, 1) both; }
+.greeting-float   { animation: greetingFloat 6s ease-in-out 1.4s infinite; }
+.greeting-ring    { animation: greetingBreathe 7s ease-in-out infinite; }
+.greeting-glow    { animation: greetingGlow 4s ease-in-out infinite; }
+.greeting-twinkle { animation: greetingTwinkle 3s ease-in-out infinite; }
+.greeting-spin    { animation: greetingSpin 80s linear infinite; }
+.greeting-drift   { animation: greetingDrift 12s ease-in-out infinite; }
+.greeting-text    { animation: greetingText .6s ease both; }
+@media (prefers-reduced-motion: reduce) {
+  .greeting-rise, .greeting-float, .greeting-ring,
+    .greeting-glow, .greeting-twinkle, .greeting-text,
+  .greeting-spin, .greeting-drift { animation: none; }
+}

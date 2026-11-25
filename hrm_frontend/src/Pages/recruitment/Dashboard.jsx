@@ -9,11 +9,17 @@ import {
   RefreshCw,
   TrendingUp,
   TrendingDown,
-  Clock3,
+  Calendar,
+  CheckCircle2,
+  Send,
+  PencilLine,
 } from "lucide-react";
 import { PageLayout } from "../../components/PageLayout";
 import { recruitmentApi } from "../../services/api";
 import { useRecruitmentAccess } from "../../utils/useRecruitmentAccess";
+import { avatarColorClass } from "../../utils/avatarColor";
+import GreetingCard from "./components/GreetingCard";
+
 
 /* ===========================================================================
  * Permissions (codes from DefaultRecruitmentSeeder)
@@ -108,28 +114,26 @@ const useList = (enabled, fetcher) => {
  * Visual tokens
  * ========================================================================= */
 const VACANCY_STATUS = [
-  { key: "PUBLISHED", label: "Published", color: "#4f46e5" },
-  { key: "PENDING_APPROVAL", label: "Pending approval", color: "#f59e0b" },
-  { key: "APPROVED", label: "Approved", color: "#10b981" },
-  { key: "DRAFT", label: "Draft", color: "#38bdf8" },
-  { key: "CLOSED", label: "Closed", color: "#cbd5e1" },
+  { key: "PUBLISHED", label: "Published", color: "#16a34a" },
+  { key: "PENDING_APPROVAL", label: "Pending approval", color: "#5563b0" },
+  { key: "APPROVED", label: "Approved", color: "#22c55e" },
+  { key: "DRAFT", label: "Draft", color: "#7c8ac8" },
+  { key: "CLOSED", label: "Closed", color: "#ef4444" },
 ];
 const CHIP = {
-  PUBLISHED: "bg-indigo-50 text-indigo-700",
-  PENDING_APPROVAL: "bg-amber-50 text-amber-700",
-  APPROVED: "bg-emerald-50 text-emerald-700",
-  DRAFT: "bg-sky-50 text-sky-700",
-  CLOSED: "bg-slate-100 text-slate-600",
-  SHORTLISTED: "bg-emerald-50 text-emerald-700",
+  PUBLISHED: "bg-green-50 text-green-700",
+  PENDING_APPROVAL: "bg-primary-50 text-primary-700",
+  APPROVED: "bg-green-50 text-green-700",
+  DRAFT: "bg-primary-50 text-primary-700",
+  CLOSED: "bg-red-50 text-red-600",
+  SHORTLISTED: "bg-primary-100 text-primary-800",
   REJECTED: "bg-red-50 text-red-600",
-  SCHEDULED: "bg-indigo-50 text-indigo-700",
-  COMPLETED: "bg-emerald-50 text-emerald-700",
+  SCHEDULED: "bg-primary-50 text-primary-700",
+  COMPLETED: "bg-green-50 text-green-700",
   CANCELLED: "bg-slate-100 text-slate-600",
-  ACCEPTED: "bg-emerald-50 text-emerald-700",
-  SENT: "bg-sky-50 text-sky-700",
+  ACCEPTED: "bg-green-50 text-green-700",
+  SENT: "bg-primary-50 text-primary-700",
 };
-const AVATAR = ["bg-indigo-100 text-indigo-700", "bg-emerald-100 text-emerald-700", "bg-amber-100 text-amber-700", "bg-sky-100 text-sky-700", "bg-violet-100 text-violet-700", "bg-rose-100 text-rose-700"];
-const avatarTone = (name) => AVATAR[(name || "?").charCodeAt(0) % AVATAR.length];
 
 /* ===========================================================================
  * Building blocks
@@ -138,26 +142,32 @@ const Card = ({ children, className = "", style, ...props }) => (
   <section
     style={style}
     {...props}
-    className={`rounded-2xl border border-slate-200/80 bg-white shadow-[0_2px_12px_rgba(15,23,42,0.035)] ${className}`}
+    className={`h-full rounded-xl border border-slate-200 bg-white p-5 shadow-sm ${className}`}
   >
     {children}
   </section>
 );
 
 const CardHead = ({ title, subtitle, right }) => (
-  <div className="flex items-start justify-between gap-3 px-5 pt-5">
+  <div className="flex items-start justify-between gap-3">
     <div>
-      <h3 className="text-sm font-semibold text-slate-900">{title}</h3>
-      {subtitle && <p className="mt-0.5 text-xs text-slate-500">{subtitle}</p>}
+      <h3 className="text-base font-semibold text-slate-900">{title}</h3>
+      {subtitle && <p className="mt-1 text-sm text-slate-500">{subtitle}</p>}
     </div>
     {right}
   </div>
 );
 
-const Empty = ({ text }) => <p className="px-5 py-10 text-center text-sm text-slate-400">{text}</p>;
+const Empty = ({ text }) => (
+  <div className="flex min-h-36 flex-col items-center justify-center px-5 py-8 text-center">
+    <Calendar className="mb-2 text-slate-400" size={24} strokeWidth={1.75} />
+    <p className="text-sm text-slate-500">{text}</p>
+    <p className="mt-1 text-xs text-slate-400">Check back for updates.</p>
+  </div>
+);
 
 const Skeleton = ({ rows = 3 }) => (
-  <div className="space-y-3 p-5">
+  <div className="space-y-3 py-5">
     {Array.from({ length: rows }).map((_, i) => (
       <div key={i} className="h-10 animate-pulse rounded-lg bg-slate-100" />
     ))}
@@ -165,13 +175,13 @@ const Skeleton = ({ rows = 3 }) => (
 );
 
 const Chip = ({ status }) => (
-  <span className={`inline-flex whitespace-nowrap rounded-full px-2.5 py-0.5 text-xs font-medium capitalize ${CHIP[status] || "bg-slate-100 text-slate-600"}`}>
+  <span className={`inline-flex whitespace-nowrap rounded-full px-2.5 py-0.5 text-xs font-medium ${CHIP[status] || "bg-slate-100 text-slate-600"}`}>
     {pretty(status) || "unknown"}
   </span>
 );
 
 const Avatar = ({ name }) => (
-  <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm font-semibold ${avatarTone(name)}`}>
+  <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm font-semibold text-white ${avatarColorClass(name)}`}>
     {(name || "?").charAt(0).toUpperCase()}
   </span>
 );
@@ -192,52 +202,41 @@ const KpiCard = ({
   label,
   value,
   metric,
-  color = "#6366f1",
-  tone,
+  gradient = "bg-gradient-to-br from-primary-600 to-primary-700",
   footnote,
   loading,
 }) => {
   const positive = metric?.delta >= 0;
 
   return (
-    <Card
-      style={{ borderTop: `3px solid ${color}` }}
-      className="group relative overflow-hidden bg-gradient-to-b from-slate-50/50 to-white p-5 transition-all duration-300 hover:-translate-y-1 hover:shadow-md"
-    >
-      <div
-        className="absolute -right-8 -top-8 h-28 w-28 rounded-full opacity-[0.08] transition-transform duration-300 group-hover:scale-125 pointer-events-none"
-        style={{ backgroundColor: color }}
-      />
-
+    <Card className={`group relative overflow-hidden border-0 ${gradient} p-5 text-white transition-all duration-300 hover:-translate-y-1 hover:shadow-md`}>
       <div className="relative flex items-center justify-between">
-        <div
-          className={`flex h-11 w-11 items-center justify-center rounded-xl border shadow-2xs ${tone}`}
-        >
+        <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-white/20 text-white">
           <Icon size={21} />
         </div>
 
         {metric && (
           <Sparkline
             data={metric.spark}
-            color={color}
+            color="rgba(255,255,255,0.6)"
           />
         )}
       </div>
 
       <div className="relative mt-4">
-        <p className="text-3xl font-extrabold tracking-tight text-slate-900 tabular-nums">
+        <p className="text-3xl font-bold text-white tabular-nums">
           {loading ? "—" : value ?? 0}
         </p>
 
-        <p className="mt-1 text-xs font-semibold uppercase tracking-wider text-slate-500">
+        <p className="mt-1 text-xs font-semibold text-white/85">
           {label}
         </p>
       </div>
 
-      <div className="relative mt-4 flex min-h-6 items-center justify-between border-t border-slate-100 pt-3 text-xs">
+      <div className="relative mt-4 flex min-h-6 items-center justify-between text-xs">
         {metric ? (
           metric.delta === null ? (
-            <span className="text-[11px] text-slate-400">
+            <span className="text-[11px] text-white/80">
               {metric.current
                 ? "No previous period data"
                 : "No activity in this period"}
@@ -245,10 +244,7 @@ const KpiCard = ({
           ) : (
             <div className="flex items-center gap-1.5 w-full justify-between">
               <span
-                className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full border ${positive
-                  ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                  : "bg-rose-50 text-rose-700 border-rose-200"
-                  }`}
+                className="inline-flex items-center gap-1 rounded-full bg-white/20 px-2 py-0.5 text-[11px] font-semibold text-white"
               >
                 {positive ? (
                   <TrendingUp size={12} />
@@ -258,16 +254,15 @@ const KpiCard = ({
                 {positive ? "+" : ""}
                 {metric.delta}%
               </span>
-              <span className="text-[11px] font-normal text-slate-400">
+              <span className="text-[11px] font-normal text-white/80">
                 vs previous period
               </span>
             </div>
           )
         ) : (
           <div className="flex items-center justify-between w-full">
-            <span className="text-[11px] text-slate-400 font-medium">Status</span>
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200">
-              <span className="w-1.5 h-1.5 rounded-full bg-indigo-500" />
+            <span className="text-[11px] font-medium text-white/80">Status</span>
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-white/20 px-2.5 py-0.5 text-[11px] font-semibold text-white">
               {footnote || "Active"}
             </span>
           </div>
@@ -286,7 +281,7 @@ const TrendChart = ({ series, labels }) => {
   const y = (v) => H - pad - (v / max) * (H - pad * 2);
   const line = (d) => d.map((v, i) => `${i ? "L" : "M"}${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(" ");
   return (
-    <div className="px-5 pb-5 pt-4">
+    <div className="pt-4">
       <div className="flex items-stretch gap-3">
         <div className="flex flex-col justify-between py-1 text-[11px] text-slate-400">
           <span>{max}</span>
@@ -334,7 +329,7 @@ const Donut = ({ data, label }) => {
   let offset = 0;
   if (!total) return <Empty text="No data yet." />;
   return (
-    <div className="flex items-center gap-5 px-5 pb-5 pt-4">
+    <div className="flex items-center gap-5 pt-4">
       <div className="relative h-32 w-32 shrink-0">
         <svg viewBox="0 0 100 100" className="h-full w-full -rotate-90" role="img" aria-label={label}>
           <circle cx="50" cy="50" r={R} fill="none" stroke="#f1f5f9" strokeWidth="11" />
@@ -371,7 +366,7 @@ const Donut = ({ data, label }) => {
 const Funnel = ({ steps }) => {
   const top = Math.max(1, steps[0]?.value || 1);
   return (
-    <ul className="space-y-3 px-5 pb-5 pt-4">
+    <ul className="space-y-3 pt-4">
       {steps.map((s, i) => {
         const prev = i ? steps[i - 1].value : null;
         return (
@@ -394,7 +389,7 @@ const BarList = ({ data }) => {
   const max = Math.max(1, ...data.map((d) => d.value));
   if (!data.length) return <Empty text="No applications in this period." />;
   return (
-    <ul className="space-y-3.5 px-5 pb-5 pt-4">
+    <ul className="space-y-3.5 pt-4">
       {data.map((d) => (
         <li key={d.label}>
           <div className="mb-1 flex justify-between text-xs">
@@ -402,7 +397,7 @@ const BarList = ({ data }) => {
             <span className="font-semibold text-slate-900">{d.value}</span>
           </div>
           <div className="h-1.5 overflow-hidden rounded-full bg-slate-100">
-            <div className="h-full rounded-full bg-indigo-500" style={{ width: `${(d.value / max) * 100}%` }} />
+          <div className="h-full rounded-full bg-primary-600" style={{ width: `${(d.value / max) * 100}%` }} />
           </div>
         </li>
       ))}
@@ -540,54 +535,56 @@ const Dashboard = () => {
   const filteredVacancies = vacs.filter((v) => vacancyFilter === "ALL" || v.status === vacancyFilter).slice(0, 8);
 
   const attention = [
-    has("VACANCY_APPROVE") && canVacancies && { label: "to approve", value: vacancyCounts.PENDING_APPROVAL || 0, filter: "PENDING_APPROVAL" },
-    has("VACANCY_PUBLISH") && canVacancies && { label: "ready to publish", value: vacancyCounts.APPROVED || 0, filter: "APPROVED" },
-    has("VACANCY_CREATE") && canVacancies && { label: "drafts", value: vacancyCounts.DRAFT || 0, filter: "DRAFT" },
+    has("VACANCY_APPROVE") && canVacancies && { label: "to approve", value: vacancyCounts.PENDING_APPROVAL || 0, filter: "PENDING_APPROVAL", icon: CheckCircle2 },
+    has("VACANCY_PUBLISH") && canVacancies && { label: "ready to publish", value: vacancyCounts.APPROVED || 0, filter: "APPROVED", icon: Send },
+    has("VACANCY_CREATE") && canVacancies && { label: "drafts", value: vacancyCounts.DRAFT || 0, filter: "DRAFT", icon: PencilLine },
   ].filter(Boolean);
 
   const funnel = [
-    canApplications && { label: "Applications", value: m.apps.current, color: "#4f46e5" },
-    canApplications && { label: "Shortlisted", value: m.shortlisted.current, color: "#38bdf8" },
-    canInterviewsAll && { label: "Interviews", value: m.interviews.current, color: "#8b5cf6" },
-    canOffers && { label: "Offers", value: m.offers.current, color: "#10b981" },
+    canApplications && { label: "Applications", value: m.apps.current, color: "#5563b0" },
+    canApplications && { label: "Shortlisted", value: m.shortlisted.current, color: "#7c8ac8" },
+    canInterviewsAll && { label: "Interviews", value: m.interviews.current, color: "#34407d" },
+    canOffers && { label: "Offers", value: m.offers.current, color: "#1b2142" },
   ].filter(Boolean);
 
-  const hour = new Date().getHours();
-  const greeting = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
   const firstName = (storedUser.fullName || "").split(" ")[0];
 
   return (
     <PageLayout role="recruiter" activePage="Overview" title="Recruitment Dashboard" subtitle="Hiring activity and performance">
       <div className="mx-auto max-w-[1400px] space-y-6">
-        {/* Header */}
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <h2 className="text-2xl font-bold tracking-tight text-slate-900">
-              {greeting}
-              {firstName ? `, ${firstName}` : ""}
-            </h2>
-            <p className="mt-1 text-sm text-slate-500">
-              {new Date().toLocaleDateString(undefined, { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
-            <div role="group" aria-label="Date range" className="flex rounded-xl border border-slate-200 bg-white p-1">
-              {RANGES.map((r) => (
-                <button
-                  key={r.days}
-                  type="button"
-                  aria-pressed={days === r.days}
-                  onClick={() => setDays(r.days)}
-                  className={`rounded-lg px-3.5 py-1.5 text-xs font-semibold transition ${days === r.days ? "bg-slate-900 text-white" : "text-slate-500 hover:text-slate-800"}`}
-                >
-                  {r.label}
+        {/* Greeting */}
+        <div
+          className="[&>section]:!rounded-2xl [&>section]:!border-primary-200 [&>section]:!bg-gradient-to-r [&>section]:!from-primary-100 [&>section]:!via-primary-50 [&>section]:!to-white [&>section]:!p-6 [&>section]:md:!p-7 [&>section]:!text-primary-950 [&>section]:!shadow-sm [&>section_h2]:!text-primary-950 [&>section_.greeting-text]:text-slate-600 [&>section_.greeting-text.text-sm]:!text-slate-600 [&>section_.greeting-text_svg]:!text-primary-600 [&>section_button.inline-flex]:!rounded-xl [&>section_button.inline-flex]:!border-primary-200 [&>section_button.inline-flex]:!bg-white [&>section_button.inline-flex]:!px-3.5 [&>section_button.inline-flex]:!py-2 [&>section_button.inline-flex]:!text-sm [&>section_button.inline-flex]:!font-semibold [&>section_button.inline-flex]:!text-primary-800 [&>section_button.inline-flex]:!shadow-sm [&>section_button.inline-flex>span]:!bg-primary-600 [&>section_button.inline-flex>span]:!text-white"
+        >
+          <GreetingCard
+            name={firstName}
+            date={new Date().toLocaleDateString(undefined, { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
+            attention={attention}
+            onChipClick={(item) => {
+              setVacancyFilter(item.filter);
+              vacancyRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+            }}
+            controls={
+              <>
+                <div role="group" aria-label="Date range" className="flex rounded-xl border border-slate-200 bg-white p-1">
+                  {RANGES.map((r) => (
+                    <button
+                      key={r.days}
+                      type="button"
+                      aria-pressed={days === r.days}
+                      onClick={() => setDays(r.days)}
+                      className={`rounded-lg px-3.5 py-1.5 text-xs transition ${days === r.days ? "bg-primary-600 text-white font-semibold shadow-sm" : "text-slate-600 font-semibold hover:bg-primary-50"}`}
+                    >
+                      {r.label}
+                    </button>
+                  ))}
+                </div>
+                <button type="button" onClick={reloadAll} aria-label="Refresh data" className="grid h-10 w-10 place-items-center rounded-xl border border-slate-200 bg-white text-slate-600 hover:bg-primary-50">
+                  <RefreshCw size={16} />
                 </button>
-              ))}
-            </div>
-            <button type="button" onClick={reloadAll} aria-label="Refresh data" className="rounded-xl border border-slate-200 bg-white p-2.5 text-slate-500 hover:text-slate-800">
-              <RefreshCw size={16} />
-            </button>
-          </div>
+              </>
+            }
+          />
         </div>
 
         {!ready && <Card><Skeleton rows={4} /></Card>}
@@ -600,50 +597,34 @@ const Dashboard = () => {
           </Card>
         )}
 
-        {/* Needs attention */}
-        {attention.some((a) => a.value > 0) && (
-          <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-amber-200 bg-amber-50/60 px-4 py-3">
-            <Clock3 size={16} className="text-amber-600" />
-            <span className="text-sm font-semibold text-amber-900">Needs your attention</span>
-            {attention.filter((a) => a.value > 0).map((a) => (
-              <button
-                key={a.label}
-                type="button"
-                onClick={() => {
-                  setVacancyFilter(a.filter);
-                  vacancyRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-                }}
-                className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-amber-800 ring-1 ring-amber-200 hover:bg-amber-100"
-              >
-                {a.value} {a.label}
-              </button>
-            ))}
-          </div>
-        )}
-
         {/* KPIs */}
         {anything && (
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
+          <div className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-5">
             {canVacancies && (
               <KpiCard icon={BriefcaseBusiness} label="Open vacancies"
                 value={vacancies.loading ? "-" : vacancyCounts.PUBLISHED || 0}
+                gradient="bg-gradient-to-br from-primary-600 to-primary-700"
                 footnote={`${vacancyCounts.PENDING_APPROVAL || 0} pending approval`} />
             )}
             {canApplications && (
               <KpiCard icon={FileText} label="Applications"
-                value={applications.loading ? "-" : m.apps.current} metric={m.apps} />
+                value={applications.loading ? "-" : m.apps.current} metric={m.apps}
+                gradient="bg-gradient-to-br from-primary-700 to-primary-800" />
             )}
             {canApplications && (
               <KpiCard icon={Users} label="Shortlisted"
-                value={applications.loading ? "-" : m.shortlisted.current} metric={m.shortlisted} />
+                value={applications.loading ? "-" : m.shortlisted.current} metric={m.shortlisted}
+                gradient="bg-gradient-to-br from-primary-800 to-primary-900" />
             )}
             {canInterviews && (
               <KpiCard icon={CalendarDays} label={canInterviewsMine ? "My interviews" : "Interviews"}
-                value={interviews.loading ? "-" : m.interviews.current} metric={m.interviews} />
+                value={interviews.loading ? "-" : m.interviews.current} metric={m.interviews}
+                gradient="bg-gradient-to-br from-primary-600 to-primary-700" />
             )}
             {canOffers && (
               <KpiCard icon={Handshake} label="Offers"
-                value={offers.loading ? "-" : m.offers.current} metric={m.offers} />
+                value={offers.loading ? "-" : m.offers.current} metric={m.offers}
+                gradient="bg-gradient-to-br from-primary-700 to-primary-800" />
             )}
           </div>
         )}
@@ -659,8 +640,8 @@ const Dashboard = () => {
                   ) : null} />
                 {applications.loading ? <Skeleton /> : applications.error ? <Empty text={applications.error} /> : (
                   <TrendChart labels={labels} series={[
-                    { name: "Applications", color: "#4f46e5", data: m.apps.spark },
-                    { name: "Shortlisted", color: "#10b981", data: m.shortlisted.spark },
+                    { name: "Applications", color: "#5563b0", data: m.apps.spark },
+                    { name: "Shortlisted", color: "#94a3b8", data: m.shortlisted.spark },
                   ]} />
                 )}
               </Card>
@@ -669,14 +650,14 @@ const Dashboard = () => {
               <Card className={canApplications ? "lg:col-span-4" : "lg:col-span-12"}>
                 <CardHead title="Upcoming interviews" subtitle="Next 7 days" />
                 {interviews.loading ? <Skeleton /> : interviews.error ? <Empty text={interviews.error} /> : agenda.length === 0 ? <Empty text="Nothing scheduled this week." /> : (
-                  <ul className="mt-3 divide-y divide-slate-100 px-5 pb-3">
+                  <ul className="mt-3 divide-y divide-slate-100">
                     {agenda.map(({ i, t }) => {
                       const hasTime = String(i.scheduledAt || i.interviewDate || i.date).includes("T");
                       const time = i.interviewTime || i.startTime || (hasTime ? new Date(t).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "");
                       return (
                         <li key={i.id} className="flex items-center gap-3 py-3">
                           <div className="w-[72px] shrink-0">
-                            <p className={`text-xs font-semibold ${dayLabel(t) === "Today" ? "text-indigo-600" : "text-slate-500"}`}>{dayLabel(t)}</p>
+                            <p className={`text-xs font-semibold ${dayLabel(t) === "Today" ? "text-primary-600" : "text-slate-500"}`}>{dayLabel(t)}</p>
                             <p className="text-xs text-slate-400">{time || "-"}</p>
                           </div>
                           <div className="min-w-0 flex-1">
@@ -724,14 +705,14 @@ const Dashboard = () => {
               <Card className="lg:col-span-8">
                 <CardHead title="Recent applications" subtitle="Latest candidates to apply" />
                 {applications.loading ? <Skeleton /> : applications.error ? <Empty text={applications.error} /> : recentApps.length === 0 ? <Empty text="No applications yet." /> : (
-                  <div className="mt-3 overflow-x-auto">
+                  <div className="mt-3 overflow-x-auto rounded-xl border border-slate-200">
                     <table className="w-full text-left text-sm">
                       <thead>
-                        <tr className="border-y border-slate-100 bg-slate-50/60 text-xs text-slate-500">
-                          <th className="px-5 py-2.5 font-medium">Candidate</th>
-                          <th className="px-3 py-2.5 font-medium">Vacancy</th>
-                          <th className="px-3 py-2.5 font-medium">Status</th>
-                          <th className="px-5 py-2.5 text-right font-medium">Applied</th>
+                        <tr className="border-b border-slate-200 bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
+                          <th className="whitespace-nowrap px-5 py-2.5 font-medium">Candidate</th>
+                          <th className="whitespace-nowrap px-3 py-2.5 font-medium">Vacancy</th>
+                          <th className="whitespace-nowrap px-3 py-2.5 font-medium">Status</th>
+                          <th className="whitespace-nowrap px-5 py-2.5 text-right font-medium">Applied</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-100">
@@ -740,10 +721,10 @@ const Dashboard = () => {
                             <td className="px-5 py-3">
                               <div className="flex items-center gap-3">
                                 <Avatar name={personName(a)} />
-                                <span className="font-medium text-slate-900">{personName(a)}</span>
+                                <span className="whitespace-nowrap font-medium text-slate-900">{personName(a)}</span>
                               </div>
                             </td>
-                            <td className="max-w-[200px] truncate px-3 py-3 text-slate-600">{vacancyName(a)}</td>
+                            <td className="whitespace-nowrap px-3 py-3 text-slate-600">{vacancyName(a)}</td>
                             <td className="px-3 py-3">{a.status && <Chip status={a.status} />}</td>
                             <td className="whitespace-nowrap px-5 py-3 text-right text-slate-500">{ago(appTime(a)) || "-"}</td>
                           </tr>
@@ -757,10 +738,10 @@ const Dashboard = () => {
             <Card className={canApplications ? "lg:col-span-4" : "lg:col-span-12"}>
               <CardHead title="Recent activity" subtitle={full ? "Audit trail" : "Your notifications"} />
               {activity.loading ? <Skeleton /> : (activity.data || []).length === 0 ? <Empty text="No recent activity." /> : (
-                <ol className="mt-4 space-y-4 px-5 pb-5">
+                <ol className="mt-4 space-y-4">
                   {[...activity.data].sort((a, b) => (actTime(b) || 0) - (actTime(a) || 0)).slice(0, 7).map((a, idx) => (
                     <li key={a.id ?? idx} className="flex gap-3">
-                      <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-indigo-400" />
+                      <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-primary-500" />
                       <div className="min-w-0">
                         <p className="line-clamp-2 text-sm text-slate-700">
                           {a.description || a.details || a.message || a.title || [a.action, a.entityType].filter(Boolean).join(" ") || "Activity"}
@@ -794,14 +775,14 @@ const Dashboard = () => {
                 } />
             </div>
             {vacancies.loading ? <Skeleton /> : vacancies.error ? <Empty text={vacancies.error} /> : filteredVacancies.length === 0 ? <Empty text="No vacancies match." /> : (
-              <div className="mt-3 overflow-x-auto">
+              <div className="mt-3 overflow-x-auto rounded-xl border border-slate-200">
                 <table className="w-full text-left text-sm">
                   <thead>
-                    <tr className="border-y border-slate-100 bg-slate-50/60 text-xs text-slate-500">
-                      <th className="px-5 py-2.5 font-medium">Vacancy</th>
-                      <th className="px-3 py-2.5 font-medium">Status</th>
-                      <th className="px-3 py-2.5 font-medium">Applicants</th>
-                      <th className="px-5 py-2.5 text-right font-medium">Deadline</th>
+                    <tr className="border-b border-slate-200 bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
+                      <th className="whitespace-nowrap px-5 py-2.5 font-medium">Vacancy</th>
+                      <th className="whitespace-nowrap px-3 py-2.5 font-medium">Status</th>
+                      <th className="whitespace-nowrap px-3 py-2.5 font-medium">Applicants</th>
+                      <th className="whitespace-nowrap px-5 py-2.5 text-right font-medium">Deadline</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">

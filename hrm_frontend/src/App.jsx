@@ -115,7 +115,10 @@ function App() {
       <Route path="/admin/system-config" element={<AdminSystemConfig />} />
 
       <Route path="/recruitment/dashboard" element={<RecruitmentRouteGuard><RecruitmentDashboard /></RecruitmentRouteGuard>} />
-      <Route path="/recruitment/vacancies" element={<RecruitmentRouteGuard requiredAny={["VACANCY_CREATE", "VACANCY_APPROVE", "VACANCY_PUBLISH"]}><RecruitmentVacancies /></RecruitmentRouteGuard>} />
+      <Route path="/recruitment/vacancies" element={<Navigate to="/recruitment/vacancies/create" replace />} />
+<Route path="/recruitment/vacancies/create" element={<RecruitmentRouteGuard requiredAny={["VACANCY_CREATE"]}><RecruitmentVacancies mode="create" /></RecruitmentRouteGuard>} />
+<Route path="/recruitment/vacancies/approval" element={<RecruitmentRouteGuard requiredAny={["VACANCY_APPROVE"]}><RecruitmentVacancies mode="approval" /></RecruitmentRouteGuard>} />
+<Route path="/recruitment/vacancies/publish" element={<RecruitmentRouteGuard requiredAny={["VACANCY_PUBLISH"]}><RecruitmentVacancies mode="publish" /></RecruitmentRouteGuard>} />
       <Route path="/recruitment/applications" element={<RecruitmentRouteGuard requiredAny={["APPLICATION_VIEW", "RESUME_DOWNLOAD", "DOWNLOAD_RESUMES", "APPLICATION_SCREEN", "APPLICATION_SHORTLIST", "INTERVIEW_SCHEDULE"]}><RecruitmentApplications /></RecruitmentRouteGuard>} />
       <Route path="/recruitment/applications/history" element={<RecruitmentRouteGuard requiredAny={["APPLICATION_VIEW", "RESUME_DOWNLOAD", "DOWNLOAD_RESUMES", "APPLICATION_SCREEN", "APPLICATION_SHORTLIST", "INTERVIEW_SCHEDULE"]}><RecruitmentApplicationsHistory /></RecruitmentRouteGuard>} />
       <Route path="/recruitment/applications/review" element={<RecruitmentRouteGuard requiredAny={["APPLICATION_SCREEN", "APPLICATION_VIEW"]}><RecruitmentApplicationReview /></RecruitmentRouteGuard>} />

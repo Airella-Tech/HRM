@@ -45,6 +45,8 @@ import {
   Handshake,
   ShieldCheck,
   FilePlus,
+  FilePlus2,
+  Send,
   CheckCircle2,
   Megaphone,
   UserCheck,
@@ -102,19 +104,25 @@ const NAV = {
       requiresAny: [],
     },
 
-    // Job Vacancies
+  
+        // Job Vacancies (split into three pages)
     {
-      name: "Job Vacancies",
-      icon: BriefcaseBusiness,
-      path: "/recruitment/vacancies",
-      requiresAny: [
-        "VACANCY_CREATE",
-        "VACANCY_APPROVE",
-        "VACANCY_PUBLISH",
-        "CREATE_VACANCIES",
-        "APPROVE_VACANCIES",
-        "PUBLISH_CLOSE_VACANCIES",
-      ],
+      name: "Create Vacancies",
+      icon: FilePlus2,
+      path: "/recruitment/vacancies/create",
+      requiresAny: ["VACANCY_CREATE", "CREATE_VACANCIES"],
+    },
+    {
+      name: "Vacancy Approval",
+      icon: ClipboardCheck,
+      path: "/recruitment/vacancies/approval",
+      requiresAny: ["VACANCY_APPROVE", "APPROVE_VACANCIES"],
+    },
+    {
+      name: "Publish Vacancies",
+      icon: Send,
+      path: "/recruitment/vacancies/publish",
+      requiresAny: ["VACANCY_PUBLISH", "PUBLISH_CLOSE_VACANCIES"],
     },
 
     // Candidate Applications
@@ -490,9 +498,6 @@ export const PageLayout = ({
                 item.name === "Manage Roles & Permissions") ||
               (activePage === "Manage Roles & Permissions" &&
                 item.name === "Roles & Permissions") ||
-              (activePage === "Job Vacancies" &&
-                (item.name === "Create Vacancies" ||
-                  item.name === "Job Vacancies")) ||
               (activePage === "Applications" &&
                 (item.name === "View Applications" ||
                   item.name === "Applications")) ||
