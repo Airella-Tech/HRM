@@ -1,3 +1,5 @@
+import RecruitmentModal, { ModalButton } from "./components/RecruitmentModal";
+import ViewButton from "./components/ViewButton";
 import React, {
   useCallback,
   useEffect,
@@ -14,7 +16,6 @@ import {
   Check,
   Circle,
   XCircle,
-  Eye,
   X,
   UserRound,
   CalendarDays,
@@ -563,42 +564,20 @@ function CandidateProgressModal({ candidate, onClose }) {
   const progress = getProgress(candidate);
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-slate-950/50 p-3 sm:p-6"
-      onMouseDown={(event) => {
-        if (event.target === event.currentTarget) onClose();
-      }}
+    <RecruitmentModal
+      open={true}
+      onClose={onClose}
+      size="xl"
+      title={candidate.candidateName}
+      subtitle={candidate.jobTitle}
+      badge="Candidate Interview Journey"
+      footer={
+        <ModalButton onClick={onClose}>
+          Close
+        </ModalButton>
+      }
     >
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="progress-modal-title"
-        className="my-4 w-full max-w-3xl overflow-hidden rounded-2xl bg-white shadow-2xl"
-      >
-        <div className="flex items-start justify-between gap-4 border-b border-slate-200 px-5 py-5 sm:px-7">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-wider text-primary-600">
-              Candidate Interview Journey
-            </p>
-            <h2
-              id="progress-modal-title"
-              className="mt-1 text-xl font-bold text-slate-900"
-            >
-              {candidate.candidateName}
-            </h2>
-            <p className="mt-1 text-sm text-slate-500">{candidate.jobTitle}</p>
-          </div>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Close"
-            className="rounded-lg p-2 text-slate-500 hover:bg-slate-100"
-          >
-            <X size={20} />
-          </button>
-        </div>
-
-        <div className="max-h-[calc(100vh-180px)] space-y-6 overflow-y-auto p-5 sm:p-7">
+        <div className="space-y-6">
           <div className="grid grid-cols-1 gap-4 rounded-xl bg-slate-50 p-4 sm:grid-cols-2">
             <div className="flex items-start gap-3">
               <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary-100 text-primary-700">
@@ -750,18 +729,7 @@ function CandidateProgressModal({ candidate, onClose }) {
             </div>
           )}
         </div>
-
-        <div className="flex justify-end border-t border-slate-200 px-5 py-4 sm:px-7">
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-lg border border-slate-200 px-5 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50"
-          >
-            Close
-          </button>
-        </div>
-      </div>
-    </div>
+    </RecruitmentModal>
   );
 }
 
@@ -1014,13 +982,12 @@ export default function InterviewProgress() {
       </td>
       <td className="whitespace-nowrap px-4 py-3.5">
         <div className="flex justify-end">
-          <button
-            type="button"
+          <ViewButton
             onClick={() => setSelectedCandidate(candidate)}
             className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-xl border border-slate-200 bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-xs hover:bg-slate-200"
-          >
-            <Eye size={15} /> View Progress <ArrowRight size={14} />
-          </button>
+            label="View Progress"
+          />
+          <ArrowRight size={14} />
         </div>
       </td>
     </tr>
@@ -1573,14 +1540,12 @@ export default function InterviewProgress() {
 
                         <td className="whitespace-nowrap px-4 py-3.5">
                           <div className="flex justify-end">
-                            <button
-                              type="button"
+                            <ViewButton
                               onClick={() => setSelectedCandidate(candidate)}
                               className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-xl border border-slate-200 bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-xs hover:bg-slate-200"
-                            >
-                              <Eye size={15} /> View Progress{" "}
-                              <ArrowRight size={14} />
-                            </button>
+                              label="View Progress"
+                            />
+                            <ArrowRight size={14} />
                           </div>
                         </td>
                       </tr>

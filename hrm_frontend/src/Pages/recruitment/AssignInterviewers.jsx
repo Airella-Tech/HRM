@@ -1,3 +1,5 @@
+import RecruitmentModal, { ModalButton } from "./components/RecruitmentModal";
+import ViewButton from "./components/ViewButton";
 
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
@@ -13,7 +15,6 @@ import {
   RefreshCw,
   LoaderCircle,
   Ban,
-  Eye,
   Info,
 } from "lucide-react";
 import PageLayout from "../../components/PageLayout";
@@ -616,8 +617,6 @@ export default function AssignInterviewers() {
   );
 
   const openAssignmentModal = (interview) => {
-    if (isInterviewLocked(interview)) return;
-
     setSelectedInterview(interview);
     setSelectedInterviewers([...interview.interviewers]);
     setModalError("");
@@ -1126,14 +1125,14 @@ export default function AssignInterviewers() {
                 const assignedCount = group.rows.length - awaitingCount;
 
                 return (
-                  <VacancyGroupCard
-                    key={group.key}
-                    title={group.title}
-                    department={group.department}
-                    meta={`${group.rows.length} ${
-                      group.rows.length === 1 ? "candidate" : "candidates"
-                    }`}
-                    badges={[
+                    <VacancyGroupCard
+                      key={group.key}
+                      title={group.title}
+                      department={group.department}
+                      meta={`${group.rows.length} ${
+                        group.rows.length === 1 ? "candidate" : "candidates"
+                      }`}
+                      badges={[
                       {
                         label: `${awaitingCount} awaiting assignment`,
                         tone: "amber",
@@ -1288,43 +1287,61 @@ export default function AssignInterviewers() {
         </div>
 
       {selectedInterview && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-slate-950/50 p-4"
-          onMouseDown={(event) => {
-            if (event.target === event.currentTarget && !saving) closeModal();
-          }}
-        >
-          <section
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="assignment-title"
-            className="my-auto max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white shadow-2xl"
-          >
-            <div className="flex items-start justify-between border-b border-slate-100 p-5 sm:p-6">
-              <div>
-                <h2
-                  id="assignment-title"
-                  className="text-xl font-bold text-slate-900"
+        <RecruitmentModal
+          open={true}
+          onClose={closeModal}
+          size="lg"
+          title={
+            isInterviewLocked(selectedInterview)
+              ? "Interview Assignment"
+              : "Assign Interviewers"
+          }
+          subtitle={
+            isInterviewLocked(selectedInterview)
+              ? "Read-only interview assignment details."
+              : "Select the employees who will conduct this interview."
+          }
+          footer={
+            <>
+              {isInterviewLocked(selectedInterview) ? (
+                <ModalButton
+                  onClick={closeModal}
+                  className="w-full sm:w-auto"
                 >
-                  Assign Interviewers
-                </h2>
-                <p className="mt-1 text-sm text-slate-500">
-                  Select the employees who will conduct this interview.
-                </p>
-              </div>
-
-              <button
-                type="button"
-                onClick={closeModal}
-                disabled={saving}
-                aria-label="Close assignment modal"
-                className="rounded-lg p-2 text-slate-400 hover:bg-slate-100"
-              >
-                <X size={20} />
-              </button>
-            </div>
-
-            <div className="space-y-5 p-5 sm:p-6">
+                  Close
+                </ModalButton>
+              ) : (
+                <>
+                  <ModalButton
+                    onClick={closeModal}
+                    disabled={saving}
+                    className="w-full sm:w-auto"
+                  >
+                    Cancel
+                  </ModalButton>
+                  <ModalButton
+                    variant="primary"
+                    onClick={saveAssignments}
+                    disabled={
+                      saving ||
+                      employeesLoading ||
+                      interviewers.length === 0
+                    }
+                    className="w-full sm:w-auto"
+                  >
+                    {saving ? (
+                      <LoaderCircle size={17} className="animate-spin" />
+                    ) : (
+                      <CheckCircle2 size={17} />
+                    )}
+                    {saving ? "Saving..." : "Save Assignments"}
+                  </ModalButton>
+                </>
+              )}
+            </>
+          }
+        >
+            <div className="space-y-5">
               <div className="rounded-xl bg-slate-50 p-4">
                 <p className="font-semibold text-slate-900">
                   {selectedInterview.candidate}
@@ -1356,7 +1373,9 @@ export default function AssignInterviewers() {
               <div>
                 <div className="mb-3 flex items-center justify-between gap-2">
                   <h3 className="font-semibold text-slate-900">
-                    Available interviewers
+                    {isInterviewLocked(selectedInterview)
+                      ? "Assigned interviewers"
+                      : "Available interviewers"}
                   </h3>
                   <span className="rounded-full bg-primary-50 px-3 py-1 text-xs font-medium text-primary-700">
                     {selectedInterviewers.length} selected
@@ -1364,8 +1383,9 @@ export default function AssignInterviewers() {
                 </div>
 
                 <p className="mb-3 text-sm text-slate-500">
-                  Select one or more interviewers. Existing assignments are
-                  preselected.
+                  {isInterviewLocked(selectedInterview)
+                    ? "This interview is locked and its assignments cannot be changed."
+                    : "Select one or more interviewers. Existing assignments are preselected."}
                 </p>
 
                 {employeesLoading ? (
@@ -1378,23 +1398,29 @@ export default function AssignInterviewers() {
                   </div>
                 ) : (
                   <div className="space-y-2">
-                    {interviewers.map((person) => {
+                    {(isInterviewLocked(selectedInterview)
+                      ? interviewers.filter((person) =>
+                          selectedInterviewers.includes(person.id),
+                        )
+                      : interviewers
+                    ).map((person) => {
                       const checked = selectedInterviewers.includes(person.id);
                       const conflicts = getConflicts(person.id);
 
                       return (
                         <label
                           key={person.id}
-                          className={`flex cursor-pointer items-start gap-3 rounded-xl border p-3 transition ${
+                          className={`flex items-start gap-3 rounded-xl border p-3 transition ${
                             checked
                               ? "border-primary-300 bg-primary-50/60"
                               : "border-slate-200 hover:border-slate-300"
-                          }`}
+                          } ${isInterviewLocked(selectedInterview) ? "cursor-default" : "cursor-pointer"}`}
                         >
                           <input
                             type="checkbox"
                             checked={checked}
                             onChange={() => toggleInterviewer(person.id)}
+                            disabled={isInterviewLocked(selectedInterview)}
                             className="mt-1 h-4 w-4 accent-primary-600"
                           />
 
@@ -1455,38 +1481,7 @@ export default function AssignInterviewers() {
                 </div>
               )}
             </div>
-
-            <div className="flex flex-col-reverse gap-3 border-t border-slate-100 p-5 sm:flex-row sm:justify-end sm:px-6">
-              <button
-                type="button"
-                onClick={closeModal}
-                disabled={saving}
-                className="rounded-xl border border-slate-200 px-5 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
-              >
-                Cancel
-              </button>
-
-              <button
-                type="button"
-                onClick={saveAssignments}
-                disabled={
-                  saving ||
-                  employeesLoading ||
-                  interviewers.length === 0 ||
-                  isInterviewLocked(selectedInterview)
-                }
-                className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                {saving ? (
-                  <LoaderCircle size={17} className="animate-spin" />
-                ) : (
-                  <CheckCircle2 size={17} />
-                )}
-                {saving ? "Saving..." : "Save Assignments"}
-              </button>
-            </div>
-          </section>
-        </div>
+        </RecruitmentModal>
       )}
     </PageLayout>
   );

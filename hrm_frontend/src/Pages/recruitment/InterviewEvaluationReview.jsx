@@ -1,8 +1,9 @@
+import RecruitmentModal, { ModalButton } from "./components/RecruitmentModal";
+import ViewButton from "./components/ViewButton";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Search,
   RefreshCw,
-  Eye,
   X,
   CheckCircle2,
   XCircle,
@@ -1222,14 +1223,10 @@ export default function InterviewEvaluationReview() {
                                       </span>
                                     </td>
                                     <td className="whitespace-nowrap px-4 py-3.5 text-right">
-                                      <button
-                                        type="button"
+                                      <ViewButton
                                         onClick={() => openReview(interview)}
-                                        className="inline-flex items-center gap-2 whitespace-nowrap rounded-xl bg-primary-600 px-3 py-2 text-sm font-semibold text-white hover:bg-primary-700"
-                                      >
-                                        <Eye size={15} />
-                                        View Reviews
-                                      </button>
+                                        label="View Reviews"
+                                      />
                                     </td>
                                   </tr>
                                 );
@@ -1251,39 +1248,23 @@ export default function InterviewEvaluationReview() {
         ================================================= */}
 
         {selectedInterview && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-3 sm:p-6">
-            <div className="flex max-h-[94vh] w-full max-w-5xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl">
-              {/* Modal header */}
-              <div className="flex items-start justify-between border-b border-slate-200 p-5 sm:p-6">
-                <div>
-                  <div className="flex items-center gap-2 text-sm font-medium text-primary-600">
-                    <ClipboardCheck size={17} />
-                    Manager Evaluation Review
-                  </div>
-
-                  <h2 className="mt-2 text-xl font-bold text-slate-900">
-                    {getCandidateName(selectedInterview)}
-                  </h2>
-
-                  <p className="mt-1 text-sm text-slate-500">
-                    {getVacancyName(selectedInterview)} ·{" "}
-                    {getRoundName(selectedInterview)}
-                  </p>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={closeReview}
-                  disabled={submittingDecision}
-                  className="rounded-lg p-2 text-slate-500 hover:bg-slate-100"
-                  aria-label="Close review"
-                >
-                  <X size={21} />
-                </button>
-              </div>
+                    <RecruitmentModal
+            open
+            onClose={closeReview}
+            size="2xl"
+            title={getCandidateName(selectedInterview)}
+            subtitle={`${getVacancyName(selectedInterview)} · ${getRoundName(selectedInterview)}`}
+            footer={
+              <ModalButton onClick={closeReview} disabled={submittingDecision}>
+                Close
+              </ModalButton>
+            }
+          >
+            <div className="space-y-6">
+              
 
               {/* Modal content */}
-              <div className="flex-1 space-y-6 overflow-y-auto p-5 sm:p-6">
+              <div className="space-y-6">
                 {/* Interview summary */}
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                   <div className="rounded-lg bg-slate-50 p-4">
@@ -1719,19 +1700,9 @@ export default function InterviewEvaluationReview() {
                 </div>
               </div>
 
-              {/* Modal footer */}
-              <div className="flex justify-end border-t border-slate-200 bg-slate-50 p-4">
-                <button
-                  type="button"
-                  onClick={closeReview}
-                  disabled={submittingDecision}
-                  className="rounded-lg border border-slate-300 bg-white px-5 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100"
-                >
-                  Close
-                </button>
-              </div>
+              
             </div>
-          </div>
+          </RecruitmentModal>
         )}
       </>
     </PageLayout>
