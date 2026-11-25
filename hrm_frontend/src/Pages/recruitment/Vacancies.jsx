@@ -4,14 +4,14 @@
  * Buttons are shown only for what the logged-in user is allowed to do, and the
  * sidebar links (?view=create | approve | publish) open the matching view.
  */
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { PageLayout } from "../../components/PageLayout";
 import StatCard, { StatCardGrid } from "../../components/StatCard";
-import { recruitmentApi, hrApi } from "../../services/api";
+import { recruitmentApi, hrApi, userHrApi, userSelfApi } from "../../services/api";
 import { formatSalary, formatDate } from "../../utils/careersFormat";
 import { useRecruitmentAccess, fetchRecruitmentAccess } from "../../utils/useRecruitmentAccess";
-import { Plus, Pencil, Trash2, BriefcaseBusiness, Loader2, X, Save, AlertTriangle, Send, CheckCircle2, XCircle, Megaphone, Ban, Search, Clock, FileText, Users, CalendarDays, Banknote, Award } from "lucide-react";
+import { Plus, Pencil, Trash2, BriefcaseBusiness, Loader2, X, Save, AlertTriangle, Send, CheckCircle2, XCircle, Megaphone, Ban, Search, Clock, FileText, Users, CalendarDays, Banknote, Award, Linkedin, ExternalLink, Copy, Check } from "lucide-react";
 
 
 const FILTERS = ["ALL", "DRAFT", "PENDING_APPROVAL", "APPROVED", "PUBLISHED", "CLOSED"];
@@ -280,7 +280,7 @@ const VacancyModal = ({ vacancy, onClose, onSaved }) => {
 
 // ─── Delete confirmation pop-up ───────────────────────────────
 // ─── Vacancy details pop-up (opens when a row is clicked) ─────
-const VacancyDetailsModal = ({ vacancy: v, canEdit, onClose, onEdit }) => {
+const VacancyDetailsModal = ({ vacancy: v, canEdit, onClose, onEdit, onShare }) => {
   useEffect(() => {
     const onKey = (e) => e.key === "Escape" && onClose();
     window.addEventListener("keydown", onKey);
@@ -383,19 +383,29 @@ const VacancyDetailsModal = ({ vacancy: v, canEdit, onClose, onEdit }) => {
           </section>
         </div>
 
-        <div className="flex justify-end gap-3 px-6 py-4 border-t border-slate-200">
+        <div className="flex flex-wrap items-center justify-end gap-3 px-6 py-4 border-t border-slate-200">
           <button
             type="button"
             onClick={onClose}
-            className="px-5 py-2.5 rounded-xl border border-slate-200 text-slate-700 text-sm font-semibold hover:bg-slate-50"
+            className="px-5 py-2.5 rounded-xl border border-slate-200 text-slate-700 text-sm font-semibold hover:bg-slate-50 transition-colors"
           >
             Close
           </button>
+          {v.status === "PUBLISHED" && onShare && (
+            <button
+              type="button"
+              onClick={() => onShare(v)}
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#0077b5] hover:bg-[#006097] text-white text-sm font-semibold shadow-sm transition-colors"
+            >
+              <Linkedin size={16} />
+              Share on LinkedIn
+            </button>
+          )}
           {canEdit && (
             <button
               type="button"
               onClick={() => onEdit(v)}
-              className="px-5 py-2.5 rounded-xl bg-primary-600 hover:bg-primary-700 text-white text-sm font-semibold shadow-sm"
+              className="px-5 py-2.5 rounded-xl bg-primary-600 hover:bg-primary-700 text-white text-sm font-semibold shadow-sm transition-colors"
             >
               Edit vacancy
             </button>
@@ -531,6 +541,165 @@ const CloseConfirmModal = ({ vacancy, busy, onCancel, onConfirm }) => (
   </div>
 );
 
+// ─── Generates pre-formatted LinkedIn post text from vacancy details ─────
+const generateLinkedInShareText = (v, publicUrl) => {
+  if (!v) return "";
+
+  const skillsText =
+    Array.isArray(v.requiredSkills) && v.requiredSkills.length > 0
+      ? v.requiredSkills.slice(0, 5).join(", ")
+      : "";
+
+  const rawDesc = (v.description || "").replace(/\s+/g, " ").trim();
+  const descSnippet =
+    rawDesc.length > 200 ? `${rawDesc.slice(0, 200)}...` : rawDesc;
+
+  const lines = [
+    `🚀 We are hiring! Exciting career opportunity:`,
+    ``,
+    `📌 Role: ${v.title}`,
+    `🏢 Department: ${v.department || "General"}`,
+    `💼 Employment Type: ${v.jobType || "Full-time"}`,
+  ];
+
+  if (v.experienceLevel) {
+    lines.push(`🎯 Experience Level: ${v.experienceLevel}`);
+  }
+  if (v.vacancyCount && v.vacancyCount > 1) {
+    lines.push(`👥 Open Positions: ${v.vacancyCount}`);
+  }
+
+  if (skillsText) {
+    lines.push(``, `✨ Key Skills:`, `• ${skillsText}`);
+  }
+
+  if (descSnippet) {
+    lines.push(``, `📋 About the Role:`, descSnippet);
+  }
+
+  lines.push(
+    ``,
+    `👉 Apply now through our public Careers Portal:`,
+    publicUrl,
+    ``,
+    `#Hiring #JobOpportunity #Careers #Recruitment #${(v.department || "Careers").replace(/[^a-zA-Z0-9]/g, "")}`
+  );
+
+  return lines.join("\n");
+};
+
+// ─── LinkedIn share confirmation pop-up (opens after publishing) ─────
+const LinkedInShareModal = ({ vacancy: v, publicUrl, onShare, onClose }) => {
+  const [copied, setCopied] = useState(false);
+  const postText = useMemo(() => generateLinkedInShareText(v, publicUrl), [v, publicUrl]);
+
+  useEffect(() => {
+    const onKey = (e) => e.key === "Escape" && onClose();
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
+
+  if (!v) return null;
+
+  const handleCopy = async () => {
+    try {
+      if (navigator?.clipboard?.writeText) {
+        await navigator.clipboard.writeText(postText);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2500);
+      }
+    } catch {
+      /* ignore */
+    }
+  };
+
+  return (
+    <div
+      className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-150"
+      onClick={onClose}
+    >
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="linkedin-share-dialog-title"
+        className="bg-white rounded-2xl shadow-2xl w-full max-w-lg p-6 relative max-h-[92vh] overflow-y-auto"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="Close"
+          className="absolute top-4 right-4 p-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
+        >
+          <X size={18} />
+        </button>
+
+        <div className="flex flex-col items-center text-center">
+          <div className="w-14 h-14 rounded-2xl bg-[#0077b5]/10 text-[#0077b5] flex items-center justify-center mb-3">
+            <Linkedin size={28} />
+          </div>
+
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 mb-2">
+            <CheckCircle2 size={13} /> Vacancy Published Successfully
+          </span>
+
+          <h3 id="linkedin-share-dialog-title" className="text-lg font-bold text-slate-900">
+            Would you like to share this job vacancy on LinkedIn?
+          </h3>
+          <p className="text-xs text-slate-500 mt-1 max-w-sm">
+            All details for this vacancy are pre-formatted below so you only need to review and click Post!
+          </p>
+
+          <div className="w-full bg-slate-50 border border-slate-200/80 rounded-xl p-3.5 my-3.5 text-left">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-[11px] font-bold text-slate-600 uppercase tracking-wider flex items-center gap-1.5">
+                <FileText size={13} className="text-primary-600" />
+                <span>Pre-filled LinkedIn Post</span>
+              </span>
+              <button
+                type="button"
+                onClick={handleCopy}
+                className="inline-flex items-center gap-1 text-xs font-semibold text-primary-700 hover:text-primary-800 bg-white border border-slate-200 rounded-lg px-2.5 py-1 shadow-2xs hover:bg-slate-50 transition-colors"
+              >
+                {copied ? <Check size={13} className="text-emerald-600" /> : <Copy size={13} />}
+                <span>{copied ? "Copied!" : "Copy text"}</span>
+              </button>
+            </div>
+            <div className="bg-white border border-slate-200/80 rounded-lg p-3 text-xs text-slate-800 font-sans whitespace-pre-line max-h-48 overflow-y-auto leading-relaxed select-all">
+              {postText}
+            </div>
+            <p className="text-[11px] text-slate-500 mt-2 flex items-center gap-1.5">
+              <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
+              <span>Clicking <strong>Share on LinkedIn</strong> opens LinkedIn with these details pre-filled.</span>
+            </p>
+          </div>
+
+          <div className="w-full flex flex-col gap-2.5 mt-1">
+            <button
+              type="button"
+              onClick={() => {
+                onShare(v);
+                onClose();
+              }}
+              className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#0077b5] hover:bg-[#006097] text-white text-sm font-semibold shadow-sm transition-colors"
+            >
+              <Linkedin size={16} />
+              Share on LinkedIn
+            </button>
+            <button
+              type="button"
+              onClick={onClose}
+              className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-slate-700 hover:bg-slate-50 text-sm font-semibold transition-colors"
+            >
+              Maybe Later
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // ─── Page ─────────────────────────────────────────────────────
 export default function RecruitmentVacancies() {
   const navigate = useNavigate();
@@ -548,6 +717,9 @@ export default function RecruitmentVacancies() {
   const [rejecting, setRejecting] = useState(null); // vacancy waiting for a rejection reason
   const [closing, setClosing] = useState(null); // vacancy waiting for close confirmation
   const [viewing, setViewing] = useState(null); // vacancy whose details pop-up is open
+  const [sharePromptVacancy, setSharePromptVacancy] = useState(null); // vacancy waiting for LinkedIn share prompt
+  const [companyRef, setCompanyRef] = useState("");
+  const [shareToast, setShareToast] = useState("");
 
   // What this user may do (HR managers / admins have full access)
   const access = useRecruitmentAccess();
@@ -601,8 +773,118 @@ export default function RecruitmentVacancies() {
       return;
     }
     load();
+
+    // Resolve company reference for public career page URLs
+    let cancelled = false;
+    const resolveCompany = async () => {
+      try {
+        const stored = localStorage.getItem("user");
+        if (stored) {
+          const u = JSON.parse(stored);
+          const ref =
+            u.companyRegistrationNumber ||
+            u.companyName ||
+            u.companyRef ||
+            (u.companyId ? String(u.companyId) : null) ||
+            u.company;
+          if (ref && !cancelled) setCompanyRef(ref);
+        }
+        try {
+          const res = await (userSelfApi?.getMyProfile ? userSelfApi.getMyProfile() : userHrApi.getMyProfile());
+          const p = res?.data ?? res ?? {};
+          const officialRef =
+            p.companyRegistrationNumber ||
+            p.companyName ||
+            (p.companyId ? String(p.companyId) : null);
+          if (officialRef && !cancelled) {
+            setCompanyRef(officialRef);
+          }
+        } catch {
+          if (userHrApi?.getMyProfile) {
+            const hrRes = await userHrApi.getMyProfile();
+            const hrP = hrRes?.data ?? hrRes ?? {};
+            const hrRef =
+              hrP.companyRegistrationNumber ||
+              hrP.companyName ||
+              (hrP.companyId ? String(hrP.companyId) : null);
+            if (hrRef && !cancelled) {
+              setCompanyRef(hrRef);
+            }
+          }
+        }
+      } catch {
+        /* fallback handled gracefully */
+      }
+    };
+    resolveCompany();
+
+    return () => {
+      cancelled = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Construct absolute public career URL for a vacancy using its actual published company
+  const getPublicJobUrl = (target) => {
+    const id = typeof target === "object" && target !== null ? target.id : target;
+    const vacancy =
+      typeof target === "object" && target !== null
+        ? target
+        : vacancies.find((item) => String(item.id) === String(id));
+
+    // Priority 1: Actual published company reference directly on the vacancy
+    const vacancyCompany =
+      vacancy?.companyRef ||
+      vacancy?.companyRegistrationNumber ||
+      vacancy?.companyName ||
+      vacancy?.company ||
+      (vacancy?.companyId ? String(vacancy.companyId) : null);
+
+    // Priority 2: Resolved company from user profile or stored user
+    const resolvedCompany =
+      vacancyCompany ||
+      companyRef ||
+      (() => {
+        try {
+          const u = JSON.parse(localStorage.getItem("user") || "{}");
+          return (
+            u.companyRegistrationNumber ||
+            u.companyName ||
+            u.companyRef ||
+            (u.companyId ? String(u.companyId) : null) ||
+            u.company ||
+            ""
+          );
+        } catch {
+          return "";
+        }
+      })();
+
+    return `${window.location.origin}/careers/jobs/${id}?company=${encodeURIComponent(resolvedCompany || "1")}`;
+  };
+
+  // Launch LinkedIn public sharing in a new browser tab with pre-filled details
+  const handleShareLinkedIn = async (v) => {
+    if (!v || v.status !== "PUBLISHED") return;
+    const url = getPublicJobUrl(v);
+    const postText = generateLinkedInShareText(v, url);
+
+    // Auto-copy post details to clipboard
+    try {
+      if (navigator?.clipboard?.writeText) {
+        await navigator.clipboard.writeText(postText);
+      }
+    } catch {
+      /* ignore clipboard restrictions */
+    }
+
+    // Open LinkedIn post composer with the full vacancy text pre-populated
+    const shareUrl = `https://www.linkedin.com/feed/?shareActive=true&text=${encodeURIComponent(postText)}`;
+    window.open(shareUrl, "_blank", "noopener,noreferrer");
+
+    setShareToast("Opening LinkedIn with vacancy details ready to post! (Text copied to clipboard)");
+    setTimeout(() => setShareToast(""), 4500);
+  };
 
   const confirmDelete = async () => {
     const v = deleting;
@@ -626,6 +908,9 @@ export default function RecruitmentVacancies() {
     try {
       await call(v.id);
       await load();
+      if (call === recruitmentApi.publishVacancy) {
+        setSharePromptVacancy({ ...v, status: "PUBLISHED" });
+      }
     } catch (e) {
       setError(errorText(e, fallback));
     } finally {
@@ -672,7 +957,8 @@ export default function RecruitmentVacancies() {
   const hasActions = (v) =>
     (v.status === "DRAFT" && canCreate) ||
     (v.status === "PENDING_APPROVAL" && canApprove) ||
-    ((v.status === "APPROVED" || v.status === "PUBLISHED") && canPublish);
+    (v.status === "APPROVED" && canPublish) ||
+    v.status === "PUBLISHED";
       const counts = vacancies.reduce((acc, v) => {
     acc[v.status] = (acc[v.status] || 0) + 1;
     return acc;
@@ -884,14 +1170,27 @@ export default function RecruitmentVacancies() {
                         {busy ? <Loader2 size={14} className="animate-spin" /> : <Megaphone size={14} />} Publish
                       </button>
                     )}
-                    {v.status === "PUBLISHED" && canPublish && (
-                      <button
-                        disabled={busy}
-                        onClick={() => setClosing(v)}
-                        className="inline-flex items-center gap-1.5 rounded-lg border border-primary-200 bg-white px-3 py-1.5 text-xs font-semibold text-primary-700 hover:bg-primary-50 disabled:opacity-50"
-                      >
-                        <Ban size={14} /> Close
-                      </button>
+                    {v.status === "PUBLISHED" && (
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => handleShareLinkedIn(v)}
+                          title="Share on LinkedIn"
+                          className="inline-flex items-center gap-1.5 rounded-lg bg-[#0077b5] hover:bg-[#006097] px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition-colors"
+                        >
+                          <Linkedin size={13} /> Share on LinkedIn
+                        </button>
+                        {canPublish && (
+                          <button
+                            disabled={busy}
+                            onClick={() => setClosing(v)}
+                            title="Close vacancy"
+                            className="inline-flex items-center gap-1.5 rounded-lg border border-primary-200 bg-white px-3 py-1.5 text-xs font-semibold text-primary-700 hover:bg-primary-50 disabled:opacity-50 transition-colors"
+                          >
+                            <Ban size={13} /> Close
+                          </button>
+                        )}
+                      </div>
                     )}
                     {!hasActions(v) && <span className="text-slate-300">—</span>}
                   </div>
@@ -911,6 +1210,7 @@ export default function RecruitmentVacancies() {
             setViewing(null);
             setModal({ vacancy: v });
           }}
+          onShare={handleShareLinkedIn}
         />
       )}
       {modal && (
@@ -939,6 +1239,20 @@ export default function RecruitmentVacancies() {
           onCancel={() => setClosing(null)}
           onConfirm={confirmClose}
         />
+      )}
+      {sharePromptVacancy && (
+        <LinkedInShareModal
+          vacancy={sharePromptVacancy}
+          publicUrl={getPublicJobUrl(sharePromptVacancy)}
+          onShare={handleShareLinkedIn}
+          onClose={() => setSharePromptVacancy(null)}
+        />
+      )}
+      {shareToast && (
+        <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2.5 px-4 py-3 rounded-2xl bg-slate-900 text-white shadow-xl text-xs font-semibold animate-in fade-in slide-in-from-bottom-2">
+          <CheckCircle2 size={16} className="text-emerald-400 shrink-0" />
+          <span>{shareToast}</span>
+        </div>
       )}
     </PageLayout>
   );

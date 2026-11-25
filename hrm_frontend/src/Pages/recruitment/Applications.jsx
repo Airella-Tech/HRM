@@ -1835,7 +1835,24 @@ export default function RecruitmentApplications() {
                   {selectedVacancyModal.id && (
                     <div className="pt-3 border-t border-slate-200/80">
                       <Link
-                        to={`/careers/jobs/${selectedVacancyModal.id}`}
+                        to={(() => {
+                          const c =
+                            selectedVacancyModal.companyRef ||
+                            selectedVacancyModal.companyRegistrationNumber ||
+                            selectedVacancyModal.companyName ||
+                            (selectedVacancyModal.companyId ? String(selectedVacancyModal.companyId) : null) ||
+                            (() => {
+                              try {
+                                const u = JSON.parse(localStorage.getItem("user") || "{}");
+                                return u.companyRegistrationNumber || u.companyName || u.companyRef || (u.companyId ? String(u.companyId) : null) || "";
+                              } catch {
+                                return "";
+                              }
+                            })();
+                          return c
+                            ? `/careers/jobs/${selectedVacancyModal.id}?company=${encodeURIComponent(c)}`
+                            : `/careers/jobs/${selectedVacancyModal.id}`;
+                        })()}
                         target="_blank"
                         className="w-full inline-flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-primary-600 hover:bg-primary-700 text-white text-xs font-semibold shadow-sm transition-all"
                       >

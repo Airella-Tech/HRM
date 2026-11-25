@@ -256,12 +256,20 @@ const EmployeeDashboard = () => {
 
         {/* ── Recent Notifications ── */}
         <div className="bg-white rounded-2xl border border-slate-200/80 shadow-[0_2px_12px_rgba(15,23,42,0.035)] p-6">
-          <h3 className="text-sm font-bold text-slate-900 mb-6 flex items-center gap-3">
-            <span className="h-9 w-9 rounded-xl bg-rose-50 text-rose-600 border border-rose-100 flex items-center justify-center shrink-0 shadow-2xs">
-              <Bell size={18} />
-            </span>
-            Recent Notifications
-          </h3>
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-sm font-bold text-slate-900 flex items-center gap-3">
+              <span className="h-9 w-9 rounded-xl bg-teal-50 text-teal-600 border border-teal-100 flex items-center justify-center shrink-0 shadow-2xs">
+                <Bell size={18} />
+              </span>
+              Recent Notifications
+            </h3>
+            <button
+              onClick={() => navigate("/employee/notifications")}
+              className="text-xs font-semibold text-teal-600 hover:text-teal-800 transition-colors"
+            >
+              View all →
+            </button>
+          </div>
           <div className="space-y-3">
             {notifications.map((n, i) => (
               <div
