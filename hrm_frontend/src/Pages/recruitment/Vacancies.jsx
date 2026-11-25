@@ -16,7 +16,7 @@ import { recruitmentApi, hrApi } from "../../services/api";
 import { formatSalary, formatDate } from "../../utils/careersFormat";
 import { useRecruitmentAccess, fetchRecruitmentAccess } from "../../utils/useRecruitmentAccess";
 import ViewButton from "./components/ViewButton";
-import { Plus, Pencil, Trash2, BriefcaseBusiness, Loader2, Save, AlertTriangle, Send, CheckCircle2, XCircle, Megaphone, Ban, Search, Clock, FileText, Users, CalendarDays, Banknote, Award } from "lucide-react";
+import { Plus, ExternalLink, Pencil, Trash2, BriefcaseBusiness, Loader2, Save, AlertTriangle, Send, CheckCircle2, XCircle, Megaphone, Ban, Search, Clock, FileText, Users, CalendarDays, Banknote, Award,RefreshCw } from "lucide-react";
 import RecruitmentModal, {
   modalLabelClass,
   modalInputClass,
@@ -731,6 +731,14 @@ export default function RecruitmentVacancies({ mode }) {
 
   // "New vacancy" only belongs on the create page (and the old combined page)
   const showNewButton = canCreate && (!mode || mode === "create");
+    const refreshButton = (
+    <button
+      onClick={load}
+      className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-sm font-semibold shadow-sm"
+    >
+      <RefreshCw size={16} /> Refresh
+    </button>
+  );
 
   return (
     <PageLayout
@@ -738,15 +746,28 @@ export default function RecruitmentVacancies({ mode }) {
       activePage={cfg.activePage}
       title={cfg.title}
       subtitle={cfg.subtitle}
-      actions={
-        showNewButton ? (
-          <button
-            onClick={() => setModal({ vacancy: null })}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-primary-600 hover:bg-primary-700 text-white text-sm font-semibold shadow-sm"
-          >
-            <Plus size={16} /> New vacancy
-          </button>
-        ) : null
+                  actions={
+        <div className="flex items-center gap-2">
+          {mode === "publish" && (
+            <a
+              href="/careers"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-sm font-semibold shadow-sm"
+            >
+              <ExternalLink size={16} /> View careers page
+            </a>
+          )}
+          {refreshButton}
+          {showNewButton && (
+            <button
+              onClick={() => setModal({ vacancy: null })}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-primary-600 hover:bg-primary-700 text-white text-sm font-semibold shadow-sm"
+            >
+              <Plus size={16} /> New vacancy
+            </button>
+          )}
+        </div>
       }
     >
       <div className="p-6 space-y-5">
