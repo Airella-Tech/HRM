@@ -1,3 +1,4 @@
+import { createPortal } from "react-dom";
 import React, { useEffect } from "react";
 import { X } from "lucide-react";
 
@@ -70,9 +71,9 @@ const RecruitmentModal = ({
     if (closeOnBackdrop && event.target === event.currentTarget) onClose?.();
   };
 
-  return (
+  return createPortal(
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm"
+      className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm"
       onMouseDown={handleBackdropMouseDown}
     >
       <div
@@ -110,7 +111,7 @@ const RecruitmentModal = ({
           </button>
         </header>
 
-        <div className="p-6 overflow-y-auto flex-1 space-y-4">{children}</div>
+        <div className="p-6 overflow-y-auto flex-1 space-y-4 text-sm">{children}</div>
 
         {footer && (
           <footer className="px-6 py-4 bg-slate-50 border-t border-slate-100 flex justify-end gap-2.5 shrink-0">
@@ -118,7 +119,8 @@ const RecruitmentModal = ({
           </footer>
         )}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 

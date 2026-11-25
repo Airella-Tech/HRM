@@ -41,6 +41,7 @@ import StatCard, { StatCardGrid } from "../../components/StatCard";
 import VacancyGroupCard from "./VacancyGroupCard";
 import { recruitmentApi } from "../../services/api";
 import { avatarColorClass } from "../../utils/avatarColor";
+import ViewButton from "./components/ViewButton";
 
 const ROUNDS = [
   "Technical Interview",
@@ -903,8 +904,9 @@ export default function RecruitmentInterviews() {
         </td>
         <td className="min-w-[180px] whitespace-nowrap px-3 py-3.5">
           <div className="flex items-center gap-1">
-            <button
-              type="button"
+                        <ViewButton
+              title="View details"
+              aria-label={`View details for ${item.candidate}`}
               onClick={() => {
                 setSelected(item);
                 setDetailsEditMode(false);
@@ -913,13 +915,7 @@ export default function RecruitmentInterviews() {
                 setFormError("");
                 setConflictError("");
               }}
-              title="View details"
-              aria-label={`View details for ${item.candidate}`}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-xs hover:bg-slate-200"
-            >
-              <MoreHorizontal size={14} />
-              <span>View</span>
-            </button>
+            />
             <button
               type="button"
               onClick={() => openEdit(item)}
@@ -2056,8 +2052,9 @@ export default function RecruitmentInterviews() {
                           <td className="min-w-[180px] whitespace-nowrap px-3 py-3.5">
                             <div className="flex items-center gap-1">
                               {/* View interview details */}
-                              <button
-                                type="button"
+                                                            <ViewButton
+                                title="View details"
+                                aria-label={`View details for ${item.candidate}`}
                                 onClick={() => {
                                   setSelected(item);
                                   setDetailsEditMode(false);
@@ -2066,13 +2063,7 @@ export default function RecruitmentInterviews() {
                                   setFormError("");
                                   setConflictError("");
                                 }}
-                                title="View details"
-                                aria-label={`View details for ${item.candidate}`}
-                                className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-xs hover:bg-slate-200"
-                              >
-                                <MoreHorizontal size={14} />
-                                <span>View</span>
-                              </button>
+                              />
 
                               {/* Edit or reschedule the interview */}
                               <button
@@ -2656,10 +2647,10 @@ export default function RecruitmentInterviews() {
         {selected && (
           <RecruitmentModal
             open={true}
-            title="Interview Details"
+            title={detailsEditMode ? "Edit Interview Details" : "Interview Details"}
             subtitle={selected.round}
             onClose={() => setSelected(null)}
-            size="sm"
+            size="lg"
             footer={
               detailsEditMode ? (
                 <>

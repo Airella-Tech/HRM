@@ -48,6 +48,7 @@ import {
   Loader2,
   Award,
   Check,
+  Users,
   ExternalLink,
   ShieldAlert,
   Banknote,
@@ -55,6 +56,8 @@ import {
   RotateCcw,
   History,
   FolderKanban,
+  Hourglass,
+  PauseCircle,
 } from "lucide-react";
 
 const AVATAR_GRADIENTS = [
@@ -725,23 +728,24 @@ export default function RecruitmentApplicationReview() {
           <div className="flex items-center justify-between gap-2 pt-2.5 border-t border-slate-100 flex-wrap">
             <div className="flex flex-wrap items-center gap-1.5">
               {[
-                { id: "ALL", label: `All Confirmed (${totalConfirmed})` },
-                { id: "READY_INTERVIEW", label: `✓ Ready (${readyInterviewCount})` },
-                { id: "UNDER_REVIEW", label: `⏳ Needs Eval (${needsEvalCount})` },
-                { id: "SECOND_OPINION", label: `👥 2nd Reviewer (${secondOpinionCount})` },
-                { id: "HOLD", label: `⏸️ On Hold (${holdCount})` },
-                { id: "REVIEWED", label: `Reviewed (${reviewedCount})` },
+                { id: "ALL", label: "All Confirmed", count: totalConfirmed },
+                { id: "READY_INTERVIEW", label: "Ready", count: readyInterviewCount, Icon: CheckCircle2 },
+                { id: "UNDER_REVIEW", label: "Needs Eval", count: needsEvalCount, Icon: Hourglass },
+                { id: "SECOND_OPINION", label: "2nd Reviewer", count: secondOpinionCount, Icon: Users },
+                { id: "HOLD", label: "On Hold", count: holdCount, Icon: PauseCircle },
+                { id: "REVIEWED", label: "Reviewed", count: reviewedCount },
               ].map((tab) => (
                 <button
                   key={tab.id}
                   onClick={() => setStatusTab(tab.id)}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
                     statusTab === tab.id
                       ? "bg-primary-600 text-white shadow-xs"
                       : "bg-slate-100 text-slate-600 hover:bg-slate-200"
                   }`}
                 >
-                  {tab.label}
+                  {tab.Icon && <tab.Icon size={13} />}
+                  <span>{tab.label} ({tab.count})</span>
                 </button>
               ))}
             </div>
@@ -1036,19 +1040,19 @@ export default function RecruitmentApplicationReview() {
                                     <div>
                                       {cand.readinessStatus === "READY_FOR_INTERVIEW" ? (
                                         <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                          ✓ Ready for Interview
+                                          <CheckCircle2 size={11} /> Ready for Interview
                                         </span>
                                       ) : cand.readinessStatus === "SECOND_OPINION" ? (
                                         <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg text-[10px] font-bold bg-primary-50 text-primary-700 border border-primary-200">
-                                          👥 2nd Reviewer Needed
+                                          <Users size={11} /> 2nd Reviewer Needed
                                         </span>
                                       ) : cand.readinessStatus === "HOLD" ? (
                                         <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg text-[10px] font-bold bg-slate-100 text-slate-700 border border-slate-300">
-                                          ⏸️ Put on Hold
+                                          <PauseCircle size={11} /> Put on Hold
                                         </span>
                                       ) : (
                                         <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200">
-                                          ⏳ Needs Further Evaluation
+                                          <Hourglass size={11} /> Needs Further Evaluation
                                         </span>
                                       )}
                                     </div>
@@ -1246,22 +1250,23 @@ export default function RecruitmentApplicationReview() {
                 </label>
                 <div className="grid grid-cols-2 gap-2">
                   {[
-                    { id: "READY_FOR_INTERVIEW", label: "✓ Ready for Interview", activeClass: "bg-emerald-50 border-emerald-600 text-emerald-900 ring-2 ring-emerald-500/30" },
-                    { id: "UNDER_REVIEW", label: "⏳ Needs Further Evaluation", activeClass: "bg-amber-50 border-amber-600 text-amber-900 ring-2 ring-amber-500/30" },
-                    { id: "SECOND_OPINION", label: "👥 2nd Reviewer Needed", activeClass: "bg-primary-50 border-primary-600 text-primary-900 ring-2 ring-primary-500/30" },
-                    { id: "HOLD", label: "⏸️ Put on Hold", activeClass: "bg-slate-100 border-slate-600 text-slate-900 ring-2 ring-slate-400/30" },
+                    { id: "READY_FOR_INTERVIEW", label: "Ready for Interview", Icon: CheckCircle2, activeClass: "bg-emerald-50 border-emerald-600 text-emerald-900 ring-2 ring-emerald-500/30" },
+                    { id: "UNDER_REVIEW", label: "Needs Further Evaluation", Icon: Hourglass, activeClass: "bg-amber-50 border-amber-600 text-amber-900 ring-2 ring-amber-500/30" },
+                    { id: "SECOND_OPINION", label: "2nd Reviewer Needed", Icon: Users, activeClass: "bg-primary-50 border-primary-600 text-primary-900 ring-2 ring-primary-500/30" },
+                    { id: "HOLD", label: "Put on Hold", Icon: PauseCircle, activeClass: "bg-slate-100 border-slate-600 text-slate-900 ring-2 ring-slate-400/30" },
                   ].map((opt) => (
                     <button
                       key={opt.id}
                       type="button"
                       onClick={() => setReadinessStatus(opt.id)}
-                      className={`p-3 rounded-xl text-xs font-bold text-left border transition-all cursor-pointer ${
+                      className={`flex items-center gap-2 p-3 rounded-xl text-xs font-bold text-left border transition-all cursor-pointer ${
                         readinessStatus === opt.id
                           ? opt.activeClass
                           : "bg-white border-slate-200 text-slate-700 hover:bg-slate-50"
                       }`}
                     >
-                      {opt.label}
+                      <opt.Icon size={15} className="shrink-0" />
+                      <span>{opt.label}</span>
                     </button>
                   ))}
                 </div>
