@@ -1235,14 +1235,12 @@ export default function AssignInterviewers() {
                                   {statusBadge(interview)}
                                 </td>
                                 <td className="whitespace-nowrap px-4 py-3.5 text-right">
-                                  {locked ? (
+                                                                    {locked ? (
                                     <ViewButton
                                       onClick={() =>
                                         openAssignmentModal(interview)
                                       }
-                                      className="inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100"
-                                      title="View"
-                                      disabled={locked}
+                                      title="View assigned interviewers"
                                       label="View"
                                     />
                                   ) : !locked ? (
