@@ -1225,7 +1225,6 @@ export default function InterviewEvaluationReview() {
                                     <td className="whitespace-nowrap px-4 py-3.5 text-right">
                                       <ViewButton
                                         onClick={() => openReview(interview)}
-                                        className="inline-flex items-center gap-2 whitespace-nowrap rounded-xl bg-primary-600 px-3 py-2 text-sm font-semibold text-white hover:bg-primary-700"
                                         label="View Reviews"
                                       />
                                     </td>
@@ -1265,7 +1264,7 @@ export default function InterviewEvaluationReview() {
               
 
               {/* Modal content */}
-              <div className="flex-1 space-y-6 overflow-y-auto p-5 sm:p-6">
+              <div className="space-y-6">
                 {/* Interview summary */}
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                   <div className="rounded-lg bg-slate-50 p-4">

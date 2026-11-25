@@ -2647,10 +2647,10 @@ export default function RecruitmentInterviews() {
         {selected && (
           <RecruitmentModal
             open={true}
-            title="Interview Details"
+            title={detailsEditMode ? "Edit Interview Details" : "Interview Details"}
             subtitle={selected.round}
             onClose={() => setSelected(null)}
-            size="sm"
+            size="lg"
             footer={
               detailsEditMode ? (
                 <>
