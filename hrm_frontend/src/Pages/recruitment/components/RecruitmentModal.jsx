@@ -111,7 +111,7 @@ const RecruitmentModal = ({
           </button>
         </header>
 
-        <div className="p-6 overflow-y-auto flex-1 space-y-4">{children}</div>
+        <div className="p-6 overflow-y-auto flex-1 space-y-4 text-sm">{children}</div>
 
         {footer && (
           <footer className="px-6 py-4 bg-slate-50 border-t border-slate-100 flex justify-end gap-2.5 shrink-0">

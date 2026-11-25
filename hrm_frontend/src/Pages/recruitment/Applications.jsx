@@ -1033,13 +1033,9 @@ export default function RecruitmentApplications() {
                                   AVATAR_GRADIENTS[(groupIdx + appIdx) % AVATAR_GRADIENTS.length];
 
                                 return (
-                                  <tr
+                                                                    <tr
                                     key={app.id || appIdx}
-                                    onClick={() => {
-                                      setSelectedApp(app);
-                                      setShowResumeText(false);
-                                    }}
-                                    className="hover:bg-primary-50/30 cursor-pointer transition-colors"
+                                    className="hover:bg-primary-50/30 transition-colors"
                                   >
                                     {/* Candidate Name, Avatar & Contact */}
                                     <td className="px-6 py-4">
@@ -1269,13 +1265,9 @@ export default function RecruitmentApplications() {
                     const jobName = app.jobTitle || app.vacancyTitle || "General Role";
 
                     return (
-                      <tr
+                                            <tr
                         key={app.id || index}
-                        onClick={() => {
-                          setSelectedApp(app);
-                          setShowResumeText(false);
-                        }}
-                        className="hover:bg-slate-50/80 cursor-pointer transition-colors"
+                        className="hover:bg-slate-50/80 transition-colors"
                       >
                         {/* Candidate info & Tracking Code */}
                         <td className="px-6 py-4">
