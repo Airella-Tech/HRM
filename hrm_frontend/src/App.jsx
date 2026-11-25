@@ -14,6 +14,7 @@ import AdminDashboard from "./Pages/admin/Dashboard.jsx";
 import Attendance from "./Pages/employee/Attendance.jsx";
 import Leave from "./Pages/employee/Leave.jsx";
 import Payslip from "./Pages/employee/Payslip.jsx";
+import EmployeeNotifications from "./Pages/employee/Notifications.jsx";
 import Profile from "./Pages/employee/Profile.jsx";
 import HRAttendance from "./Pages/hr/Attendance.jsx";
 import HRLeave from "./Pages/hr/Leave.jsx";
@@ -84,6 +85,7 @@ function App() {
       <Route path="/employee/attendance" element={<Attendance />} />
       <Route path="/employee/leave" element={<Leave />} />
       <Route path="/employee/payslip" element={<Payslip />} />
+      <Route path="/employee/notifications" element={<EmployeeNotifications />} />
       <Route path="/employee/profile" element={<Profile />} />
       <Route path="/hr/dashboard" element={<HRDashboard />} />
       <Route path="/hr/departments" element={<HRDepartment />} />

@@ -16,6 +16,8 @@ public class AuthResponse {
     private Long companyId;
     private Long employeeId;
     private boolean mustChangePassword;
+    private String companyName;
+    private String companyRegistrationNumber;
 
     public AuthResponse(String token, String email, String fullName, String role, Long companyId, Long employeeId) {
         this(token, email, fullName, role, companyId, employeeId, false);

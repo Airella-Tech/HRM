@@ -113,7 +113,7 @@ public class AuthService {
             System.err.println("[SESSION LOG ERROR] " + e.getMessage());
         }
 
-        return new AuthResponse(
+        AuthResponse response = new AuthResponse(
                 jwt,
                 employee.getEmail(),
                 employee.getFullName(),
@@ -122,6 +122,11 @@ public class AuthService {
                 employee.getId(),
                 Boolean.TRUE.equals(employee.getMustChangePassword())
         );
+        if (employee.getCompany() != null) {
+            response.setCompanyName(employee.getCompany().getCompanyName());
+            response.setCompanyRegistrationNumber(employee.getCompany().getRegistrationNumber());
+        }
+        return response;
     }
 
         private void migrateLegacyUserIfNeeded(String normalizedEmail, String rawPassword) {
