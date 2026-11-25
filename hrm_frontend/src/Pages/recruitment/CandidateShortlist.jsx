@@ -61,8 +61,6 @@ import {
   RotateCcw,
   History,
   FolderKanban,
-  Calendar,
-  ExternalLink,
 } from "lucide-react";
 
 /**
@@ -1189,13 +1187,7 @@ export default function RecruitmentCandidateShortlist() {
                         {/* 0. Job Vacancy Details Button */}
                         <button
                           type="button"
-                          onClick={() => {
-                            const fullVac =
-                              (vacancies && vacancies.find((v) => String(v.id) === String(group.vacancyId))) ||
-                              group.rawVacancy ||
-                              { id: group.vacancyId, title: group.title, department: group.department };
-                            setSelectedVacancyModal(fullVac);
-                          }}
+                          onClick={() => setSelectedVacancyModal(group.rawVacancy || { id: group.vacancyId, title: group.title, department: group.department })}
                           className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-slate-200 bg-white text-slate-700 text-sm font-semibold hover:bg-slate-50 transition-colors cursor-pointer"
                           title="Display job vacancy details like public career page"
                         >
@@ -2738,24 +2730,7 @@ export default function RecruitmentCandidateShortlist() {
                   {selectedVacancyModal.id && (
                     <div className="pt-3 border-t border-slate-200/80">
                       <Link
-                        to={(() => {
-                          const c =
-                            selectedVacancyModal.companyRef ||
-                            selectedVacancyModal.companyRegistrationNumber ||
-                            selectedVacancyModal.companyName ||
-                            (selectedVacancyModal.companyId ? String(selectedVacancyModal.companyId) : null) ||
-                            (() => {
-                              try {
-                                const u = JSON.parse(localStorage.getItem("user") || "{}");
-                                return u.companyRegistrationNumber || u.companyName || u.companyRef || (u.companyId ? String(u.companyId) : null) || "";
-                              } catch {
-                                return "";
-                              }
-                            })();
-                          return c
-                            ? `/careers/jobs/${selectedVacancyModal.id}?company=${encodeURIComponent(c)}`
-                            : `/careers/jobs/${selectedVacancyModal.id}`;
-                        })()}
+                        to={`/careers/jobs/${selectedVacancyModal.id}`}
                         target="_blank"
                         className="w-full inline-flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-primary-600 hover:bg-primary-700 text-white text-xs font-semibold shadow-sm transition-all"
                       >

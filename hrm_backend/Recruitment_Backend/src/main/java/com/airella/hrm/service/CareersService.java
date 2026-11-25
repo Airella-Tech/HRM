@@ -33,19 +33,10 @@ public class CareersService {
         String type = clean(jobType);
         String query = clean(search) == null ? null : search.trim().toLowerCase(Locale.ROOT);
 
-        List<JobVacancy> vacancies = vacancyRepo
+        return vacancyRepo
                 .findByCompanyRefAndStatusAndDeadlineGreaterThanEqualOrderByPublishedAtDesc(
-                        companyRef, VacancyStatus.PUBLISHED, LocalDate.now());
-
-        if (vacancies.isEmpty()) {
-            vacancies = vacancyRepo.findAll().stream()
-                    .filter(v -> v.getStatus() == VacancyStatus.PUBLISHED && !v.getDeadline().isBefore(LocalDate.now()))
-                    .filter(v -> v.getCompanyRef() != null && v.getCompanyRef().equalsIgnoreCase(companyRef))
-                    .sorted((a, b) -> b.getPublishedAt() != null && a.getPublishedAt() != null ? b.getPublishedAt().compareTo(a.getPublishedAt()) : 0)
-                    .toList();
-        }
-
-        return vacancies.stream()
+                        companyRef, VacancyStatus.PUBLISHED, LocalDate.now())
+                .stream()
                 .filter(v -> dept == null || v.getDepartment().equalsIgnoreCase(dept))
                 .filter(v -> type == null || v.getJobType().equalsIgnoreCase(type))
                 .filter(v -> query == null || matches(v, query))
@@ -55,19 +46,9 @@ public class CareersService {
 
     public PublicVacancyDTO getOpen(Long id, String company) {
         String companyRef = requireCompany(company);
-
-        // 1. Exact match on id and companyRef
-        java.util.Optional<JobVacancy> exact = vacancyRepo.findByIdAndCompanyRef(id, companyRef)
-                .filter(v -> v.getStatus() == VacancyStatus.PUBLISHED && !v.getDeadline().isBefore(LocalDate.now()));
-        if (exact.isPresent()) {
-            return toDto(exact.get());
-        }
-
-        // 2. Fallback to published vacancy by id (allowing case-insensitive companyRef or companyId match)
-        JobVacancy vacancy = vacancyRepo.findById(id)
+        JobVacancy vacancy = vacancyRepo.findByIdAndCompanyRef(id, companyRef)
                 .filter(v -> v.getStatus() == VacancyStatus.PUBLISHED && !v.getDeadline().isBefore(LocalDate.now()))
                 .orElseThrow(() -> new ResourceNotFoundException("Vacancy", "id", id));
-
         return toDto(vacancy);
     }
 

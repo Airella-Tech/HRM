@@ -171,35 +171,6 @@ export default function CareerJob() {
     };
   }, [id, company]);
 
-  useEffect(() => {
-    if (!job) return;
-    const prevTitle = document.title;
-    document.title = `${job.title} | Careers`;
-
-    const setOrCreateMeta = (attr, val, content) => {
-      let tag = document.querySelector(`meta[${attr}='${val}']`);
-      if (!tag) {
-        tag = document.createElement("meta");
-        tag.setAttribute(attr, val);
-        document.head.appendChild(tag);
-      }
-      tag.setAttribute("content", content);
-    };
-
-    setOrCreateMeta("property", "og:title", `${job.title} - Now Hiring`);
-    setOrCreateMeta(
-      "property",
-      "og:description",
-      job.description ? job.description.slice(0, 200).replace(/\s+/g, " ").trim() : "View details and apply online."
-    );
-    setOrCreateMeta("property", "og:type", "website");
-    setOrCreateMeta("property", "og:url", window.location.href);
-
-    return () => {
-      document.title = prevTitle;
-    };
-  }, [job]);
-
   const backTo = `/careers?company=${encodeURIComponent(company)}`;
 
   if (!company) {

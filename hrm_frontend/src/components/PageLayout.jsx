@@ -65,7 +65,6 @@ const NAV = {
     { name: "Attendance", icon: Clock, path: "/employee/attendance" },
     { name: "Leave", icon: CalendarDays, path: "/employee/leave" },
     { name: "Payslip", icon: DollarSign, path: "/employee/payslip" },
-    { name: "Notifications", icon: BellIcon, path: "/employee/notifications" },
     { name: "Profile", icon: User, path: "/employee/profile" },
   ],
   hr: [
@@ -89,9 +88,9 @@ const NAV = {
     { name: "Overview", icon: LayoutDashboard, path: "/admin/dashboard" },
     { name: "Companies", icon: Building2, path: "/admin/companies" },
     { name: "System Users", icon: Users, path: "/admin/system-users" },
-    { name: "Attendance", icon: CalendarCheck, path: "/admin/attendance" },
-    { name: "Leave", icon: FileText, path: "/admin/leave" },
-    { name: "Payroll", icon: DollarSign, path: "/admin/payslip" },
+    // { name: "Attendance", icon: CalendarCheck, path: "/admin/attendance" },
+    // { name: "Leave", icon: FileText, path: "/admin/leave" },
+    // { name: "Payroll", icon: Activity, path: "/admin/payslip" },
     { name: "System Config", icon: Settings, path: "/admin/system-config" },
     { name: "Profile", icon: User, path: "/admin/profile" },
   ],
@@ -177,7 +176,7 @@ const NAV = {
       icon: CheckCircle2,
       path: "/recruitment/evaluation-review",
       requiresAny: ["INTERVIEW_DECIDE"],
-
+    
     },
 
     // Job Offers
@@ -196,121 +195,78 @@ const NAV = {
       requiresAny: ["RECRUITMENT_ROLE_ADMIN", "MANAGE_ROLES_PERMISSIONS"],
     },
     // Audit trail (needs AUDIT_VIEW, or full access)
-    {
-      name: "Audit Log",
-      icon: Activity,
-      path: "/recruitment/audit-log",
-      requiresAny: ["AUDIT_VIEW"],
-    },
+{
+  name: "Audit Log",
+  icon: Activity,
+  path: "/recruitment/audit-log",
+  requiresAny: ["AUDIT_VIEW"],
+},
   ],
 };
 
-// ─── Module coordinated colour systems ─────────────────────────────────────────
+// ─── Role accent colours ──────────────────────────────────────────────────────
 const ACCENT = {
-  admin: {
-    from: "rgba(37,99,235,1)",
-    to: "rgba(29,78,216,0.9)",
-    shadow: "rgba(37,99,235,0.3)",
-    avatarFrom: "from-blue-600",
-    avatarTo: "to-blue-800",
-    label: "Administrator",
-    surface: "bg-[#F8FAFC]",
-    sidebarBg: "linear-gradient(180deg, #0b1528 0%, #112240 100%)",
-    activeBg: "#2563EB",
-    activeBorder: "border-blue-400",
-    activeIcon: "text-blue-200",
-    menuBg: "bg-[#0b1528]",
-    ringClass: "ring-blue-900",
-    sidebarBottomFade: "linear-gradient(to top, #112240, transparent)",
-    topbar: "border-slate-200/80",
-    title: "text-slate-900",
-    hover: "hover:bg-blue-50",
-    badgeBg: "bg-blue-500/20 text-blue-300 border-blue-500/30",
-    moduleCode: "HR ADMIN",
-  },
-  hr: {
-    from: "rgba(147,51,234,1)",
-    to: "rgba(126,34,206,0.9)",
-    shadow: "rgba(147,51,234,0.3)",
-    avatarFrom: "from-purple-600",
-    avatarTo: "to-purple-800",
-    label: "HR Manager",
-    surface: "bg-[#F8FAFC]",
-    sidebarBg: "linear-gradient(180deg, #1d102e 0%, #2b1845 100%)",
-    activeBg: "#9333EA",
-    activeBorder: "border-purple-300",
-    activeIcon: "text-purple-200",
-    menuBg: "bg-[#1d102e]",
-    ringClass: "ring-purple-900",
-    sidebarBottomFade: "linear-gradient(to top, #2b1845, transparent)",
-    topbar: "border-slate-200/80",
-    title: "text-slate-900",
-    hover: "hover:bg-purple-50",
-    badgeBg: "bg-purple-500/20 text-purple-300 border-purple-500/30",
-    moduleCode: "HR",
-  },
-  recruiter: {
-    from: "rgba(99,102,241,1)",
-    to: "rgba(79,70,229,0.9)",
-    shadow: "rgba(99,102,241,0.3)",
-    avatarFrom: "from-indigo-600",
-    avatarTo: "to-indigo-800",
-    label: "Recruiter",
-    surface: "bg-[#F8FAFC]",
-    sidebarBg: "linear-gradient(180deg, #131738 0%, #1c224f 100%)",
-    activeBg: "#6366F1",
-    activeBorder: "border-indigo-300",
-    activeIcon: "text-indigo-200",
-    menuBg: "bg-[#131738]",
-    ringClass: "ring-indigo-900",
-    sidebarBottomFade: "linear-gradient(to top, #1c224f, transparent)",
-    topbar: "border-slate-200/80",
-    title: "text-slate-900",
-    hover: "hover:bg-indigo-50",
-    badgeBg: "bg-indigo-500/20 text-indigo-300 border-indigo-500/30",
-    moduleCode: "RECRUITMENT",
-  },
-  recruitment: {
-    from: "rgba(99,102,241,1)",
-    to: "rgba(79,70,229,0.9)",
-    shadow: "rgba(99,102,241,0.3)",
-    avatarFrom: "from-indigo-600",
-    avatarTo: "to-indigo-800",
-    label: "Recruiter",
-    surface: "bg-[#F8FAFC]",
-    sidebarBg: "linear-gradient(180deg, #131738 0%, #1c224f 100%)",
-    activeBg: "#6366F1",
-    activeBorder: "border-indigo-300",
-    activeIcon: "text-indigo-200",
-    menuBg: "bg-[#131738]",
-    ringClass: "ring-indigo-900",
-    sidebarBottomFade: "linear-gradient(to top, #1c224f, transparent)",
-    topbar: "border-slate-200/80",
-    title: "text-slate-900",
-    hover: "hover:bg-indigo-50",
-    badgeBg: "bg-indigo-500/20 text-indigo-300 border-indigo-500/30",
-    moduleCode: "RECRUITMENT",
-  },
   employee: {
-    from: "rgba(13,148,136,1)",
-    to: "rgba(15,118,110,0.9)",
-    shadow: "rgba(13,148,136,0.3)",
-    avatarFrom: "from-teal-600",
-    avatarTo: "to-teal-800",
+    from: "rgba(13,148,136,0.9)",
+    to: "rgba(15,118,110,0.8)",
+    shadow: "rgba(13,148,136,0.25)",
+    avatarFrom: "from-teal-500",
+    avatarTo: "to-teal-700",
     label: "Employee",
-    surface: "bg-[#F8FAFC]",
-    sidebarBg: "linear-gradient(180deg, #0d2524 0%, #133937 100%)",
-    activeBg: "#0D9488",
-    activeBorder: "border-teal-300",
-    activeIcon: "text-teal-200",
-    menuBg: "bg-[#0d2524]",
+    surface: "bg-slate-50",
+    sidebarBg: "linear-gradient(180deg, #102a2a 0%, #163b38 100%)",
+    activeBg: "rgba(13, 148, 136, 0.28)",
+    activeBorder: "border-teal-400",
+    activeIcon: "text-teal-300",
+    menuBg: "bg-[#102a2a]",
     ringClass: "ring-teal-900",
-    sidebarBottomFade: "linear-gradient(to top, #133937, transparent)",
-    topbar: "border-slate-200/80",
+    sidebarBottomFade: "linear-gradient(to top, #163b38, transparent)",
+    topbar: "border-slate-200",
     title: "text-slate-900",
     hover: "hover:bg-teal-50",
-    badgeBg: "bg-teal-500/20 text-teal-300 border-teal-500/30",
-    moduleCode: "EMPLOYEE",
+  },
+  hr: {
+    from: "rgba(3,105,161,1)",
+    to: "rgba(7,89,133,1)",
+    shadow: "rgba(3,105,161,0.35)",
+    avatarFrom: "from-sky-600",
+    avatarTo: "to-sky-800",
+    label: "HR Manager",
+    surface: "bg-gray-50",
+    topbar: "border-gray-100",
+    title: "text-gray-900",
+    hover: "hover:bg-gray-100",
+    activeBg: "#0369a1",
+    activeBorder: "border-sky-300",
+  },
+  admin: {
+    from: "rgba(99,102,241,0.8)",
+    to: "rgba(79,70,229,0.6)",
+    shadow: "rgba(99,102,241,0.35)",
+    avatarFrom: "from-indigo-500",
+    avatarTo: "to-violet-600",
+    label: "Administrator",
+    surface: "bg-gray-50",
+    topbar: "border-gray-100",
+    title: "text-gray-900",
+    hover: "hover:bg-gray-100",
+  },
+  recruiter: {
+    from: "rgba(85,99,176,0.9)",
+    to: "rgba(63,77,153,0.8)",
+    shadow: "rgba(63,77,153,0.35)",
+    avatarFrom: "from-primary-600",
+    avatarTo: "to-primary-700",
+    label: "Recruiter",
+    surface: "bg-slate-50",
+    sidebarBg: "linear-gradient(180deg, #151a35 0%, #1b2142 100%)",
+    activeBg: "rgba(63,77,153,0.45)",
+    activeBorder: "border-primary-300",
+    menuBg: "bg-primary-800",
+    ringClass: "ring-primary-900",
+    topbar: "border-primary-100",
+    title: "text-slate-900",
+    hover: "hover:bg-primary-50",
   },
 };
 // Remembers sidebar scroll between page changes (each page remounts PageLayout)
@@ -322,7 +278,6 @@ export const PageLayout = ({
   activeNav,
   title,
   subtitle,
-  breadcrumbs,
   actions,
   children,
 }) => {
@@ -382,35 +337,35 @@ export const PageLayout = ({
     role !== "recruiter"
       ? NAV[role] || []
       : (NAV.recruiter || []).filter((item) => {
-        // Do not show Recruitment pages until access is confirmed.
-        if (!recruitmentAccess?.hasRecruitmentAccess) {
-          return false;
-        }
+          // Do not show Recruitment pages until access is confirmed.
+          if (!recruitmentAccess?.hasRecruitmentAccess) {
+            return false;
+          }
 
-        // Some pages require full access.
-        if (item.requiresFullAccess) {
-          return recruitmentAccess.fullAccess;
-        }
+          // Some pages require full access.
+          if (item.requiresFullAccess) {
+            return recruitmentAccess.fullAccess;
+          }
 
         // Everyone with recruitment access can see Overview.
         if (item.name === "Overview") {
           return true;
         }
 
-        // Full-access users can see all other Recruitment pages.
-        if (recruitmentAccess.fullAccess) {
-          return true;
-        }
+          // Full-access users can see all other Recruitment pages.
+          if (recruitmentAccess.fullAccess) {
+            return true;
+          }
 
-        // Show the page if no specific permission is required,
-        // or if the user has at least one required permission.
-        return (
-          !item.requiresAny?.length ||
-          item.requiresAny.some((permission) =>
-            recruitmentAccess.permissions.includes(permission),
-          )
-        );
-      });
+          // Show the page if no specific permission is required,
+          // or if the user has at least one required permission.
+          return (
+            !item.requiresAny?.length ||
+            item.requiresAny.some((permission) =>
+              recruitmentAccess.permissions.includes(permission),
+            )
+          );
+        });
 
   const storedUser = localStorage.getItem("user");
 
@@ -450,22 +405,16 @@ export const PageLayout = ({
           <img
             src={logo}
             alt="Logo"
-            className="w-9 h-9 rounded-xl flex-shrink-0 shadow-md object-cover"
+            className="w-9 h-9 rounded-xl flex-shrink-0 shadow-md"
           />
           {!collapsed && (
-            <div className="min-w-0 flex-1">
-              <span className="text-white text-sm font-bold tracking-tight block truncate">
-                HRM System
-              </span>
-              <span className={`inline-block text-[9px] font-extrabold uppercase tracking-wider px-1.5 py-0.2 rounded border ${accent.badgeBg}`}>
-                {accent.moduleCode}
-              </span>
-            </div>
+            <span className="text-white text-base font-bold tracking-tight">
+              HRM System
+            </span>
           )}
           <button
             onClick={toggleCollapsed}
-            className="ml-auto p-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
-            title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+            className="ml-auto p-1.5 rounded-lg text-gray-500 hover:text-white hover:bg-white/10 transition-colors"
           >
             {collapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
           </button>
@@ -510,7 +459,7 @@ export const PageLayout = ({
                 (item.name === "Evaluate Interviews" ||
                   item.name === "Evaluations")) ||
               (activePage === "Evaluation Review" &&
-                item.name === "Evaluation Review") ||
+                  item.name === "Evaluation Review") ||
               ((activePage === "Evaluation Review" ||
                 activePage === "Interview Evaluation Review") &&
                 item.name === "Evaluation Review") ||
@@ -525,9 +474,9 @@ export const PageLayout = ({
               item.path && !location.search && itemBase === currentBase,
             );
 
-            const isActive = activeNav
-              ? item.name === activeNav
-              : exactUrlMatches ||
+              const isActive = activeNav
+     ? item.name === activeNav
+     : exactUrlMatches ||
               (nameMatches &&
                 (location.search
                   ? exactUrlMatches
@@ -538,15 +487,17 @@ export const PageLayout = ({
                 <button
                   onClick={() => (item.path ? navigate(item.path) : null)}
                   className={`relative flex items-center gap-3 w-full px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200
-                    ${accent.activeBorder
-                      ? `border-l-[3px] ${isActive ? accent.activeBorder : "border-transparent"}`
-                      : ""
+                    ${
+                      accent.activeBorder
+                        ? `border-l-[3px] ${isActive ? accent.activeBorder : "border-transparent"}`
+                        : ""
                     }
-                    ${isActive
-                      ? "text-white"
-                      : role === "hr"
-                        ? "text-slate-400 hover:text-white hover:bg-primary-800/40"
-                        : "text-gray-400 hover:text-white hover:bg-white/10"
+                    ${
+                      isActive
+                        ? "text-white"
+                        : role === "hr"
+                          ? "text-slate-400 hover:text-white hover:bg-primary-800/40"
+                          : "text-gray-400 hover:text-white hover:bg-white/10"
                     }
                     ${collapsed ? "justify-center px-0" : ""}`}
                   style={
@@ -554,9 +505,9 @@ export const PageLayout = ({
                       ? accent.activeBg
                         ? { backgroundColor: accent.activeBg }
                         : {
-                          background: `linear-gradient(135deg, ${accent.from}, ${accent.to})`,
-                          boxShadow: `0 2px 12px ${accent.shadow}`,
-                        }
+                            background: `linear-gradient(135deg, ${accent.from}, ${accent.to})`,
+                            boxShadow: `0 2px 12px ${accent.shadow}`,
+                          }
                       : {}
                   }
                   title={collapsed ? item.name : undefined}
@@ -573,26 +524,41 @@ export const PageLayout = ({
 
         {/* User + logout */}
         <div className="border-t border-white/10 p-3 space-y-2 flex-shrink-0">
-          <UserMenu
-            mode={
-              role === "admin"
-                ? "admin"
-                : role === "hr"
+          {role === "hr" || role === "employee" || role === "recruiter" ? (
+            <UserMenu
+              mode={
+                role === "hr"
                   ? "hr"
                   : role === "employee"
                     ? "employee"
                     : "recruitment"
-            }
-            initials={initials}
-            name={user?.fullName || "User"}
-            roleLabel={accent.label}
-            accent={accent}
-            collapsed={collapsed}
-          />
+              }
+              initials={initials}
+              name={user?.fullName || "User"}
+              roleLabel={accent.label}
+              accent={accent}
+              collapsed={collapsed}
+            />
+          ) : (
+            !collapsed && (
+              <div className="flex items-center gap-3 px-2 py-2">
+                <div
+                  className={`w-9 h-9 rounded-xl bg-gradient-to-br ${accent.avatarFrom} ${accent.avatarTo} flex items-center justify-center text-white text-sm font-bold flex-shrink-0 shadow-md`}
+                >
+                  {initials}
+                </div>
+                <div className="min-w-0">
+                  <p className="text-white text-sm font-semibold truncate">
+                    {user?.fullName || "User"}
+                  </p>
+                  <p className="text-gray-500 text-xs">{accent.label}</p>
+                </div>
+              </div>
+            )
+          )}
           <button
             onClick={handleLogout}
             className={`flex items-center gap-3 w-full p-2.5 rounded-xl text-gray-400 hover:text-white hover:bg-red-500/20 transition-all ${collapsed ? "justify-center" : ""}`}
-            title={collapsed ? "Sign Out" : undefined}
           >
             <LogOut size={18} />
             {!collapsed && (
@@ -606,17 +572,12 @@ export const PageLayout = ({
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Topbar */}
         <header
-          className={`flex-shrink-0 h-16 bg-white border-b ${accent.topbar} flex items-center justify-between px-6 shadow-xs`}
+          className={`flex-shrink-0 h-16 bg-white border-b ${accent.topbar} flex items-center justify-between px-6 shadow-sm`}
         >
           <div>
-            {breadcrumbs && (
-              <div className="flex items-center gap-1.5 text-xs text-slate-400 mb-0.5 font-medium">
-                {breadcrumbs}
-              </div>
-            )}
-            <h1 className="text-lg font-bold text-slate-900 leading-tight">{title}</h1>
+            <h1 className={`text-lg font-bold ${accent.title}`}>{title}</h1>
             {subtitle && (
-              <p className="text-xs text-slate-500 hidden md:block">
+              <p className="text-xs text-gray-400 hidden md:block">
                 {subtitle}
               </p>
             )}
@@ -625,35 +586,41 @@ export const PageLayout = ({
             {actions}
             <button
               onClick={() => setIsNotificationsOpen((v) => !v)}
-              className={`relative p-2 rounded-xl text-slate-500 ${accent.hover} transition-colors cursor-pointer`}
+              className={`relative p-2 rounded-xl text-gray-500 ${accent.hover} transition-colors`}
               title="Notifications"
             >
               <Bell size={20} />
               {unreadCount > 0 && (
-                <span className="absolute top-1.5 right-1.5 min-w-[16px] h-[16px] px-1 bg-rose-600 text-white font-bold text-[9px] rounded-full flex items-center justify-center shadow-xs animate-pulse">
+                <span className="absolute top-1.5 right-1.5 min-w-[16px] h-[16px] px-1 bg-red-500 text-white font-bold text-[9px] rounded-full flex items-center justify-center shadow-xs animate-pulse">
                   {unreadCount}
                 </span>
               )}
             </button>
-            <button
-              type="button"
-              onClick={() =>
-                navigate(
-                  role === "admin"
-                    ? "/admin/profile"
-                    : role === "hr"
+            {role === "hr" || role === "employee" || role === "recruiter" ? (
+              <button
+                type="button"
+                onClick={() =>
+                  navigate(
+                    role === "hr"
                       ? "/hr/profile"
-                      : role === "recruiter" || role === "recruitment"
+                      : role === "recruiter"
                         ? "/recruitment/profile"
                         : "/employee/profile",
-                )
-              }
-              title="My Profile"
-              aria-label="Open my profile"
-              className={`w-8 h-8 rounded-lg bg-gradient-to-br ${accent.avatarFrom} ${accent.avatarTo} flex items-center justify-center text-white text-xs font-bold shadow-xs cursor-pointer hover:shadow-md hover:scale-105 transition-all`}
-            >
-              {initials}
-            </button>
+                  )
+                }
+                title="My Profile"
+                aria-label="Open my profile"
+                className={`w-8 h-8 rounded-lg bg-gradient-to-br ${accent.avatarFrom} ${accent.avatarTo} flex items-center justify-center text-white text-xs font-bold shadow cursor-pointer hover:shadow-md hover:scale-105 transition-all`}
+              >
+                {initials}
+              </button>
+            ) : (
+              <div
+                className={`w-8 h-8 rounded-lg bg-gradient-to-br ${accent.avatarFrom} ${accent.avatarTo} flex items-center justify-center text-white text-xs font-bold shadow`}
+              >
+                {initials}
+              </div>
+            )}
           </div>
         </header>
 

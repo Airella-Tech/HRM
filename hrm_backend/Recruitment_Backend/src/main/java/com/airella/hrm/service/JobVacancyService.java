@@ -424,7 +424,6 @@ public class JobVacancyService {
                 v.getCreatedBy(), v.getCreatedAt(), v.getUpdatedAt(),
                 v.getRemovedFromApplications(), v.getRemovedFromApplicationsAt(),
                 v.getRemovedFromShortlist(), v.getRemovedFromShortlistAt(),
-                v.getRemovedFromReview(), v.getRemovedFromReviewAt(),
-                v.getCompanyRef());
+                v.getRemovedFromReview(), v.getRemovedFromReviewAt());
     }
 }
