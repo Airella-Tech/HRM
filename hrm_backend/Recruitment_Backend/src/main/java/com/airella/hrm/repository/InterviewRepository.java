@@ -55,4 +55,12 @@ public interface InterviewRepository extends JpaRepository<Interview, Long> {
             Long id,
             Long companyId
     );
+
+    // Get interviews within a date range for a company.
+    List<Interview>
+    findByCompanyIdAndInterviewDateBetweenOrderByInterviewDateAscInterviewTimeAsc(
+            Long companyId,
+            LocalDate startDate,
+            LocalDate endDate
+    );
 }

@@ -29,15 +29,7 @@ const STAGES = [
   "Final Interview",
 ];
 
-const LOCKED_STATUSES = new Set([
-  "completed",
-  "complete",
-  "cancelled",
-  "canceled",
-  "evaluated",
-  "submitted",
-  "finished",
-]);
+const LOCKED_STATUSES = new Set(["cancelled", "canceled"]);
 
 const unwrapList = (response) => {
   let value = response;
@@ -1236,17 +1228,7 @@ export default function AssignInterviewers() {
                                   {statusBadge(interview)}
                                 </td>
                                 <td className="whitespace-nowrap px-4 py-3.5 text-right">
-                                  {getDisplayStatus(interview) ===
-                                  "Completed" ? (
-                                    <button
-                                      type="button"
-                                      disabled
-                                      className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-400"
-                                    >
-                                      <Eye size={14} />
-                                      View
-                                    </button>
-                                  ) : !locked ? (
+                                  {!locked ? (
                                     <button
                                       type="button"
                                       onClick={() =>
