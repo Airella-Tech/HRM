@@ -4,7 +4,7 @@ import { Bell, CheckCircle, Trash2 } from "lucide-react";
 import { PageLayout } from "../../components/PageLayout";
 import NotificationItem from "../../components/NotificationItem";
 import useNotifications from "../../utils/useNotifications";
-import { NOTIF_THEME, isBirthday } from "../../utils/notifications";
+import { NOTIF_THEME, topicOf } from "../../utils/notifications";
 
 const theme = NOTIF_THEME.hr;
 
@@ -16,20 +16,6 @@ const TOPICS = [
   ["recruitment", "Recruitment"],
 ];
 
-const topicOf = (n) =>
-  n.category?.startsWith("LEAVE")
-    ? "leave"
-    : n.category?.startsWith("ALLOWANCE")
-      ? "allowance"
-      : isBirthday(n)
-        ? "birthday"
-        : n.category?.startsWith("VACANCY") ||
-          n.category?.startsWith("INTERVIEW") ||
-          n.category?.startsWith("CANDIDATE") ||
-          n.category?.startsWith("OFFER") ||
-          n.category?.startsWith("ROLE")
-          ? "recruitment"
-          : "other";
 
 /**
  * HR notifications page — everything that reached the header bell, newest first.
