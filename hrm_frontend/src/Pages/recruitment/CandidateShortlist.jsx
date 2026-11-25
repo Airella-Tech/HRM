@@ -46,6 +46,7 @@ import {
   ShieldAlert,
   GraduationCap,
   Clock,
+  Calendar,
   HelpCircle,
   Layers,
   Bot,

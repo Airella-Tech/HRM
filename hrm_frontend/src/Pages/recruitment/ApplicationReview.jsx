@@ -48,6 +48,7 @@ import {
   Loader2,
   Award,
   Check,
+  Users,
   ExternalLink,
   ShieldAlert,
   Banknote,
