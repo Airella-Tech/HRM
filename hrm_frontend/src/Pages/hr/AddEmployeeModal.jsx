@@ -247,6 +247,7 @@ const AddEmployeeModal = ({
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [notification, setNotification] = useState(null);
   // Whether the form currently on screen was restored from a saved draft (Add mode only)
   const [draftRestored, setDraftRestored] = useState(false);
   // Guards against the restored draft being immediately re-saved (and briefly overwritten
@@ -672,7 +673,13 @@ const AddEmployeeModal = ({
         setCurrentStep(2);
       }
 
-      alert(message);
+      setNotification({
+        type: "error",
+        title: isEdit
+          ? "Employee Update Failed"
+          : "Employee Registration Failed",
+        message: String(message).replace(/^\d{3}:\s*/, ""),
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -703,14 +710,14 @@ const AddEmployeeModal = ({
     "Strong",
     "Very Strong",
   ];
-const strengthColors = [
-  "bg-red-500",
-  "bg-orange-500",
-  "bg-yellow-500",
-  "bg-sky-400",
-  "bg-sky-500",
-  "bg-sky-700",
-];
+  const strengthColors = [
+    "bg-red-500",
+    "bg-orange-500",
+    "bg-yellow-500",
+    "bg-sky-400",
+    "bg-sky-500",
+    "bg-sky-700",
+  ];
 
   const selectedRole = USER_ROLES.find((r) => r.value === formData.userRole);
 
@@ -816,9 +823,7 @@ const strengthColors = [
                   {index < STEPS.length - 1 && (
                     <div
                       className={`flex-1 h-1 mx-2 rounded-full transition-all duration-300 ${
-                        currentStep > step.id
-                          ? "	bg-sky-600"
-                          : "bg-slate-200"
+                        currentStep > step.id ? "	bg-sky-600" : "bg-slate-200"
                       }`}
                     />
                   )}
@@ -1496,6 +1501,49 @@ const strengthColors = [
           </div>
         </form>
       </div>
+
+      {/* Custom Error Notification */}
+      {notification && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
+          <div className="bg-white w-full max-w-md rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
+            {/* Header */}
+            <div className="px-6 pt-6 pb-4 text-center">
+              <div className="w-16 h-16 mx-auto rounded-2xl bg-red-50 flex items-center justify-center mb-4">
+                <X className="w-8 h-8 text-red-600" strokeWidth={2.5} />
+              </div>
+
+              <h3 className="text-lg font-bold text-slate-800">
+                {notification.title}
+              </h3>
+
+              <p className="text-sm text-slate-500 mt-2 leading-relaxed">
+                {notification.message}
+              </p>
+            </div>
+
+            {/* Error information */}
+            <div className="mx-6 mb-5 p-3.5 bg-red-50 border border-red-100 rounded-xl">
+              <div className="flex items-start gap-2">
+                <Shield className="w-4 h-4 text-red-500 mt-0.5 shrink-0" />
+                <p className="text-xs text-red-700 leading-relaxed">
+                  Please check the employee information and try again.
+                </p>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="px-6 py-4 bg-slate-50 border-t border-slate-200 flex justify-end">
+              <button
+                type="button"
+                onClick={() => setNotification(null)}
+                className="px-6 py-2.5 bg-primary-600 hover:bg-primary-700 text-white rounded-xl text-sm font-semibold shadow-sm transition-colors"
+              >
+                Got it
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

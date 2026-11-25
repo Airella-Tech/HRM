@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
   Search,
@@ -90,7 +90,7 @@ const LeaveManagement = ({ role = "hr" }) => {
   const errorText = (e, fallback) =>
     (e?.message || fallback).replace(/^\d{3}:\s*/, "");
 
-  const loadLeaves = async () => {
+  const loadLeaves = useCallback(async () => {
     try {
       setLoading(true);
       const res = await hrApi.getLeaveRequests();
@@ -100,11 +100,11 @@ const LeaveManagement = ({ role = "hr" }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     if (user) loadLeaves();
-  }, [user]);
+  }, [user, loadLeaves]);
 
   // Arriving from a notification (/hr/leave?view=<id>): open that request's form, so HR can approve or reject it.
   useEffect(() => {
@@ -122,7 +122,7 @@ const LeaveManagement = ({ role = "hr" }) => {
       handledNavKey.current = location.key;
       flash("✗ That leave request could not be found");
     }
-  }, [user, loading, leaveRequests, location.key, location.search]);
+  }, [user, loading, leaveRequests, location.key, location.search, loadLeaves]);
 
   const stats = {
     total: leaveRequests.length,

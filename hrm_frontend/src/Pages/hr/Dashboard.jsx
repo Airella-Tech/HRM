@@ -2266,6 +2266,13 @@ const HRDashboard = () => {
     }));
   }, [departments, employees]);
 
+  // Active employees from the real User_Backend employee records
+  const activeEmployeeCount = employees.filter(
+    (emp) => (emp.status || "").toUpperCase() === "ACTIVE",
+  ).length;
+
+
+
   useEffect(() => {
     if (activeMenu === "Departments") {
       navigate("/hr/departments");
@@ -2506,18 +2513,40 @@ const HRDashboard = () => {
                       Welcome back, {user.fullName?.split(" ")[0]}!
                     </h2>
                     <p className="text-blue-100 text-sm mt-2 max-w-xl">
-                      Here's an overview of your organization's workforce,
-                      attendance, leave requests, and HR activities.
+                      Monitor your workforce, review pending approvals, and
+                      manage your organization's daily HR activities from one
+                      place.
+                    </p>
+
+                    <p className="text-blue-100/80 text-sm mt-3 flex items-center gap-2">
+                      <Calendar size={15} />
+                      {new Date().toLocaleDateString("en-US", {
+                        weekday: "long",
+                        year: "numeric",
+                        month: "long",
+                        day: "numeric",
+                      })}
                     </p>
                   </div>
 
-                  <div className="hidden sm:flex w-16 h-16 rounded-2xl bg-white/20 items-center justify-center">
-                    <LayoutDashboard size={34} />
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={fetchDashboardData}
+                      title="Refresh dashboard data"
+                      className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/15 hover:bg-white/25 border border-white/20 text-white text-sm font-semibold transition"
+                    >
+                      <RefreshCw size={16} />
+                      Refresh
+                    </button>
+
+                    <div className="hidden sm:flex w-16 h-16 rounded-2xl bg-white/20 items-center justify-center">
+                      <LayoutDashboard size={34} />
+                    </div>
                   </div>
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-5">
                 {[
                   {
                     label: "Total Departments",
@@ -2558,6 +2587,16 @@ const HRDashboard = () => {
                     to: "to-sky-900",
                     tc: "text-sky-50",
                     path: "/hr/leave",
+                  },
+                  {
+                    label: "Active Employees",
+                    val: activeEmployeeCount,
+                    sub: "Currently active staff",
+                    icon: UserCheck,
+                    from: "from-sky-500",
+                    to: "to-blue-700",
+                    tc: "text-sky-50",
+                    path: "/hr/employees",
                   },
                 ].map(({ label, val, sub, icon: Icon, from, to, tc, path }) => (
                   <div
@@ -2630,7 +2669,7 @@ const HRDashboard = () => {
                           title="Open Leave Management"
                           className="flex items-center gap-4 p-4 border rounded-lg hover:bg-gray-50 transition cursor-pointer"
                         >
-                          <div className="h-12 w-12 bg-blue-100 rounded-full flex items-center justify-center font-bold text-blue-600 flex-shrink-0">
+                          <div className="h-12 w-12 bg-sky-100 rounded-full flex items-center justify-center font-bold text-sky-600 flex-shrink-0">
                             {leave.employeeName
                               ?.split(" ")
                               .map((n) => n[0])
@@ -2655,7 +2694,7 @@ const HRDashboard = () => {
                                 e.stopPropagation();
                                 handleApproveLeave(leave.id);
                               }}
-                              className="bg-green-500 text-white px-3 py-1.5 rounded-lg hover:bg-green-600 transition flex items-center gap-1 text-sm"
+                              className="bg-sky-500 text-white px-3 py-1.5 rounded-lg hover:bg-sky-600 transition flex items-center gap-1 text-sm"
                             >
                               <CheckCircle size={14} /> Approve
                             </button>
@@ -2746,7 +2785,7 @@ const HRDashboard = () => {
                         key={r.id}
                         className="flex items-center gap-4 p-4 border rounded-lg hover:bg-gray-50 transition"
                       >
-                        <div className="h-12 w-12 bg-emerald-100 rounded-full flex items-center justify-center font-bold text-emerald-600 flex-shrink-0">
+                        <div className="h-12 w-12 bg-sky-100 rounded-full flex items-center justify-center font-bold text-sky-600 flex-shrink-0">
                           {(r.employeeName || r.employeeEmail || "?")
                             .split(" ")
                             .map((n) => n[0])
@@ -2770,7 +2809,7 @@ const HRDashboard = () => {
                           onClick={() =>
                             navigate("/hr/payroll/allowance-requests")
                           }
-                          className="bg-emerald-500 text-white px-3 py-1.5 rounded-lg hover:bg-emerald-600 transition text-sm"
+                          className="bg-sky-600 text-white px-3 py-1.5 rounded-lg hover:bg-sky-700 transition text-sm"
                         >
                           Review
                         </button>
@@ -2805,10 +2844,11 @@ const HRDashboard = () => {
                     limit={5}
                   />
                 </div>
+
                 <div className="bg-white p-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300">
                   <h3 className="text-xl font-bold mb-6 flex items-center text-gray-800">
-                    <div className="bg-yellow-100 p-2 rounded-lg mr-3">
-                      <Award className="text-yellow-600" size={24} />
+                    <div className="bg-sky-100 p-2 rounded-lg mr-3">
+                      <Award className="text-sky-600" size={24} />
                     </div>
                     Top Performers This Month
                   </h3>

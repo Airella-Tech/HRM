@@ -1,11 +1,11 @@
 name: Frontend CI
 
 on:
+  # No path filter on pull_request: "Lint & Build" is required by branch
+  # protection, so it must always report. Steps are skipped when the PR
+  # doesn't touch the frontend (see the `changes` job).
   pull_request:
     branches: [master]
-    paths:
-      - 'hrm_frontend/**'
-      - '.github/workflows/frontend-ci.yml'
   push:
     branches: [master]
     paths:
@@ -13,17 +13,44 @@ on:
       - '.github/workflows/frontend-ci.yml'
 
 jobs:
+  changes:
+    name: Detect frontend changes
+    runs-on: ubuntu-latest
+    outputs:
+      frontend: ${{ steps.diff.outputs.frontend }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check for frontend changes
+        id: diff
+        run: |
+          if [ "${{ github.event_name }}" != "pull_request" ]; then
+            echo "frontend=true" >> "$GITHUB_OUTPUT"
+          elif git diff --name-only "origin/${{ github.base_ref }}...HEAD" | grep -qE '^(hrm_frontend/|\.github/workflows/frontend-ci\.yml)'; then
+            echo "frontend=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "frontend=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  # Always runs so the required "Lint & Build" check reports on every PR.
+  # Steps (not the job) are gated, matching backend-ci.yml.
   build:
     name: Lint & Build
+    needs: changes
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: hrm_frontend
     steps:
       - name: Checkout
+        if: needs.changes.outputs.frontend == 'true'
         uses: actions/checkout@v4
 
       - name: Set up Node.js
+        if: needs.changes.outputs.frontend == 'true'
         uses: actions/setup-node@v4
         with:
           node-version: '20'
@@ -31,10 +58,13 @@ jobs:
           cache-dependency-path: hrm_frontend/package-lock.json
 
       - name: Install dependencies
+        if: needs.changes.outputs.frontend == 'true'
         run: npm ci
 
       - name: Lint
+        if: needs.changes.outputs.frontend == 'true'
         run: npm run lint
 
       - name: Build
+        if: needs.changes.outputs.frontend == 'true'
         run: npm run build

@@ -380,7 +380,10 @@ const IndividualAllowance = () => {
         })),
       });
       navigate("/hr/payslip", {
-        state: { message: `✓ ${res.message || "Saved"} for ${employee.name}` },
+        state: {
+          message: `${res.message || "Successfully saved"} for ${employee.name}`,
+          type: "success",
+        },
       });
     } catch (e2) {
       setFormError(errorText(e2, "Failed to save allowances / deductions"));
@@ -622,11 +625,9 @@ const IndividualAllowance = () => {
                     -{money(sheet.roleDeduction)}
                   </p>
                 </div>
-               <div className="bg-sky-100 rounded-xl p-3 border border-sky-200">
+                <div className="bg-sky-100 rounded-xl p-3 border border-sky-200">
                   <p className="text-xs text-slate-400">Job role total</p>
-                  <p className="font-bold text-sky-700">
-                    {money(roleTotal)}
-                  </p>
+                  <p className="font-bold text-sky-700">{money(roleTotal)}</p>
                 </div>
               </div>
               <p className="text-[11px] text-slate-400 mt-2">

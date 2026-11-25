@@ -1,4 +1,4 @@
-/**
+﻿/**
  * ============================================================
  *  HRM Frontend â€” Centralized API Service
  * ============================================================
@@ -633,7 +633,10 @@ export const recruitmentApi = {
   rejectCandidate: (id, reason) => request("POST", `${RECRUITMENT_URL}/recruitment/applications/${id}/reject`, { reason }),
   autoShortlist: (threshold) => request("POST", `${RECRUITMENT_URL}/recruitment/applications/auto-shortlist`, { threshold }),
   getResumeDownloadUrl: (id) => `${RECRUITMENT_URL}/recruitment/applications/${id}/resume`,
-  downloadResume: (id) => requestBlob(`${RECRUITMENT_URL}/recruitment/applications/${id}/resume?download=true`),
+  downloadResume: (id) =>
+  requestBlob(
+    `${RECRUITMENT_URL}/recruitment/applications/${id}/resume`,
+  ),
 
   // â”€â”€ Interviews, offers, reports  â”€â”€
 

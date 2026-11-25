@@ -4,7 +4,7 @@ import { Bell, CheckCircle, Trash2 } from "lucide-react";
 import { PageLayout } from "../../components/PageLayout";
 import NotificationItem from "../../components/NotificationItem";
 import useNotifications from "../../utils/useNotifications";
-import { NOTIF_THEME, isBirthday } from "../../utils/notifications";
+import { NOTIF_THEME, topicOf } from "../../utils/notifications";
 
 const theme = NOTIF_THEME.hr;
 
@@ -16,20 +16,6 @@ const TOPICS = [
   ["recruitment", "Recruitment"],
 ];
 
-const topicOf = (n) =>
-  n.category?.startsWith("LEAVE")
-    ? "leave"
-    : n.category?.startsWith("ALLOWANCE")
-      ? "allowance"
-      : isBirthday(n)
-        ? "birthday"
-        : n.category?.startsWith("VACANCY") ||
-          n.category?.startsWith("INTERVIEW") ||
-          n.category?.startsWith("CANDIDATE") ||
-          n.category?.startsWith("OFFER") ||
-          n.category?.startsWith("ROLE")
-          ? "recruitment"
-          : "other";
 
 /**
  * HR notifications page — everything that reached the header bell, newest first.
@@ -43,6 +29,13 @@ const Notifications = () => {
   const { notifications, loading, error, markRead, markAllRead, remove } = useNotifications("hr");
 
   const unread = notifications.filter((n) => !n.read).length;
+  const topicCounts = {
+  all: notifications.length,
+  leave: notifications.filter((n) => topicOf(n) === "leave").length,
+  allowance: notifications.filter((n) => topicOf(n) === "allowance").length,
+  birthday: notifications.filter((n) => topicOf(n) === "birthday").length,
+  recruitment: notifications.filter((n) => topicOf(n) === "recruitment").length,
+};
   const visible = notifications.filter(
     (n) => (filter === "all" || (filter === "unread" && !n.read) || (filter === "read" && n.read)) && (topic === "all" || topicOf(n) === topic)
   );
@@ -63,6 +56,88 @@ const Notifications = () => {
       ) : null}
     >
       <div className="space-y-5">
+                {/* Notification Summary Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+
+          {[
+            {
+              key: "all",
+              label: "Total Notifications",
+              count: topicCounts.all,
+              icon: Bell,
+              color: "from-sky-600 to-sky-700",
+              description: "All notifications",
+            },
+            {
+              key: "leave",
+              label: "Leave",
+              count: topicCounts.leave,
+              icon: CheckCircle,
+              color: "from-sky-500 to-sky-600",
+              description: "Leave notifications",
+            },
+            {
+              key: "allowance",
+              label: "Allowance",
+              count: topicCounts.allowance,
+              icon: CheckCircle,
+              color: "from-sky-600 to-sky-700",
+              description: "Allowance notifications",
+            },
+            {
+              key: "birthday",
+              label: "Birthdays",
+              count: topicCounts.birthday,
+              icon: Bell,
+              color: "from-sky-400 to-sky-500",
+              description: "Birthday notifications",
+            },
+            {
+              key: "recruitment",
+              label: "Recruitment",
+              count: topicCounts.recruitment,
+              icon: CheckCircle,
+              color: "from-sky-700 to-sky-800",
+              description: "Recruitment notifications",
+            },
+          ].map((card) => {
+            const Icon = card.icon;
+            const active = topic === card.key;
+
+            return (
+              <button
+                key={card.key}
+                onClick={() => setTopic(active && card.key !== "all" ? "all" : card.key)}
+                className={`relative overflow-hidden text-left rounded-xl p-5 text-white bg-gradient-to-br ${card.color}
+                  shadow-sm hover:shadow-lg transition-all duration-300
+                  hover:-translate-y-1 ${active ? "ring-2 ring-offset-2 ring-slate-400" : ""}`}
+              >
+                {/* Decorative circles */}
+                <div className="absolute -right-5 -top-5 w-24 h-24 rounded-full bg-white/10" />
+                <div className="absolute -right-2 -bottom-8 w-20 h-20 rounded-full bg-white/10" />
+
+                <div className="relative z-10 flex items-start justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-white/80">
+                      {card.label}
+                    </p>
+                    <h3 className="text-3xl font-bold mt-2">
+                      {card.count}
+                    </h3>
+                    <p className="text-xs text-white/70 mt-2">
+                      {card.description}
+                    </p>
+                  </div>
+
+                  <div className="p-2.5 rounded-xl bg-white/20">
+                    <Icon size={21} />
+                  </div>
+                </div>
+              </button>
+            );
+          })}
+
+        </div>
         {/* Filters */}
         <div className="flex flex-col md:flex-row gap-3 md:items-center">
           <div className="flex gap-2 bg-white p-2 rounded-2xl shadow-sm border border-slate-200 w-fit">
@@ -111,6 +186,8 @@ const Notifications = () => {
           )}
           {loading && notifications.length === 0 && <div className="text-center py-20 text-slate-400">Loading notifications…</div>}
         </div>
+
+        
       </div>
     </PageLayout>
   );

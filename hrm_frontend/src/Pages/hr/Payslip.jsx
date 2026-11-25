@@ -22,7 +22,11 @@ import {
   FileSpreadsheet,
   FileText,
   ChevronDown,
+  ChevronUp,
+  ArrowUpDown,
   Check,
+  CheckCircle2,
+  Clock,
 } from "lucide-react";
 import { PageLayout } from "../../components/PageLayout";
 import { hrApi, userHrApi } from "../../services/api";
@@ -39,7 +43,29 @@ const money2 = (v) =>
   `Rs.${num(v).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
 const headerBtn =
-  "inline-flex items-center gap-2 bg-sky-600 hover:bg-sky-700 text-white px-4 py-2.5 rounded-xl text-sm font-semibold shadow-sm transition-all duration-200";
+  "inline-flex items-center gap-2 bg-gradient-to-br from-sky-400 to-sky-500 hover:from-sky-500 hover:to-sky-600 text-white px-4 py-2.5 rounded-xl text-sm font-semibold shadow-sm shadow-sky-500/20 transition-all duration-200";
+
+const SortableHeader = ({ label, columnKey, sortKey, sortDir, onSort }) => (
+  <th className="px-5 py-3.5 text-left font-semibold whitespace-nowrap">
+    <button
+      type="button"
+      onClick={() => onSort(columnKey)}
+      className="inline-flex items-center gap-1.5 hover:text-sky-100 transition-colors cursor-pointer"
+    >
+      {label}
+
+      {sortKey === columnKey ? (
+        sortDir === "asc" ? (
+          <ChevronUp size={14} />
+        ) : (
+          <ChevronDown size={14} />
+        )
+      ) : (
+        <ArrowUpDown size={13} className="opacity-60" />
+      )}
+    </button>
+  </th>
+);
 
 const HRPayslip = () => {
   const navigate = useNavigate();
@@ -65,6 +91,12 @@ const HRPayslip = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const ROWS_PER_PAGE = 5;
 
+  const [roleSortKey, setRoleSortKey] = useState(null);
+  const [roleSortDir, setRoleSortDir] = useState("asc");
+
+  const [employeeSortKey, setEmployeeSortKey] = useState(null);
+  const [employeeSortDir, setEmployeeSortDir] = useState("asc");
+
   // "roles" = job role salaries (basic_payments); "employees" = per-employee pay sheets
   const [activeTab, setActiveTab] = useState("roles");
   // Departments (name + short code) for the department filter and the department-code search
@@ -79,6 +111,24 @@ const HRPayslip = () => {
   const [sendState, setSendState] = useState(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState(null);
   const [deletingId, setDeletingId] = useState(null);
+
+  const handleRoleSort = (key) => {
+    if (roleSortKey === key) {
+      setRoleSortDir((prev) => (prev === "asc" ? "desc" : "asc"));
+    } else {
+      setRoleSortKey(key);
+      setRoleSortDir("asc");
+    }
+  };
+
+  const handleEmployeeSort = (key) => {
+    if (employeeSortKey === key) {
+      setEmployeeSortDir((prev) => (prev === "asc" ? "desc" : "asc"));
+    } else {
+      setEmployeeSortKey(key);
+      setEmployeeSortDir("asc");
+    }
+  };
 
   useEffect(() => {
     if (location.state?.message) {
@@ -391,17 +441,84 @@ const HRPayslip = () => {
       (r.employmentTypeName || "").toLowerCase().includes(q) ||
       (r.createdByName || "").toLowerCase().includes(q),
   );
+
+  const sortedRoles = useMemo(() => {
+    if (!roleSortKey) return filteredRoles;
+
+    const numericKeys = [
+      "basicSalary",
+      "allowance",
+      "deduction",
+      "totalSalary",
+      "employeeCount",
+    ];
+
+    return [...filteredRoles].sort((a, b) => {
+      const aValue = a[roleSortKey];
+      const bValue = b[roleSortKey];
+
+      let comparison;
+
+      if (numericKeys.includes(roleSortKey)) {
+        comparison = (Number(aValue) || 0) - (Number(bValue) || 0);
+      } else {
+        comparison = String(aValue ?? "").localeCompare(
+          String(bValue ?? ""),
+          undefined,
+          { numeric: true, sensitivity: "base" },
+        );
+      }
+
+      return roleSortDir === "asc" ? comparison : -comparison;
+    });
+  }, [filteredRoles, roleSortKey, roleSortDir]);
+
   const roleTotalPages = Math.max(
     1,
-    Math.ceil(filteredRoles.length / ROWS_PER_PAGE),
+    Math.ceil(sortedRoles.length / ROWS_PER_PAGE),
   );
-  const paginatedRoles = filteredRoles.slice(
+
+  const paginatedRoles = sortedRoles.slice(
     (rolePage - 1) * ROWS_PER_PAGE,
     rolePage * ROWS_PER_PAGE,
   );
 
-  const totalPages = Math.max(1, Math.ceil(filtered.length / ROWS_PER_PAGE));
-  const paginated = filtered.slice(
+  const sortedEmployees = useMemo(() => {
+    if (!employeeSortKey) return filtered;
+
+    const numericKeys = [
+      "basicSalary",
+      "allowances",
+      "deductions",
+      "netSalary",
+    ];
+
+    return [...filtered].sort((a, b) => {
+      const aValue = a[employeeSortKey];
+      const bValue = b[employeeSortKey];
+
+      let comparison;
+
+      if (numericKeys.includes(employeeSortKey)) {
+        comparison = (Number(aValue) || 0) - (Number(bValue) || 0);
+      } else {
+        comparison = String(aValue ?? "").localeCompare(
+          String(bValue ?? ""),
+          undefined,
+          { numeric: true, sensitivity: "base" },
+        );
+      }
+
+      return employeeSortDir === "asc" ? comparison : -comparison;
+    });
+  }, [filtered, employeeSortKey, employeeSortDir]);
+
+  const totalPages = Math.max(
+    1,
+    Math.ceil(sortedEmployees.length / ROWS_PER_PAGE),
+  );
+
+  const paginated = sortedEmployees.slice(
     (currentPage - 1) * ROWS_PER_PAGE,
     currentPage * ROWS_PER_PAGE,
   );
@@ -424,7 +541,7 @@ const HRPayslip = () => {
   const statusBadge = (s) =>
     ({
       Configured: "bg-emerald-100 text-emerald-700",
-      Adjusted: "bg-sky-100 text-sky-700",
+      Adjusted: "bg-violet-100 text-violet-700",
     })[s] || "bg-amber-100 text-amber-700";
 
   if (!user) return null;
@@ -436,29 +553,29 @@ const HRPayslip = () => {
       title="Payroll Management"
       subtitle="Manage employee salaries and payslips"
       actions={
-        <div className="flex flex-wrap items-center gap-2 w-full">
+        <div className="flex flex-wrap items-center gap-2">
           <button
             onClick={() => navigate("/hr/payroll/salaries")}
-            className={`${headerBtn} justify-center flex-1 sm:flex-none`}
+            className={headerBtn}
           >
             <Plus size={17} strokeWidth={2.5} /> Add Salaries for Job Roles
           </button>
           <button
             onClick={() => navigate("/hr/payroll/individual-allowance")}
-            className={`${headerBtn} justify-center flex-1 sm:flex-none`}
+            className={headerBtn}
           >
             <SlidersHorizontal size={16} /> Individual Allowance & Deduction
           </button>
           <button
             onClick={() => navigate("/hr/payroll/allowance-requests")}
-            className={`${headerBtn} justify-center flex-1 sm:flex-none`}
+            className={headerBtn}
           >
             <Inbox size={16} /> See Allowance Requests
           </button>
           <button
             onClick={handleGenerateAll}
             disabled={generating}
-            className="inline-flex items-center gap-2 bg-sky-600 hover:bg-sky-700 disabled:opacity-60 text-white px-4 py-2.5 rounded-xl text-sm font-semibold shadow-sm transition-all duration-200"
+            className="flex items-center gap-2 bg-sky-500 hover:bg-sky-600 disabled:opacity-60 text-white px-4 py-2.5 rounded-xl text-sm font-semibold transition-colors"
           >
             {generating ? (
               <Loader2 size={15} className="animate-spin" />
@@ -471,15 +588,34 @@ const HRPayslip = () => {
       }
     >
       <div className="space-y-6">
-        {message && (
-          <div className="p-4 rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm">
-            <Check size={18} className="shrink-0" />
-            {message}
+        {(message || loadError) && (
+          <div
+            className={`flex items-center gap-2 p-4 rounded-xl border text-sm font-medium ${
+              message
+                ? "bg-emerald-50 border-sky-200 text-sky-700"
+                : "bg-red-50 border-red-200 text-red-700"
+            }`}
+          >
+            {message ? (
+              <Check size={18} className="shrink-0" />
+            ) : (
+              <X size={18} className="shrink-0" />
+            )}
+            {message || loadError}
           </div>
         )}
+
         {loadError && (
-          <div className="p-4 rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm">
-            {loadError}
+          <div className="flex items-start gap-2 p-4 rounded-xl border text-sm font-medium bg-red-50 border-red-200 text-red-700">
+            <X size={18} className="shrink-0 mt-0.5" />
+            <span className="flex-1">{loadError}</span>
+            <button
+              onClick={() => setLoadError("")}
+              className="text-red-500 hover:text-red-700"
+              aria-label="Dismiss"
+            >
+              <X size={15} />
+            </button>
           </div>
         )}
 
@@ -508,35 +644,35 @@ const HRPayslip = () => {
           </div>
         )}
 
-        <div className="grid grid-cols-2 xl:grid-cols-4 gap-5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5">
           {[
             {
               label: "Employees",
               value: stats.total,
-              subtitle: "Total employees in payroll",
-              color: "bg-gradient-to-br from-sky-600 to-sky-700",
+              subtitle: "Total registered employees",
               icon: Users,
+              gradient: "from-sky-600 to-sky-700",
             },
             {
               label: "Total Net Pay",
               value: `Rs.${(stats.payroll / 1000).toFixed(0)}K`,
-              subtitle: "Combined employee net salary",
-              color: "bg-gradient-to-br from-sky-500 to-sky-600",
+              subtitle: "Total monthly net salary",
               icon: DollarSign,
+              gradient: "from-sky-500 to-sky-600",
             },
             {
               label: "Configured",
               value: stats.configured,
               subtitle: "Employees with salary setup",
-              color: "bg-gradient-to-br from-sky-700 to-sky-800",
-              icon: Check,
+              icon: CheckCircle2,
+              gradient: "from-sky-700 to-sky-800",
             },
             {
               label: "Pending Setup",
               value: stats.pending,
-              subtitle: "Employees awaiting salary setup",
-              color: "bg-gradient-to-br from-sky-800 to-sky-900",
-              icon: Calendar,
+              subtitle: "Employees without salary setup",
+              icon: Clock,
+              gradient: "from-sky-800 to-sky-900",
             },
           ].map((s) => {
             const Icon = s.icon;
@@ -544,31 +680,37 @@ const HRPayslip = () => {
             return (
               <div
                 key={s.label}
-                className={`${s.color} relative overflow-hidden p-6 rounded-2xl text-white shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-300`}
+                className={`relative overflow-hidden rounded-2xl bg-gradient-to-br ${s.gradient} p-5 text-white shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 min-h-[140px]`}
               >
                 {/* Decorative circles */}
-                <div className="absolute -right-6 -top-8 w-28 h-28 rounded-full bg-white/10" />
-                <div className="absolute -right-2 -bottom-12 w-24 h-24 rounded-full bg-white/10" />
+                <div className="absolute -right-5 -top-5 h-24 w-24 rounded-full bg-white/10" />
+                <div className="absolute -right-2 -bottom-10 h-28 w-28 rounded-full bg-white/10" />
 
-                <div className="relative z-10">
-                  <div className="flex items-center justify-between mb-3">
-                    <p className="text-white/85 text-sm font-medium">
+                <div className="relative z-10 flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-white/90">
                       {s.label}
                     </p>
-                    <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center">
-                      <Icon size={21} className="text-white" />
-                    </div>
+
+                    <p className="mt-3 text-3xl font-bold tracking-tight">
+                      {s.value}
+                    </p>
+
+                    <p className="mt-2 text-xs font-medium text-white/80">
+                      {s.subtitle}
+                    </p>
                   </div>
 
-                  <p className="text-3xl font-bold tracking-tight">{s.value}</p>
-                  <p className="text-xs text-white/75 mt-2">{s.subtitle}</p>
+                  <div className="shrink-0 flex h-11 w-11 items-center justify-center rounded-xl bg-white/20">
+                    <Icon size={22} />
+                  </div>
                 </div>
               </div>
             );
           })}
         </div>
 
-        <div className="inline-flex flex-wrap bg-white border border-slate-200 shadow-sm rounded-xl p-1 gap-1">
+        <div className="inline-flex bg-white border border-gray-100 shadow-sm rounded-xl p-1 gap-1">
           {[
             { key: "roles", label: "Job Role Salaries", icon: Briefcase },
             { key: "employees", label: "Employee Payslips", icon: Users },
@@ -576,35 +718,20 @@ const HRPayslip = () => {
             <button
               key={t.key}
               onClick={() => setActiveTab(t.key)}
-              className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${
-                activeTab === t.key
-                   ? "bg-sky-600 text-white shadow-sm"
-                   : "text-slate-600 hover:bg-sky-50 hover:text-sky-700"
-              }`}
+              className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${activeTab === t.key ? "bg-gradient-to-r from-sky-500 to-sky-600 text-white shadow-sm" : "text-gray-600 hover:bg-gray-50"}`}
             >
               <t.icon size={15} /> {t.label}
             </button>
           ))}
         </div>
 
-        {/* SEARCH & FILTER CONTROLS */}
-        <div className="overflow-visible bg-white rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow duration-200">
-          <div className="px-5 py-4 border-b border-slate-100">
-            <h3 className="text-sm font-bold text-slate-900">
-              Find Payroll Records
-            </h3>
-            <p className="text-xs text-slate-500 mt-0.5">
-              Search, filter, and export salary information
-            </p>
-          </div>
-
-          <div className="flex flex-col xl:flex-row gap-3 xl:items-center xl:justify-between p-4 sm:p-5">
-            <div className="relative flex-1 min-w-0">
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+          <div className="flex flex-col md:flex-row gap-4">
+            <div className="relative flex-1">
               <Search
-                size={18}
-                className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"
+                size={15}
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
               />
-
               <input
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
@@ -613,22 +740,20 @@ const HRPayslip = () => {
                     ? "Search by department, job role, employment type or set by…"
                     : "Search by name, ID, department, department code or designation…"
                 }
-                className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:bg-white focus:border-sky-500 focus:ring-4 focus:ring-sky-500/10 transition-all"
+                className="w-full pl-9 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 bg-gray-50"
               />
             </div>
-
             {activeTab === "employees" && (
               <>
                 <div className="relative">
                   <Building2
-                    size={16}
-                    className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+                    size={15}
+                    className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
                   />
-
                   <select
                     value={deptFilter}
                     onChange={(e) => setDeptFilter(e.target.value)}
-                    className="w-full pl-9 pr-8 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-700 font-medium focus:outline-none focus:bg-white focus:border-sky-500 focus:ring-4 focus:ring-sky-500/10 transition-all min-w-[200px]"
+                    className="pl-9 pr-8 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 bg-gray-50 min-w-[200px]"
                   >
                     <option value="">All departments</option>
                     {deptOptions.map((d) => (
@@ -639,78 +764,65 @@ const HRPayslip = () => {
                     ))}
                   </select>
                 </div>
-
                 <div className="relative">
                   <Calendar
-                    size={16}
-                    className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+                    size={15}
+                    className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
                   />
-
                   <input
                     type="month"
                     value={filterMonth}
                     onChange={(e) => setFilterMonth(e.target.value)}
-                    className="w-full pl-9 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-700 focus:outline-none focus:bg-white focus:border-sky-500 focus:ring-4 focus:ring-sky-500/10 transition-all"
+                    className="pl-9 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 bg-gray-50"
                   />
                 </div>
-
                 <div className="relative">
                   <button
                     type="button"
                     onClick={() => setExportOpen((o) => !o)}
                     aria-haspopup="menu"
                     aria-expanded={exportOpen}
-                    className="inline-flex items-center gap-2 bg-sky-600 hover:bg-sky-700 text-white px-4 py-2.5 rounded-xl text-sm font-semibold shadow-sm transition-all duration-200"
+                    className="flex items-center gap-2 bg-sky-500 hover:bg-sky-600 text-white px-4 py-2.5 rounded-xl text-sm font-semibold transition-colors"
                   >
-                    <Download size={15} />
-                    Export
+                    <Download size={15} /> Export{" "}
                     <ChevronDown
                       size={14}
                       className={`transition-transform ${exportOpen ? "rotate-180" : ""}`}
                     />
                   </button>
-
                   {exportOpen && (
                     <>
                       <div
                         className="fixed inset-0 z-10"
                         onClick={() => setExportOpen(false)}
                       />
-
                       <div
                         role="menu"
-                        className="absolute right-0 mt-2 w-64 z-20 bg-white border border-slate-200 rounded-xl shadow-lg overflow-hidden"
+                        className="absolute right-0 mt-2 w-64 z-20 bg-white border border-gray-100 rounded-xl shadow-lg overflow-hidden"
                       >
-                        <p className="px-4 pt-3 pb-1 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+                        <p className="px-4 pt-3 pb-1 text-[11px] font-semibold uppercase tracking-wider text-gray-400">
                           {filterMonth} · {filtered.length} employee(s)
                         </p>
-
                         <button
                           role="menuitem"
                           onClick={() => handleExport("xls")}
-                          className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-slate-700 hover:bg-sky-50 hover:text-sky-700 text-left transition-colors"
+                          className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-teal-50 text-left"
                         >
-                          <FileSpreadsheet
-                            size={16}
-                            className="text-emerald-600"
-                          />
+                          <FileSpreadsheet size={16} className="text-sky-600" />{" "}
                           <span>
                             <b className="font-semibold">Excel</b>{" "}
-                            <span className="text-slate-400">
-                              · with totals
-                            </span>
+                            <span className="text-gray-400">· with totals</span>
                           </span>
                         </button>
-
                         <button
                           role="menuitem"
                           onClick={() => handleExport("csv")}
-                          className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-slate-700 hover:bg-sky-50 text-left transition-colors"
+                          className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-teal-50 text-left"
                         >
-                          <FileText size={16} className="text-sky-600" />
+                          <FileText size={16} className="text-sky-600" />{" "}
                           <span>
                             <b className="font-semibold">CSV</b>{" "}
-                            <span className="text-slate-400">· plain data</span>
+                            <span className="text-gray-400">· plain data</span>
                           </span>
                         </button>
                       </div>
@@ -723,12 +835,12 @@ const HRPayslip = () => {
         </div>
 
         {activeTab === "roles" && (
-          <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden hover:shadow-md transition-shadow duration-200">
-            <div className="px-5 py-4 border-b border-slate-200 flex items-center justify-between">
-              <h2 className="text-base font-semibold text-slate-800 flex items-center gap-2">
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+            <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+              <h2 className="text-base font-semibold text-gray-800 flex items-center gap-2">
                 <Briefcase size={18} className="text-sky-600" /> Job Role
                 Salaries
-                <span className="text-xs font-normal text-slate-400">
+                <span className="text-xs font-normal text-gray-400">
                   · added through “Add Salaries for Job Roles”
                 </span>
               </h2>
@@ -736,49 +848,54 @@ const HRPayslip = () => {
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="bg-gradient-to-r from-sky-600 to-sky-700 text-white text-xs">
+                  <tr className="bg-gradient-to-r from-sky-500 to-sky-600 text-white text-xs">
                     {[
-                      "Department",
-                      "Job Role",
-                      "Employment Type",
-                      "Period",
-                      "Basic",
-                      "Allowance",
-                      "Deduction",
-                      "Total Salary",
-                      "Employees",
-                      "Set By",
-                      "Last Updated",
-                      "Actions",
-                    ].map((h) => (
-                      <th
-                        key={h}
-                        className="px-5 py-3.5 text-left font-semibold whitespace-nowrap"
-                      >
-                        {h}
-                      </th>
+                      ["Department", "departmentName"],
+                      ["Job Role", "jobRoleTitle"],
+                      ["Employment Type", "employmentTypeName"],
+                      ["Period", "period"],
+                      ["Basic", "basicSalary"],
+                      ["Allowance", "allowance"],
+                      ["Deduction", "deduction"],
+                      ["Total Salary", "totalSalary"],
+                      ["Employees", "employeeCount"],
+                      ["Set By", "createdByName"],
+                      ["Last Updated", "updatedAt"],
+                    ].map(([label, key]) => (
+                      <SortableHeader
+                        key={key}
+                        label={label}
+                        columnKey={key}
+                        sortKey={roleSortKey}
+                        sortDir={roleSortDir}
+                        onSort={handleRoleSort}
+                      />
                     ))}
+                    <th className="px-5 py-3.5 text-left font-semibold whitespace-nowrap">
+                      Actions
+                    </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100">
+
+                <tbody className="divide-y divide-gray-50">
                   {paginatedRoles.map((r, i) => (
                     <tr
                       key={r.id}
-                      className={`hover:bg-sky-50/60 transition-colors ${i % 2 === 1 ? "bg-slate-50/40" : ""}`}
+                      className={`hover:bg-teal-50/40 transition-colors ${i % 2 === 1 ? "bg-gray-50/40" : ""}`}
                     >
-                      <td className="px-5 py-3 text-slate-600">
+                      <td className="px-5 py-3 text-gray-600">
                         {r.departmentName}
                       </td>
-                      <td className="px-5 py-3 font-medium text-slate-800">
+                      <td className="px-5 py-3 font-medium text-gray-800">
                         {r.jobRoleTitle}
                       </td>
-                      <td className="px-5 py-3 text-slate-600">
+                      <td className="px-5 py-3 text-gray-600">
                         {r.employmentTypeName}
                       </td>
-                      <td className="px-5 py-3 text-slate-600">
+                      <td className="px-5 py-3 text-gray-600">
                         {periodLabel(r.period) || "—"}
                       </td>
-                      <td className="px-5 py-3 font-semibold text-slate-800 whitespace-nowrap">
+                      <td className="px-5 py-3 font-semibold text-gray-800 whitespace-nowrap">
                         {money2(r.basicSalary)}
                       </td>
                       <td className="px-5 py-3 text-emerald-600 font-semibold whitespace-nowrap">
@@ -787,16 +904,16 @@ const HRPayslip = () => {
                       <td className="px-5 py-3 text-red-600 font-semibold whitespace-nowrap">
                         -{money2(r.deduction)}
                       </td>
-                      <td className="px-5 py-3 font-bold text-sky-700 whitespace-nowrap">
+                      <td className="px-5 py-3 font-bold text-teal-700 whitespace-nowrap">
                         {money2(r.totalSalary)}
                       </td>
-                      <td className="px-5 py-3 text-slate-600">
+                      <td className="px-5 py-3 text-gray-600">
                         {r.employeeCount ?? "—"}
                       </td>
-                      <td className="px-5 py-3 text-slate-500">
+                      <td className="px-5 py-3 text-gray-500">
                         {r.createdByName || "—"}
                       </td>
-                      <td className="px-5 py-3 text-slate-400 whitespace-nowrap">
+                      <td className="px-5 py-3 text-gray-400 whitespace-nowrap">
                         {fmtDateTime(r.updatedAt)}
                       </td>
                       <td className="px-5 py-3">
@@ -827,14 +944,14 @@ const HRPayslip = () => {
                             <button
                               onClick={() => editRoleSalary(r)}
                               title="Edit this salary row"
-                              className="p-1.5 text-slate-400 hover:text-sky-700 hover:bg-sky-50 rounded-lg transition-colors"
+                              className="p-1.5 text-gray-400 hover:text-teal-600 hover:bg-teal-50 rounded-lg transition-colors"
                             >
                               <Pencil size={14} />
                             </button>
                             <button
                               onClick={() => setConfirmDeleteId(r.id)}
                               title="Delete this salary row"
-                              className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                              className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
                             >
                               <Trash2 size={14} />
                             </button>
@@ -847,7 +964,7 @@ const HRPayslip = () => {
                     <tr>
                       <td
                         colSpan={12}
-                        className="text-center py-10 text-slate-400"
+                        className="text-center py-10 text-gray-400"
                       >
                         Loading job role salaries…
                       </td>
@@ -857,7 +974,7 @@ const HRPayslip = () => {
                     <tr>
                       <td
                         colSpan={12}
-                        className="text-center py-10 text-slate-400"
+                        className="text-center py-10 text-gray-400"
                       >
                         {searchTerm
                           ? "No job role salaries match your search"
@@ -870,14 +987,14 @@ const HRPayslip = () => {
             </div>
 
             {!isLoading && filteredRoles.length > 0 && (
-              <div className="flex flex-col items-center gap-2 px-5 py-4 border-t border-slate-200">
+              <div className="flex flex-col items-center gap-2 px-5 py-4 border-t border-gray-100">
                 <div className="flex items-center justify-center gap-1.5">
                   <button
                     type="button"
                     onClick={() => setRolePage((p) => Math.max(1, p - 1))}
                     disabled={rolePage === 1}
                     aria-label="Previous page"
-                    className="h-8 w-8 rounded-lg flex items-center justify-center text-slate-600 border border-slate-200 hover:bg-sky-50 hover:text-sky-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                    className="h-8 w-8 rounded-lg flex items-center justify-center text-gray-500 border border-gray-200 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                   >
                     <ChevronLeft size={15} />
                   </button>
@@ -889,7 +1006,11 @@ const HRPayslip = () => {
                       key={pg}
                       type="button"
                       onClick={() => setRolePage(pg)}
-                      className={`h-8 min-w-[2rem] px-2 rounded-lg text-xs font-semibold transition-colors ${pg === rolePage ? "bg-sky-600 text-white shadow-sm" : "text-slate-600 border border-slate-200 hover:bg-sky-50 hover:text-sky-700"}`}
+                      className={`h-8 min-w-[2rem] px-2 rounded-lg text-xs font-semibold transition-colors ${
+                        pg === rolePage
+                          ? "bg-sky-600 hover:bg-sky-700 text-white shadow-sm"
+                          : "text-gray-600 border border-gray-200 hover:bg-gray-50"
+                      }`}
                     >
                       {pg}
                     </button>
@@ -901,19 +1022,19 @@ const HRPayslip = () => {
                     }
                     disabled={rolePage === roleTotalPages}
                     aria-label="Next page"
-                    className="h-8 w-8 rounded-lg flex items-center justify-center text-slate-600 border border-slate-200 hover:bg-sky-50 hover:text-sky-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                    className="h-8 w-8 rounded-lg flex items-center justify-center text-gray-500 border border-gray-200 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                   >
                     <ChevronRight size={15} />
                   </button>
                 </div>
-                <p className="text-xs text-slate-500 font-medium">
+                <p className="text-xs text-gray-500 font-medium">
                   Showing{" "}
-                  <strong className="text-slate-800">
+                  <strong className="text-gray-800">
                     {(rolePage - 1) * ROWS_PER_PAGE + 1}-
                     {Math.min(rolePage * ROWS_PER_PAGE, filteredRoles.length)}
                   </strong>{" "}
                   of{" "}
-                  <strong className="text-slate-800">
+                  <strong className="text-gray-800">
                     {filteredRoles.length}
                   </strong>{" "}
                   salary rows
@@ -924,54 +1045,59 @@ const HRPayslip = () => {
         )}
 
         {activeTab === "employees" && (
-          <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden hover:shadow-md transition-shadow duration-200">
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="bg-gradient-to-r from-sky-600 to-sky-700 text-white text-xs">
+                  <tr className="bg-gradient-to-r from-sky-500 to-sky-600 text-white text-xs">
                     {[
-                      "Emp ID",
-                      "Employee",
-                      "Dept",
-                      "Designation",
-                      "Basic",
-                      "Allowances",
-                      "Deductions",
-                      "Net Salary",
-                      "Status",
-                      "Actions",
-                    ].map((h) => (
-                      <th
-                        key={h}
-                        className="px-5 py-4 text-left font-semibold whitespace-nowrap"
-                      >
-                        {h}
-                      </th>
+                      ["Emp ID", "empId"],
+                      ["Employee", "name"],
+                      ["Dept", "department"],
+                      ["Designation", "designation"],
+                      ["Basic", "basicSalary"],
+                      ["Allowances", "allowances"],
+                      ["Deductions", "deductions"],
+                      ["Net Salary", "netSalary"],
+                      ["Status", "status"],
+                    ].map(([label, key]) => (
+                      <SortableHeader
+                        key={key}
+                        label={label}
+                        columnKey={key}
+                        sortKey={employeeSortKey}
+                        sortDir={employeeSortDir}
+                        onSort={handleEmployeeSort}
+                      />
                     ))}
+                    <th className="px-5 py-4 text-left font-semibold whitespace-nowrap">
+                      Actions
+                    </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100">
+
+                <tbody className="divide-y divide-gray-50">
                   {paginated.map((p, i) => (
                     <tr
                       key={p.email}
-                      className={`hover:bg-sky-50/60 transition-colors ${i % 2 === 1 ? "bg-slate-50/40" : ""}`}
+                      className={`hover:bg-teal-50/40 transition-colors ${i % 2 === 1 ? "bg-gray-50/40" : ""}`}
                     >
-                      <td className="px-5 py-3.5 font-mono font-semibold text-slate-700">
+                      <td className="px-5 py-3.5 font-mono font-semibold text-gray-700">
                         {p.empId}
                       </td>
-                      <td className="px-5 py-3.5 font-medium text-slate-800">
+                      <td className="px-5 py-3.5 font-medium text-gray-800">
                         {p.name}
                       </td>
-                      <td className="px-5 py-3.5 text-slate-500">
+                      <td className="px-5 py-3.5 text-gray-500">
                         {p.department}
                       </td>
-                      <td className="px-5 py-3.5 text-slate-500 text-xs">
+                      <td className="px-5 py-3.5 text-gray-500 text-xs">
                         {p.designation}
                       </td>
                       <td className="px-5 py-3.5 font-semibold whitespace-nowrap">
                         {p.missingReason ? (
                           <>
-                            <span className="text-slate-400">Not set</span>
+                            <span className="text-gray-400">Not set</span>
                             <p className="text-[11px] font-normal text-amber-600 whitespace-normal max-w-[180px] mt-0.5">
                               {p.missingReason}
                             </p>
@@ -986,7 +1112,7 @@ const HRPayslip = () => {
                       <td className="px-5 py-3.5 text-red-600 font-semibold whitespace-nowrap">
                         -{money(p.deductions)}
                       </td>
-                      <td className="px-5 py-3.5 font-bold text-sky-700 whitespace-nowrap">
+                      <td className="px-5 py-3.5 font-bold text-teal-600 whitespace-nowrap">
                         {money(p.netSalary)}
                       </td>
                       <td className="px-5 py-3.5">
@@ -1001,7 +1127,7 @@ const HRPayslip = () => {
                           <button
                             onClick={() => setViewingPayslip(p)}
                             title="View Payslip"
-                            className="p-1.5 text-slate-400 hover:text-sky-700 hover:bg-sky-50 rounded-lg transition-colors"
+                            className="p-1.5 text-gray-400 hover:text-teal-600 hover:bg-teal-50 rounded-lg transition-colors"
                           >
                             <Eye size={14} />
                           </button>
@@ -1013,7 +1139,7 @@ const HRPayslip = () => {
                             }
                             title="Edit allowances & deductions"
                             aria-label="Edit allowances & deductions"
-                            className="p-1.5 text-slate-400 hover:text-sky-700 hover:bg-sky-50 rounded-lg transition-colors"
+                            className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                           >
                             <Pencil size={14} />
                           </button>
@@ -1037,7 +1163,7 @@ const HRPayslip = () => {
                     <tr>
                       <td
                         colSpan={10}
-                        className="text-center py-10 text-slate-400"
+                        className="text-center py-10 text-gray-400"
                       >
                         {searchTerm || deptFilter
                           ? "No employees match your search / department"
@@ -1049,7 +1175,7 @@ const HRPayslip = () => {
                     <tr>
                       <td
                         colSpan={10}
-                        className="text-center py-10 text-slate-400"
+                        className="text-center py-10 text-gray-400"
                       >
                         Loading payroll data…
                       </td>
@@ -1060,13 +1186,13 @@ const HRPayslip = () => {
             </div>
 
             {!isLoading && filtered.length > 0 && (
-              <div className="flex flex-col items-center gap-2 px-5 py-4 border-t border-slate-200">
+              <div className="flex flex-col items-center gap-2 px-5 py-4 border-t border-gray-100">
                 <div className="flex items-center justify-center gap-1.5">
                   <button
                     type="button"
                     onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                     disabled={currentPage === 1}
-                    className="h-8 w-8 rounded-lg flex items-center justify-center text-slate-600 border border-slate-200 hover:bg-sky-50 hover:text-sky-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                    className="h-8 w-8 rounded-lg flex items-center justify-center text-gray-500 border border-gray-200 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                     aria-label="Previous page"
                   >
                     <ChevronLeft size={15} />
@@ -1079,8 +1205,8 @@ const HRPayslip = () => {
                         onClick={() => setCurrentPage(p)}
                         className={`h-8 min-w-[2rem] px-2 rounded-lg text-xs font-semibold transition-colors ${
                           p === currentPage
-                            ? "bg-sky-600 text-white shadow-sm"
-                            : "text-slate-600 border border-slate-200 hover:bg-sky-50 hover:text-sky-700"
+                            ? "bg-sky-600 hover:bg-sky-700 text-white shadow-sm"
+                            : "text-gray-600 border border-gray-200 hover:bg-gray-50"
                         }`}
                       >
                         {p}
@@ -1093,20 +1219,20 @@ const HRPayslip = () => {
                       setCurrentPage((p) => Math.min(totalPages, p + 1))
                     }
                     disabled={currentPage === totalPages}
-                    className="h-8 w-8 rounded-lg flex items-center justify-center text-slate-600 border border-slate-200 hover:bg-sky-50 hover:text-sky-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                    className="h-8 w-8 rounded-lg flex items-center justify-center text-gray-500 border border-gray-200 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                     aria-label="Next page"
                   >
                     <ChevronRight size={15} />
                   </button>
                 </div>
-                <p className="text-xs text-slate-500 font-medium">
+                <p className="text-xs text-gray-500 font-medium">
                   Showing{" "}
-                  <strong className="text-slate-800">
+                  <strong className="text-gray-800">
                     {(currentPage - 1) * ROWS_PER_PAGE + 1}-
                     {Math.min(currentPage * ROWS_PER_PAGE, filtered.length)}
                   </strong>{" "}
                   of{" "}
-                  <strong className="text-slate-800">{filtered.length}</strong>{" "}
+                  <strong className="text-gray-800">{filtered.length}</strong>{" "}
                   employees
                 </p>
               </div>
@@ -1122,12 +1248,12 @@ const HRPayslip = () => {
           return (
             <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
               <div className="bg-white rounded-2xl shadow-2xl w-full max-w-xl max-h-[90vh] overflow-y-auto">
-                <div className="flex items-start justify-between p-6 bg-gradient-to-br from-sky-700 to-sky-600 text-white rounded-t-2xl">
+                <div className="flex items-start justify-between p-6 bg-gradient-to-r from-teal-500 to-emerald-600 text-white rounded-t-2xl">
                   <div>
                     <h3 className="text-xl font-bold">
                       Payslip – {viewingPayslip.month}
                     </h3>
-                    <p className="text-sky-100 text-sm">
+                    <p className="text-teal-100 text-sm">
                       {viewingPayslip.name} · {viewingPayslip.empId}
                     </p>
                   </div>
@@ -1150,12 +1276,9 @@ const HRPayslip = () => {
                       ["Employment Type", viewingPayslip.employmentType || "—"],
                       ["Pay Period", periodLabel(s.period) || "—"],
                     ].map(([l, v]) => (
-                      <div
-                        key={l}
-                        className="bg-slate-50 p-3 rounded-xl border border-slate-100"
-                      >
-                        <p className="text-xs text-slate-400 mb-0.5">{l}</p>
-                        <p className="font-semibold text-slate-900 break-all">
+                      <div key={l} className="bg-gray-50 p-3 rounded-xl">
+                        <p className="text-xs text-gray-400 mb-0.5">{l}</p>
+                        <p className="font-semibold text-gray-800 break-all">
                           {v}
                         </p>
                       </div>
@@ -1168,7 +1291,7 @@ const HRPayslip = () => {
                     </p>
                   )}
                   <div>
-                    <h4 className="font-semibold text-slate-800 mb-2 text-sm">
+                    <h4 className="font-semibold text-gray-800 mb-2 text-sm">
                       Earnings
                     </h4>
                     <div className="space-y-2 text-sm">
@@ -1181,9 +1304,9 @@ const HRPayslip = () => {
                       ].map(([l, v], idx) => (
                         <div
                           key={`${l}-${idx}`}
-                          className="flex justify-between py-1.5 border-b border-slate-100"
+                          className="flex justify-between py-1.5 border-b border-gray-50"
                         >
-                          <span className="text-slate-600">{l}</span>
+                          <span className="text-gray-600">{l}</span>
                           <span className="font-medium">{money(v)}</span>
                         </div>
                       ))}
@@ -1199,7 +1322,7 @@ const HRPayslip = () => {
                     </div>
                   </div>
                   <div>
-                    <h4 className="font-semibold text-slate-800 mb-2 text-sm">
+                    <h4 className="font-semibold text-gray-800 mb-2 text-sm">
                       Deductions
                     </h4>
                     <div className="space-y-2 text-sm">
@@ -1211,9 +1334,9 @@ const HRPayslip = () => {
                       ].map(([l, v], idx) => (
                         <div
                           key={`${l}-${idx}`}
-                          className="flex justify-between py-1.5 border-b border-slate-100"
+                          className="flex justify-between py-1.5 border-b border-gray-50"
                         >
-                          <span className="text-slate-600">{l}</span>
+                          <span className="text-gray-600">{l}</span>
                           <span className="font-medium">{money(v)}</span>
                         </div>
                       ))}
@@ -1223,11 +1346,9 @@ const HRPayslip = () => {
                       </div>
                     </div>
                   </div>
-                  <div className="bg-gradient-to-r from-sky-700 to-sky-800 text-white p-5 rounded-2xl flex items-center justify-between shadow-sm">
+                  <div className="bg-gradient-to-r from-teal-500 to-emerald-600 text-white p-5 rounded-2xl flex items-center justify-between">
                     <div>
-                      <p className="text-sky-100 text-xs mb-0.5">
-                        Net Salary
-                      </p>
+                      <p className="text-teal-100 text-xs mb-0.5">Net Salary</p>
                       <p className="text-3xl font-bold">
                         {money(viewingPayslip.netSalary)}
                       </p>
@@ -1264,7 +1385,7 @@ const HRPayslip = () => {
                             sending ||
                             viewingPayslip.status === "Not Configured"
                           }
-                          className="flex-1 bg-sky-600 hover:bg-sky-700 disabled:opacity-50 disabled:cursor-not-allowed text-white py-3 rounded-xl font-semibold text-sm shadow-sm transition-colors flex items-center justify-center gap-2"
+                          className="flex-1 bg-emerald-500 hover:bg-emerald-600 disabled:opacity-50 disabled:cursor-not-allowed text-white py-3 rounded-xl font-semibold text-sm transition-colors flex items-center justify-center gap-2"
                         >
                           {sending ? (
                             <Loader2 size={15} className="animate-spin" />
@@ -1283,7 +1404,7 @@ const HRPayslip = () => {
                     })()}
                     <button
                       onClick={closePayslip}
-                      className="flex-1 bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 py-3 rounded-xl font-semibold text-sm transition-colors"
+                      className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 py-3 rounded-xl font-semibold text-sm transition-colors"
                     >
                       Close
                     </button>
