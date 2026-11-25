@@ -1249,36 +1249,20 @@ export default function InterviewEvaluationReview() {
         ================================================= */}
 
         {selectedInterview && (
-          <RecruitmentModal open={true} onClose={closeReview} size="2xl">
-            <div className="flex max-h-[94vh] w-full max-w-5xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl">
-              {/* Modal header */}
-              <div className="flex items-start justify-between border-b border-slate-200 p-5 sm:p-6">
-                <div>
-                  <div className="flex items-center gap-2 text-sm font-medium text-primary-600">
-                    <ClipboardCheck size={17} />
-                    Manager Evaluation Review
-                  </div>
-
-                  <h2 className="mt-2 text-xl font-bold text-slate-900">
-                    {getCandidateName(selectedInterview)}
-                  </h2>
-
-                  <p className="mt-1 text-sm text-slate-500">
-                    {getVacancyName(selectedInterview)} ·{" "}
-                    {getRoundName(selectedInterview)}
-                  </p>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={closeReview}
-                  disabled={submittingDecision}
-                  className="rounded-lg p-2 text-slate-500 hover:bg-slate-100"
-                  aria-label="Close review"
-                >
-                  <X size={21} />
-                </button>
-              </div>
+                    <RecruitmentModal
+            open
+            onClose={closeReview}
+            size="2xl"
+            title={getCandidateName(selectedInterview)}
+            subtitle={`${getVacancyName(selectedInterview)} · ${getRoundName(selectedInterview)}`}
+            footer={
+              <ModalButton onClick={closeReview} disabled={submittingDecision}>
+                Close
+              </ModalButton>
+            }
+          >
+            <div className="space-y-6">
+              
 
               {/* Modal content */}
               <div className="flex-1 space-y-6 overflow-y-auto p-5 sm:p-6">
@@ -1717,17 +1701,7 @@ export default function InterviewEvaluationReview() {
                 </div>
               </div>
 
-              {/* Modal footer */}
-              <div className="flex justify-end border-t border-slate-200 bg-slate-50 p-4">
-                <button
-                  type="button"
-                  onClick={closeReview}
-                  disabled={submittingDecision}
-                  className="rounded-lg border border-slate-300 bg-white px-5 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100"
-                >
-                  Close
-                </button>
-              </div>
+              
             </div>
           </RecruitmentModal>
         )}
