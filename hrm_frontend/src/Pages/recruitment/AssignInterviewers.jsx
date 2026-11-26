@@ -15,10 +15,10 @@ import {
   RefreshCw,
   LoaderCircle,
   Ban,
-  Info,
 } from "lucide-react";
 import PageLayout from "../../components/PageLayout";
 import StatCard, { StatCardGrid } from "../../components/StatCard";
+import FilterBar from "./components/FilterBar";
 import VacancyGroupCard from "./VacancyGroupCard";
 import { recruitmentApi } from "../../services/api";
 import { avatarColorClass } from "../../utils/avatarColor";
@@ -1030,91 +1030,51 @@ export default function AssignInterviewers() {
           </div>
 
           <div className="space-y-6">
-            <div className="bg-white rounded-xl border border-slate-200 shadow-sm px-4 py-3">
-              <div className="flex flex-wrap items-center gap-3">
-                <div className="relative flex-1 min-w-[220px]">
-                  <Search
-                    size={17}
-                    className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
-                  />
-                  <input
-                    value={search}
-                    onChange={(event) => setSearch(event.target.value)}
-                    placeholder="Search candidates or positions..."
-                    className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50 pl-9 pr-3 text-sm text-slate-800 placeholder-slate-400 focus:border-primary-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary-100"
-                  />
-                </div>
-                <span
-                  title="Filter interviews by candidate, position, stage, or assignment status."
-                  className="inline-flex shrink-0 text-slate-400"
-                >
-                  <Info size={14} />
-                </span>
-                <span className="text-sm font-semibold text-slate-600">
-                  Stage:
-                </span>
-                <div className="flex flex-wrap items-center gap-1">
-                  {["All Stages", ...STAGES].map((stage) => (
-                    <button
-                      key={stage}
-                      type="button"
-                      aria-pressed={stageFilter === stage}
-                      onClick={() => setStageFilter(stage)}
-                      className={`rounded-full border px-3 py-1.5 text-sm font-semibold transition-colors ${
-                        stageFilter === stage
-                          ? "border-primary-600 bg-primary-600 text-white shadow-sm"
-                          : "border-slate-300 bg-white text-slate-600 hover:bg-slate-50"
-                      }`}
-                    >
-                      {stage}
-                    </button>
-                  ))}
-                </div>
-                <span className="text-sm font-semibold text-slate-600">
-                  Status:
-                </span>
-                <div className="flex flex-wrap items-center gap-1">
-                  {["All Interviews", "Assigned", "Unassigned"].map((status) => (
-                    <button
-                      key={status}
-                      type="button"
-                      aria-pressed={assignmentFilter === status}
-                      onClick={() => setAssignmentFilter(status)}
-                      className={`rounded-full border px-3 py-1.5 text-sm font-semibold transition-colors ${
-                        assignmentFilter === status
-                          ? "border-primary-600 bg-primary-600 text-white shadow-sm"
-                          : "border-slate-300 bg-white text-slate-600 hover:bg-slate-50"
-                      }`}
-                    >
-                      {status}
-                    </button>
-                  ))}
-                </div>
-                <span className="ml-auto text-xs text-slate-500">
-                  {filteredInterviews.length} interview
-                  {filteredInterviews.length !== 1 ? "s" : ""} found
-                </span>
-                {vacancyGroups.length > 0 && (
-                  <div className="flex items-center gap-1 border-l border-slate-200 pl-3">
-                    <button
-                      type="button"
-                      onClick={expandAllGroups}
-                      className="rounded-lg px-2 py-1 text-sm font-semibold text-slate-500 hover:bg-slate-50 hover:text-primary-600"
-                    >
-                      Expand All
-                    </button>
-                    <span className="h-4 w-px bg-slate-200" />
-                    <button
-                      type="button"
-                      onClick={collapseAllGroups}
-                      className="rounded-lg px-2 py-1 text-sm font-semibold text-slate-500 hover:bg-slate-50 hover:text-primary-600"
-                    >
-                      Collapse All
-                    </button>
-                  </div>
-                )}
-              </div>
-            </div>
+            <FilterBar
+              search={search}
+              onSearchChange={setSearch}
+              searchPlaceholder="Search candidates or positions..."
+              filters={[
+                {
+                  id: "stage",
+                  label: "Stage",
+                  value: stageFilter,
+                  onChange: setStageFilter,
+                  allLabel: "All stages",
+                  allValue: "All Stages",
+                  options: STAGES,
+                },
+              ]}
+              pills={{
+                value: assignmentFilter,
+                onChange: setAssignmentFilter,
+                items: [
+                  { value: "All Interviews", label: "All interviews", count: interviews.length },
+                  {
+                    value: "Assigned",
+                    label: "Assigned",
+                    count: interviews.filter((item) => item.interviewers.length > 0).length,
+                  },
+                  {
+                    value: "Unassigned",
+                    label: "Unassigned",
+                    count: interviews.filter((item) => item.interviewers.length === 0).length,
+                  },
+                ],
+              }}
+              count={filteredInterviews.length}
+              countLabel="interview"
+              onExpandAll={vacancyGroups.length > 0 ? expandAllGroups : undefined}
+              onCollapseAll={vacancyGroups.length > 0 ? collapseAllGroups : undefined}
+              hasActiveFilters={
+                search !== "" || stageFilter !== "All Stages" || assignmentFilter !== "All Interviews"
+              }
+              onReset={() => {
+                setSearch("");
+                setStageFilter("All Stages");
+                setAssignmentFilter("All Interviews");
+              }}
+            />
 
             <div className="space-y-6">
               {vacancyGroups.map((group) => {

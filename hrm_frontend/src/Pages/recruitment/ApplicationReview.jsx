@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { PageLayout } from "../../components/PageLayout";
 import StatCard, { StatCardGrid } from "../../components/StatCard";
+import FilterBar from "./components/FilterBar";
 import { recruitmentApi } from "../../services/api";
 import { DeadlineMeter } from "../careers/careersShared";
 import { formatSalary, formatDate } from "../../utils/careersFormat";
@@ -17,7 +18,6 @@ import {
 } from "../../utils/vacancyRemovalStorage";
 import {
   ClipboardCheck,
-  Search,
   Filter,
   CheckCircle2,
   Clock,
@@ -58,6 +58,7 @@ import {
   FolderKanban,
   Hourglass,
   PauseCircle,
+  Search,
 } from "lucide-react";
 
 const AVATAR_GRADIENTS = [
@@ -616,6 +617,7 @@ export default function RecruitmentApplicationReview() {
 
   // Active vacancy groups displayed
   const displayedVacancyGroups = activeVacancyGroups;
+  const filtersActive = search !== "" || selectedVacancyFilter !== "ALL" || statusTab !== "ALL";
 
   // KPI Metrics & Counts for all readiness recommendation categories
   const totalConfirmed = candidates.length;
@@ -655,7 +657,7 @@ export default function RecruitmentApplicationReview() {
         </div>
       }
     >
-      <div className="p-6 space-y-6 max-w-7xl mx-auto">
+      <div className="space-y-6 max-w-7xl mx-auto">
         {/* Toast Alert Banner */}
         {toastMessage && (
           <div className="p-3.5 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs flex items-center justify-between gap-3 shadow-xs animate-in fade-in">
@@ -685,86 +687,51 @@ export default function RecruitmentApplicationReview() {
         </StatCardGrid>
 
         {/* ── Search, Vacancy Filter & Status Tabs ── */}
-        <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs space-y-3">
-          {/* Top Row: Search input & Position Dropdown */}
-          <div className="flex flex-col sm:flex-row items-center gap-3 w-full">
-            <div className="relative w-full sm:flex-1">
-              <Search className="absolute left-3.5 top-3 text-slate-400" size={17} />
-              <input
-                type="text"
-                placeholder="Search candidate, email, skill..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:outline-none focus:ring-2 focus:ring-primary-500 focus:bg-white"
-              />
-              {search && (
-                <button
-                  onClick={() => setSearch("")}
-                  className="absolute right-3 top-3 text-slate-400 hover:text-slate-600"
-                >
-                  <X size={16} />
-                </button>
-              )}
-            </div>
-
-            {/* Position Dropdown */}
-            <div className="w-full sm:w-72">
-              <select
-                value={selectedVacancyFilter}
-                onChange={(e) => setSelectedVacancyFilter(e.target.value)}
-                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:bg-white cursor-pointer"
-              >
-                <option value="ALL">All Positions ({totalConfirmed})</option>
-                {vacancyOptions.map((v) => (
-                  <option key={v.key} value={v.key}>
-                    {v.title} ({v.count})
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          {/* Bottom Row: Status Tabs (Placed under Search & Position bar) */}
-          <div className="flex items-center justify-between gap-2 pt-2.5 border-t border-slate-100 flex-wrap">
-            <div className="flex flex-wrap items-center gap-1.5">
-              {[
-                { id: "ALL", label: "All Confirmed", count: totalConfirmed },
-                { id: "READY_INTERVIEW", label: "Ready", count: readyInterviewCount, Icon: CheckCircle2 },
-                { id: "UNDER_REVIEW", label: "Needs Eval", count: needsEvalCount, Icon: Hourglass },
-                { id: "SECOND_OPINION", label: "2nd Reviewer", count: secondOpinionCount, Icon: Users },
-                { id: "HOLD", label: "On Hold", count: holdCount, Icon: PauseCircle },
-                { id: "REVIEWED", label: "Reviewed", count: reviewedCount },
-              ].map((tab) => (
-                <button
-                  key={tab.id}
-                  onClick={() => setStatusTab(tab.id)}
-                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
-                    statusTab === tab.id
-                      ? "bg-primary-600 text-white shadow-xs"
-                      : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-                  }`}
-                >
-                  {tab.Icon && <tab.Icon size={13} />}
-                  <span>{tab.label} ({tab.count})</span>
-                </button>
-              ))}
-            </div>
-
-            {(search || selectedVacancyFilter !== "ALL" || statusTab !== "ALL") && (
-              <button
-                onClick={() => {
-                  setSearch("");
-                  setSelectedVacancyFilter("ALL");
-                  setStatusTab("ALL");
-                }}
-                className="text-xs font-semibold text-primary-600 hover:text-primary-800 flex items-center gap-1 shrink-0 py-1"
-              >
-                <RefreshCw size={12} />
-                <span>Reset Filters</span>
-              </button>
-            )}
-          </div>
-        </div>
+        <FilterBar
+          search={search}
+          onSearchChange={setSearch}
+          searchPlaceholder="Search candidate, email, skill..."
+          filters={[
+            {
+              id: "position",
+              label: "Position",
+              value: selectedVacancyFilter,
+              onChange: setSelectedVacancyFilter,
+              allLabel: `All positions (${totalConfirmed})`,
+              allValue: "ALL",
+              options: vacancyOptions.map((v) => ({
+                value: v.key,
+                label: `${v.title} (${v.count})`,
+              })),
+            },
+          ]}
+          pills={{
+            value: statusTab,
+            onChange: setStatusTab,
+            items: [
+              { value: "ALL", label: "All confirmed", count: totalConfirmed },
+              { value: "READY_INTERVIEW", label: "Ready", count: readyInterviewCount },
+              { value: "UNDER_REVIEW", label: "Needs eval", count: needsEvalCount },
+              { value: "SECOND_OPINION", label: "2nd reviewer", count: secondOpinionCount },
+              { value: "HOLD", label: "On hold", count: holdCount },
+              { value: "REVIEWED", label: "Reviewed", count: reviewedCount },
+            ],
+          }}
+          count={filteredCandidates.length}
+          countLabel="candidate"
+          onExpandAll={displayedVacancyGroups.length > 1 ? expandAll : undefined}
+          onCollapseAll={
+            displayedVacancyGroups.length > 1
+              ? () => collapseAll(displayedVacancyGroups)
+              : undefined
+          }
+          hasActiveFilters={search !== "" || selectedVacancyFilter !== "ALL" || statusTab !== "ALL"}
+          onReset={() => {
+            setSearch("");
+            setSelectedVacancyFilter("ALL");
+            setStatusTab("ALL");
+          }}
+        />
 
         {/* ── Confirmed Candidates Table ── */}
         {loading ? (
@@ -773,7 +740,7 @@ export default function RecruitmentApplicationReview() {
             <h4 className="font-bold text-slate-800 text-sm">Loading Confirmed Candidates...</h4>
             <p className="text-xs text-slate-400 mt-1">Retrieving candidates confirmed from shortlist</p>
           </div>
-        ) : displayedVacancyGroups.length === 0 ? (
+        ) : displayedVacancyGroups.length === 0 && !filtersActive ? (
           <div className="bg-white rounded-3xl p-16 text-center border border-slate-200/80 shadow-xs max-w-md mx-auto space-y-3">
             <div className="w-14 h-14 bg-primary-50 text-primary-600 rounded-2xl flex items-center justify-center mx-auto mb-3">
               <UserCheck size={28} />
@@ -792,12 +759,23 @@ export default function RecruitmentApplicationReview() {
               </Link>
             )}
           </div>
-        ) : filteredCandidates.length === 0 ? (
-          /* Empty state for search / tab filters */
-          <div className="bg-white rounded-3xl p-12 text-center border border-slate-200/80 shadow-xs">
-            <p className="text-xs text-slate-400 font-medium">
-              No confirmed candidates match the selected filters or search criteria.
-            </p>
+        ) : displayedVacancyGroups.length === 0 ? (
+          <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-12 text-center max-w-md mx-auto space-y-3">
+            <div className="w-12 h-12 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center mx-auto">
+              <Search size={22} />
+            </div>
+            <h4 className="text-base font-semibold text-slate-800">No candidates found</h4>
+            <p className="text-xs text-slate-500">Try changing your search or filters.</p>
+            <button
+              onClick={() => {
+                setSearch("");
+                setSelectedVacancyFilter("ALL");
+                setStatusTab("ALL");
+              }}
+              className="mt-2 inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-primary-50 text-primary-600 hover:bg-primary-100 transition-colors"
+            >
+              Reset filters
+            </button>
           </div>
         ) : (
           <div className="space-y-6">
@@ -813,25 +791,6 @@ export default function RecruitmentApplicationReview() {
                 </span>
               </div>
 
-              {displayedVacancyGroups.length > 1 && (
-                <div className="flex items-center gap-2 text-xs">
-                  <button
-                    type="button"
-                    onClick={expandAll}
-                    className="text-slate-600 hover:text-primary-600 font-semibold transition-colors cursor-pointer"
-                  >
-                    Expand All
-                  </button>
-                  <span className="text-slate-300">•</span>
-                  <button
-                    type="button"
-                    onClick={() => collapseAll(displayedVacancyGroups)}
-                    className="text-slate-600 hover:text-primary-600 font-semibold transition-colors cursor-pointer"
-                  >
-                    Collapse All
-                  </button>
-                </div>
-              )}
             </div>
 
             {/* Vacancy Separated Candidate Tables */}
