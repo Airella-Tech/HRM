@@ -11,9 +11,10 @@ import { Search, ChevronDown, RefreshCw } from "lucide-react";
  *
  * Props
  *  search / onSearchChange / searchPlaceholder
- *  filters      [{ id, label, value, onChange, allLabel?, options }]
+ *  filters      [{ id, label, value, onChange, allLabel?, allValue?, options }]
  *               options: string[] or [{ value, label }]
- *               The "All" option is added automatically (value "All").
+ *               The "All" option is added automatically (value "All",
+ *               or allValue when a page uses a different one, e.g. "ALL").
  *  extras       node shown after the dropdowns (view toggle etc.)
  *  pills        { value, onChange, items: [{ value, label, count, icon }] }
  *  count / countLabel / loading   -> "7 candidates found"
@@ -21,7 +22,14 @@ import { Search, ChevronDown, RefreshCw } from "lucide-react";
  *  onReset / hasActiveFilters     -> "Reset filters" shows only when active
  */
 
-export function FilterSelect({ label, value, onChange, allLabel = "All", options = [] }) {
+export function FilterSelect({
+  label,
+  value,
+  onChange,
+  allLabel = "All",
+  allValue = "All",
+  options = [],
+}) {
   const normalized = options.map((option) =>
     typeof option === "string" ? { value: option, label: option } : option,
   );
@@ -35,7 +43,7 @@ export function FilterSelect({ label, value, onChange, allLabel = "All", options
         aria-label={label}
         className="min-w-0 flex-1 cursor-pointer appearance-none truncate bg-transparent font-semibold text-slate-800 focus:outline-none"
       >
-        <option value="All">{allLabel}</option>
+        <option value={allValue}>{allLabel}</option>
         {normalized.map((option) => (
           <option key={option.value} value={option.value}>
             {option.label}
