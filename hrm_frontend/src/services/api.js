@@ -1,4 +1,4 @@
-﻿/**
+/**
  * ============================================================
  *  HRM Frontend â€” Centralized API Service
  * ============================================================
@@ -906,7 +906,10 @@ export const careersApi = {
       `${RECRUITMENT_URL}/careers/jobs?company=${encodeURIComponent(company)}`,
     ),
   getJob: (id, company) =>
-    request("GET", `${RECRUITMENT_URL}/careers/jobs/${id}?company=${encodeURIComponent(company)}`),
+    request(
+      "GET",
+      `${RECRUITMENT_URL}/careers/jobs/${id}${company ? `?company=${encodeURIComponent(company)}` : ""}`,
+    ),
   applyJob: (id, arg2, arg3) => {
     let company = "COMP-001";
     let body = arg2;

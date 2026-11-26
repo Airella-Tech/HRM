@@ -55,10 +55,26 @@ const Section = ({ title, children }) => (
 export default function CareerJob() {
   const { id } = useParams();
   const [params] = useSearchParams();
-  const company = params.get("company") || "";
+  const companyFromParam = params.get("company") || "";
+  const storedCompany = (() => {
+    try {
+      const u = JSON.parse(localStorage.getItem("user") || "{}");
+      return (
+        u.companyRegistrationNumber ||
+        u.companyRef ||
+        u.companyName ||
+        (u.companyId ? String(u.companyId) : "") ||
+        u.company ||
+        ""
+      );
+    } catch {
+      return "";
+    }
+  })();
+  const company = companyFromParam || storedCompany || "";
 
   const [job, setJob] = useState(null);
-  const [loading, setLoading] = useState(Boolean(company));
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   const [isApplying, setIsApplying] = useState(false);
@@ -157,7 +173,6 @@ export default function CareerJob() {
   };
 
   useEffect(() => {
-    if (!company) return;
     let cancelled = false;
     setLoading(true);
     setError("");
@@ -200,18 +215,8 @@ export default function CareerJob() {
     };
   }, [job]);
 
-  const backTo = `/careers?company=${encodeURIComponent(company)}`;
-
-  if (!company) {
-    return (
-      <CareersLayout>
-        <Notice
-          title="Careers Link Incomplete"
-          text="Please open the full careers portal link provided by the hiring organization."
-        />
-      </CareersLayout>
-    );
-  }
+  const effectiveCompany = company || job?.companyRef || "";
+  const backTo = effectiveCompany ? `/careers?company=${encodeURIComponent(effectiveCompany)}` : "/careers";
 
   const hero = (
     <div className="pt-2 pb-8 sm:pb-10">

@@ -54,16 +54,17 @@ public class CareersService {
     }
 
     public PublicVacancyDTO getOpen(Long id, String company) {
-        String companyRef = requireCompany(company);
-
-        // 1. Exact match on id and companyRef
-        java.util.Optional<JobVacancy> exact = vacancyRepo.findByIdAndCompanyRef(id, companyRef)
-                .filter(v -> v.getStatus() == VacancyStatus.PUBLISHED && !v.getDeadline().isBefore(LocalDate.now()));
-        if (exact.isPresent()) {
-            return toDto(exact.get());
+        if (company != null && !company.isBlank()) {
+            String companyRef = company.trim();
+            // 1. Exact match on id and companyRef
+            java.util.Optional<JobVacancy> exact = vacancyRepo.findByIdAndCompanyRef(id, companyRef)
+                    .filter(v -> v.getStatus() == VacancyStatus.PUBLISHED && !v.getDeadline().isBefore(LocalDate.now()));
+            if (exact.isPresent()) {
+                return toDto(exact.get());
+            }
         }
 
-        // 2. Fallback to published vacancy by id (allowing case-insensitive companyRef or companyId match)
+        // 2. Fallback to published vacancy by id
         JobVacancy vacancy = vacancyRepo.findById(id)
                 .filter(v -> v.getStatus() == VacancyStatus.PUBLISHED && !v.getDeadline().isBefore(LocalDate.now()))
                 .orElseThrow(() -> new ResourceNotFoundException("Vacancy", "id", id));

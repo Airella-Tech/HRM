@@ -1755,18 +1755,40 @@ export default function RecruitmentApplications() {
                   </div>
 
                   {/* Public Career link button if ID exists */}
-                  {selectedVacancyModal.id && (
-                    <div className="pt-3 border-t border-slate-200/80">
-                      <Link
-                        to={`/careers/jobs/${selectedVacancyModal.id}`}
-                        target="_blank"
-                        className="w-full inline-flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-primary-600 hover:bg-primary-700 text-white text-xs font-semibold shadow-sm transition-all"
-                      >
-                        <ExternalLink size={13} />
-                        <span>View on Public Careers</span>
-                      </Link>
-                    </div>
-                  )}
+                  {selectedVacancyModal.id && (() => {
+                    const comp =
+                      selectedVacancyModal.companyRef ||
+                      selectedVacancyModal.company ||
+                      (() => {
+                        try {
+                          const u = JSON.parse(localStorage.getItem("user") || "{}");
+                          return (
+                            u.companyRegistrationNumber ||
+                            u.companyRef ||
+                            u.companyName ||
+                            (u.companyId ? String(u.companyId) : "") ||
+                            ""
+                          );
+                        } catch {
+                          return "";
+                        }
+                      })();
+                    const careerUrl = `/careers/jobs/${selectedVacancyModal.id}${
+                      comp ? `?company=${encodeURIComponent(comp)}` : ""
+                    }`;
+                    return (
+                      <div className="pt-3 border-t border-slate-200/80">
+                        <Link
+                          to={careerUrl}
+                          target="_blank"
+                          className="w-full inline-flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-primary-600 hover:bg-primary-700 text-white text-xs font-semibold shadow-sm transition-all"
+                        >
+                          <ExternalLink size={13} />
+                          <span>View on Public Careers</span>
+                        </Link>
+                      </div>
+                    );
+                  })()}
                 </div>
               </div>
             </div>
