@@ -1385,10 +1385,11 @@ export default function RecruitmentCandidateShortlist() {
 
                   {/* ── Vacancy Content (When not collapsed) ── */}
                   {!isCollapsed && (
-                    <div className="p-5 sm:p-6 space-y-5">
+                    <div>
                       {/* Staged candidates: confirm for this vacancy */}
+{/* layout-aligned */}
                       {stagedCount > 0 && (
-                        <div className="flex flex-wrap items-center justify-end gap-3">
+                        <div className="flex flex-wrap items-center justify-end gap-3 px-6 py-3 bg-slate-50/70 border-b border-slate-200/70">
 
                         {stagedCount > 0 && (
                           <div className="flex items-center gap-2">
@@ -1418,7 +1419,7 @@ export default function RecruitmentCandidateShortlist() {
 
                       {/* ── Candidate Cards Grid for this Vacancy ── */}
                       {filteredVacancyCandidates.length === 0 ? (
-                        <div className="py-10 text-center bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+                        <div className="py-10 text-center">
                           <p className="text-xs text-slate-400 font-medium">
                             {vacTotal === 0
                               ? "No candidate applications submitted for this vacancy yet."
@@ -1426,7 +1427,7 @@ export default function RecruitmentCandidateShortlist() {
                           </p>
                         </div>
                       ) : (
-                        <div className="overflow-hidden bg-white rounded-2xl border border-slate-200 shadow-sm">
+                        <div>
                           <div className="overflow-x-auto">
                             <table className="w-full text-left text-sm text-slate-600">
                               <thead className="bg-slate-50/80 border-b border-slate-200 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
