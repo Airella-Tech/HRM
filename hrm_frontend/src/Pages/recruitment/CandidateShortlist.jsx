@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { PageLayout } from "../../components/PageLayout";
 import StatCard, { StatCardGrid } from "../../components/StatCard";
+import FilterBar from "./components/FilterBar";
 import { recruitmentApi } from "../../services/api";
 import { DeadlineMeter } from "../careers/careersShared";
 import { formatSalary, formatDate } from "../../utils/careersFormat";
@@ -18,7 +19,6 @@ import {
   setRemovedFromShortlist,
 } from "../../utils/vacancyRemovalStorage";
 import {
-  Search,
   CheckCircle2,
   Sparkles,
   Zap,
@@ -974,50 +974,37 @@ export default function RecruitmentCandidateShortlist() {
         </StatCardGrid>
 
         {/* ── Global Search & Position Filter Bar ── */}
-        <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm flex flex-col md:flex-row justify-between items-center gap-4">
-          <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto flex-1">
-            <div className="relative w-full sm:w-80">
-              <Search className="absolute left-3.5 top-3 text-slate-400" size={17} />
-              <input
-                type="text"
-                placeholder="Search candidate name, email, or skill..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:bg-white"
-              />
-            </div>
-
-            <div className="w-full sm:w-64">
-              <select
-                value={selectedVacancyFilter}
-                onChange={(e) => setSelectedVacancyFilter(e.target.value)}
-                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:bg-white cursor-pointer"
-              >
-                <option value="ALL">All Vacancies ({displayedVacancyGroups.length})</option>
-                {displayedVacancyGroups.map((g) => (
-                  <option key={g.vacancyKey} value={g.vacancyKey}>
-                    {g.title} ({g.candidates.length})
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2 self-end md:self-center">
-            <button
-              onClick={expandAll}
-              className="px-3 py-1.5 text-xs font-medium text-slate-600 hover:text-primary-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition-all cursor-pointer"
-            >
-              Expand All
-            </button>
-            <button
-              onClick={collapseAll}
-              className="px-3 py-1.5 text-xs font-medium text-slate-600 hover:text-primary-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition-all cursor-pointer"
-            >
-              Collapse All
-            </button>
-          </div>
-        </div>
+        <FilterBar
+          search={search}
+          onSearchChange={setSearch}
+          searchPlaceholder="Search candidate name, email, or skill..."
+          filters={[
+            {
+              id: "vacancy",
+              label: "Vacancy",
+              value: selectedVacancyFilter,
+              onChange: setSelectedVacancyFilter,
+              allLabel: `All vacancies (${displayedVacancyGroups.length})`,
+              allValue: "ALL",
+              options: displayedVacancyGroups.map((g) => ({
+                value: g.vacancyKey,
+                label: `${g.title} (${g.candidates.length})`,
+              })),
+            },
+          ]}
+          count={displayedVacancyGroups.reduce(
+            (total, group) => total + group.candidates.length,
+            0,
+          )}
+          countLabel="candidate"
+          onExpandAll={displayedVacancyGroups.length > 0 ? expandAll : undefined}
+          onCollapseAll={displayedVacancyGroups.length > 0 ? collapseAll : undefined}
+          hasActiveFilters={search !== "" || selectedVacancyFilter !== "ALL"}
+          onReset={() => {
+            setSearch("");
+            setSelectedVacancyFilter("ALL");
+          }}
+        />
 
         {/* ── Vacancy Separated Shortlist Sections ── */}
         {loading ? (
