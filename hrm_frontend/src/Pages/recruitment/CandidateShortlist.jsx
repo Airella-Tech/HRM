@@ -230,7 +230,7 @@ export default function RecruitmentCandidateShortlist() {
 
   // Per-vacancy UI state
   const [collapsedGroups, setCollapsedGroups] = useState({});
-  const [groupStatusFilters, setGroupStatusFilters] = useState({});
+  const [globalStatusFilter, setGlobalStatusFilter] = useState("ALL");
   const [stagedShortlists, setStagedShortlists] = useState({});
   const [runningAutoForVacancy, setRunningAutoForVacancy] = useState({});
   const [confirmingVacancy, setConfirmingVacancy] = useState({});
@@ -578,10 +578,7 @@ export default function RecruitmentCandidateShortlist() {
   };
 
   // Per-vacancy state helpers
-  const getStatusFilterForVacancy = (vacKey) => groupStatusFilters[vacKey] || "ALL";
-  const setStatusFilterForVacancy = (vacKey, status) => {
-    setGroupStatusFilters((prev) => ({ ...prev, [vacKey]: status }));
-  };
+  const getStatusFilterForVacancy = () => globalStatusFilter;
 
   const toggleCollapse = (vacKey) => {
     setCollapsedGroups((prev) => ({ ...prev, [vacKey]: !prev[vacKey] }));
@@ -974,37 +971,80 @@ export default function RecruitmentCandidateShortlist() {
         </StatCardGrid>
 
         {/* ── Global Search & Position Filter Bar ── */}
-        <FilterBar
-          search={search}
-          onSearchChange={setSearch}
-          searchPlaceholder="Search candidate name, email, or skill..."
-          filters={[
-            {
-              id: "vacancy",
-              label: "Vacancy",
-              value: selectedVacancyFilter,
-              onChange: setSelectedVacancyFilter,
-              allLabel: `All vacancies (${displayedVacancyGroups.length})`,
-              allValue: "ALL",
-              options: displayedVacancyGroups.map((g) => ({
-                value: g.vacancyKey,
-                label: `${g.title} (${g.candidates.length})`,
-              })),
-            },
-          ]}
-          count={displayedVacancyGroups.reduce(
-            (total, group) => total + group.candidates.length,
-            0,
-          )}
-          countLabel="candidate"
-          onExpandAll={displayedVacancyGroups.length > 0 ? expandAll : undefined}
-          onCollapseAll={displayedVacancyGroups.length > 0 ? collapseAll : undefined}
-          hasActiveFilters={search !== "" || selectedVacancyFilter !== "ALL"}
-          onReset={() => {
-            setSearch("");
-            setSelectedVacancyFilter("ALL");
-          }}
-        />
+        {(() => {
+          const q = search.trim().toLowerCase();
+          const rows = displayedVacancyGroups.flatMap((group) => {
+            const vacKey = group.vacancyKey;
+            const vacConfig =
+              screeningConfigs[group.vacancyId] ||
+              screeningConfigs[String(group.vacancyId)] ||
+              screeningConfigs[vacKey];
+            const minScore = vacConfig?.minimumScore ?? 75;
+            const stagedSet = getStagedSet(vacKey);
+            return group.candidates
+              .filter(
+                (c) =>
+                  !q ||
+                  (c.candidateName || "").toLowerCase().includes(q) ||
+                  (c.email || "").toLowerCase().includes(q) ||
+                  (Array.isArray(c.skills) && c.skills.some((s) => s.toLowerCase().includes(q))),
+              )
+              .map((c) => ({ c, minScore, staged: stagedSet.has(c.id) }));
+          });
+          const matches = ({ c, minScore, staged }, status) => {
+            if (status === "ALL") return true;
+            if (status === "SUITABLE") return getCandidateSuitability(c, minScore).isSuitable;
+            if (status === "NOT_SUITABLE") return !getCandidateSuitability(c, minScore).isSuitable;
+            if (status === "SHORTLISTED") return c.status === "SHORTLISTED";
+            if (status === "STAGED") return staged;
+            if (status === "REJECTED") return c.status === "REJECTED";
+            return true;
+          };
+          const countOf = (status) => rows.filter((row) => matches(row, status)).length;
+          return (
+            <FilterBar
+              search={search}
+              onSearchChange={setSearch}
+              searchPlaceholder="Search candidate name, email, or skill..."
+              filters={[
+                {
+                  id: "vacancy",
+                  label: "Vacancy",
+                  value: selectedVacancyFilter,
+                  onChange: setSelectedVacancyFilter,
+                  allLabel: "All vacancies",
+                  allValue: "ALL",
+                  options: displayedVacancyGroups.map((g) => ({
+                    value: g.vacancyKey,
+                    label: `${g.title} (${g.candidates.length})`,
+                  })),
+                },
+              ]}
+              pills={{
+                value: globalStatusFilter,
+                onChange: setGlobalStatusFilter,
+                items: [
+                  { value: "ALL", label: "All ranked", count: countOf("ALL") },
+                  { value: "SUITABLE", label: "Suitable", count: countOf("SUITABLE") },
+                  { value: "NOT_SUITABLE", label: "Not suitable", count: countOf("NOT_SUITABLE") },
+                  { value: "SHORTLISTED", label: "Shortlisted", count: countOf("SHORTLISTED") },
+                  { value: "STAGED", label: "Staged", count: countOf("STAGED") },
+                  { value: "REJECTED", label: "Rejected", count: countOf("REJECTED") },
+                ],
+              }}
+              count={countOf(globalStatusFilter)}
+              countLabel="candidate"
+              onExpandAll={displayedVacancyGroups.length > 0 ? expandAll : undefined}
+              onCollapseAll={displayedVacancyGroups.length > 0 ? collapseAll : undefined}
+              hasActiveFilters={search !== "" || selectedVacancyFilter !== "ALL" || globalStatusFilter !== "ALL"}
+              onReset={() => {
+                setSearch("");
+                setSelectedVacancyFilter("ALL");
+                setGlobalStatusFilter("ALL");
+              }}
+            />
+          );
+        })()}
 
         {/* ── Vacancy Separated Shortlist Sections ── */}
         {loading ? (
@@ -1086,10 +1126,6 @@ export default function RecruitmentCandidateShortlist() {
 
               // Status and Suitability count breakdowns
               const vacTotal = group.candidates.length;
-              const vacSuitable = group.candidates.filter((c) => getCandidateSuitability(c, minScore).isSuitable).length;
-              const vacNotSuitable = group.candidates.filter((c) => !getCandidateSuitability(c, minScore).isSuitable).length;
-              const vacShortlisted = group.candidates.filter((c) => c.status === "SHORTLISTED").length;
-              const vacRejected = group.candidates.filter((c) => c.status === "REJECTED").length;
 
               return (
                 <div
@@ -1350,40 +1386,9 @@ export default function RecruitmentCandidateShortlist() {
                   {/* ── Vacancy Content (When not collapsed) ── */}
                   {!isCollapsed && (
                     <div className="p-5 sm:p-6 space-y-5">
-                      {/* Per-Vacancy Status Filter Tabs */}
-                      <div className="flex flex-wrap items-center justify-between gap-3 pb-2 border-b border-slate-100">
-                        <div className="flex flex-wrap gap-1.5 sm:gap-2">
-                          {[
-                            { id: "ALL", label: `All Ranked (${vacTotal})` },
-                            { id: "SUITABLE", label: `Suitable (${vacSuitable})`, icon: Check, highlight: vacSuitable > 0 },
-                            { id: "NOT_SUITABLE", label: `Not Suitable (${vacNotSuitable})`, icon: X },
-                            { id: "SHORTLISTED", label: `Shortlisted (${vacShortlisted})` },
-                            {
-                              id: "STAGED",
-                              label: `Staged (${stagedCount})`,
-                              icon: Sparkles,
-                              highlight: stagedCount > 0,
-                            },
-                            { id: "REJECTED", label: `Rejected (${vacRejected})` },
-                          ].map((t) => (
-                            <button
-                              key={t.id}
-                              onClick={() => setStatusFilterForVacancy(vacKey, t.id)}
-                              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
-                                statusFilter === t.id
-                                  ? t.highlight
-                                    ? "bg-amber-500 text-slate-950 shadow-sm"
-                                    : "bg-primary-600 text-white shadow-sm"
-                                  : t.highlight
-                                  ? "bg-amber-50 text-amber-800 border border-amber-200 hover:bg-amber-100"
-                                  : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-                              }`}
-                            >
-                              {t.icon && <t.icon size={14} />}
-                              {t.label}
-                            </button>
-                          ))}
-                        </div>
+                      {/* Staged candidates: confirm for this vacancy */}
+                      {stagedCount > 0 && (
+                        <div className="flex flex-wrap items-center justify-end gap-3">
 
                         {stagedCount > 0 && (
                           <div className="flex items-center gap-2">
@@ -1409,6 +1414,7 @@ export default function RecruitmentCandidateShortlist() {
                           </div>
                         )}
                       </div>
+                      )}
 
                       {/* ── Candidate Cards Grid for this Vacancy ── */}
                       {filteredVacancyCandidates.length === 0 ? (

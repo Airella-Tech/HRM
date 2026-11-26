@@ -708,10 +708,10 @@ export default function RecruitmentApplicationReview() {
             onChange: setStatusTab,
             items: [
               { value: "ALL", label: "All confirmed", count: totalConfirmed },
-              { value: "READY_INTERVIEW", label: "Ready", count: readyInterviewCount, icon: CheckCircle2 },
-              { value: "UNDER_REVIEW", label: "Needs eval", count: needsEvalCount, icon: Hourglass },
-              { value: "SECOND_OPINION", label: "2nd reviewer", count: secondOpinionCount, icon: Users },
-              { value: "HOLD", label: "On hold", count: holdCount, icon: PauseCircle },
+              { value: "READY_INTERVIEW", label: "Ready", count: readyInterviewCount },
+              { value: "UNDER_REVIEW", label: "Needs eval", count: needsEvalCount },
+              { value: "SECOND_OPINION", label: "2nd reviewer", count: secondOpinionCount },
+              { value: "HOLD", label: "On hold", count: holdCount },
               { value: "REVIEWED", label: "Reviewed", count: reviewedCount },
             ],
           }}

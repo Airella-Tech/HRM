@@ -135,8 +135,8 @@ export default function RecruitmentApplications() {
   const [selectedVacancyId, setSelectedVacancyId] = useState("ALL");
   const [viewMode, setViewMode] = useState("grouped"); // 'grouped' (separated by position) or 'list' (master table)
   const [collapsedGroups, setCollapsedGroups] = useState({});
-  const [groupStatusFilters, setGroupStatusFilters] = useState({});
-  const [masterStatusFilter, setMasterStatusFilter] = useState("ALL");
+  const [statusFilter, setStatusFilter] = useState("ALL");
+  const masterStatusFilter = statusFilter;
 
   // Selected Candidate Modal
   const [selectedApp, setSelectedApp] = useState(null);
@@ -148,13 +148,8 @@ export default function RecruitmentApplications() {
   const [selectedVacancyModal, setSelectedVacancyModal] = useState(null);
 
   // Helper for per-group status filter
-  const getGroupStatus = (groupKey) => groupStatusFilters[groupKey] || "ALL";
-  const setGroupStatus = (groupKey, status) => {
-    setGroupStatusFilters((prev) => ({
-      ...prev,
-      [groupKey]: status,
-    }));
-  };
+  const getGroupStatus = () => statusFilter;
+  const setGroupStatus = (_groupKey, status) => setStatusFilter(status);
 
   // Load real applications, vacancies & job offers from backend
   const loadData = async (isManualRefresh = false) => {
@@ -640,73 +635,85 @@ export default function RecruitmentApplications() {
         </StatCardGrid>
 
         {/* ── Search & Filter Controls Toolbar ── */}
-        <FilterBar
-          search={search}
-          onSearchChange={setSearch}
-          searchPlaceholder="Search candidates by name, email, skills, tracking code..."
-          filters={[
-            {
-              id: "position",
-              label: "Position",
-              value: selectedVacancyId,
-              onChange: setSelectedVacancyId,
-              allLabel: `All positions (${vacancySelectorList.length})`,
-              allValue: "ALL",
-              options: vacancySelectorList.map((v) => ({
-                value: v.key,
-                label: `${v.title} (${v.applicantCount})`,
-              })),
-            },
-          ]}
-          extras={
-            <div className="flex h-10 items-center rounded-xl border border-slate-200 bg-slate-50 p-0.5">
-              <button
-                type="button"
-                onClick={() => setViewMode("grouped")}
-                className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-semibold ${
-                  viewMode === "grouped" ? "bg-white text-primary-700 shadow-sm" : "text-slate-600"
-                }`}
-                title="Separate applicant tables according to applied vacancy"
-              >
-                <FolderKanban size={14} /> Separated by Role
-              </button>
-              <button
-                type="button"
-                onClick={() => setViewMode("list")}
-                className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-semibold ${
-                  viewMode === "list" ? "bg-white text-primary-700 shadow-sm" : "text-slate-600"
-                }`}
-                title="View all candidates in one combined master table"
-              >
-                <List size={14} /> Master List
-              </button>
-            </div>
-          }
-          count={
-            viewMode === "list"
-              ? masterFilteredApplications.length
-              : displayedVacancyGroups.reduce(
-                  (total, group) => total + group.searchMatchedApplications.length,
-                  0,
-                )
-          }
-          countLabel="application"
-          onExpandAll={
-            viewMode === "grouped" && displayedVacancyGroups.length > 0
-              ? () => toggleAllGroups(true)
-              : undefined
-          }
-          onCollapseAll={
-            viewMode === "grouped" && displayedVacancyGroups.length > 0
-              ? () => toggleAllGroups(false)
-              : undefined
-          }
-          hasActiveFilters={search !== "" || selectedVacancyId !== "ALL"}
-          onReset={() => {
-            setSearch("");
-            setSelectedVacancyId("ALL");
-          }}
-        />
+        {(() => {
+          const allApps = displayedVacancyGroups.flatMap((g) => g.searchMatchedApplications);
+          const countOf = (status) => allApps.filter((a) => a.status === status).length;
+          const shown = statusFilter === "ALL" ? allApps.length : countOf(statusFilter);
+          return (
+            <FilterBar
+              search={search}
+              onSearchChange={setSearch}
+              searchPlaceholder="Search name, email, skills..."
+              filters={[
+                {
+                  id: "position",
+                  label: "Position",
+                  value: selectedVacancyId,
+                  onChange: setSelectedVacancyId,
+                  allLabel: "All positions",
+                  allValue: "ALL",
+                  options: vacancySelectorList.map((v) => ({
+                    value: v.key,
+                    label: `${v.title} (${v.applicantCount})`,
+                  })),
+                },
+              ]}
+              extras={
+                <div className="flex h-10 items-center rounded-xl border border-slate-200 bg-slate-50 p-0.5">
+                  <button
+                    type="button"
+                    onClick={() => setViewMode("grouped")}
+                    className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-semibold ${
+                      viewMode === "grouped" ? "bg-white text-primary-700 shadow-sm" : "text-slate-600"
+                    }`}
+                    title="Separate applicant tables according to applied vacancy"
+                  >
+                    <FolderKanban size={14} /> Separated by Role
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setViewMode("list")}
+                    className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-semibold ${
+                      viewMode === "list" ? "bg-white text-primary-700 shadow-sm" : "text-slate-600"
+                    }`}
+                    title="View all candidates in one combined master table"
+                  >
+                    <List size={14} /> Master List
+                  </button>
+                </div>
+              }
+              pills={{
+                value: statusFilter,
+                onChange: setStatusFilter,
+                items: [
+                  { value: "ALL", label: "All applicants", count: allApps.length },
+                  { value: "NEW", label: "New", count: countOf("NEW") },
+                  { value: "SHORTLISTED", label: "Shortlisted", count: countOf("SHORTLISTED") },
+                  { value: "UNDER_REVIEW", label: "Under review", count: countOf("UNDER_REVIEW") },
+                  { value: "REJECTED", label: "Rejected", count: countOf("REJECTED") },
+                ],
+              }}
+              count={shown}
+              countLabel="application"
+              onExpandAll={
+                viewMode === "grouped" && displayedVacancyGroups.length > 0
+                  ? () => toggleAllGroups(true)
+                  : undefined
+              }
+              onCollapseAll={
+                viewMode === "grouped" && displayedVacancyGroups.length > 0
+                  ? () => toggleAllGroups(false)
+                  : undefined
+              }
+              hasActiveFilters={search !== "" || selectedVacancyId !== "ALL" || statusFilter !== "ALL"}
+              onReset={() => {
+                setSearch("");
+                setSelectedVacancyId("ALL");
+                setStatusFilter("ALL");
+              }}
+            />
+          );
+        })()}
 
         {/* ── Main Candidate Content Area ── */}
         {loading ? (
@@ -915,50 +922,6 @@ export default function RecruitmentApplications() {
                   {/* ── Position Content: Status Tabs Under Each Position & Table ── */}
                   {!isCollapsed && (
                     <div>
-                      {/* ── Status Filter Tabs for this specific role ── */}
-                      <div className="px-6 py-3 bg-slate-50/70 border-b border-slate-200/70 flex flex-wrap items-center justify-between gap-3">
-                        <div className="flex flex-wrap items-center gap-2">
-                          {[
-                            { id: "ALL", label: "All Applicants", count: totalForGroup },
-                            { id: "NEW", label: "New", count: newCount },
-                            { id: "SHORTLISTED", label: "Shortlisted", count: shortlistedCount },
-                            { id: "UNDER_REVIEW", label: "Under Review", count: reviewCount },
-                            { id: "REJECTED", label: "Rejected", count: rejectedCount },
-                          ].map((tab) => {
-                            const active = currentStatus === tab.id;
-                            return (
-                              <button
-                                key={tab.id}
-                                onClick={() => setGroupStatus(group.key, tab.id)}
-                                className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 ${
-                                  active
-                                    ? "bg-primary-600 text-white shadow-sm"
-                                    : "bg-white text-slate-600 hover:bg-slate-100 border border-slate-200/80"
-                                }`}
-                              >
-                                <span>{tab.label}</span>
-                                <span
-                                  className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${
-                                    active ? "bg-white/20 text-white" : "bg-slate-100 text-slate-600"
-                                  }`}
-                                >
-                                  {tab.count}
-                                </span>
-                              </button>
-                            );
-                          })}
-                        </div>
-
-                        {currentStatus !== "ALL" && (
-                          <button
-                            onClick={() => setGroupStatus(group.key, "ALL")}
-                            className="text-xs font-semibold text-primary-600 hover:text-primary-800 flex items-center gap-1"
-                          >
-                            <RefreshCw size={11} />
-                            <span>Show All ({totalForGroup})</span>
-                          </button>
-                        )}
-                      </div>
 
                       {/* ── Candidate Table for this specific role ── */}
                       <div className="overflow-x-auto">
@@ -1169,47 +1132,6 @@ export default function RecruitmentApplications() {
              MODE 2: UNIFIED MASTER TABLE (WITH OPTIONAL MASTER STATUS TABS)
              ══════════════════════════════════════════════════════════════ */
           <div className="bg-white rounded-3xl border border-slate-200/80 shadow-sm overflow-hidden space-y-0">
-            {/* Master list status tabs */}
-            <div className="p-4 bg-slate-50/70 border-b border-slate-100 flex flex-wrap items-center justify-between gap-3">
-              <div className="flex flex-wrap items-center gap-2">
-                {["ALL", "NEW", "SHORTLISTED", "UNDER_REVIEW", "REJECTED"].map((st) => {
-                  const active = masterStatusFilter === st;
-                  const count =
-                    st === "ALL"
-                      ? applications.length
-                      : applications.filter((a) => a.status === st).length;
-                  return (
-                    <button
-                      key={st}
-                      onClick={() => setMasterStatusFilter(st)}
-                      className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 ${
-                        active
-                          ? "bg-primary-600 text-white shadow-sm"
-                          : "bg-white text-slate-600 hover:bg-slate-100 border border-slate-200/80"
-                      }`}
-                    >
-                      <span>{st === "ALL" ? "All Applicants" : st.replace("_", " ")}</span>
-                      <span
-                        className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${
-                          active ? "bg-white/20 text-white" : "bg-slate-100 text-slate-600"
-                        }`}
-                      >
-                        {count}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-
-              {masterStatusFilter !== "ALL" && (
-                <button
-                  onClick={() => setMasterStatusFilter("ALL")}
-                  className="text-xs font-semibold text-primary-600 hover:text-primary-800"
-                >
-                  Show All ({applications.length})
-                </button>
-              )}
-            </div>
 
             <div className="overflow-x-auto">
               <table className="w-full text-left text-sm text-slate-600">
