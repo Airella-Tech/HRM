@@ -17,7 +17,8 @@ import { Search, ChevronDown, RefreshCw } from "lucide-react";
  *               or allValue when a page uses a different one, e.g. "ALL").
  *  extras       node shown after the dropdowns (view toggle etc.)
  *  pills        { value, onChange, items: [{ value, label, count, icon }] }
- *  count / countLabel / loading   -> "7 candidates found"
+ *  count / countLabel / countPlural / loading   -> "7 candidates found"
+ *               (countPlural only when "s" is wrong, e.g. vacancy -> vacancies)
  *  onExpandAll / onCollapseAll    -> buttons only show when both are given
  *  onReset / hasActiveFilters     -> "Reset filters" shows only when active
  */
@@ -103,6 +104,7 @@ export default function FilterBar({
   pills = null,
   count = null,
   countLabel = "result",
+  countPlural,
   loading = false,
   onExpandAll,
   onCollapseAll,
@@ -150,7 +152,7 @@ export default function FilterBar({
             <span className="whitespace-nowrap text-xs text-slate-500">
               {loading
                 ? "Loading..."
-                : `${count} ${countLabel}${count !== 1 ? "s" : ""} found`}
+                : `${count} ${count === 1 ? countLabel : countPlural || `${countLabel}s`} found`}
             </span>
           )}
           {showExpand && (

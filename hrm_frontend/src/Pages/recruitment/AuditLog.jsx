@@ -5,9 +5,10 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { PageLayout } from "../../components/PageLayout";
 import StatCard, { StatCardGrid } from "../../components/StatCard";
+import FilterBar from "./components/FilterBar";
 import { recruitmentApi } from "../../services/api";
 import { avatarColorClass } from "../../utils/avatarColor";
-import { Activity, Loader2, RefreshCw, Search, CalendarDays, BriefcaseBusiness, ShieldCheck } from "lucide-react";
+import { Activity, Loader2, RefreshCw, CalendarDays, BriefcaseBusiness, ShieldCheck } from "lucide-react";
 
 const PAGE_SIZE = 15;
 
@@ -41,9 +42,6 @@ const initials = (name = "") =>
     .map((part) => part[0])
     .join("")
     .toUpperCase();
-
-const selectCls =
-  "rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-800 focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-100";
 
 const AuditLog = () => {
   const [logs, setLogs] = useState([]);
@@ -108,6 +106,16 @@ const AuditLog = () => {
       activePage="Audit Log"
       title="Audit Log"
       subtitle="A record of recruitment actions: who did what, and when"
+      actions={
+        <button
+          type="button"
+          onClick={load}
+          disabled={loading}
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-sm font-semibold shadow-sm disabled:opacity-60"
+        >
+          <RefreshCw size={16} className={loading ? "animate-spin" : ""} /> Refresh
+        </button>
+      }
     >
       <div className="space-y-5">
                 {/* Summary cards */}
@@ -118,63 +126,49 @@ const AuditLog = () => {
           <StatCard label="Role changes" value={loading ? "-" : stats.roles} caption="Roles and assignments" icon={ShieldCheck} tone="amber" />
         </StatCardGrid>
         {/* Filters */}
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="relative min-w-[220px] flex-1">
-            <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
-            <input
-              type="text"
-              value={search}
-              onChange={(e) => {
-                setSearch(e.target.value);
+        <FilterBar
+          search={search}
+          onSearchChange={(value) => {
+            setSearch(value);
+            setPage(1);
+          }}
+          searchPlaceholder="Search by person, action or description..."
+          filters={[
+            {
+              id: "action",
+              label: "Action",
+              value: actionFilter,
+              onChange: (value) => {
+                setActionFilter(value);
                 setPage(1);
-              }}
-              placeholder="Search by person, action or description"
-              className={`${selectCls} w-full pl-10`}
-            />
-          </div>
-
-          <select
-            value={actionFilter}
-            onChange={(e) => {
-              setActionFilter(e.target.value);
-              setPage(1);
-            }}
-            className={selectCls}
-          >
-            <option value="ALL">All actions</option>
-            {actions.map((a) => (
-              <option key={a} value={a}>
-                {label(a)}
-              </option>
-            ))}
-          </select>
-
-          <select
-            value={entityFilter}
-            onChange={(e) => {
-              setEntityFilter(e.target.value);
-              setPage(1);
-            }}
-            className={selectCls}
-          >
-            <option value="ALL">All item types</option>
-            {entities.map((en) => (
-              <option key={en} value={en}>
-                {en}
-              </option>
-            ))}
-          </select>
-
-          <button
-            type="button"
-            onClick={load}
-            disabled={loading}
-            className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:opacity-60"
-          >
-            <RefreshCw size={15} className={loading ? "animate-spin" : ""} />
-            Refresh
-          </button>
-        </div>
+              },
+              allLabel: "All actions",
+              allValue: "ALL",
+              options: actions.map((a) => ({ value: a, label: label(a) })),
+            },
+            {
+              id: "entity",
+              label: "Item type",
+              value: entityFilter,
+              onChange: (value) => {
+                setEntityFilter(value);
+                setPage(1);
+              },
+              allLabel: "All item types",
+              allValue: "ALL",
+              options: entities,
+            },
+          ]}
+          count={filtered.length}
+          countLabel="record"
+          hasActiveFilters={search !== "" || actionFilter !== "ALL" || entityFilter !== "ALL"}
+          onReset={() => {
+            setSearch("");
+            setActionFilter("ALL");
+            setEntityFilter("ALL");
+            setPage(1);
+          }}
+        />
 
         {error && (
           <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">

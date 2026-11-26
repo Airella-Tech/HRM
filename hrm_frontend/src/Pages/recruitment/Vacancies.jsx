@@ -12,11 +12,12 @@ import React, { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { PageLayout } from "../../components/PageLayout";
 import StatCard from "../../components/StatCard";
+import FilterBar from "./components/FilterBar";
 import { recruitmentApi, hrApi } from "../../services/api";
 import { formatSalary, formatDate } from "../../utils/careersFormat";
 import { useRecruitmentAccess, fetchRecruitmentAccess } from "../../utils/useRecruitmentAccess";
 import ViewButton from "./components/ViewButton";
-import { Plus, ExternalLink, Pencil, Trash2, BriefcaseBusiness, Loader2, Save, AlertTriangle, Send, CheckCircle2, XCircle, Megaphone, Ban, Search, Clock, FileText, Users, CalendarDays, Banknote, Award,RefreshCw } from "lucide-react";
+import { Plus, ExternalLink, Pencil, Trash2, BriefcaseBusiness, Loader2, Save, AlertTriangle, Send, CheckCircle2, XCircle, Megaphone, Ban, Clock, FileText, Users, CalendarDays, Banknote, Award,RefreshCw } from "lucide-react";
 import RecruitmentModal, {
   modalLabelClass,
   modalInputClass,
@@ -786,33 +787,28 @@ export default function RecruitmentVacancies({ mode }) {
         </div>
 
         {/* Filters + search */}
-        <div className="flex flex-wrap items-center gap-2">
-          {cfg.filters.map((f) => (
-            <button
-              key={f}
-              onClick={() => setFilter(f)}
-              className={`px-3.5 py-1.5 rounded-full text-sm font-medium border transition-colors ${
-                filter === f
-                  ? "bg-primary-600 text-white border-primary-600"
-                  : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"
-              }`}
-            >
-              {filterLabel(f, cfg)}
-              <span className={`ml-1.5 text-xs ${filter === f ? "text-white/70" : "text-slate-400"}`}>
-                {filterCount(f)}
-              </span>
-            </button>
-          ))}
-          <div className="relative ml-auto w-full sm:w-64">
-            <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-            <input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search title or department"
-              className="w-full rounded-xl border border-slate-200 bg-white pl-9 pr-3 py-2 text-sm text-slate-800 focus:outline-none focus:border-primary-400 focus:ring-2 focus:ring-primary-100"
-            />
-          </div>
-        </div>
+        <FilterBar
+          search={search}
+          onSearchChange={setSearch}
+          searchPlaceholder="Search title or department..."
+          pills={{
+            value: filter,
+            onChange: setFilter,
+            items: cfg.filters.map((f) => ({
+              value: f,
+              label: filterLabel(f, cfg),
+              count: filterCount(f),
+            })),
+          }}
+          count={visible.length}
+          countLabel="vacancy"
+          countPlural="vacancies"
+          hasActiveFilters={search !== "" || filter !== "ALL"}
+          onReset={() => {
+            setSearch("");
+            setFilter("ALL");
+          }}
+        />
 
         {error && (
           <div className="px-4 py-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm font-medium">
