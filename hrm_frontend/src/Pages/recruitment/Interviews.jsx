@@ -1,3 +1,4 @@
+import RecruitmentModal, { ModalButton } from "./components/RecruitmentModal";
 import React, {
   useCallback,
   useEffect,
@@ -33,13 +34,14 @@ import {
   RefreshCw,
   Check,
   Save,
-  Info,
 } from "lucide-react";
 import { PageLayout } from "../../components/PageLayout";
 import StatCard, { StatCardGrid } from "../../components/StatCard";
+import FilterBar from "./components/FilterBar";
 import VacancyGroupCard from "./VacancyGroupCard";
 import { recruitmentApi } from "../../services/api";
 import { avatarColorClass } from "../../utils/avatarColor";
+import ViewButton from "./components/ViewButton";
 
 const ROUNDS = [
   "Technical Interview",
@@ -902,8 +904,9 @@ export default function RecruitmentInterviews() {
         </td>
         <td className="min-w-[180px] whitespace-nowrap px-3 py-3.5">
           <div className="flex items-center gap-1">
-            <button
-              type="button"
+                        <ViewButton
+              title="View details"
+              aria-label={`View details for ${item.candidate}`}
               onClick={() => {
                 setSelected(item);
                 setDetailsEditMode(false);
@@ -912,13 +915,7 @@ export default function RecruitmentInterviews() {
                 setFormError("");
                 setConflictError("");
               }}
-              title="View details"
-              aria-label={`View details for ${item.candidate}`}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-xs hover:bg-slate-200"
-            >
-              <MoreHorizontal size={14} />
-              <span>View</span>
-            </button>
+            />
             <button
               type="button"
               onClick={() => openEdit(item)}
@@ -1741,68 +1738,24 @@ export default function RecruitmentInterviews() {
 
           {mode === "list" && (
             <>
-              <div className="bg-white rounded-xl border border-slate-200 shadow-sm px-4 py-3">
-                <div className="flex flex-wrap items-center gap-3">
-                  <div className="relative flex-1 min-w-[220px]">
-                    <Search
-                      size={17}
-                      className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
-                    />
-                    <input
-                      value={search}
-                      onChange={(event) => setSearch(event.target.value)}
-                      placeholder="Search interviews..."
-                      className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50 pl-9 pr-3 text-sm text-slate-800 placeholder-slate-400 focus:border-primary-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary-100"
-                    />
-                  </div>
-                  <span
-                    title="Search and filter scheduled interviews by status or round."
-                    className="inline-flex shrink-0 text-slate-400"
-                  >
-                    <Info size={14} />
-                  </span>
-                  <span className="text-sm font-semibold text-slate-600">
-                    Status:
-                  </span>
-                  <div className="flex flex-wrap items-center gap-1">
-                    {["All", ...STATUSES].map((status) => (
-                      <button
-                        key={status}
-                        type="button"
-                        aria-pressed={statusFilter === status}
-                        onClick={() => setStatusFilter(status)}
-                        className={`rounded-full border px-3 py-1.5 text-sm font-semibold transition-colors ${
-                          statusFilter === status
-                            ? "border-primary-600 bg-primary-600 text-white shadow-sm"
-                            : "border-slate-300 bg-white text-slate-600 hover:bg-slate-50"
-                        }`}
-                      >
-                        {status}
-                      </button>
-                    ))}
-                  </div>
-                  <span className="text-sm font-semibold text-slate-600">
-                    Round:
-                  </span>
-                  <div className="flex flex-wrap items-center gap-1">
-                    {["All", ...ROUNDS].map((round) => (
-                      <button
-                        key={round}
-                        type="button"
-                        aria-pressed={roundFilter === round}
-                        onClick={() => setRoundFilter(round)}
-                        className={`rounded-full border px-3 py-1.5 text-sm font-semibold transition-colors ${
-                          roundFilter === round
-                            ? "border-primary-600 bg-primary-600 text-white shadow-sm"
-                            : "border-slate-300 bg-white text-slate-600 hover:bg-slate-50"
-                        }`}
-                      >
-                        {round}
-                      </button>
-                    ))}
-                  </div>
-                  <div className="flex items-center rounded-xl border border-slate-200 bg-slate-50 p-0.5">
+              <FilterBar
+                search={search}
+                onSearchChange={setSearch}
+                searchPlaceholder="Search interviews..."
+                filters={[
+                  {
+                    id: "round",
+                    label: "Round",
+                    value: roundFilter,
+                    onChange: setRoundFilter,
+                    allLabel: "All rounds",
+                    options: ROUNDS,
+                  },
+                ]}
+                extras={
+                  <div className="flex h-10 items-center rounded-xl border border-slate-200 bg-slate-50 p-0.5">
                     <button
+                      type="button"
                       onClick={() => setMode("list")}
                       className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-semibold ${
                         mode === "list"
@@ -1813,6 +1766,7 @@ export default function RecruitmentInterviews() {
                       <List size={14} /> List
                     </button>
                     <button
+                      type="button"
                       onClick={() => setMode("calendar")}
                       className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-semibold ${
                         mode === "calendar"
@@ -1823,31 +1777,33 @@ export default function RecruitmentInterviews() {
                       <CalendarRange size={14} /> Calendar
                     </button>
                   </div>
-                  <span className="ml-auto text-xs text-slate-500">
-                    {filtered.length} interview
-                    {filtered.length !== 1 ? "s" : ""} found
-                  </span>
-                  {vacancyGroups.length > 0 && (
-                    <div className="flex items-center gap-1 border-l border-slate-200 pl-3">
-                      <button
-                        type="button"
-                        onClick={expandAllGroups}
-                        className="rounded-lg px-2 py-1 text-sm font-semibold text-slate-500 hover:bg-slate-50 hover:text-primary-600"
-                      >
-                        Expand All
-                      </button>
-                      <span className="h-4 w-px bg-slate-200" />
-                      <button
-                        type="button"
-                        onClick={collapseAllGroups}
-                        className="rounded-lg px-2 py-1 text-sm font-semibold text-slate-500 hover:bg-slate-50 hover:text-primary-600"
-                      >
-                        Collapse All
-                      </button>
-                    </div>
-                  )}
-                </div>
-              </div>
+                }
+                pills={{
+                  value: statusFilter,
+                  onChange: setStatusFilter,
+                  items: [
+                    { value: "All", label: "All", count: interviews.length },
+                    ...STATUSES.map((status) => ({
+                      value: status,
+                      label: status,
+                      count: interviews.filter((item) => item.status === status)
+                        .length,
+                    })),
+                  ],
+                }}
+                count={filtered.length}
+                countLabel="interview"
+                onExpandAll={vacancyGroups.length > 0 ? expandAllGroups : undefined}
+                onCollapseAll={vacancyGroups.length > 0 ? collapseAllGroups : undefined}
+                hasActiveFilters={
+                  search !== "" || statusFilter !== "All" || roundFilter !== "All"
+                }
+                onReset={() => {
+                  setSearch("");
+                  setStatusFilter("All");
+                  setRoundFilter("All");
+                }}
+              />
 
               <div className="space-y-6">
                 {vacancyGroups.length ? (
@@ -2055,8 +2011,9 @@ export default function RecruitmentInterviews() {
                           <td className="min-w-[180px] whitespace-nowrap px-3 py-3.5">
                             <div className="flex items-center gap-1">
                               {/* View interview details */}
-                              <button
-                                type="button"
+                                                            <ViewButton
+                                title="View details"
+                                aria-label={`View details for ${item.candidate}`}
                                 onClick={() => {
                                   setSelected(item);
                                   setDetailsEditMode(false);
@@ -2065,13 +2022,7 @@ export default function RecruitmentInterviews() {
                                   setFormError("");
                                   setConflictError("");
                                 }}
-                                title="View details"
-                                aria-label={`View details for ${item.candidate}`}
-                                className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-xs hover:bg-slate-200"
-                              >
-                                <MoreHorizontal size={14} />
-                                <span>View</span>
-                              </button>
+                              />
 
                               {/* Edit or reschedule the interview */}
                               <button
@@ -2135,23 +2086,14 @@ export default function RecruitmentInterviews() {
 
         {/* Backend shortlisted-candidate picker */}
         {pickerOpen && (
-          <div className="fixed inset-0 z-[55] flex items-center justify-center bg-slate-950/50 p-4">
-            <div
-              role="dialog"
-              aria-modal="true"
-              className="w-full max-w-5xl overflow-hidden rounded-2xl bg-white shadow-2xl"
-            >
-              <div className="flex items-center justify-between border-b p-5">
-                <div>
-                  <h2 className="text-xl font-bold">Shortlisted Candidates</h2>
-                  <p className="mt-1 text-sm text-slate-500">
-                    Select a candidate to schedule an interview.
-                  </p>
-                </div>
-                <button onClick={() => setPickerOpen(false)} aria-label="Close">
-                  <X />
-                </button>
-              </div>
+          <RecruitmentModal
+            open={true}
+            title="Shortlisted Candidates"
+            subtitle="Select a candidate to schedule an interview."
+            onClose={() => setPickerOpen(false)}
+            size="2xl"
+            footer={<ModalButton onClick={() => setPickerOpen(false)}>Close</ModalButton>}
+          >
               <div className="border-b p-5">
                 <input
                   value={candidateSearch}
@@ -2244,49 +2186,28 @@ export default function RecruitmentInterviews() {
                   </table>
                 )}
               </div>
-              <div className="border-t bg-slate-50 p-4 text-right">
-                <button
-                  onClick={() => setPickerOpen(false)}
-                  className="rounded-xl border bg-white px-4 py-2 text-sm"
-                >
-                  Close
-                </button>
-              </div>
-            </div>
-          </div>
+          </RecruitmentModal>
         )}
 
         {/* Create / edit / reschedule form */}
         {modalOpen && editingId == null && (
-          <div
-            className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-slate-950/50 p-4 backdrop-blur-sm"
-            onMouseDown={(event) => {
-              if (event.target === event.currentTarget) closeForm();
-            }}
+          <RecruitmentModal
+            open={true}
+            title={editingId !== null ? "Edit / Reschedule Interview" : "Schedule Interview"}
+            subtitle="Assign the interview stage and one or more interviewers."
+            onClose={closeForm}
+            size="lg"
+            footer={
+              <>
+                <ModalButton onClick={closeForm} disabled={saving}>Cancel</ModalButton>
+                <ModalButton variant="primary" type="submit" form="interview-form" disabled={saving}>
+                  <CalendarCheck size={17} />
+                  {saving ? "Saving..." : editingId !== null ? "Save Changes" : "Schedule Interview"}
+                </ModalButton>
+              </>
+            }
           >
-            <div
-              role="dialog"
-              aria-modal="true"
-              aria-labelledby="interview-form-title"
-              className="my-auto w-full max-w-3xl overflow-visible rounded-2xl bg-white shadow-2xl"
-            >
-              <div className="flex items-center justify-between border-b p-5 sm:px-6">
-                <div>
-                  <h2 id="interview-form-title" className="text-xl font-bold">
-                    {editingId !== null
-                      ? "Edit / Reschedule Interview"
-                      : "Schedule Interview"}
-                  </h2>
-                  <p className="mt-1 text-sm text-slate-500">
-                    Assign the interview stage and one or more interviewers.
-                  </p>
-                </div>
-                <button onClick={closeForm} aria-label="Close form">
-                  <X />
-                </button>
-              </div>
-
-              <form onSubmit={submit}>
+              <form id="interview-form" onSubmit={submit}>
                 <div className="grid max-h-[68vh] grid-cols-1 gap-5 overflow-y-auto p-5 sm:grid-cols-2 sm:p-6">
                   <label className="text-sm font-medium text-slate-700">
                     Candidate name *
@@ -2677,78 +2598,36 @@ export default function RecruitmentInterviews() {
                   )}
                 </div>
 
-                <div className="flex flex-col-reverse gap-3 border-t bg-slate-50 p-4 sm:flex-row sm:justify-end sm:px-6">
-                  <button
-                    type="button"
-                    onClick={closeForm}
-                    disabled={saving}
-                    className="rounded-xl border bg-white px-5 py-2.5 text-sm font-semibold disabled:opacity-50"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={saving}
-                    className="rounded-xl bg-primary-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-60"
-                  >
-                    <CalendarCheck className="mr-2 inline" size={17} />
-                    {saving
-                      ? "Saving..."
-                      : editingId !== null
-                        ? "Save Changes"
-                        : "Schedule Interview"}
-                  </button>
-                </div>
               </form>
-            </div>
-          </div>
+          </RecruitmentModal>
         )}
 
         {/* Interview details */}
         {selected && (
-          <div
-            className="fixed inset-0 z-[52] flex items-center justify-center overflow-y-auto bg-slate-950/50 p-4"
-            onMouseDown={(event) => {
-              if (event.target === event.currentTarget) {
-                setSelected(null);
-                setStatusError("");
-                setDetailsEditMode(false);
-                setEditingId(null);
-                setFormError("");
-                setConflictError("");
-              }
-            }}
+          <RecruitmentModal
+            open={true}
+            title={detailsEditMode ? "Edit Interview Details" : "Interview Details"}
+            subtitle={selected.round}
+            onClose={() => setSelected(null)}
+            size="lg"
+            footer={
+              detailsEditMode ? (
+                <>
+                  <ModalButton onClick={() => { setDetailsEditMode(false); setEditingId(null); setFormError(""); setConflictError(""); setStatusError(""); setInterviewerSearch(""); setInterviewerPickerOpen(false); }} disabled={saving}>Cancel</ModalButton>
+                  <ModalButton variant="primary" type="submit" form="interview-details-form" disabled={saving}><Save size={15} />{saving ? "Saving..." : "Save Changes"}</ModalButton>
+                </>
+              ) : (
+                <>
+                  <ModalButton onClick={() => setSelected(null)}>Close</ModalButton>
+                  <ModalButton variant="danger" onClick={() => setDeleteTarget(selected)}><Trash2 size={15} />Delete</ModalButton>
+                </>
+              )
+            }
           >
-            <div
-              role="dialog"
-              aria-modal="true"
-              className="my-auto w-full max-w-xl overflow-hidden rounded-2xl bg-white shadow-2xl"
-            >
-              <div className="flex items-center justify-between border-b p-5">
-                <div>
-                  <h2 className="text-xl font-bold">Interview Details</h2>
-                  <p className="mt-1 text-sm text-slate-500">
-                    {selected.round}
-                  </p>
-                </div>
-                <button
-                  onClick={() => {
-                    setSelected(null);
-                    setStatusError("");
-                    setDetailsEditMode(false);
-                    setEditingId(null);
-                    setFormError("");
-                    setConflictError("");
-                  }}
-                  aria-label="Close details"
-                >
-                  <X />
-                </button>
-              </div>
 
               <div className="max-h-[72vh] space-y-5 overflow-y-auto p-5">
                 {detailsEditMode ? (
-                  <form onSubmit={submit} className="space-y-4">
+                  <form id="interview-details-form" onSubmit={submit} className="space-y-4">
                     <p className="text-sm text-slate-500">
                       Edit the interview details below. Changes will be saved
                       without opening a separate scheduling form.
@@ -2938,32 +2817,6 @@ export default function RecruitmentInterviews() {
                         {formError}
                       </div>
                     )}
-                    <div className="flex flex-wrap justify-end gap-2 border-t pt-4">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setDetailsEditMode(false);
-                          setEditingId(null);
-                          setFormError("");
-                          setConflictError("");
-                          setStatusError("");
-                          setInterviewerSearch("");
-                          setInterviewerPickerOpen(false);
-                        }}
-                        disabled={saving}
-                        className="rounded-xl border px-4 py-2 text-sm font-semibold disabled:opacity-50"
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        type="submit"
-                        disabled={saving}
-                        className="rounded-xl bg-primary-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
-                      >
-                        <Save className="mr-1 inline" size={15} />
-                        {saving ? "Saving..." : "Save Changes"}
-                      </button>
-                    </div>
                   </form>
                 ) : (
                   <>
@@ -3080,7 +2933,7 @@ export default function RecruitmentInterviews() {
                         .map((entry) => (
                           <div
                             key={entry.id}
-                            className="mb-3 border-l-2 border-primary-200 pl-3"
+                            className="mb-3 pl-3"
                           >
                             <p className="text-sm font-semibold">
                               {entry.action}
@@ -3102,48 +2955,22 @@ export default function RecruitmentInterviews() {
                         </p>
                       )}
                     </div>
-                    <div className="flex flex-wrap justify-end gap-2 border-t pt-4">
-                      <button
-                        type="button"
-                        onClick={() => setDeleteTarget(selected)}
-                        className="rounded-xl border border-red-200 px-4 py-2 text-sm font-semibold text-red-600"
-                      >
-                        <Trash2 className="mr-1 inline" size={15} />
-                        Delete
-                      </button>
-                    </div>
                   </>
                 )}
               </div>
-            </div>
-          </div>
+          </RecruitmentModal>
         )}
 
         {/* Interview history */}
         {historyOpen && (
-          <div className="fixed inset-0 z-[55] flex items-center justify-center bg-slate-950/50 p-4">
-            <div
-              role="dialog"
-              aria-modal="true"
-              className="w-full max-w-2xl overflow-hidden rounded-2xl bg-white shadow-2xl"
-            >
-              <div className="flex items-center justify-between border-b p-5">
-                <div>
-                  <h2 className="flex items-center gap-2 text-xl font-bold">
-                    <History className="text-primary-600" />
-                    Interview History
-                  </h2>
-                  <p className="mt-1 text-sm text-slate-500">
-                    Changes recorded during this page session.
-                  </p>
-                </div>
-                <button
-                  onClick={() => setHistoryOpen(false)}
-                  aria-label="Close history"
-                >
-                  <X />
-                </button>
-              </div>
+          <RecruitmentModal
+            open={true}
+            title="Interview History"
+            subtitle="Changes recorded during this page session."
+            onClose={() => setHistoryOpen(false)}
+            size="lg"
+            footer={<ModalButton onClick={() => setHistoryOpen(false)}>Close</ModalButton>}
+          >
               <div className="border-b p-4">
                 <select
                   value={historyFilter}
@@ -3202,43 +3029,37 @@ export default function RecruitmentInterviews() {
                 This history is session-only; backend audit history is not
                 configured in this page.
               </div>
-            </div>
-          </div>
+          </RecruitmentModal>
         )}
 
         {/* Delete confirmation */}
         {deleteTarget && (
-          <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/60 p-4">
-            <div
-              role="alertdialog"
-              aria-modal="true"
-              className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl"
-            >
+          <RecruitmentModal
+            open={true}
+            title="Delete interview?"
+            subtitle={`Delete the interview for ${deleteTarget.candidate}? This cannot be undone.`}
+            onClose={() => setDeleteTarget(null)}
+            size="sm"
+            tone="danger"
+            footer={
+              <>
+                <ModalButton onClick={() => setDeleteTarget(null)}>Cancel</ModalButton>
+                <ModalButton variant="danger" onClick={confirmDelete}>Delete interview</ModalButton>
+              </>
+            }
+          >
               <div className="flex items-center gap-3 text-red-600">
                 <Trash2 size={24} />
-                <h2 className="text-xl font-bold text-slate-800">
-                  Delete interview?
-                </h2>
+                <p className="text-sm font-semibold">Confirm deletion</p>
               </div>
               <p className="mt-3 text-sm leading-6 text-slate-600">
                 Are you sure you want to delete the interview for{" "}
                 <strong>{deleteTarget.candidate}</strong>? This cannot be
                 undone.
               </p>
-              <div className="mt-6 flex justify-end gap-3">
-                <button
-                  onClick={() => setDeleteTarget(null)}
-                  className="rounded-xl border px-4 py-2.5 text-sm font-semibold"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={confirmDelete}
-                  className="rounded-xl bg-red-600 px-4 py-2.5 text-sm font-semibold text-white"
-                >
-                  Delete interview</button>
- </div></div>
-          </div> )}</div>
+          </RecruitmentModal>
+        )}
+      </div>
     </PageLayout>
   );
 }

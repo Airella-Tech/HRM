@@ -55,10 +55,26 @@ const Section = ({ title, children }) => (
 export default function CareerJob() {
   const { id } = useParams();
   const [params] = useSearchParams();
-  const company = params.get("company") || "";
+  const companyFromParam = params.get("company") || "";
+  const storedCompany = (() => {
+    try {
+      const u = JSON.parse(localStorage.getItem("user") || "{}");
+      return (
+        u.companyRegistrationNumber ||
+        u.companyRef ||
+        u.companyName ||
+        (u.companyId ? String(u.companyId) : "") ||
+        u.company ||
+        ""
+      );
+    } catch {
+      return "";
+    }
+  })();
+  const company = companyFromParam || storedCompany || "";
 
   const [job, setJob] = useState(null);
-  const [loading, setLoading] = useState(Boolean(company));
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   const [isApplying, setIsApplying] = useState(false);
@@ -157,7 +173,6 @@ export default function CareerJob() {
   };
 
   useEffect(() => {
-    if (!company) return;
     let cancelled = false;
     setLoading(true);
     setError("");
@@ -171,18 +186,37 @@ export default function CareerJob() {
     };
   }, [id, company]);
 
-  const backTo = `/careers?company=${encodeURIComponent(company)}`;
+  useEffect(() => {
+    if (!job) return;
+    const prevTitle = document.title;
+    document.title = `${job.title} | Careers`;
 
-  if (!company) {
-    return (
-      <CareersLayout>
-        <Notice
-          title="Careers Link Incomplete"
-          text="Please open the full careers portal link provided by the hiring organization."
-        />
-      </CareersLayout>
+    const setOrCreateMeta = (attr, val, content) => {
+      let tag = document.querySelector(`meta[${attr}='${val}']`);
+      if (!tag) {
+        tag = document.createElement("meta");
+        tag.setAttribute(attr, val);
+        document.head.appendChild(tag);
+      }
+      tag.setAttribute("content", content);
+    };
+
+    setOrCreateMeta("property", "og:title", `${job.title} - Now Hiring`);
+    setOrCreateMeta(
+      "property",
+      "og:description",
+      job.description ? job.description.slice(0, 200).replace(/\s+/g, " ").trim() : "View details and apply online."
     );
-  }
+    setOrCreateMeta("property", "og:type", "website");
+    setOrCreateMeta("property", "og:url", window.location.href);
+
+    return () => {
+      document.title = prevTitle;
+    };
+  }, [job]);
+
+  const effectiveCompany = company || job?.companyRef || "";
+  const backTo = effectiveCompany ? `/careers?company=${encodeURIComponent(effectiveCompany)}` : "/careers";
 
   const hero = (
     <div className="pt-2 pb-8 sm:pb-10">

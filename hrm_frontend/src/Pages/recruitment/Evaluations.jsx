@@ -1,3 +1,5 @@
+import RecruitmentModal, { ModalButton } from "./components/RecruitmentModal";
+import ViewButton from "./components/ViewButton";
 import React, {
   useCallback,
   useEffect,
@@ -6,11 +8,10 @@ import React, {
   useState,
 } from "react";
 import {
-  Search,
   ClipboardCheck,
   Clock,
-  CheckCircle2,
   Eye,
+  CheckCircle2,
   X,
   Star,
   UserRound,
@@ -21,10 +22,10 @@ import {
   AlertCircle,
   RefreshCw,
   Download,
-  Info,
 } from "lucide-react";
 import PageLayout from "../../components/PageLayout";
 import StatCard, { StatCardGrid } from "../../components/StatCard";
+import FilterBar from "./components/FilterBar";
 import VacancyGroupCard from "./VacancyGroupCard";
 import { recruitmentApi } from "../../services/api";
 import { avatarColorClass } from "../../utils/avatarColor";
@@ -1152,22 +1153,29 @@ export default function RecruitmentEvaluations() {
             >
               <Download size={15} />
             </button>
-            <button
-              type="button"
-              onClick={() => openEvaluation(interview)}
-              disabled={!isCompleted && evaluationStatus !== "Submitted"}
-              title={
-                evaluationStatus === "Submitted"
-                  ? "View my evaluation"
-                  : !isCompleted
+            {evaluationStatus === "Submitted" ? (
+              <ViewButton
+                label="View"
+                onClick={() => openEvaluation(interview)}
+                disabled={!isCompleted && evaluationStatus !== "Submitted"}
+                title="View my evaluation"
+              />
+            ) : (
+              <button
+                type="button"
+                onClick={() => openEvaluation(interview)}
+                disabled={!isCompleted && evaluationStatus !== "Submitted"}
+                title={
+                  !isCompleted
                     ? "Mark the interview completed before evaluating"
                     : "Evaluate interview"
-              }
-              className="inline-flex items-center gap-2 rounded-xl bg-primary-600 px-3 py-2 text-sm font-medium text-white hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-40"
-            >
-              <Eye size={15} />
-              {evaluationStatus === "Submitted" ? "View" : "Evaluate"}
-            </button>
+                }
+                className="inline-flex items-center gap-2 rounded-xl bg-primary-600 px-3 py-2 text-sm font-medium text-white hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                <Eye size={15} />
+                Evaluate
+              </button>
+            )}
           </div>
         </td>
       </tr>
@@ -1247,80 +1255,42 @@ export default function RecruitmentEvaluations() {
             />
         </StatCardGrid>
 
-        <div className="bg-white rounded-xl border border-slate-200 shadow-sm px-4 py-3">
-          <div className="flex flex-wrap items-center gap-3">
-            <div className="relative flex-1 min-w-[220px]">
-              <Search
-                size={17}
-                className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
-              />
-
-              <input
-                value={search}
-                onChange={(event) => setSearch(event.target.value)}
-                placeholder="Search candidates or job titles..."
-                className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50 pl-9 pr-3 text-sm text-slate-800 placeholder-slate-400 focus:border-primary-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary-100"
-              />
-            </div>
-            <span
-              title="Only interviews assigned to you are shown. Your evaluation is private to your account."
-              className="inline-flex shrink-0 text-slate-400"
-            >
-              <Info size={14} />
-            </span>
-            <span className="text-sm font-semibold text-slate-600">
-              Status:
-            </span>
-            <select
-              value={statusFilter}
-              onChange={(event) => setStatusFilter(event.target.value)}
-              className="h-10 w-auto rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-800 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100"
-              aria-label="Filter by evaluation status"
-            >
-              <option value="All">All evaluation statuses</option>
-              <option value="Pending">Pending evaluation</option>
-              <option value="Submitted">Submitted evaluation</option>
-            </select>
-            <span className="text-sm font-semibold text-slate-600">
-              Round:
-            </span>
-            <select
-              value={roundFilter}
-              onChange={(event) => setRoundFilter(event.target.value)}
-              className="h-10 w-auto rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-800 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100"
-              aria-label="Filter by interview round"
-            >
-              <option value="All">All rounds</option>
-              <option value="Technical">Technical</option>
-              <option value="HR">HR</option>
-              <option value="Hiring Manager">Hiring Manager</option>
-              <option value="Final">Final</option>
-            </select>
-            <span className="ml-auto text-xs text-slate-500">
-              {filteredInterviews.length} interview
-              {filteredInterviews.length !== 1 ? "s" : ""} found
-            </span>
-            {!loading && vacancyGroups.length > 0 && (
-              <div className="flex items-center gap-1 border-l border-slate-200 pl-3">
-                <button
-                  type="button"
-                  onClick={expandAllGroups}
-                  className="rounded-lg px-2 py-1 text-sm font-semibold text-slate-500 hover:bg-slate-50 hover:text-primary-600"
-                >
-                  Expand All
-                </button>
-                <span className="h-4 w-px bg-slate-200" />
-                <button
-                  type="button"
-                  onClick={collapseAllGroups}
-                  className="rounded-lg px-2 py-1 text-sm font-semibold text-slate-500 hover:bg-slate-50 hover:text-primary-600"
-                >
-                  Collapse All
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
+        <FilterBar
+          search={search}
+          onSearchChange={setSearch}
+          searchPlaceholder="Search candidates or job titles..."
+          filters={[
+            {
+              id: "status",
+              label: "Status",
+              value: statusFilter,
+              onChange: setStatusFilter,
+              allLabel: "All statuses",
+              options: [
+                { value: "Pending", label: "Pending evaluation" },
+                { value: "Submitted", label: "Submitted evaluation" },
+              ],
+            },
+            {
+              id: "round",
+              label: "Round",
+              value: roundFilter,
+              onChange: setRoundFilter,
+              allLabel: "All rounds",
+              options: ["Technical", "HR", "Hiring Manager", "Final"],
+            },
+          ]}
+          count={filteredInterviews.length}
+          countLabel="interview"
+          onExpandAll={!loading && vacancyGroups.length > 0 ? expandAllGroups : undefined}
+          onCollapseAll={!loading && vacancyGroups.length > 0 ? collapseAllGroups : undefined}
+          hasActiveFilters={search !== "" || statusFilter !== "All" || roundFilter !== "All"}
+          onReset={() => {
+            setSearch("");
+            setStatusFilter("All");
+            setRoundFilter("All");
+          }}
+        />
 
         <div className="space-y-4">
           {loading ? (
@@ -1558,26 +1528,33 @@ export default function RecruitmentEvaluations() {
                               <Download size={15} />
                             </button>
 
-                            <button
-                              type="button"
-                              onClick={() => openEvaluation(interview)}
-                              disabled={
-                                !isCompleted && evaluationStatus !== "Submitted"
-                              }
-                              title={
-                                evaluationStatus === "Submitted"
-                                  ? "View my evaluation"
-                                  : !isCompleted
+                            {evaluationStatus === "Submitted" ? (
+                              <ViewButton
+                                label="View"
+                                onClick={() => openEvaluation(interview)}
+                                disabled={
+                                  !isCompleted && evaluationStatus !== "Submitted"
+                                }
+                                title="View my evaluation"
+                              />
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={() => openEvaluation(interview)}
+                                disabled={
+                                  !isCompleted && evaluationStatus !== "Submitted"
+                                }
+                                title={
+                                  !isCompleted
                                     ? "Mark the interview completed before evaluating"
                                     : "Evaluate interview"
-                              }
-                              className="inline-flex items-center gap-2 rounded-xl bg-primary-600 px-3 py-2 text-sm font-medium text-white hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-40"
-                            >
-                              <Eye size={15} />
-                              {evaluationStatus === "Submitted"
-                                ? "View"
-                                : "Evaluate"}
-                            </button>
+                                }
+                                className="inline-flex items-center gap-2 rounded-xl bg-primary-600 px-3 py-2 text-sm font-medium text-white hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-40"
+                              >
+                                <Eye size={15} />
+                                Evaluate
+                              </button>
+                            )}
                           </div>
                         </td>
                       </tr>
@@ -1590,47 +1567,46 @@ export default function RecruitmentEvaluations() {
         </div>
 
         {selectedInterview && (
-          <div
-            className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4"
-            onMouseDown={(event) => {
-              if (event.target === event.currentTarget && !saving) {
-                setSelectedInterview(null);
-              }
-            }}
-          >
-            <div
-              role="dialog"
-              aria-modal="true"
-              aria-labelledby="evaluation-modal-title"
-              className="max-h-[92vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white shadow-2xl"
-            >
-              <div className="sticky top-0 z-10 flex items-start justify-between border-b border-slate-100 bg-white px-6 py-4">
-                <div>
-                  <h2
-                    id="evaluation-modal-title"
-                    className="text-lg font-bold text-slate-900"
+          <RecruitmentModal
+            open={true}
+            onClose={() => setSelectedInterview(null)}
+            size="lg"
+            title="Interview Evaluation"
+            subtitle={`${selectedInterview.candidateName} · ${selectedInterview.round}`}
+            footer={
+              selectedEvaluation?.submitted ? (
+                <ModalButton onClick={() => setSelectedInterview(null)}>
+                  Close
+                </ModalButton>
+              ) : (
+                <>
+                  <ModalButton
+                    onClick={() => setSelectedInterview(null)}
+                    disabled={saving}
                   >
-                    Interview Evaluation
-                  </h2>
-                  <p className="mt-1 text-sm text-slate-500">
-                    {selectedInterview.candidateName} ·{" "}
-                    {selectedInterview.round}
-                  </p>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={() => setSelectedInterview(null)}
-                  disabled={saving}
-                  className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 disabled:opacity-50"
-                  aria-label="Close evaluation"
-                >
-                  <X size={20} />
-                </button>
-              </div>
+                    Cancel
+                  </ModalButton>
+                  <ModalButton
+                    type="submit"
+                    variant="primary"
+                    form="evaluation-form"
+                    disabled={
+                      saving ||
+                      normalizeInterviewStatus(selectedInterview.status) !==
+                        "COMPLETED" ||
+                      selectedCriteria.length !== 6
+                    }
+                  >
+                    <Send size={15} />
+                    {saving ? "Submitting..." : "Submit Evaluation"}
+                  </ModalButton>
+                </>
+              )
+            }
+          >
 
               {selectedEvaluation?.submitted ? (
-                <div className="space-y-5 p-6">
+                <div className="space-y-5">
                   <div className="rounded-xl bg-emerald-50 p-4 text-sm text-emerald-800">
                     <CheckCircle2 className="mr-2 inline" size={17} />
                     Your evaluation has been submitted and is read-only.
@@ -1739,18 +1715,13 @@ export default function RecruitmentEvaluations() {
                     </p>
                   </div>
 
-                  <div className="flex justify-end">
-                    <button
-                      type="button"
-                      onClick={() => setSelectedInterview(null)}
-                      className="rounded-xl border border-slate-200 px-4 py-2 text-sm"
-                    >
-                      Close
-                    </button>
-                  </div>
                 </div>
               ) : (
-                <form onSubmit={saveEvaluation} className="space-y-6 p-6">
+                <form
+                  id="evaluation-form"
+                  onSubmit={saveEvaluation}
+                  className="space-y-6"
+                >
                   <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                     <InfoItem
                       icon={UserRound}
@@ -1974,34 +1945,9 @@ export default function RecruitmentEvaluations() {
                     </select>
                   </div>
 
-                  <div className="flex justify-end gap-3 border-t border-slate-100 pt-4">
-                    <button
-                      type="button"
-                      onClick={() => setSelectedInterview(null)}
-                      disabled={saving}
-                      className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-medium text-slate-600 disabled:opacity-50"
-                    >
-                      Cancel
-                    </button>
-
-                    <button
-                      type="submit"
-                      disabled={
-                        saving ||
-                        normalizeInterviewStatus(selectedInterview.status) !==
-                          "COMPLETED" ||
-                        selectedCriteria.length !== 6
-                      }
-                      className="inline-flex items-center gap-2 rounded-xl bg-primary-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-primary-700 disabled:opacity-50"
-                    >
-                      <Send size={15} />
-                      {saving ? "Submitting..." : "Submit Evaluation"}
-                    </button>
-                  </div>
                 </form>
               )}
-            </div>
-          </div>
+          </RecruitmentModal>
         )}
       </div>
     </PageLayout>

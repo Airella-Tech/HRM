@@ -1,3 +1,5 @@
+import RecruitmentModal, { ModalButton } from "./components/RecruitmentModal";
+import ViewButton from "./components/ViewButton";
 import React, {
   useCallback,
   useEffect,
@@ -7,14 +9,12 @@ import React, {
 } from "react";
 import {
   Search,
-  Filter,
   ClipboardCheck,
   Clock,
   CheckCircle2,
   Check,
   Circle,
   XCircle,
-  Eye,
   X,
   UserRound,
   CalendarDays,
@@ -24,10 +24,10 @@ import {
   Users,
   TrendingUp,
   AlertCircle,
-  Info,
 } from "lucide-react";
 import PageLayout from "../../components/PageLayout";
 import StatCard, { StatCardGrid } from "../../components/StatCard";
+import FilterBar from "./components/FilterBar";
 import VacancyGroupCard from "./VacancyGroupCard";
 import { recruitmentApi } from "../../services/api";
 import { avatarColorClass } from "../../utils/avatarColor";
@@ -563,42 +563,20 @@ function CandidateProgressModal({ candidate, onClose }) {
   const progress = getProgress(candidate);
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-slate-950/50 p-3 sm:p-6"
-      onMouseDown={(event) => {
-        if (event.target === event.currentTarget) onClose();
-      }}
+    <RecruitmentModal
+      open={true}
+      onClose={onClose}
+      size="xl"
+      title={candidate.candidateName}
+      subtitle={candidate.jobTitle}
+      badge="Candidate Interview Journey"
+      footer={
+        <ModalButton onClick={onClose}>
+          Close
+        </ModalButton>
+      }
     >
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="progress-modal-title"
-        className="my-4 w-full max-w-3xl overflow-hidden rounded-2xl bg-white shadow-2xl"
-      >
-        <div className="flex items-start justify-between gap-4 border-b border-slate-200 px-5 py-5 sm:px-7">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-wider text-primary-600">
-              Candidate Interview Journey
-            </p>
-            <h2
-              id="progress-modal-title"
-              className="mt-1 text-xl font-bold text-slate-900"
-            >
-              {candidate.candidateName}
-            </h2>
-            <p className="mt-1 text-sm text-slate-500">{candidate.jobTitle}</p>
-          </div>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Close"
-            className="rounded-lg p-2 text-slate-500 hover:bg-slate-100"
-          >
-            <X size={20} />
-          </button>
-        </div>
-
-        <div className="max-h-[calc(100vh-180px)] space-y-6 overflow-y-auto p-5 sm:p-7">
+        <div className="space-y-6">
           <div className="grid grid-cols-1 gap-4 rounded-xl bg-slate-50 p-4 sm:grid-cols-2">
             <div className="flex items-start gap-3">
               <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary-100 text-primary-700">
@@ -750,18 +728,7 @@ function CandidateProgressModal({ candidate, onClose }) {
             </div>
           )}
         </div>
-
-        <div className="flex justify-end border-t border-slate-200 px-5 py-4 sm:px-7">
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-lg border border-slate-200 px-5 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50"
-          >
-            Close
-          </button>
-        </div>
-      </div>
-    </div>
+    </RecruitmentModal>
   );
 }
 
@@ -774,7 +741,6 @@ export default function InterviewProgress() {
   const [statusFilter, setStatusFilter] = useState("All");
   const [roundFilter, setRoundFilter] = useState("All");
   const [jobFilter, setJobFilter] = useState("All");
-  const [showFilters, setShowFilters] = useState(false);
   const [selectedCandidate, setSelectedCandidate] = useState(null);
   const [collapsedGroups, setCollapsedGroups] = useState({});
 
@@ -1014,13 +980,12 @@ export default function InterviewProgress() {
       </td>
       <td className="whitespace-nowrap px-4 py-3.5">
         <div className="flex justify-end">
-          <button
-            type="button"
+          <ViewButton
             onClick={() => setSelectedCandidate(candidate)}
             className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-xl border border-slate-200 bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-xs hover:bg-slate-200"
-          >
-            <Eye size={15} /> View Progress <ArrowRight size={14} />
-          </button>
+            label="View Progress"
+          />
+          <ArrowRight size={14} />
         </div>
       </td>
     </tr>
@@ -1262,144 +1227,46 @@ export default function InterviewProgress() {
           </section>
 
           <div className="space-y-6">
-            <div className="bg-white rounded-xl border border-slate-200 shadow-sm px-4 py-3">
-              <div className="flex flex-wrap items-center gap-3">
-              <div className="relative flex-1 min-w-[220px]">
-                <Search
-                  size={17}
-                  className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
-                />
-                <input
-                  type="search"
-                  value={searchTerm}
-                  onChange={(event) => setSearchTerm(event.target.value)}
-                  placeholder="Search candidates..."
-                  aria-label="Search candidates"
-                  className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50 pl-9 pr-3 text-sm text-slate-800 placeholder-slate-400 focus:border-primary-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary-100"
-                />
-              </div>
-              <span
-                title="Search candidates and filter by status, current interview round, or job position."
-                className="inline-flex shrink-0 text-slate-400"
-              >
-                <Info size={14} />
-              </span>
-              <div className="flex items-center">
-                <button
-                  type="button"
-                  onClick={() => setShowFilters((value) => !value)}
-                  aria-expanded={showFilters}
-                  className="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-slate-200 px-4 text-sm font-semibold text-slate-700 hover:bg-slate-50"
-                >
-                  <Filter size={16} /> Filters
-                </button>
-              </div>
-              <span className="ml-auto text-xs text-slate-500">
-                {loading
-                  ? "Loading candidates..."
-                  : `${filteredCandidates.length} candidate${filteredCandidates.length !== 1 ? "s" : ""} found`}
-              </span>
-              {vacancyGroups.length > 0 && (
-                <div className="flex items-center gap-1 border-l border-slate-200 pl-3">
-                  <button
-                    type="button"
-                    onClick={expandAllGroups}
-                    className="rounded-lg px-2 py-1 text-sm font-semibold text-slate-500 hover:bg-slate-50 hover:text-primary-600"
-                  >
-                    Expand All
-                  </button>
-                  <span className="h-4 w-px bg-slate-200" />
-                  <button
-                    type="button"
-                    onClick={collapseAllGroups}
-                    className="rounded-lg px-2 py-1 text-sm font-semibold text-slate-500 hover:bg-slate-50 hover:text-primary-600"
-                  >
-                    Collapse All
-                  </button>
-                </div>
-              )}
-            </div>
-
-            {showFilters && (
-              <div className="mt-3 flex flex-wrap items-center gap-3 border-t border-slate-200 pt-3">
-                <div className="flex items-center gap-2">
-                  <label
-                    htmlFor="progress-status-filter"
-                    className="text-sm font-semibold text-slate-600"
-                  >
-                    Status:
-                  </label>
-                  <select
-                    id="progress-status-filter"
-                    value={statusFilter}
-                    onChange={(event) => setStatusFilter(event.target.value)}
-                    className="h-10 w-auto rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-800 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100"
-                  >
-                    <option value="All">All</option>
-                    {STATUS_OPTIONS.map((status) => (
-                      <option key={status} value={status}>
-                        {status}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <label
-                    htmlFor="progress-round-filter"
-                    className="text-sm font-semibold text-slate-600"
-                  >
-                    Round:
-                  </label>
-                  <select
-                    id="progress-round-filter"
-                    value={roundFilter}
-                    onChange={(event) => setRoundFilter(event.target.value)}
-                    className="h-10 w-auto rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-800 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100"
-                  >
-                    <option value="All">All</option>
-                    {ROUNDS.map((round) => (
-                      <option key={round} value={round}>
-                        {round}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <label
-                    htmlFor="progress-job-filter"
-                    className="text-sm font-semibold text-slate-600"
-                  >
-                    Position:
-                  </label>
-                  <select
-                    id="progress-job-filter"
-                    value={jobFilter}
-                    onChange={(event) => setJobFilter(event.target.value)}
-                    className="h-10 w-auto rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-800 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100"
-                  >
-                    <option value="All">All</option>
-                    {jobTitles.map((job) => (
-                      <option key={job} value={job}>
-                        {job}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="flex items-center">
-                  <button
-                    type="button"
-                    onClick={resetFilters}
-                    className="h-10 rounded-xl border border-slate-200 bg-white px-4 text-sm font-medium text-slate-600 hover:bg-slate-50"
-                  >
-                    Clear Filters
-                  </button>
-                </div>
-              </div>
-            )}
-            </div>
+            <FilterBar
+              search={searchTerm}
+              onSearchChange={setSearchTerm}
+              searchPlaceholder="Search candidates..."
+              filters={[
+                {
+                  id: "status",
+                  label: "Status",
+                  value: statusFilter,
+                  onChange: setStatusFilter,
+                  options: STATUS_OPTIONS,
+                },
+                {
+                  id: "round",
+                  label: "Round",
+                  value: roundFilter,
+                  onChange: setRoundFilter,
+                  options: ROUNDS,
+                },
+                {
+                  id: "position",
+                  label: "Position",
+                  value: jobFilter,
+                  onChange: setJobFilter,
+                  options: jobTitles,
+                },
+              ]}
+              count={filteredCandidates.length}
+              countLabel="candidate"
+              loading={loading}
+              onExpandAll={vacancyGroups.length > 0 ? expandAllGroups : undefined}
+              onCollapseAll={vacancyGroups.length > 0 ? collapseAllGroups : undefined}
+              hasActiveFilters={
+                searchTerm !== "" ||
+                statusFilter !== "All" ||
+                roundFilter !== "All" ||
+                jobFilter !== "All"
+              }
+              onReset={resetFilters}
+            />
 
             <div className="space-y-6">
               {loading ? (
@@ -1573,14 +1440,12 @@ export default function InterviewProgress() {
 
                         <td className="whitespace-nowrap px-4 py-3.5">
                           <div className="flex justify-end">
-                            <button
-                              type="button"
+                            <ViewButton
                               onClick={() => setSelectedCandidate(candidate)}
                               className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-xl border border-slate-200 bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-xs hover:bg-slate-200"
-                            >
-                              <Eye size={15} /> View Progress{" "}
-                              <ArrowRight size={14} />
-                            </button>
+                              label="View Progress"
+                            />
+                            <ArrowRight size={14} />
                           </div>
                         </td>
                       </tr>

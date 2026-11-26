@@ -34,6 +34,7 @@ public record VacancyDTO(
         Boolean removedFromShortlist,
         LocalDateTime removedFromShortlistAt,
         Boolean removedFromReview,
-        LocalDateTime removedFromReviewAt
+        LocalDateTime removedFromReviewAt,
+        String companyRef
 ) {
 }

@@ -1,3 +1,5 @@
+import RecruitmentModal, { ModalButton } from "./components/RecruitmentModal";
+import ViewButton from "./components/ViewButton";
 
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
@@ -13,11 +15,10 @@ import {
   RefreshCw,
   LoaderCircle,
   Ban,
-  Eye,
-  Info,
 } from "lucide-react";
 import PageLayout from "../../components/PageLayout";
 import StatCard, { StatCardGrid } from "../../components/StatCard";
+import FilterBar from "./components/FilterBar";
 import VacancyGroupCard from "./VacancyGroupCard";
 import { recruitmentApi } from "../../services/api";
 import { avatarColorClass } from "../../utils/avatarColor";
@@ -29,15 +30,7 @@ const STAGES = [
   "Final Interview",
 ];
 
-const LOCKED_STATUSES = new Set([
-  "completed",
-  "complete",
-  "cancelled",
-  "canceled",
-  "evaluated",
-  "submitted",
-  "finished",
-]);
+const LOCKED_STATUSES = new Set(["cancelled", "canceled"]);
 
 const unwrapList = (response) => {
   let value = response;
@@ -624,8 +617,6 @@ export default function AssignInterviewers() {
   );
 
   const openAssignmentModal = (interview) => {
-    if (isInterviewLocked(interview)) return;
-
     setSelectedInterview(interview);
     setSelectedInterviewers([...interview.interviewers]);
     setModalError("");
@@ -1039,91 +1030,51 @@ export default function AssignInterviewers() {
           </div>
 
           <div className="space-y-6">
-            <div className="bg-white rounded-xl border border-slate-200 shadow-sm px-4 py-3">
-              <div className="flex flex-wrap items-center gap-3">
-                <div className="relative flex-1 min-w-[220px]">
-                  <Search
-                    size={17}
-                    className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
-                  />
-                  <input
-                    value={search}
-                    onChange={(event) => setSearch(event.target.value)}
-                    placeholder="Search candidates or positions..."
-                    className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50 pl-9 pr-3 text-sm text-slate-800 placeholder-slate-400 focus:border-primary-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary-100"
-                  />
-                </div>
-                <span
-                  title="Filter interviews by candidate, position, stage, or assignment status."
-                  className="inline-flex shrink-0 text-slate-400"
-                >
-                  <Info size={14} />
-                </span>
-                <span className="text-sm font-semibold text-slate-600">
-                  Stage:
-                </span>
-                <div className="flex flex-wrap items-center gap-1">
-                  {["All Stages", ...STAGES].map((stage) => (
-                    <button
-                      key={stage}
-                      type="button"
-                      aria-pressed={stageFilter === stage}
-                      onClick={() => setStageFilter(stage)}
-                      className={`rounded-full border px-3 py-1.5 text-sm font-semibold transition-colors ${
-                        stageFilter === stage
-                          ? "border-primary-600 bg-primary-600 text-white shadow-sm"
-                          : "border-slate-300 bg-white text-slate-600 hover:bg-slate-50"
-                      }`}
-                    >
-                      {stage}
-                    </button>
-                  ))}
-                </div>
-                <span className="text-sm font-semibold text-slate-600">
-                  Status:
-                </span>
-                <div className="flex flex-wrap items-center gap-1">
-                  {["All Interviews", "Assigned", "Unassigned"].map((status) => (
-                    <button
-                      key={status}
-                      type="button"
-                      aria-pressed={assignmentFilter === status}
-                      onClick={() => setAssignmentFilter(status)}
-                      className={`rounded-full border px-3 py-1.5 text-sm font-semibold transition-colors ${
-                        assignmentFilter === status
-                          ? "border-primary-600 bg-primary-600 text-white shadow-sm"
-                          : "border-slate-300 bg-white text-slate-600 hover:bg-slate-50"
-                      }`}
-                    >
-                      {status}
-                    </button>
-                  ))}
-                </div>
-                <span className="ml-auto text-xs text-slate-500">
-                  {filteredInterviews.length} interview
-                  {filteredInterviews.length !== 1 ? "s" : ""} found
-                </span>
-                {vacancyGroups.length > 0 && (
-                  <div className="flex items-center gap-1 border-l border-slate-200 pl-3">
-                    <button
-                      type="button"
-                      onClick={expandAllGroups}
-                      className="rounded-lg px-2 py-1 text-sm font-semibold text-slate-500 hover:bg-slate-50 hover:text-primary-600"
-                    >
-                      Expand All
-                    </button>
-                    <span className="h-4 w-px bg-slate-200" />
-                    <button
-                      type="button"
-                      onClick={collapseAllGroups}
-                      className="rounded-lg px-2 py-1 text-sm font-semibold text-slate-500 hover:bg-slate-50 hover:text-primary-600"
-                    >
-                      Collapse All
-                    </button>
-                  </div>
-                )}
-              </div>
-            </div>
+            <FilterBar
+              search={search}
+              onSearchChange={setSearch}
+              searchPlaceholder="Search candidates or positions..."
+              filters={[
+                {
+                  id: "stage",
+                  label: "Stage",
+                  value: stageFilter,
+                  onChange: setStageFilter,
+                  allLabel: "All stages",
+                  allValue: "All Stages",
+                  options: STAGES,
+                },
+              ]}
+              pills={{
+                value: assignmentFilter,
+                onChange: setAssignmentFilter,
+                items: [
+                  { value: "All Interviews", label: "All interviews", count: interviews.length },
+                  {
+                    value: "Assigned",
+                    label: "Assigned",
+                    count: interviews.filter((item) => item.interviewers.length > 0).length,
+                  },
+                  {
+                    value: "Unassigned",
+                    label: "Unassigned",
+                    count: interviews.filter((item) => item.interviewers.length === 0).length,
+                  },
+                ],
+              }}
+              count={filteredInterviews.length}
+              countLabel="interview"
+              onExpandAll={vacancyGroups.length > 0 ? expandAllGroups : undefined}
+              onCollapseAll={vacancyGroups.length > 0 ? collapseAllGroups : undefined}
+              hasActiveFilters={
+                search !== "" || stageFilter !== "All Stages" || assignmentFilter !== "All Interviews"
+              }
+              onReset={() => {
+                setSearch("");
+                setStageFilter("All Stages");
+                setAssignmentFilter("All Interviews");
+              }}
+            />
 
             <div className="space-y-6">
               {vacancyGroups.map((group) => {
@@ -1134,14 +1085,14 @@ export default function AssignInterviewers() {
                 const assignedCount = group.rows.length - awaitingCount;
 
                 return (
-                  <VacancyGroupCard
-                    key={group.key}
-                    title={group.title}
-                    department={group.department}
-                    meta={`${group.rows.length} ${
-                      group.rows.length === 1 ? "candidate" : "candidates"
-                    }`}
-                    badges={[
+                    <VacancyGroupCard
+                      key={group.key}
+                      title={group.title}
+                      department={group.department}
+                      meta={`${group.rows.length} ${
+                        group.rows.length === 1 ? "candidate" : "candidates"
+                      }`}
+                      badges={[
                       {
                         label: `${awaitingCount} awaiting assignment`,
                         tone: "amber",
@@ -1236,17 +1187,7 @@ export default function AssignInterviewers() {
                                   {statusBadge(interview)}
                                 </td>
                                 <td className="whitespace-nowrap px-4 py-3.5 text-right">
-                                  {getDisplayStatus(interview) ===
-                                  "Completed" ? (
-                                    <button
-                                      type="button"
-                                      disabled
-                                      className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-400"
-                                    >
-                                      <Eye size={14} />
-                                      View
-                                    </button>
-                                  ) : !locked ? (
+                                  {!locked ? (
                                     <button
                                       type="button"
                                       onClick={() =>
@@ -1306,43 +1247,61 @@ export default function AssignInterviewers() {
         </div>
 
       {selectedInterview && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-slate-950/50 p-4"
-          onMouseDown={(event) => {
-            if (event.target === event.currentTarget && !saving) closeModal();
-          }}
-        >
-          <section
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="assignment-title"
-            className="my-auto max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white shadow-2xl"
-          >
-            <div className="flex items-start justify-between border-b border-slate-100 p-5 sm:p-6">
-              <div>
-                <h2
-                  id="assignment-title"
-                  className="text-xl font-bold text-slate-900"
+        <RecruitmentModal
+          open={true}
+          onClose={closeModal}
+          size="lg"
+          title={
+            isInterviewLocked(selectedInterview)
+              ? "Interview Assignment"
+              : "Assign Interviewers"
+          }
+          subtitle={
+            isInterviewLocked(selectedInterview)
+              ? "Read-only interview assignment details."
+              : "Select the employees who will conduct this interview."
+          }
+          footer={
+            <>
+              {isInterviewLocked(selectedInterview) ? (
+                <ModalButton
+                  onClick={closeModal}
+                  className="w-full sm:w-auto"
                 >
-                  Assign Interviewers
-                </h2>
-                <p className="mt-1 text-sm text-slate-500">
-                  Select the employees who will conduct this interview.
-                </p>
-              </div>
-
-              <button
-                type="button"
-                onClick={closeModal}
-                disabled={saving}
-                aria-label="Close assignment modal"
-                className="rounded-lg p-2 text-slate-400 hover:bg-slate-100"
-              >
-                <X size={20} />
-              </button>
-            </div>
-
-            <div className="space-y-5 p-5 sm:p-6">
+                  Close
+                </ModalButton>
+              ) : (
+                <>
+                  <ModalButton
+                    onClick={closeModal}
+                    disabled={saving}
+                    className="w-full sm:w-auto"
+                  >
+                    Cancel
+                  </ModalButton>
+                  <ModalButton
+                    variant="primary"
+                    onClick={saveAssignments}
+                    disabled={
+                      saving ||
+                      employeesLoading ||
+                      interviewers.length === 0
+                    }
+                    className="w-full sm:w-auto"
+                  >
+                    {saving ? (
+                      <LoaderCircle size={17} className="animate-spin" />
+                    ) : (
+                      <CheckCircle2 size={17} />
+                    )}
+                    {saving ? "Saving..." : "Save Assignments"}
+                  </ModalButton>
+                </>
+              )}
+            </>
+          }
+        >
+            <div className="space-y-5">
               <div className="rounded-xl bg-slate-50 p-4">
                 <p className="font-semibold text-slate-900">
                   {selectedInterview.candidate}
@@ -1374,7 +1333,9 @@ export default function AssignInterviewers() {
               <div>
                 <div className="mb-3 flex items-center justify-between gap-2">
                   <h3 className="font-semibold text-slate-900">
-                    Available interviewers
+                    {isInterviewLocked(selectedInterview)
+                      ? "Assigned interviewers"
+                      : "Available interviewers"}
                   </h3>
                   <span className="rounded-full bg-primary-50 px-3 py-1 text-xs font-medium text-primary-700">
                     {selectedInterviewers.length} selected
@@ -1382,8 +1343,9 @@ export default function AssignInterviewers() {
                 </div>
 
                 <p className="mb-3 text-sm text-slate-500">
-                  Select one or more interviewers. Existing assignments are
-                  preselected.
+                  {isInterviewLocked(selectedInterview)
+                    ? "This interview is locked and its assignments cannot be changed."
+                    : "Select one or more interviewers. Existing assignments are preselected."}
                 </p>
 
                 {employeesLoading ? (
@@ -1396,23 +1358,29 @@ export default function AssignInterviewers() {
                   </div>
                 ) : (
                   <div className="space-y-2">
-                    {interviewers.map((person) => {
+                    {(isInterviewLocked(selectedInterview)
+                      ? interviewers.filter((person) =>
+                          selectedInterviewers.includes(person.id),
+                        )
+                      : interviewers
+                    ).map((person) => {
                       const checked = selectedInterviewers.includes(person.id);
                       const conflicts = getConflicts(person.id);
 
                       return (
                         <label
                           key={person.id}
-                          className={`flex cursor-pointer items-start gap-3 rounded-xl border p-3 transition ${
+                          className={`flex items-start gap-3 rounded-xl border p-3 transition ${
                             checked
                               ? "border-primary-300 bg-primary-50/60"
                               : "border-slate-200 hover:border-slate-300"
-                          }`}
+                          } ${isInterviewLocked(selectedInterview) ? "cursor-default" : "cursor-pointer"}`}
                         >
                           <input
                             type="checkbox"
                             checked={checked}
                             onChange={() => toggleInterviewer(person.id)}
+                            disabled={isInterviewLocked(selectedInterview)}
                             className="mt-1 h-4 w-4 accent-primary-600"
                           />
 
@@ -1473,38 +1441,7 @@ export default function AssignInterviewers() {
                 </div>
               )}
             </div>
-
-            <div className="flex flex-col-reverse gap-3 border-t border-slate-100 p-5 sm:flex-row sm:justify-end sm:px-6">
-              <button
-                type="button"
-                onClick={closeModal}
-                disabled={saving}
-                className="rounded-xl border border-slate-200 px-5 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
-              >
-                Cancel
-              </button>
-
-              <button
-                type="button"
-                onClick={saveAssignments}
-                disabled={
-                  saving ||
-                  employeesLoading ||
-                  interviewers.length === 0 ||
-                  isInterviewLocked(selectedInterview)
-                }
-                className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                {saving ? (
-                  <LoaderCircle size={17} className="animate-spin" />
-                ) : (
-                  <CheckCircle2 size={17} />
-                )}
-                {saving ? "Saving..." : "Save Assignments"}
-              </button>
-            </div>
-          </section>
-        </div>
+        </RecruitmentModal>
       )}
     </PageLayout>
   );

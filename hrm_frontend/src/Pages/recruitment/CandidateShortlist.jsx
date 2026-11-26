@@ -2,16 +2,23 @@ import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { PageLayout } from "../../components/PageLayout";
 import StatCard, { StatCardGrid } from "../../components/StatCard";
+import FilterBar from "./components/FilterBar";
 import { recruitmentApi } from "../../services/api";
 import { DeadlineMeter } from "../careers/careersShared";
 import { formatSalary, formatDate } from "../../utils/careersFormat";
 import { avatarColorClass } from "../../utils/avatarColor";
+import RecruitmentModal, {
+  ModalButton,
+  modalLabelClass,
+  modalInputClass,
+  modalTextareaClass,
+} from "./components/RecruitmentModal";
+import ViewButton from "./components/ViewButton";
 import {
   isRemovedFromShortlist,
   setRemovedFromShortlist,
 } from "../../utils/vacancyRemovalStorage";
 import {
-  Search,
   CheckCircle2,
   Sparkles,
   Zap,
@@ -32,7 +39,6 @@ import {
   Loader2,
   CheckSquare,
   Square,
-  Eye,
   SlidersHorizontal,
   Settings,
   Info,
@@ -54,6 +60,9 @@ import {
   RotateCcw,
   History,
   FolderKanban,
+  Calendar,
+  ExternalLink,
+  Search,
 } from "lucide-react";
 
 /**
@@ -222,7 +231,7 @@ export default function RecruitmentCandidateShortlist() {
 
   // Per-vacancy UI state
   const [collapsedGroups, setCollapsedGroups] = useState({});
-  const [groupStatusFilters, setGroupStatusFilters] = useState({});
+  const [globalStatusFilter, setGlobalStatusFilter] = useState("ALL");
   const [stagedShortlists, setStagedShortlists] = useState({});
   const [runningAutoForVacancy, setRunningAutoForVacancy] = useState({});
   const [confirmingVacancy, setConfirmingVacancy] = useState({});
@@ -570,10 +579,7 @@ export default function RecruitmentCandidateShortlist() {
   };
 
   // Per-vacancy state helpers
-  const getStatusFilterForVacancy = (vacKey) => groupStatusFilters[vacKey] || "ALL";
-  const setStatusFilterForVacancy = (vacKey, status) => {
-    setGroupStatusFilters((prev) => ({ ...prev, [vacKey]: status }));
-  };
+  const getStatusFilterForVacancy = () => globalStatusFilter;
 
   const toggleCollapse = (vacKey) => {
     setCollapsedGroups((prev) => ({ ...prev, [vacKey]: !prev[vacKey] }));
@@ -861,15 +867,21 @@ export default function RecruitmentCandidateShortlist() {
           : cand.jobTitle || "Other Applications";
 
       if (!groupsMap.has(key)) {
+        const matchedVac = vacancies.find(
+          (v) =>
+            (cand.vacancyId && cand.vacancyId !== "unassigned" && String(v.id) === String(cand.vacancyId)) ||
+            (cand.jobTitle && v.title && v.title.toLowerCase() === cand.jobTitle.toLowerCase())
+        );
+
         groupsMap.set(key, {
-          vacancyId: cand.vacancyId,
+          vacancyId: matchedVac?.id || cand.vacancyId,
           vacancyKey: key,
-          title: cand.jobTitle || "Job Opening",
-          department: cand.department || "General",
-          jobType: "Position Opening",
-          vacancyCount: null,
-          status: "ACTIVE",
-          rawVacancy: { id: cand.vacancyId, title: cand.jobTitle },
+          title: matchedVac?.title || cand.jobTitle || "Job Opening",
+          department: matchedVac?.department || cand.department || "General",
+          jobType: matchedVac?.jobType || "Position Opening",
+          vacancyCount: matchedVac?.vacancyCount ?? null,
+          status: matchedVac?.status || "ACTIVE",
+          rawVacancy: matchedVac || { id: cand.vacancyId, title: cand.jobTitle },
           candidates: [],
         });
       }
@@ -912,6 +924,36 @@ export default function RecruitmentCandidateShortlist() {
     setCollapsedGroups(all);
   };
 
+  // Number of candidates matching the search AND the chosen status (all vacancies)
+  const matchedCandidateTotal = displayedVacancyGroups.reduce((total, group) => {
+    const vacKey = group.vacancyKey;
+    const cfg =
+      screeningConfigs[group.vacancyId] ||
+      screeningConfigs[String(group.vacancyId)] ||
+      screeningConfigs[vacKey];
+    const minScore = cfg?.minimumScore ?? 75;
+    const stagedSet = getStagedSet(vacKey);
+    const q = search.trim().toLowerCase();
+    return (
+      total +
+      group.candidates.filter((c) => {
+        const matchesSearch =
+          !q ||
+          (c.candidateName || "").toLowerCase().includes(q) ||
+          (c.email || "").toLowerCase().includes(q) ||
+          (Array.isArray(c.skills) && c.skills.some((sk) => sk.toLowerCase().includes(q)));
+        if (!matchesSearch) return false;
+        if (globalStatusFilter === "ALL") return true;
+        if (globalStatusFilter === "SUITABLE") return getCandidateSuitability(c, minScore).isSuitable;
+        if (globalStatusFilter === "NOT_SUITABLE") return !getCandidateSuitability(c, minScore).isSuitable;
+        if (globalStatusFilter === "SHORTLISTED") return c.status === "SHORTLISTED";
+        if (globalStatusFilter === "STAGED") return stagedSet.has(c.id);
+        if (globalStatusFilter === "REJECTED") return c.status === "REJECTED";
+        return true;
+      }).length
+    );
+  }, 0);
+
   return (
     <PageLayout
       role="recruiter"
@@ -939,7 +981,7 @@ export default function RecruitmentCandidateShortlist() {
         </div>
       }
     >
-      <div className="p-6 space-y-6 max-w-7xl mx-auto">
+      <div className="space-y-6 max-w-7xl mx-auto">
         {/* ── Action Notice ── */}
         {actionNotice && (
           <div className="p-3.5 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center justify-between text-xs text-emerald-800 font-medium shadow-xs">
@@ -966,50 +1008,80 @@ export default function RecruitmentCandidateShortlist() {
         </StatCardGrid>
 
         {/* ── Global Search & Position Filter Bar ── */}
-        <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm flex flex-col md:flex-row justify-between items-center gap-4">
-          <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto flex-1">
-            <div className="relative w-full sm:w-80">
-              <Search className="absolute left-3.5 top-3 text-slate-400" size={17} />
-              <input
-                type="text"
-                placeholder="Search candidate name, email, or skill..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:bg-white"
-              />
-            </div>
-
-            <div className="w-full sm:w-64">
-              <select
-                value={selectedVacancyFilter}
-                onChange={(e) => setSelectedVacancyFilter(e.target.value)}
-                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:bg-white cursor-pointer"
-              >
-                <option value="ALL">All Vacancies ({displayedVacancyGroups.length})</option>
-                {displayedVacancyGroups.map((g) => (
-                  <option key={g.vacancyKey} value={g.vacancyKey}>
-                    {g.title} ({g.candidates.length})
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2 self-end md:self-center">
-            <button
-              onClick={expandAll}
-              className="px-3 py-1.5 text-xs font-medium text-slate-600 hover:text-primary-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition-all cursor-pointer"
-            >
-              Expand All
-            </button>
-            <button
-              onClick={collapseAll}
-              className="px-3 py-1.5 text-xs font-medium text-slate-600 hover:text-primary-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition-all cursor-pointer"
-            >
-              Collapse All
-            </button>
-          </div>
-        </div>
+        {(() => {
+          const q = search.trim().toLowerCase();
+          const rows = displayedVacancyGroups.flatMap((group) => {
+            const vacKey = group.vacancyKey;
+            const vacConfig =
+              screeningConfigs[group.vacancyId] ||
+              screeningConfigs[String(group.vacancyId)] ||
+              screeningConfigs[vacKey];
+            const minScore = vacConfig?.minimumScore ?? 75;
+            const stagedSet = getStagedSet(vacKey);
+            return group.candidates
+              .filter(
+                (c) =>
+                  !q ||
+                  (c.candidateName || "").toLowerCase().includes(q) ||
+                  (c.email || "").toLowerCase().includes(q) ||
+                  (Array.isArray(c.skills) && c.skills.some((s) => s.toLowerCase().includes(q))),
+              )
+              .map((c) => ({ c, minScore, staged: stagedSet.has(c.id) }));
+          });
+          const matches = ({ c, minScore, staged }, status) => {
+            if (status === "ALL") return true;
+            if (status === "SUITABLE") return getCandidateSuitability(c, minScore).isSuitable;
+            if (status === "NOT_SUITABLE") return !getCandidateSuitability(c, minScore).isSuitable;
+            if (status === "SHORTLISTED") return c.status === "SHORTLISTED";
+            if (status === "STAGED") return staged;
+            if (status === "REJECTED") return c.status === "REJECTED";
+            return true;
+          };
+          const countOf = (status) => rows.filter((row) => matches(row, status)).length;
+          return (
+            <FilterBar
+              search={search}
+              onSearchChange={setSearch}
+              searchPlaceholder="Search candidate name, email, or skill..."
+              filters={[
+                {
+                  id: "vacancy",
+                  label: "Vacancy",
+                  value: selectedVacancyFilter,
+                  onChange: setSelectedVacancyFilter,
+                  allLabel: "All vacancies",
+                  allValue: "ALL",
+                  options: displayedVacancyGroups.map((g) => ({
+                    value: g.vacancyKey,
+                    label: `${g.title} (${g.candidates.length})`,
+                  })),
+                },
+              ]}
+              pills={{
+                value: globalStatusFilter,
+                onChange: setGlobalStatusFilter,
+                items: [
+                  { value: "ALL", label: "All ranked", count: countOf("ALL") },
+                  { value: "SUITABLE", label: "Suitable", count: countOf("SUITABLE") },
+                  { value: "NOT_SUITABLE", label: "Not suitable", count: countOf("NOT_SUITABLE") },
+                  { value: "SHORTLISTED", label: "Shortlisted", count: countOf("SHORTLISTED") },
+                  { value: "STAGED", label: "Staged", count: countOf("STAGED") },
+                  { value: "REJECTED", label: "Rejected", count: countOf("REJECTED") },
+                ],
+              }}
+              count={countOf(globalStatusFilter)}
+              countLabel="candidate"
+              onExpandAll={displayedVacancyGroups.length > 0 ? expandAll : undefined}
+              onCollapseAll={displayedVacancyGroups.length > 0 ? collapseAll : undefined}
+              hasActiveFilters={search !== "" || selectedVacancyFilter !== "ALL" || globalStatusFilter !== "ALL"}
+              onReset={() => {
+                setSearch("");
+                setSelectedVacancyFilter("ALL");
+                setGlobalStatusFilter("ALL");
+              }}
+            />
+          );
+        })()}
 
         {/* ── Vacancy Separated Shortlist Sections ── */}
         {loading ? (
@@ -1036,6 +1108,24 @@ export default function RecruitmentCandidateShortlist() {
                 <span>View Shortlist History ({historyVacancyGroups.length})</span>
               </Link>
             )}
+          </div>
+        ) : matchedCandidateTotal === 0 && (globalStatusFilter !== "ALL" || search.trim() !== "") ? (
+          <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-12 text-center max-w-md mx-auto space-y-3">
+            <div className="w-12 h-12 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center mx-auto">
+              <Search size={22} />
+            </div>
+            <h4 className="text-base font-semibold text-slate-800">No candidates found</h4>
+            <p className="text-xs text-slate-500">Try changing your search or filters.</p>
+            <button
+              onClick={() => {
+                setSearch("");
+                setSelectedVacancyFilter("ALL");
+                setGlobalStatusFilter("ALL");
+              }}
+              className="mt-2 inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-primary-50 text-primary-600 hover:bg-primary-100 transition-colors"
+            >
+              Reset filters
+            </button>
           </div>
         ) : (
           <div className="space-y-6">
@@ -1089,52 +1179,55 @@ export default function RecruitmentCandidateShortlist() {
                   return suitB - suitA;
                 });
 
+              // Hide vacancies with nothing to show for the current search or status
+              if ((statusFilter !== "ALL" || search.trim() !== "") && filteredVacancyCandidates.length === 0) return null;
+
               // Status and Suitability count breakdowns
               const vacTotal = group.candidates.length;
-              const vacSuitable = group.candidates.filter((c) => getCandidateSuitability(c, minScore).isSuitable).length;
-              const vacNotSuitable = group.candidates.filter((c) => !getCandidateSuitability(c, minScore).isSuitable).length;
-              const vacShortlisted = group.candidates.filter((c) => c.status === "SHORTLISTED").length;
-              const vacRejected = group.candidates.filter((c) => c.status === "REJECTED").length;
 
               return (
                 <div
                   key={vacKey}
-                  className="bg-white rounded-xl border border-slate-200 border-l-4 border-l-primary-600 shadow-sm overflow-hidden transition-shadow hover:shadow-md"
+                  className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden transition-shadow hover:shadow-md"
                 >
                   {/* ── Vacancy Header & Full-Width Controls Bar ── */}
-                  <div className={`px-6 py-5 relative ${isCollapsed ? "" : "border-b border-slate-200"}`}>
+                  <div className="px-6 py-5 relative bg-gradient-to-r from-[#d5dbf5] to-[#e6e9f9] border-b border-[#cfd5ee] text-slate-900">
                     {/* Top Row: Title, Applicants Count, Last Screened Status & Collapse Button */}
                     <div className="flex items-start justify-between gap-4">
-                      <div className="flex flex-col gap-1.5 min-w-0">
-                        <div className="flex items-center gap-2.5 flex-wrap">
-                          <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-                            {group.title}
-                          </h3>
-                          <span className="text-xs px-2.5 py-0.5 rounded-full bg-primary-50 text-primary-700 font-semibold">
-                            {vacTotal} Applicants
-                          </span>
-                          {/* Job Offer Status Badge */}
-                          {(() => {
-                            const offerInfo = getVacancyOfferInfo(vacKey, group.candidates, group.title);
-                            return offerInfo.hasOffer ? (
-                              <span
-                                className="text-xs px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 font-semibold border border-emerald-200 flex items-center gap-1.5"
-                                title="Job offer created for this position"
-                              >
-                                <CheckCircle2 size={13} className="text-emerald-600 shrink-0" />
-                                <span>Job Offer Created {offerInfo.offerCount > 1 ? `(${offerInfo.offerCount})` : ""}</span>
-                              </span>
-                            ) : (
-                              <span
-                                className="text-xs px-3 py-1 rounded-full bg-amber-50 text-amber-700 font-semibold border border-amber-200 flex items-center gap-1.5"
-                                title="No job offer created yet for this position"
-                              >
-                                <Clock size={13} className="text-amber-600 shrink-0" />
-                                <span>Job Offer Not Created Yet</span>
-                              </span>
-                            );
-                          })()}
+                      <div className="flex items-center gap-4 min-w-0">
+                        <div className="h-12 w-12 rounded-2xl bg-primary-600 text-white shadow-md shadow-primary-600/25 flex items-center justify-center shrink-0">
+                          <Briefcase size={22} />
                         </div>
+                        <div className="flex flex-col gap-1.5 min-w-0">
+                          <div className="flex items-center gap-2.5 flex-wrap">
+                            <h3 className="text-xl font-bold tracking-tight text-[#1b2142] flex items-center gap-2">
+                              {group.title}
+                            </h3>
+                            <span className="text-xs px-2.5 py-0.5 rounded-full bg-primary-50 text-primary-700 font-semibold">
+                              {vacTotal} Applicants
+                            </span>
+                            {/* Job Offer Status Badge */}
+                            {(() => {
+                              const offerInfo = getVacancyOfferInfo(vacKey, group.candidates, group.title);
+                              return offerInfo.hasOffer ? (
+                                <span
+                                  className="text-xs px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 font-semibold border border-emerald-200 flex items-center gap-1.5"
+                                  title="Job offer created for this position"
+                                >
+                                  <CheckCircle2 size={13} className="text-emerald-600 shrink-0" />
+                                  <span>Job Offer Created {offerInfo.offerCount > 1 ? `(${offerInfo.offerCount})` : ""}</span>
+                                </span>
+                              ) : (
+                                <span
+                                  className="text-xs px-3 py-1 rounded-full bg-amber-50 text-amber-700 font-semibold border border-amber-200 flex items-center gap-1.5"
+                                  title="No job offer created yet for this position"
+                                >
+                                  <Clock size={13} className="text-amber-600 shrink-0" />
+                                  <span>Job Offer Not Created Yet</span>
+                                </span>
+                              );
+                            })()}
+                          </div>
                         {/* Persisted Last Run Details from database */}
                         {vacConfig?.lastScreenedAt ? (
                           <div className="flex flex-wrap items-center gap-1.5 text-xs text-slate-500">
@@ -1157,6 +1250,7 @@ export default function RecruitmentCandidateShortlist() {
                           </div>
                         )}
                       </div>
+                      </div>
 
                       {/* Collapse/Expand Toggle */}
                       <button
@@ -1175,7 +1269,20 @@ export default function RecruitmentCandidateShortlist() {
                         {/* 0. Job Vacancy Details Button */}
                         <button
                           type="button"
-                          onClick={() => setSelectedVacancyModal(group.rawVacancy || { id: group.vacancyId, title: group.title, department: group.department })}
+                          onClick={() => {
+                            const matched =
+                              group.rawVacancy ||
+                              vacancies.find(
+                                (v) =>
+                                  (group.vacancyId && String(v.id) === String(group.vacancyId)) ||
+                                  (group.title && v.title && v.title.toLowerCase() === group.title.toLowerCase())
+                              ) || {
+                                id: group.vacancyId,
+                                title: group.title,
+                                department: group.department,
+                              };
+                            setSelectedVacancyModal(matched);
+                          }}
                           className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-slate-200 bg-white text-slate-700 text-sm font-semibold hover:bg-slate-50 transition-colors cursor-pointer"
                           title="Display job vacancy details like public career page"
                         >
@@ -1349,41 +1456,11 @@ export default function RecruitmentCandidateShortlist() {
 
                   {/* ── Vacancy Content (When not collapsed) ── */}
                   {!isCollapsed && (
-                    <div className="p-5 sm:p-6 space-y-5">
-                      {/* Per-Vacancy Status Filter Tabs */}
-                      <div className="flex flex-wrap items-center justify-between gap-3 pb-2 border-b border-slate-100">
-                        <div className="flex flex-wrap gap-1.5 sm:gap-2">
-                          {[
-                            { id: "ALL", label: `All Ranked (${vacTotal})` },
-                            { id: "SUITABLE", label: `Suitable (${vacSuitable})`, icon: Check, highlight: vacSuitable > 0 },
-                            { id: "NOT_SUITABLE", label: `Not Suitable (${vacNotSuitable})`, icon: X },
-                            { id: "SHORTLISTED", label: `Shortlisted (${vacShortlisted})` },
-                            {
-                              id: "STAGED",
-                              label: `Staged (${stagedCount})`,
-                              icon: Sparkles,
-                              highlight: stagedCount > 0,
-                            },
-                            { id: "REJECTED", label: `Rejected (${vacRejected})` },
-                          ].map((t) => (
-                            <button
-                              key={t.id}
-                              onClick={() => setStatusFilterForVacancy(vacKey, t.id)}
-                              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
-                                statusFilter === t.id
-                                  ? t.highlight
-                                    ? "bg-amber-500 text-slate-950 shadow-sm"
-                                    : "bg-primary-600 text-white shadow-sm"
-                                  : t.highlight
-                                  ? "bg-amber-50 text-amber-800 border border-amber-200 hover:bg-amber-100"
-                                  : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-                              }`}
-                            >
-                              {t.icon && <t.icon size={14} />}
-                              {t.label}
-                            </button>
-                          ))}
-                        </div>
+                    <div>
+                      {/* Staged candidates: confirm for this vacancy */}
+{/* layout-aligned */}
+                      {stagedCount > 0 && (
+                        <div className="flex flex-wrap items-center justify-end gap-3 px-6 py-3 bg-slate-50/70 border-b border-slate-200/70">
 
                         {stagedCount > 0 && (
                           <div className="flex items-center gap-2">
@@ -1409,10 +1486,11 @@ export default function RecruitmentCandidateShortlist() {
                           </div>
                         )}
                       </div>
+                      )}
 
                       {/* ── Candidate Cards Grid for this Vacancy ── */}
                       {filteredVacancyCandidates.length === 0 ? (
-                        <div className="py-10 text-center bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+                        <div className="py-10 text-center">
                           <p className="text-xs text-slate-400 font-medium">
                             {vacTotal === 0
                               ? "No candidate applications submitted for this vacancy yet."
@@ -1420,7 +1498,7 @@ export default function RecruitmentCandidateShortlist() {
                           </p>
                         </div>
                       ) : (
-                        <div className="overflow-hidden bg-white rounded-2xl border border-slate-200 shadow-sm">
+                        <div>
                           <div className="overflow-x-auto">
                             <table className="w-full text-left text-sm text-slate-600">
                               <thead className="bg-slate-50/80 border-b border-slate-200 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
@@ -1568,15 +1646,11 @@ export default function RecruitmentCandidateShortlist() {
 
                                       {/* 5. Action - View Details */}
                                       <td className="py-3.5 px-4 text-right whitespace-nowrap">
-                                        <button
-                                          type="button"
+                                        <ViewButton
+                                          label="View"
                                           onClick={() => setBreakdownCandidate(cand)}
-                                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-primary-700 hover:text-primary-900 bg-primary-50 hover:bg-primary-100 border border-primary-200 transition-all cursor-pointer shadow-xs"
                                           title="View matching details: what matched and what did not match"
-                                        >
-                                          <Eye size={13} />
-                                          <span>View</span>
-                                        </button>
+                                        />
                                       </td>
                                     </tr>
                                   );
@@ -1597,26 +1671,31 @@ export default function RecruitmentCandidateShortlist() {
 
       {/* ── Vacancy Screening Configuration Modal ── */}
       {configModalVacancy && activeConfigForm && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-3xl p-6 sm:p-7 space-y-5 border border-slate-100 max-h-[92vh] overflow-y-auto">
-            {/* Header */}
-            <div className="flex items-start justify-between border-b border-slate-100 pb-3">
-              <div>
-                <span className="text-xs font-semibold text-primary-600 uppercase tracking-wider block">
-                  Define Screening Rules
-                </span>
-                <h3 className="text-xl font-bold text-slate-900 mt-0.5">{configModalVacancy.title}</h3>
-                <p className="text-xs text-slate-500 mt-0.5">
-                  Define evaluation weights, minimum cutoff score threshold, and mandatory position criteria.
-                </p>
-              </div>
-              <button
-                onClick={() => setConfigModalVacancy(null)}
-                className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center cursor-pointer"
-              >
-                <X size={16} />
-              </button>
-            </div>
+        <RecruitmentModal
+          open
+          title={configModalVacancy.title}
+          subtitle="Define evaluation weights, minimum cutoff score threshold, and mandatory position criteria"
+          size="xl"
+          onClose={() => setConfigModalVacancy(null)}
+          footer={
+            <>
+              <ModalButton variant="primary" onClick={handleSaveConfig} disabled={savingConfig}>
+                {savingConfig ? (
+                  <>
+                    <Loader2 size={14} className="animate-spin" />
+                    <span>Saving Rules...</span>
+                  </>
+                ) : (
+                  <>
+                    <Check size={14} />
+                    <span>Save Screening Configuration</span>
+                  </>
+                )}
+              </ModalButton>
+              <ModalButton onClick={() => setConfigModalVacancy(null)}>Cancel</ModalButton>
+            </>
+          }
+        >
 
             {/* Modal Navigation Tabs */}
             <div className="flex border-b border-slate-100 gap-2">
@@ -2053,36 +2132,7 @@ export default function RecruitmentCandidateShortlist() {
               </div>
             )}
 
-            {/* Modal Actions */}
-            <div className="flex items-center justify-between pt-4 border-t border-slate-100">
-              <button
-                type="button"
-                onClick={() => setConfigModalVacancy(null)}
-                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold cursor-pointer"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={handleSaveConfig}
-                disabled={savingConfig}
-                className="inline-flex items-center gap-2 px-5 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-xl text-xs font-bold shadow-md transition-all disabled:opacity-60 cursor-pointer"
-              >
-                {savingConfig ? (
-                  <>
-                    <Loader2 size={14} className="animate-spin text-white" />
-                    <span>Saving Rules...</span>
-                  </>
-                ) : (
-                  <>
-                    <Check size={14} />
-                    <span>Save Screening Configuration</span>
-                  </>
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
+        </RecruitmentModal>
       )}
 
       {/* ── Candidate Screening Breakdown Modal ── */}
@@ -2121,28 +2171,43 @@ export default function RecruitmentCandidateShortlist() {
         const eduMatched = breakdownCandidate.mandatoryQualificationsMet !== "UNMET";
 
         return (
-          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-            <div className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl p-6 sm:p-7 space-y-5 border border-slate-100 max-h-[92vh] overflow-y-auto">
-              {/* Header */}
-              <div className="flex items-start justify-between border-b border-slate-100 pb-3">
-                <div>
-                  <span className="text-xs font-semibold text-primary-600 uppercase tracking-wider block">
-                    Candidate Profile & Matching Details
-                  </span>
-                  <h3 className="text-xl font-bold text-slate-900 mt-0.5">{breakdownCandidate.candidateName}</h3>
-                  <p className="text-xs text-slate-500">
-                    Position: <strong className="text-slate-800">{breakdownCandidate.jobTitle}</strong> • {breakdownCandidate.department}
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setBreakdownCandidate(null)}
-                  className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center cursor-pointer transition-colors"
-                  title="Close"
-                >
-                  <X size={16} />
-                </button>
-              </div>
+          <RecruitmentModal
+            open
+            title={breakdownCandidate.candidateName}
+            subtitle={`Candidate Profile & Matching Details • ${breakdownCandidate.jobTitle} • ${breakdownCandidate.department}`}
+            size="xl"
+            onClose={() => setBreakdownCandidate(null)}
+            footer={
+              <>
+                {breakdownCandidate.status !== "SHORTLISTED" && (
+                  <ModalButton
+                    variant="primary"
+                    onClick={() => {
+                      handleShortlistSingle(breakdownCandidate);
+                      setBreakdownCandidate(null);
+                    }}
+                  >
+                    <Check size={14} />
+                    <span>Shortlist Candidate</span>
+                  </ModalButton>
+                )}
+                {breakdownCandidate.status !== "REJECTED" && (
+                  <ModalButton
+                    variant="danger"
+                    onClick={() => {
+                      const cand = breakdownCandidate;
+                      setBreakdownCandidate(null);
+                      setRejectingCandidate(cand);
+                    }}
+                  >
+                    <X size={14} />
+                    <span>Reject Candidate</span>
+                  </ModalButton>
+                )}
+                <ModalButton onClick={() => setBreakdownCandidate(null)}>Close</ModalButton>
+              </>
+            }
+          >
 
               {/* ── System Suitability Verdict Banner ── */}
               <div
@@ -2422,81 +2487,35 @@ export default function RecruitmentCandidateShortlist() {
                 </div>
               </div>
 
-              {/* Modal Actions */}
-              <div className="flex items-center justify-between gap-2 pt-3 border-t border-slate-100">
-                <div>
-                  <button
-                    type="button"
-                    onClick={() => setBreakdownCandidate(null)}
-                    className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold cursor-pointer transition-colors"
-                  >
-                    Close
-                  </button>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  {breakdownCandidate.status !== "REJECTED" && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const cand = breakdownCandidate;
-                        setBreakdownCandidate(null);
-                        setRejectingCandidate(cand);
-                      }}
-                      className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-rose-50 hover:text-rose-600 text-slate-700 text-xs font-semibold transition-all cursor-pointer"
-                    >
-                      <X size={14} />
-                      <span>Reject Candidate</span>
-                    </button>
-                  )}
-
-                  {breakdownCandidate.status !== "SHORTLISTED" && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        handleShortlistSingle(breakdownCandidate);
-                        setBreakdownCandidate(null);
-                      }}
-                      className="inline-flex items-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-sm transition-all cursor-pointer"
-                    >
-                      <Check size={14} />
-                      <span>Shortlist Candidate</span>
-                    </button>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
+          </RecruitmentModal>
         );
       })()}
 
       {/* ── Structured Rejection Modal ── */}
       {rejectingCandidate && (
-        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md p-6 space-y-5 border border-slate-100">
-            <div className="flex items-start gap-3">
-              <div className="w-10 h-10 rounded-xl bg-rose-100 text-rose-600 flex items-center justify-center shrink-0">
-                <AlertTriangle size={20} />
-              </div>
-              <div>
-                <h3 className="text-base font-bold text-slate-900">
-                  Reject Candidate Application?
-                </h3>
-                <p className="text-xs text-slate-500 mt-0.5">
-                  Select a structured rejection reason for <span className="font-semibold text-slate-700">{rejectingCandidate.candidateName}</span>.
-                </p>
-              </div>
-            </div>
-
+        <RecruitmentModal
+          open
+          title="Reject Candidate Application?"
+          subtitle={`Select a structured rejection reason for ${rejectingCandidate.candidateName}`}
+          size="sm"
+          tone="danger"
+          onClose={() => setRejectingCandidate(null)}
+          footer={
+            <>
+              <ModalButton variant="danger" onClick={handleConfirmRejection}>Confirm Rejection</ModalButton>
+              <ModalButton onClick={() => setRejectingCandidate(null)}>Cancel</ModalButton>
+            </>
+          }
+        >
             <div className="space-y-3">
               <div className="space-y-1.5">
-                <label className="text-xs font-bold uppercase tracking-wider text-slate-600 block">
+                <label className={modalLabelClass}>
                   Rejection Reason
                 </label>
                 <select
                   value={selectedReason}
                   onChange={(e) => setSelectedReason(e.target.value)}
-                  className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-rose-500"
+                  className={modalInputClass}
                 >
                   {REJECTION_REASONS.map((r) => (
                     <option key={r} value={r}>
@@ -2508,7 +2527,7 @@ export default function RecruitmentCandidateShortlist() {
 
               {selectedReason === "Other / Non-competitive background" && (
                 <div className="space-y-1">
-                  <label className="text-xs font-semibold text-slate-600 block">
+                  <label className={modalLabelClass}>
                     Custom Notes:
                   </label>
                   <textarea
@@ -2516,46 +2535,39 @@ export default function RecruitmentCandidateShortlist() {
                     value={customReason}
                     onChange={(e) => setCustomReason(e.target.value)}
                     placeholder="Enter specific feedback or justification..."
-                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-rose-500"
+                    className={modalTextareaClass}
                   />
                 </div>
               )}
             </div>
-
-            <div className="flex justify-end gap-2.5 pt-3 border-t border-slate-100">
-              <button
-                onClick={() => setRejectingCandidate(null)}
-                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold cursor-pointer"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleConfirmRejection}
-                className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-semibold shadow-sm cursor-pointer"
-              >
-                Confirm Rejection
-              </button>
-            </div>
-          </div>
-        </div>
+        </RecruitmentModal>
       )}
 
       {/* ── Run Screening Confirmation Modal ── */}
       {pendingScreeningVacancy && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md p-6 space-y-4 border border-slate-100 animate-in fade-in zoom-in-95">
-            <div className="flex items-start gap-3">
-              <div className="w-10 h-10 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center shrink-0">
-                <Sparkles size={20} />
-              </div>
-              <div>
-                <h3 className="text-base font-bold text-slate-900">Run Screening Evaluation?</h3>
-                <p className="text-xs text-slate-500 mt-0.5">
-                  Position: <strong className="text-slate-800">{pendingScreeningVacancy.vacancyTitle}</strong>
-                </p>
-              </div>
-            </div>
-
+        <RecruitmentModal
+          open
+          title="Run Screening Evaluation?"
+          subtitle={`Position: ${pendingScreeningVacancy.vacancyTitle}`}
+          size="sm"
+          onClose={() => setPendingScreeningVacancy(null)}
+          footer={
+            <>
+              <ModalButton
+                variant="primary"
+                onClick={() => {
+                  const target = pendingScreeningVacancy;
+                  setPendingScreeningVacancy(null);
+                  handleRunScreeningForVacancy(target.vacKey, target.vacancyTitle, target.candidates);
+                }}
+              >
+                <Sparkles size={14} />
+                <span>Confirm & Run Screening</span>
+              </ModalButton>
+              <ModalButton onClick={() => setPendingScreeningVacancy(null)}>Cancel</ModalButton>
+            </>
+          }
+        >
             <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-200/80 space-y-2 text-xs text-slate-600">
               <div className="flex justify-between">
                 <span>Applicants to screen:</span>
@@ -2587,48 +2599,34 @@ export default function RecruitmentCandidateShortlist() {
                 </label>
               </div>
             </div>
-
-            <div className="flex justify-end gap-2.5 pt-2 border-t border-slate-100">
-              <button
-                type="button"
-                onClick={() => setPendingScreeningVacancy(null)}
-                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold cursor-pointer"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  const target = pendingScreeningVacancy;
-                  setPendingScreeningVacancy(null);
-                  handleRunScreeningForVacancy(target.vacKey, target.vacancyTitle, target.candidates);
-                }}
-                className="inline-flex items-center gap-1.5 px-4 py-2 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-500 hover:to-amber-600 text-slate-950 rounded-xl text-xs font-bold shadow-sm transition-all cursor-pointer"
-              >
-                <Sparkles size={14} />
-                <span>Confirm & Run Screening</span>
-              </button>
-            </div>
-          </div>
-        </div>
+        </RecruitmentModal>
       )}
 
       {/* ── Confirm Shortlist Dialog ── */}
       {pendingConfirmVacancy && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md p-6 space-y-4 border border-slate-100 animate-in fade-in zoom-in-95">
-            <div className="flex items-start gap-3">
-              <div className="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0">
-                <CheckCircle2 size={20} />
-              </div>
-              <div>
-                <h3 className="text-base font-bold text-slate-900">Confirm Shortlist Candidates</h3>
-                <p className="text-xs text-slate-500 mt-0.5">
-                  Position: <strong className="text-slate-800">{pendingConfirmVacancy.vacancyTitle}</strong>
-                </p>
-              </div>
-            </div>
-
+        <RecruitmentModal
+          open
+          title="Confirm Shortlist Candidates"
+          subtitle={`Position: ${pendingConfirmVacancy.vacancyTitle}`}
+          size="sm"
+          onClose={() => setPendingConfirmVacancy(null)}
+          footer={
+            <>
+              <ModalButton
+                variant="primary"
+                onClick={() => {
+                  const target = pendingConfirmVacancy;
+                  setPendingConfirmVacancy(null);
+                  handleConfirmShortlistForVacancy(target.vacKey, target.vacancyTitle);
+                }}
+              >
+                <Check size={14} />
+                <span>Confirm Shortlist ({pendingConfirmVacancy.stagedCount})</span>
+              </ModalButton>
+              <ModalButton onClick={() => setPendingConfirmVacancy(null)}>Cancel</ModalButton>
+            </>
+          }
+        >
             <p className="text-xs text-slate-600">
               You are about to finalize and shortlist <strong>{pendingConfirmVacancy.stagedCount} candidate(s)</strong>:
             </p>
@@ -2646,85 +2644,56 @@ export default function RecruitmentCandidateShortlist() {
                 </div>
               ))}
             </div>
-
-            <div className="flex justify-end gap-2.5 pt-2 border-t border-slate-100">
-              <button
-                type="button"
-                onClick={() => setPendingConfirmVacancy(null)}
-                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold cursor-pointer"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  const target = pendingConfirmVacancy;
-                  setPendingConfirmVacancy(null);
-                  handleConfirmShortlistForVacancy(target.vacKey, target.vacancyTitle);
-                }}
-                className="inline-flex items-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-sm transition-all cursor-pointer"
-              >
-                <Check size={14} />
-                <span>Confirm Shortlist ({pendingConfirmVacancy.stagedCount})</span>
-              </button>
-            </div>
-          </div>
-        </div>
+        </RecruitmentModal>
       )}
       {/* ── Job Vacancy Details Modal (Styled like Public Career Page Added Vacancy Details) ── */}
       {selectedVacancyModal && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto animate-fadeIn">
-          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col border border-slate-100 animate-scaleUp">
-            {/* Header: Dark Navy banner styled like Public Careers layout */}
-            <div className="p-6 bg-gradient-to-r from-primary-900 via-primary-800 to-primary-900 text-white flex items-start justify-between border-b border-primary-900/40 relative">
-              <div className="space-y-3 max-w-xl">
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="px-2.5 py-0.5 rounded-full bg-primary-500/30 border border-primary-400/40 text-primary-200 text-[10px] font-extrabold uppercase tracking-widest flex items-center gap-1 shadow-xs">
-                    <Sparkles size={11} className="text-amber-400" />
-                    Career Vacancy Details
-                  </span>
-                  {selectedVacancyModal.status && (
-                    <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 text-[11px] font-semibold flex items-center gap-1">
-                      <CheckCircle2 size={12} />
-                      {selectedVacancyModal.status}
-                    </span>
-                  )}
-                </div>
-
-                <h3 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight leading-tight">
-                  {selectedVacancyModal.title}
-                </h3>
-
-                {/* Hero Chips: Department & Job Type */}
-                <div className="flex flex-wrap items-center gap-2 pt-1">
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-xs font-medium text-primary-100 border border-white/15">
-                    <Building2 size={13} className="text-primary-300" />
-                    {selectedVacancyModal.department || "General"}
-                  </span>
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-xs font-medium text-primary-100 border border-white/15">
-                    <Clock size={13} className="text-primary-300" />
-                    {selectedVacancyModal.jobType || "Full-time"}
-                  </span>
-                  {selectedVacancyModal.vacancyCount && (
-                    <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-xs font-medium text-primary-100 border border-white/15">
-                      <Users size={13} className="text-primary-300" />
-                      {selectedVacancyModal.vacancyCount} {selectedVacancyModal.vacancyCount === 1 ? "Opening" : "Openings"}
-                    </span>
-                  )}
-                </div>
-              </div>
-
-              <button
-                onClick={() => setSelectedVacancyModal(null)}
-                className="p-2 rounded-xl text-slate-300 hover:text-white hover:bg-white/10 transition-colors"
-                title="Close modal"
-              >
-                <X size={20} />
-              </button>
-            </div>
-
-            {/* Modal Body: 2-Column Responsive Layout like CareerJob.jsx */}
-            <div className="p-6 space-y-6 overflow-y-auto flex-1">
+        <RecruitmentModal
+          open
+          title={selectedVacancyModal.title}
+          subtitle={`${selectedVacancyModal.department || "General"} • ${selectedVacancyModal.jobType || "Full-time"} • Career Vacancy Details`}
+          badge={selectedVacancyModal.status || undefined}
+          size="xl"
+          onClose={() => setSelectedVacancyModal(null)}
+          footer={
+            <>
+              <ModalButton onClick={() => setSelectedVacancyModal(null)}>Close</ModalButton>
+              {selectedVacancyModal.id && (() => {
+                const comp =
+                  selectedVacancyModal.companyRef ||
+                  selectedVacancyModal.company ||
+                  (() => {
+                    try {
+                      const u = JSON.parse(localStorage.getItem("user") || "{}");
+                      return (
+                        u.companyRegistrationNumber ||
+                        u.companyRef ||
+                        u.companyName ||
+                        (u.companyId ? String(u.companyId) : "") ||
+                        ""
+                      );
+                    } catch {
+                      return "";
+                    }
+                  })();
+                const careerUrl = `/careers/jobs/${selectedVacancyModal.id}${
+                  comp ? `?company=${encodeURIComponent(comp)}` : ""
+                }`;
+                return (
+                  <Link
+                    to={careerUrl}
+                    target="_blank"
+                    className="inline-flex items-center justify-center gap-1.5 h-10 px-5 rounded-xl text-sm font-semibold bg-primary-600 text-white hover:bg-primary-700 shadow-sm"
+                  >
+                    <ExternalLink size={13} />
+                    <span>View on Public Careers</span>
+                  </Link>
+                );
+              })()}
+            </>
+          }
+        >
+            {/* 2-Column Responsive Layout like CareerJob.jsx */}
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
                 {/* Left/Main Column (2 cols): Description, Qualifications, Skills */}
                 <div className="lg:col-span-2 space-y-6">
@@ -2845,58 +2814,65 @@ export default function RecruitmentCandidateShortlist() {
                       </div>
                     </div>
                   </div>
-
                   {/* Public Career link button if ID exists */}
-                  {selectedVacancyModal.id && (
-                    <div className="pt-3 border-t border-slate-200/80">
-                      <Link
-                        to={`/careers/jobs/${selectedVacancyModal.id}`}
-                        target="_blank"
-                        className="w-full inline-flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-primary-600 hover:bg-primary-700 text-white text-xs font-semibold shadow-sm transition-all"
-                      >
-                        <ExternalLink size={13} />
-                        <span>View on Public Careers</span>
-                      </Link>
-                    </div>
-                  )}
+                  {selectedVacancyModal.id && (() => {
+                    const comp =
+                      selectedVacancyModal.companyRef ||
+                      selectedVacancyModal.company ||
+                      (() => {
+                        try {
+                          const u = JSON.parse(localStorage.getItem("user") || "{}");
+                          return (
+                            u.companyRegistrationNumber ||
+                            u.companyRef ||
+                            u.companyName ||
+                            (u.companyId ? String(u.companyId) : "") ||
+                            ""
+                          );
+                        } catch {
+                          return "";
+                        }
+                      })();
+                    const careerUrl = `/careers/jobs/${selectedVacancyModal.id}${
+                      comp ? `?company=${encodeURIComponent(comp)}` : ""
+                    }`;
+                    return (
+                      <div className="pt-3 border-t border-slate-200/80">
+                        <Link
+                          to={careerUrl}
+                          target="_blank"
+                          className="w-full inline-flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-primary-600 hover:bg-primary-700 text-white text-xs font-semibold shadow-sm transition-all"
+                        >
+                          <ExternalLink size={13} />
+                          <span>View on Public Careers</span>
+                        </Link>
+                      </div>
+                    );
+                  })()}
                 </div>
               </div>
-            </div>
-
-            {/* Modal Footer */}
-            <div className="p-4 border-t border-slate-100 bg-slate-50/50 flex items-center justify-between">
-              <Link
-                to="/recruitment/vacancies"
-                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold text-primary-700 bg-primary-50 hover:bg-primary-100 border border-primary-200/80 transition-colors"
-              >
-                <Briefcase size={14} />
-                <span>Manage Vacancy Postings</span>
-              </Link>
-              <button
-                onClick={() => setSelectedVacancyModal(null)}
-                className="px-5 py-2.5 rounded-xl bg-slate-200 hover:bg-slate-300 text-slate-800 text-xs font-semibold transition-colors"
-              >
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
+        </RecruitmentModal>
       )}
 
       {/* Confirmation Modal: Archive Vacancy from Shortlist */}
       {confirmArchiveModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
-          <div className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 space-y-4">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center shrink-0">
-                <Archive size={22} />
-              </div>
-              <div>
-                <h3 className="text-base font-bold text-slate-900">Archive Vacancy to Shortlist History</h3>
-                <p className="text-xs text-slate-500">Close vacancy and reject unconfirmed candidates</p>
-              </div>
-            </div>
-
+        <RecruitmentModal
+          open
+          title="Archive Vacancy to Shortlist History"
+          subtitle="Close vacancy and reject unconfirmed candidates"
+          size="sm"
+          tone="danger"
+          onClose={() => setConfirmArchiveModal(null)}
+          footer={
+            <>
+              <ModalButton variant="danger" disabled={actionInProgress} onClick={handleArchiveVacancy}>
+                {actionInProgress ? <Loader2 size={14} className="animate-spin" /> : <Archive size={14} />}
+                <span>Confirm & Archive</span>
+              </ModalButton>
+              <ModalButton disabled={actionInProgress} onClick={() => setConfirmArchiveModal(null)}>Cancel</ModalButton>
+            </>
+          }
+        >
             <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 text-xs leading-relaxed space-y-2">
               <p className="font-semibold flex items-center gap-1.5 text-amber-800">
                 <AlertCircle size={15} className="shrink-0" />
@@ -2916,28 +2892,7 @@ export default function RecruitmentCandidateShortlist() {
             <p className="text-xs text-slate-600">
               Are you sure you want to proceed with archiving <span className="font-bold text-slate-900">{confirmArchiveModal.vacancy?.title}</span>?
             </p>
-
-            <div className="flex items-center justify-end gap-2.5 pt-2">
-              <button
-                type="button"
-                disabled={actionInProgress}
-                onClick={() => setConfirmArchiveModal(null)}
-                className="px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 transition-colors cursor-pointer"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                disabled={actionInProgress}
-                onClick={handleArchiveVacancy}
-                className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-semibold text-white bg-rose-600 hover:bg-rose-700 transition-colors shadow-sm cursor-pointer disabled:opacity-50"
-              >
-                {actionInProgress ? <Loader2 size={14} className="animate-spin" /> : <Archive size={14} />}
-                <span>Confirm & Archive</span>
-              </button>
-            </div>
-          </div>
-        </div>
+        </RecruitmentModal>
       )}
 
     </PageLayout>

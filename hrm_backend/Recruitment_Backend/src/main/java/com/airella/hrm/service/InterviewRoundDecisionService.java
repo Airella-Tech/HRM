@@ -35,6 +35,10 @@ public class InterviewRoundDecisionService {
     private static final Set<String> VALID_DECISIONS =
             Set.of("APPROVED", "REJECTED");
 
+    // Recommendations that require manager justification when approving.
+    private static final Set<String> NEGATIVE_RECOMMENDATIONS =
+            Set.of("HOLD", "NO_HIRE", "STRONG_NO_HIRE");
+
     public InterviewRoundDecisionService(
             InterviewRoundDecisionRepository decisionRepository,
             InterviewRepository interviewRepository,
@@ -93,8 +97,10 @@ public class InterviewRoundDecisionService {
                 ? null
                 : request.comments().trim();
 
+        // A rejection always requires a reason.
         if ("REJECTED".equals(decisionValue)
                 && (comments == null || comments.isBlank())) {
+
             throw new BusinessException(
                     "A reason is required when rejecting a candidate.");
         }
@@ -149,7 +155,7 @@ public class InterviewRoundDecisionService {
         // Every assigned interviewer must submit an evaluation.
         List<Long> missingEvaluators = assignments.stream()
                 .map(InterviewEvaluatorAssignment::getEmployeeId)
-                .filter(id -> !submittedEvaluatorIds.contains(id))
+                .filter(id -> id == null || !submittedEvaluatorIds.contains(id))
                 .toList();
 
         if (!missingEvaluators.isEmpty()) {
@@ -159,7 +165,77 @@ public class InterviewRoundDecisionService {
                             + " assigned interviewer(s) have not submitted their evaluations.");
         }
 
-        // Find the candidate application using both company identifiers.
+        // --------------------------------------------------------
+        // OPTION B: MANAGER OVERRIDE VALIDATION
+        // --------------------------------------------------------
+
+        if ("APPROVED".equals(decisionValue)) {
+
+            // Check whether any assigned interviewer submitted
+            // HOLD, NO_HIRE, or STRONG_NO_HIRE.
+            boolean hasNegativeRecommendation =
+                    assignments.stream().anyMatch(assignment -> {
+
+                        Long evaluatorId = assignment.getEmployeeId();
+
+                        if (evaluatorId == null) {
+                            return false;
+                        }
+
+                        // Check this assigned interviewer's own
+                        // submitted evaluation.
+                        return evaluations.stream().anyMatch(evaluation -> {
+
+                            if (!evaluatorId.equals(
+                                    evaluation.getEvaluatorId())) {
+                                return false;
+                            }
+
+                            if (!"SUBMITTED".equalsIgnoreCase(
+                                    evaluation.getStatus())) {
+                                return false;
+                            }
+
+                            if (evaluation.getSubmittedAt() == null) {
+                                return false;
+                            }
+
+                            String recommendation =
+                                    evaluation.getRecommendation();
+
+                            if (recommendation == null
+                                    || recommendation.isBlank()) {
+                                return false;
+                            }
+
+                            // Normalize recommendation values.
+                            String normalizedRecommendation =
+                                    recommendation.trim()
+                                            .replace(' ', '_')
+                                            .replace('-', '_')
+                                            .toUpperCase(Locale.ROOT);
+
+                            return NEGATIVE_RECOMMENDATIONS.contains(
+                                    normalizedRecommendation
+                            );
+                        });
+                    });
+
+            // The manager can override negative recommendations,
+            // but must explain the reason for approving.
+            if (hasNegativeRecommendation
+                    && (comments == null || comments.isBlank())) {
+
+                throw new BusinessException(
+                        "A justification is required when approving a candidate "
+                                + "despite negative interviewer recommendations.");
+            }
+        }
+
+        // --------------------------------------------------------
+        // FIND CANDIDATE APPLICATION
+        // --------------------------------------------------------
+
         CandidateApplication application = applicationRepository
                 .findByIdAndCompany(
                         interview.getApplicationId(),
@@ -170,7 +246,10 @@ public class InterviewRoundDecisionService {
                         "id",
                         interview.getApplicationId()));
 
-        // Save the manager decision.
+        // --------------------------------------------------------
+        // SAVE MANAGER DECISION
+        // --------------------------------------------------------
+
         InterviewRoundDecision decision = new InterviewRoundDecision();
 
         decision.setCompanyId(companyId);
@@ -185,9 +264,14 @@ public class InterviewRoundDecisionService {
         InterviewRoundDecision saved =
                 decisionRepository.save(decision);
 
-        // Update the candidate application.
+        // --------------------------------------------------------
+        // UPDATE CANDIDATE APPLICATION
+        // --------------------------------------------------------
+
         if ("REJECTED".equals(decisionValue)) {
 
+            // Only the manager's official rejection rejects
+            // the candidate application.
             application.setStatus(ApplicationStatus.REJECTED);
             application.setEligibilityStatus(EligibilityStatus.INELIGIBLE);
             application.setRejectionReason(comments);
@@ -197,19 +281,27 @@ public class InterviewRoundDecisionService {
         } else {
 
             // Keep the candidate in the interview process.
+            // The next round is allowed only after the progression
+            // validation also confirms manager approval.
             application.setStatus(ApplicationStatus.INTERVIEW_SCHEDULED);
         }
 
         applicationRepository.save(application);
 
-        // Notify assigned interviewers about the manager's decision.
+        // --------------------------------------------------------
+        // SEND NOTIFICATION
+        // --------------------------------------------------------
+
         notificationService.roundDecisionMade(
                 interview,
                 decisionValue,
                 comments
         );
 
-        // Record audit information.
+        // --------------------------------------------------------
+        // AUDIT LOGGING
+        // --------------------------------------------------------
+
         auditService.logAction(
                 "INTERVIEW_ROUND_" + decisionValue,
                 "InterviewRoundDecision",
@@ -234,7 +326,9 @@ public class InterviewRoundDecisionService {
 
         Long companyId = authService.getCurrentCompanyId();
 
-        if (!permissionService.isFullAccess() && !permissionService.hasRecruitmentAccess()) {
+        if (!permissionService.isFullAccess()
+                && !permissionService.hasRecruitmentAccess()) {
+
             throw new AccessDeniedException(
                     "Access denied: missing recruitment access to read interview decision"
             );

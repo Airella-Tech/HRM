@@ -7,7 +7,9 @@ import com.airella.hrm.exception.BusinessException;
 import com.airella.hrm.exception.ResourceNotFoundException;
 import com.airella.hrm.model.Interview;
 import com.airella.hrm.model.InterviewEvaluation;
+import com.airella.hrm.model.InterviewEvaluatorAssignment;
 import com.airella.hrm.repository.InterviewEvaluationRepository;
+import com.airella.hrm.repository.InterviewEvaluatorAssignmentRepository;
 import com.airella.hrm.repository.InterviewRepository;
 
 import org.springframework.security.access.AccessDeniedException;
@@ -88,6 +90,7 @@ public class InterviewEvaluationService {
 
     private final InterviewEvaluationRepository evaluationRepository;
     private final InterviewRepository interviewRepository;
+    private final InterviewEvaluatorAssignmentRepository assignmentRepository;
     private final AuthService authService;
     private final PermissionService permissionService;
     private final RecruitmentNotificationService notificationService;
@@ -95,12 +98,14 @@ public class InterviewEvaluationService {
     public InterviewEvaluationService(
             InterviewEvaluationRepository evaluationRepository,
             InterviewRepository interviewRepository,
+            InterviewEvaluatorAssignmentRepository assignmentRepository,
             AuthService authService,
             PermissionService permissionService,
             RecruitmentNotificationService notificationService) {
 
         this.evaluationRepository = evaluationRepository;
         this.interviewRepository = interviewRepository;
+        this.assignmentRepository = assignmentRepository;
         this.authService = authService;
         this.permissionService = permissionService;
         this.notificationService = notificationService;
@@ -223,36 +228,141 @@ public class InterviewEvaluationService {
     }
 
     // ------------------------------------------------------------
-    // CHECK PASSING SUBMITTED EVALUATION
+    // CHECK ALL ASSIGNED INTERVIEWERS' EVALUATIONS
+    // EXISTING PASSING-RECOMMENDATION CHECK
     // ------------------------------------------------------------
 
     @Transactional(readOnly = true)
-    public boolean hasPassingSubmittedEvaluation(Long interviewId) {
+    public boolean hasAllAssignedEvaluationsPassing(Long interviewId) {
 
         Long companyId = authService.getCurrentCompanyId();
 
         Interview interview = findInterview(interviewId, companyId);
 
+        // The interview must be completed first.
         if (!"Completed".equalsIgnoreCase(interview.getStatus())) {
             return false;
         }
 
-        List<InterviewEvaluation> evaluations = evaluationRepository
-                .findByCompanyIdAndInterviewIdOrderByCreatedAtAsc(
+        // Get every interviewer assigned to this interview.
+        List<InterviewEvaluatorAssignment> assignments =
+                assignmentRepository.findByCompanyIdAndInterviewId(
                         companyId,
                         interviewId
                 );
 
-        return evaluations.stream().anyMatch(evaluation ->
-                "SUBMITTED".equalsIgnoreCase(evaluation.getStatus())
-                        && evaluation.getSubmittedAt() != null
-                        && evaluation.getRecommendation() != null
-                        && PASSING_RECOMMENDATIONS.contains(
-                        normalizeRecommendation(
-                                evaluation.getRecommendation()
-                        )
+        // An interview without assigned interviewers cannot pass.
+        if (assignments.isEmpty()) {
+            return false;
+        }
+
+        // Get all evaluations submitted for this interview.
+        List<InterviewEvaluation> evaluations =
+                evaluationRepository
+                        .findByCompanyIdAndInterviewIdOrderByCreatedAtAsc(
+                                companyId,
+                                interviewId
+                        );
+
+        // Every assigned interviewer must have a submitted
+        // evaluation with HIRE or STRONG_HIRE.
+        return assignments.stream().allMatch(assignment -> {
+
+            Long evaluatorId = assignment.getEmployeeId();
+
+            if (evaluatorId == null) {
+                return false;
+            }
+
+            return evaluations.stream().anyMatch(evaluation -> {
+
+                String recommendation = evaluation.getRecommendation();
+
+                return evaluatorId.equals(evaluation.getEvaluatorId())
+
+                        && "SUBMITTED".equalsIgnoreCase(
+                        evaluation.getStatus()
                 )
-        );
+
+                        && evaluation.getSubmittedAt() != null
+
+                        && recommendation != null
+
+                        && PASSING_RECOMMENDATIONS.contains(
+                        normalizeRecommendation(recommendation)
+                );
+            });
+        });
+    }
+
+    // ------------------------------------------------------------
+    // NEW: CHECK ALL ASSIGNED INTERVIEWERS HAVE SUBMITTED
+    // RECOMMENDATIONS DO NOT AFFECT THIS CHECK
+    // ------------------------------------------------------------
+
+    @Transactional(readOnly = true)
+    public boolean hasAllAssignedEvaluationsSubmitted(Long interviewId) {
+
+        Long companyId = authService.getCurrentCompanyId();
+
+        Interview interview = findInterview(interviewId, companyId);
+
+        // The interview must be completed first.
+        if (!"Completed".equalsIgnoreCase(interview.getStatus())) {
+            return false;
+        }
+
+        // Get every interviewer assigned to this interview.
+        List<InterviewEvaluatorAssignment> assignments =
+                assignmentRepository.findByCompanyIdAndInterviewId(
+                        companyId,
+                        interviewId
+                );
+
+        // An interview without assigned interviewers cannot proceed.
+        if (assignments.isEmpty()) {
+            return false;
+        }
+
+        // Get all evaluations for this interview.
+        List<InterviewEvaluation> evaluations =
+                evaluationRepository
+                        .findByCompanyIdAndInterviewIdOrderByCreatedAtAsc(
+                                companyId,
+                                interviewId
+                        );
+
+        // Every assigned interviewer must have a submitted evaluation.
+        // The recommendation value is intentionally not checked here.
+        return assignments.stream().allMatch(assignment -> {
+
+            Long evaluatorId = assignment.getEmployeeId();
+
+            if (evaluatorId == null) {
+                return false;
+            }
+
+            return evaluations.stream().anyMatch(evaluation ->
+
+                    evaluatorId.equals(evaluation.getEvaluatorId())
+
+                            && "SUBMITTED".equalsIgnoreCase(
+                            evaluation.getStatus()
+                    )
+
+                            && evaluation.getSubmittedAt() != null
+            );
+        });
+    }
+
+    // ------------------------------------------------------------
+    // BACKWARD-COMPATIBLE PASSING CHECK
+    // ------------------------------------------------------------
+
+    @Transactional(readOnly = true)
+    public boolean hasPassingSubmittedEvaluation(Long interviewId) {
+
+        return hasAllAssignedEvaluationsPassing(interviewId);
     }
 
     // ------------------------------------------------------------
@@ -339,11 +449,11 @@ public class InterviewEvaluationService {
 
         boolean canViewAllEvaluations = permissionService.isFullAccess()
                 || permissionService.hasAny(
-                        "INTERVIEW_SCHEDULE",
-                        "INTERVIEW_DECIDE")
+                "INTERVIEW_SCHEDULE",
+                "INTERVIEW_DECIDE")
                 || permissionService.has("INTERVIEW_PROGRESS_VIEW")
                 || permissionService.currentPermissions().stream()
-                        .anyMatch(code -> !"INTERVIEW_EVALUATE".equals(code));
+                .anyMatch(code -> !"INTERVIEW_EVALUATE".equals(code));
 
         if (canViewAllEvaluations) {
 

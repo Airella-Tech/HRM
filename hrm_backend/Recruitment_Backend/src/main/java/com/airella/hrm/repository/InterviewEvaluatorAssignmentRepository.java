@@ -8,6 +8,7 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Collection;
 
 
 @Repository
@@ -33,6 +34,13 @@ public interface InterviewEvaluatorAssignmentRepository
     List<InterviewEvaluatorAssignment> findByCompanyIdAndEmployeeId(
             Long companyId,
             Long employeeId
+    );
+
+    // Get interviewer assignments for multiple interviews in one query.
+    List<InterviewEvaluatorAssignment>
+    findByCompanyIdAndInterviewIdIn(
+            Long companyId,
+            Collection<Long> interviewIds
     );
 
     /**

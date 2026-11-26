@@ -2,16 +2,22 @@ import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { PageLayout } from "../../components/PageLayout";
 import StatCard, { StatCardGrid } from "../../components/StatCard";
+import FilterBar from "./components/FilterBar";
 import { recruitmentApi } from "../../services/api";
 import { DeadlineMeter } from "../careers/careersShared";
 import { formatSalary, formatDate } from "../../utils/careersFormat";
+import RecruitmentModal, {
+  modalLabelClass,
+  modalInputClass,
+  modalTextareaClass,
+  ModalButton,
+} from "./components/RecruitmentModal";
 import {
   isRemovedFromReview,
   setRemovedFromReview,
 } from "../../utils/vacancyRemovalStorage";
 import {
   ClipboardCheck,
-  Search,
   Filter,
   CheckCircle2,
   Clock,
@@ -42,6 +48,7 @@ import {
   Loader2,
   Award,
   Check,
+  Users,
   ExternalLink,
   ShieldAlert,
   Banknote,
@@ -49,6 +56,9 @@ import {
   RotateCcw,
   History,
   FolderKanban,
+  Hourglass,
+  PauseCircle,
+  Search,
 } from "lucide-react";
 
 const AVATAR_GRADIENTS = [
@@ -607,6 +617,7 @@ export default function RecruitmentApplicationReview() {
 
   // Active vacancy groups displayed
   const displayedVacancyGroups = activeVacancyGroups;
+  const filtersActive = search !== "" || selectedVacancyFilter !== "ALL" || statusTab !== "ALL";
 
   // KPI Metrics & Counts for all readiness recommendation categories
   const totalConfirmed = candidates.length;
@@ -646,7 +657,7 @@ export default function RecruitmentApplicationReview() {
         </div>
       }
     >
-      <div className="p-6 space-y-6 max-w-7xl mx-auto">
+      <div className="space-y-6 max-w-7xl mx-auto">
         {/* Toast Alert Banner */}
         {toastMessage && (
           <div className="p-3.5 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs flex items-center justify-between gap-3 shadow-xs animate-in fade-in">
@@ -676,85 +687,51 @@ export default function RecruitmentApplicationReview() {
         </StatCardGrid>
 
         {/* ── Search, Vacancy Filter & Status Tabs ── */}
-        <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs space-y-3">
-          {/* Top Row: Search input & Position Dropdown */}
-          <div className="flex flex-col sm:flex-row items-center gap-3 w-full">
-            <div className="relative w-full sm:flex-1">
-              <Search className="absolute left-3.5 top-3 text-slate-400" size={17} />
-              <input
-                type="text"
-                placeholder="Search candidate, email, skill..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:outline-none focus:ring-2 focus:ring-primary-500 focus:bg-white"
-              />
-              {search && (
-                <button
-                  onClick={() => setSearch("")}
-                  className="absolute right-3 top-3 text-slate-400 hover:text-slate-600"
-                >
-                  <X size={16} />
-                </button>
-              )}
-            </div>
-
-            {/* Position Dropdown */}
-            <div className="w-full sm:w-72">
-              <select
-                value={selectedVacancyFilter}
-                onChange={(e) => setSelectedVacancyFilter(e.target.value)}
-                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:bg-white cursor-pointer"
-              >
-                <option value="ALL">All Positions ({totalConfirmed})</option>
-                {vacancyOptions.map((v) => (
-                  <option key={v.key} value={v.key}>
-                    {v.title} ({v.count})
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          {/* Bottom Row: Status Tabs (Placed under Search & Position bar) */}
-          <div className="flex items-center justify-between gap-2 pt-2.5 border-t border-slate-100 flex-wrap">
-            <div className="flex flex-wrap items-center gap-1.5">
-              {[
-                { id: "ALL", label: `All Confirmed (${totalConfirmed})` },
-                { id: "READY_INTERVIEW", label: `✓ Ready (${readyInterviewCount})` },
-                { id: "UNDER_REVIEW", label: `⏳ Needs Eval (${needsEvalCount})` },
-                { id: "SECOND_OPINION", label: `👥 2nd Reviewer (${secondOpinionCount})` },
-                { id: "HOLD", label: `⏸️ On Hold (${holdCount})` },
-                { id: "REVIEWED", label: `Reviewed (${reviewedCount})` },
-              ].map((tab) => (
-                <button
-                  key={tab.id}
-                  onClick={() => setStatusTab(tab.id)}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
-                    statusTab === tab.id
-                      ? "bg-primary-600 text-white shadow-xs"
-                      : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-                  }`}
-                >
-                  {tab.label}
-                </button>
-              ))}
-            </div>
-
-            {(search || selectedVacancyFilter !== "ALL" || statusTab !== "ALL") && (
-              <button
-                onClick={() => {
-                  setSearch("");
-                  setSelectedVacancyFilter("ALL");
-                  setStatusTab("ALL");
-                }}
-                className="text-xs font-semibold text-primary-600 hover:text-primary-800 flex items-center gap-1 shrink-0 py-1"
-              >
-                <RefreshCw size={12} />
-                <span>Reset Filters</span>
-              </button>
-            )}
-          </div>
-        </div>
+        <FilterBar
+          search={search}
+          onSearchChange={setSearch}
+          searchPlaceholder="Search candidate, email, skill..."
+          filters={[
+            {
+              id: "position",
+              label: "Position",
+              value: selectedVacancyFilter,
+              onChange: setSelectedVacancyFilter,
+              allLabel: `All positions (${totalConfirmed})`,
+              allValue: "ALL",
+              options: vacancyOptions.map((v) => ({
+                value: v.key,
+                label: `${v.title} (${v.count})`,
+              })),
+            },
+          ]}
+          pills={{
+            value: statusTab,
+            onChange: setStatusTab,
+            items: [
+              { value: "ALL", label: "All confirmed", count: totalConfirmed },
+              { value: "READY_INTERVIEW", label: "Ready", count: readyInterviewCount },
+              { value: "UNDER_REVIEW", label: "Needs eval", count: needsEvalCount },
+              { value: "SECOND_OPINION", label: "2nd reviewer", count: secondOpinionCount },
+              { value: "HOLD", label: "On hold", count: holdCount },
+              { value: "REVIEWED", label: "Reviewed", count: reviewedCount },
+            ],
+          }}
+          count={filteredCandidates.length}
+          countLabel="candidate"
+          onExpandAll={displayedVacancyGroups.length > 1 ? expandAll : undefined}
+          onCollapseAll={
+            displayedVacancyGroups.length > 1
+              ? () => collapseAll(displayedVacancyGroups)
+              : undefined
+          }
+          hasActiveFilters={search !== "" || selectedVacancyFilter !== "ALL" || statusTab !== "ALL"}
+          onReset={() => {
+            setSearch("");
+            setSelectedVacancyFilter("ALL");
+            setStatusTab("ALL");
+          }}
+        />
 
         {/* ── Confirmed Candidates Table ── */}
         {loading ? (
@@ -763,7 +740,7 @@ export default function RecruitmentApplicationReview() {
             <h4 className="font-bold text-slate-800 text-sm">Loading Confirmed Candidates...</h4>
             <p className="text-xs text-slate-400 mt-1">Retrieving candidates confirmed from shortlist</p>
           </div>
-        ) : displayedVacancyGroups.length === 0 ? (
+        ) : displayedVacancyGroups.length === 0 && !filtersActive ? (
           <div className="bg-white rounded-3xl p-16 text-center border border-slate-200/80 shadow-xs max-w-md mx-auto space-y-3">
             <div className="w-14 h-14 bg-primary-50 text-primary-600 rounded-2xl flex items-center justify-center mx-auto mb-3">
               <UserCheck size={28} />
@@ -782,12 +759,23 @@ export default function RecruitmentApplicationReview() {
               </Link>
             )}
           </div>
-        ) : filteredCandidates.length === 0 ? (
-          /* Empty state for search / tab filters */
-          <div className="bg-white rounded-3xl p-12 text-center border border-slate-200/80 shadow-xs">
-            <p className="text-xs text-slate-400 font-medium">
-              No confirmed candidates match the selected filters or search criteria.
-            </p>
+        ) : displayedVacancyGroups.length === 0 ? (
+          <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-12 text-center max-w-md mx-auto space-y-3">
+            <div className="w-12 h-12 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center mx-auto">
+              <Search size={22} />
+            </div>
+            <h4 className="text-base font-semibold text-slate-800">No candidates found</h4>
+            <p className="text-xs text-slate-500">Try changing your search or filters.</p>
+            <button
+              onClick={() => {
+                setSearch("");
+                setSelectedVacancyFilter("ALL");
+                setStatusTab("ALL");
+              }}
+              className="mt-2 inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-primary-50 text-primary-600 hover:bg-primary-100 transition-colors"
+            >
+              Reset filters
+            </button>
           </div>
         ) : (
           <div className="space-y-6">
@@ -803,25 +791,6 @@ export default function RecruitmentApplicationReview() {
                 </span>
               </div>
 
-              {displayedVacancyGroups.length > 1 && (
-                <div className="flex items-center gap-2 text-xs">
-                  <button
-                    type="button"
-                    onClick={expandAll}
-                    className="text-slate-600 hover:text-primary-600 font-semibold transition-colors cursor-pointer"
-                  >
-                    Expand All
-                  </button>
-                  <span className="text-slate-300">•</span>
-                  <button
-                    type="button"
-                    onClick={() => collapseAll(displayedVacancyGroups)}
-                    className="text-slate-600 hover:text-primary-600 font-semibold transition-colors cursor-pointer"
-                  >
-                    Collapse All
-                  </button>
-                </div>
-              )}
             </div>
 
             {/* Vacancy Separated Candidate Tables */}
@@ -838,21 +807,19 @@ export default function RecruitmentApplicationReview() {
               return (
                 <div
                   key={group.vacancyKey}
-                  className="bg-white rounded-xl border border-slate-200 border-l-4 border-l-primary-600 shadow-sm overflow-hidden transition-shadow hover:shadow-md"
+                  className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden transition-shadow hover:shadow-md"
                 >
                   {/* ── Vacancy Header ── */}
                   <div
-                    className={`px-6 py-4 flex flex-col lg:flex-row lg:items-center justify-between gap-4 ${
-                      isCollapsed ? "" : "border-b border-slate-200"
-                    }`}
+                    className="px-6 py-5 flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-gradient-to-r from-[#d5dbf5] to-[#e6e9f9] border-b border-[#cfd5ee] text-slate-900"
                   >
                     <div className="flex items-center gap-4 min-w-0">
-                      <div className="w-11 h-11 rounded-xl bg-primary-50 text-primary-600 flex items-center justify-center shrink-0">
-                        <Briefcase size={20} />
+                      <div className="h-12 w-12 rounded-2xl bg-primary-600 text-white shadow-md shadow-primary-600/25 flex items-center justify-center shrink-0">
+                        <Briefcase size={22} />
                       </div>
                       <div className="min-w-0">
-                        <h3 className="text-lg font-bold text-slate-900 truncate">{group.title}</h3>
-                        <p className="text-xs text-slate-500 mt-0.5 flex flex-wrap items-center gap-x-2">
+                        <h3 className="text-xl font-bold tracking-tight text-[#1b2142] truncate">{group.title}</h3>
+                        <p className="text-sm text-slate-600 mt-0.5 flex flex-wrap items-center gap-x-2">
                           <span className="inline-flex items-center gap-1">
                             <Building2 size={12} />
                             <span>{group.department}</span>
@@ -1032,19 +999,19 @@ export default function RecruitmentApplicationReview() {
                                     <div>
                                       {cand.readinessStatus === "READY_FOR_INTERVIEW" ? (
                                         <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                          ✓ Ready for Interview
+                                          <CheckCircle2 size={11} /> Ready for Interview
                                         </span>
                                       ) : cand.readinessStatus === "SECOND_OPINION" ? (
                                         <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg text-[10px] font-bold bg-primary-50 text-primary-700 border border-primary-200">
-                                          👥 2nd Reviewer Needed
+                                          <Users size={11} /> 2nd Reviewer Needed
                                         </span>
                                       ) : cand.readinessStatus === "HOLD" ? (
                                         <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg text-[10px] font-bold bg-slate-100 text-slate-700 border border-slate-300">
-                                          ⏸️ Put on Hold
+                                          <PauseCircle size={11} /> Put on Hold
                                         </span>
                                       ) : (
                                         <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200">
-                                          ⏳ Needs Further Evaluation
+                                          <Hourglass size={11} /> Needs Further Evaluation
                                         </span>
                                       )}
                                     </div>
@@ -1100,32 +1067,34 @@ export default function RecruitmentApplicationReview() {
 
       {/* ── Interactive Candidate Review & Assessment Modal ── */}
       {activeReviewCandidate && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl overflow-hidden border border-slate-100 flex flex-col max-h-[92vh] animate-in fade-in zoom-in-95">
-            {/* Modal Header */}
-            <div className="p-6 border-b border-slate-100 bg-slate-50/70 flex justify-between items-start">
-              <div>
-                <span className="text-[11px] font-bold text-primary-600 uppercase tracking-wider block">
-                  Confirmed Candidate Assessment
-                </span>
-                <h3 className="text-xl font-bold text-slate-900 mt-0.5">
-                  {activeReviewCandidate.candidateName}
-                </h3>
-                <p className="text-xs text-slate-500 mt-0.5">
-                  Position: <strong className="text-slate-800">{activeReviewCandidate.jobTitle}</strong> • {activeReviewCandidate.department}
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setActiveReviewCandidate(null)}
-                className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center cursor-pointer transition-colors"
+        <RecruitmentModal
+          open
+          title={activeReviewCandidate.candidateName}
+          subtitle={`Confirmed Candidate Assessment • ${activeReviewCandidate.jobTitle} • ${activeReviewCandidate.department}`}
+          onClose={() => setActiveReviewCandidate(null)}
+          size="xl"
+          footer={
+            <>
+              <ModalButton onClick={() => setActiveReviewCandidate(null)}>Cancel</ModalButton>
+              <ModalButton variant="secondary" onClick={() => openRejectModal(activeReviewCandidate)}>
+                <UserX size={14} /> Reject Candidate
+              </ModalButton>
+              <ModalButton variant="primary" type="submit" form="candidate-review-form" disabled={saving}>
+                <Save size={14} />{saving ? "Saving..." : "Save Assessment Notes"}
+              </ModalButton>
+              <ModalButton
+                onClick={() => {
+                  const cand = activeReviewCandidate;
+                  saveReview();
+                  navigate(`/recruitment/interviews?view=schedule&candidateId=${cand.id}&vacancyId=${cand.vacancyId}`);
+                }}
               >
-                <X size={16} />
-              </button>
-            </div>
-
-            {/* Modal Body */}
-            <form onSubmit={saveReview} className="p-6 space-y-5 overflow-y-auto flex-1">
+                <CalendarClock size={14} /> Schedule Interview →
+              </ModalButton>
+            </>
+          }
+        >
+            <form id="candidate-review-form" onSubmit={saveReview} className="space-y-5">
               {/* Confirmed Status & Match Score Card */}
               <div className="p-4 bg-emerald-50/70 border border-emerald-200 rounded-2xl flex items-center justify-between gap-3">
                 <div className="flex items-center gap-3">
@@ -1178,7 +1147,7 @@ export default function RecruitmentApplicationReview() {
               {/* Candidate Skills List */}
               {activeReviewCandidate.skills.length > 0 && (
                 <div className="space-y-1.5">
-                  <label className="text-[11px] font-bold uppercase tracking-wider text-slate-600 block">
+                  <label className={modalLabelClass}>
                     Candidate Skills ({activeReviewCandidate.skills.length})
                   </label>
                   <div className="flex flex-wrap gap-1.5">
@@ -1235,27 +1204,28 @@ export default function RecruitmentApplicationReview() {
 
               {/* Screening & Interview Readiness Recommendation */}
               <div className="space-y-1.5">
-                <label className="text-[11px] font-bold uppercase tracking-wider text-slate-600 block">
+                <label className={modalLabelClass}>
                   Interview Readiness Recommendation
                 </label>
                 <div className="grid grid-cols-2 gap-2">
                   {[
-                    { id: "READY_FOR_INTERVIEW", label: "✓ Ready for Interview", activeClass: "bg-emerald-50 border-emerald-600 text-emerald-900 ring-2 ring-emerald-500/30" },
-                    { id: "UNDER_REVIEW", label: "⏳ Needs Further Evaluation", activeClass: "bg-amber-50 border-amber-600 text-amber-900 ring-2 ring-amber-500/30" },
-                    { id: "SECOND_OPINION", label: "👥 2nd Reviewer Needed", activeClass: "bg-primary-50 border-primary-600 text-primary-900 ring-2 ring-primary-500/30" },
-                    { id: "HOLD", label: "⏸️ Put on Hold", activeClass: "bg-slate-100 border-slate-600 text-slate-900 ring-2 ring-slate-400/30" },
+                    { id: "READY_FOR_INTERVIEW", label: "Ready for Interview", Icon: CheckCircle2, activeClass: "bg-emerald-50 border-emerald-600 text-emerald-900 ring-2 ring-emerald-500/30" },
+                    { id: "UNDER_REVIEW", label: "Needs Further Evaluation", Icon: Hourglass, activeClass: "bg-amber-50 border-amber-600 text-amber-900 ring-2 ring-amber-500/30" },
+                    { id: "SECOND_OPINION", label: "2nd Reviewer Needed", Icon: Users, activeClass: "bg-primary-50 border-primary-600 text-primary-900 ring-2 ring-primary-500/30" },
+                    { id: "HOLD", label: "Put on Hold", Icon: PauseCircle, activeClass: "bg-slate-100 border-slate-600 text-slate-900 ring-2 ring-slate-400/30" },
                   ].map((opt) => (
                     <button
                       key={opt.id}
                       type="button"
                       onClick={() => setReadinessStatus(opt.id)}
-                      className={`p-3 rounded-xl text-xs font-bold text-left border transition-all cursor-pointer ${
+                      className={`flex items-center gap-2 p-3 rounded-xl text-xs font-bold text-left border transition-all cursor-pointer ${
                         readinessStatus === opt.id
                           ? opt.activeClass
                           : "bg-white border-slate-200 text-slate-700 hover:bg-slate-50"
                       }`}
                     >
-                      {opt.label}
+                      <opt.Icon size={15} className="shrink-0" />
+                      <span>{opt.label}</span>
                     </button>
                   ))}
                 </div>
@@ -1264,7 +1234,7 @@ export default function RecruitmentApplicationReview() {
               {/* System Screening Assessment (Auto-Calculated, Read-Only) */}
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <label className="text-[11px] font-bold uppercase tracking-wider text-slate-600 flex items-center gap-1.5">
+                  <label className={modalLabelClass}>
                     <Sparkles size={13} className="text-primary-600" />
                     <span>System Screening Assessment</span>
                   </label>
@@ -1373,109 +1343,52 @@ export default function RecruitmentApplicationReview() {
 
               {/* Review Notes & Interview Prep */}
               <div>
-                <label className="text-[11px] font-bold uppercase tracking-wider text-slate-600 block mb-1.5">
+                <label className={modalLabelClass}>
                   Screening Review Notes & Interview Focus Areas
                 </label>
                 <textarea
+                  className={modalTextareaClass}
                   rows={4}
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
                   placeholder="Record strengths, interview discussion topics, technical focus areas, or recruiter observations..."
-                  className="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:bg-white resize-none"
                 />
               </div>
-
-              {/* Modal Footer Actions */}
-              <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-4 border-t border-slate-100">
-                <div className="flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-start">
-                  <button
-                    type="button"
-                    onClick={() => setActiveReviewCandidate(null)}
-                    className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold cursor-pointer"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => openRejectModal(activeReviewCandidate)}
-                    className="inline-flex items-center gap-1.5 px-3 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 rounded-xl text-xs font-semibold border border-rose-200 transition-all cursor-pointer"
-                    title="Reject this candidate application"
-                  >
-                    <UserX size={14} />
-                    <span>Reject Candidate</span>
-                  </button>
-                </div>
-
-                <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
-                  <button
-                    type="submit"
-                    disabled={saving}
-                    className="inline-flex items-center gap-1.5 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-xl text-xs font-bold shadow-sm disabled:opacity-50 cursor-pointer"
-                  >
-                    <Save size={14} />
-                    <span>{saving ? "Saving..." : "Save Assessment Notes"}</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const cand = activeReviewCandidate;
-                      saveReview();
-                      navigate(`/recruitment/interviews?view=schedule&candidateId=${cand.id}&vacancyId=${cand.vacancyId}`);
-                    }}
-                    className="inline-flex items-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-sm transition-all cursor-pointer"
-                    title="Go to Schedule Interview page"
-                  >
-                    <CalendarClock size={14} />
-                    <span>Schedule Interview →</span>
-                  </button>
-                </div>
-              </div>
             </form>
-          </div>
-        </div>
+        </RecruitmentModal>
       )}
 
       {/* ── Candidate Rejection Modal ── */}
       {rejectingCandidate && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden border border-slate-100 animate-in fade-in zoom-in-95">
-            <div className="p-5 border-b border-slate-100 bg-rose-50/60 flex justify-between items-start">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-rose-100 text-rose-600 flex items-center justify-center shrink-0">
-                  <UserX size={20} />
-                </div>
-                <div>
-                  <h3 className="text-base font-bold text-slate-900">
-                    Reject Candidate Application
-                  </h3>
-                  <p className="text-xs text-slate-500 mt-0.5">
-                    {rejectingCandidate.candidateName} • {rejectingCandidate.jobTitle}
-                  </p>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => setRejectingCandidate(null)}
-                className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center cursor-pointer transition-colors"
-              >
-                <X size={15} />
-              </button>
-            </div>
-
-            <div className="p-6 space-y-4">
+        <RecruitmentModal
+          open
+          title="Reject Candidate Application"
+          subtitle={`${rejectingCandidate.candidateName} • ${rejectingCandidate.jobTitle}`}
+          tone="danger"
+          onClose={() => setRejectingCandidate(null)}
+          size="sm"
+          footer={
+            <>
+              <ModalButton disabled={rejecting} onClick={() => setRejectingCandidate(null)}>Cancel</ModalButton>
+              <ModalButton variant="danger" disabled={rejecting} onClick={handleConfirmReject}>
+                <UserX size={14} />{rejecting ? "Rejecting..." : "Confirm Rejection"}
+              </ModalButton>
+            </>
+          }
+        >
+            <div className="space-y-4">
               <p className="text-xs text-slate-600 leading-relaxed">
                 Are you sure you want to reject <strong>{rejectingCandidate.candidateName}</strong>? This will update their application status to <span className="font-semibold text-rose-700">REJECTED</span> and remove them from the review list.
               </p>
 
               <div className="space-y-1.5">
-                <label className="text-[11px] font-bold uppercase tracking-wider text-slate-600 block">
+                <label className={modalLabelClass}>
                   Reason for Rejection
                 </label>
                 <select
                   value={rejectionReason}
                   onChange={(e) => setRejectionReason(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-rose-500 cursor-pointer"
+                  className={modalInputClass}
                 >
                   {REJECTION_REASONS.map((r) => (
                     <option key={r} value={r}>
@@ -1487,7 +1400,7 @@ export default function RecruitmentApplicationReview() {
 
               {rejectionReason === "Other" && (
                 <div className="space-y-1">
-                  <label className="text-[11px] font-bold uppercase tracking-wider text-slate-600 block">
+                  <label className={modalLabelClass}>
                     Custom Rejection Note
                   </label>
                   <textarea
@@ -1495,88 +1408,35 @@ export default function RecruitmentApplicationReview() {
                     value={customRejectionReason}
                     onChange={(e) => setCustomRejectionReason(e.target.value)}
                     placeholder="Provide specific reason for rejection..."
-                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-rose-500 resize-none"
+                    className={modalTextareaClass}
                   />
                 </div>
               )}
             </div>
-
-            <div className="p-4 bg-slate-50 border-t border-slate-100 flex items-center justify-between gap-3">
-              <button
-                type="button"
-                onClick={() => setRejectingCandidate(null)}
-                disabled={rejecting}
-                className="px-4 py-2 bg-white hover:bg-slate-100 text-slate-700 rounded-xl text-xs font-semibold border border-slate-200 cursor-pointer"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={handleConfirmReject}
-                disabled={rejecting}
-                className="inline-flex items-center gap-1.5 px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold shadow-sm transition-all cursor-pointer disabled:opacity-50"
-              >
-                <UserX size={14} />
-                <span>{rejecting ? "Rejecting..." : "Confirm Rejection"}</span>
-              </button>
-            </div>
-          </div>
-        </div>
+        </RecruitmentModal>
       )}
       {/* ── Job Vacancy Details Modal (Styled like Public Career Page Added Vacancy Details) ── */}
       {selectedVacancyModal && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto animate-fadeIn">
-          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col border border-slate-100 animate-scaleUp">
-            {/* Header: Dark Navy banner styled like Public Careers layout */}
-            <div className="p-6 bg-gradient-to-r from-primary-900 via-primary-800 to-primary-900 text-white flex items-start justify-between border-b border-primary-900/40 relative">
-              <div className="space-y-3 max-w-xl">
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="px-2.5 py-0.5 rounded-full bg-primary-500/30 border border-primary-400/40 text-primary-200 text-[10px] font-extrabold uppercase tracking-widest flex items-center gap-1 shadow-xs">
-                    <Sparkles size={11} className="text-amber-400" />
-                    Career Vacancy Details
-                  </span>
-                  {selectedVacancyModal.status && (
-                    <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 text-[11px] font-semibold flex items-center gap-1">
-                      <CheckCircle2 size={12} />
-                      {selectedVacancyModal.status}
-                    </span>
-                  )}
-                </div>
-
-                <h3 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight leading-tight">
-                  {selectedVacancyModal.title}
-                </h3>
-
-                {/* Hero Chips: Department & Job Type */}
-                <div className="flex flex-wrap items-center gap-2 pt-1">
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-xs font-medium text-primary-100 border border-white/15">
-                    <Building2 size={13} className="text-primary-300" />
-                    {selectedVacancyModal.department || "General"}
-                  </span>
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-xs font-medium text-primary-100 border border-white/15">
-                    <Clock size={13} className="text-primary-300" />
-                    {selectedVacancyModal.jobType || "Full-time"}
-                  </span>
-                  {selectedVacancyModal.vacancyCount && (
-                    <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-xs font-medium text-primary-100 border border-white/15">
-                      <Users size={13} className="text-primary-300" />
-                      {selectedVacancyModal.vacancyCount} {selectedVacancyModal.vacancyCount === 1 ? "Opening" : "Openings"}
-                    </span>
-                  )}
-                </div>
-              </div>
-
-              <button
-                onClick={() => setSelectedVacancyModal(null)}
-                className="p-2 rounded-xl text-slate-300 hover:text-white hover:bg-white/10 transition-colors"
-                title="Close modal"
+        <RecruitmentModal
+          open
+          title={selectedVacancyModal.title}
+          subtitle="Career Vacancy Details"
+          badge={selectedVacancyModal.status}
+          onClose={() => setSelectedVacancyModal(null)}
+          size="xl"
+          footer={
+            <>
+              <Link
+                to="/recruitment/vacancies"
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold text-primary-700 bg-primary-50 hover:bg-primary-100 border border-primary-200/80 transition-colors"
               >
-                <X size={20} />
-              </button>
-            </div>
-
-            {/* Modal Body: 2-Column Responsive Layout like CareerJob.jsx */}
-            <div className="p-6 space-y-6 overflow-y-auto flex-1">
+                <Briefcase size={14} /> Manage Vacancy Postings
+              </Link>
+              <ModalButton onClick={() => setSelectedVacancyModal(null)}>Close</ModalButton>
+            </>
+          }
+        >
+            <div className="space-y-6">
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
                 {/* Left/Main Column (2 cols): Description, Qualifications, Skills */}
                 <div className="lg:col-span-2 space-y-6">
@@ -1699,80 +1559,70 @@ export default function RecruitmentApplicationReview() {
                   </div>
 
                   {/* Public Career link button if ID exists */}
-                  {selectedVacancyModal.id && (
-                    <div className="pt-3 border-t border-slate-200/80">
-                      <Link
-                        to={`/careers/jobs/${selectedVacancyModal.id}`}
-                        target="_blank"
-                        className="w-full inline-flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-primary-600 hover:bg-primary-700 text-white text-xs font-semibold shadow-sm transition-all"
-                      >
-                        <ExternalLink size={13} />
-                        <span>View on Public Careers</span>
-                      </Link>
-                    </div>
-                  )}
+                  {selectedVacancyModal.id && (() => {
+                    const comp =
+                      selectedVacancyModal.companyRef ||
+                      selectedVacancyModal.company ||
+                      (() => {
+                        try {
+                          const u = JSON.parse(localStorage.getItem("user") || "{}");
+                          return (
+                            u.companyRegistrationNumber ||
+                            u.companyRef ||
+                            u.companyName ||
+                            (u.companyId ? String(u.companyId) : "") ||
+                            ""
+                          );
+                        } catch {
+                          return "";
+                        }
+                      })();
+                    const careerUrl = `/careers/jobs/${selectedVacancyModal.id}${
+                      comp ? `?company=${encodeURIComponent(comp)}` : ""
+                    }`;
+                    return (
+                      <div className="pt-3 border-t border-slate-200/80">
+                        <Link
+                          to={careerUrl}
+                          target="_blank"
+                          className="w-full inline-flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-primary-600 hover:bg-primary-700 text-white text-xs font-semibold shadow-sm transition-all"
+                        >
+                          <ExternalLink size={13} />
+                          <span>View on Public Careers</span>
+                        </Link>
+                      </div>
+                    );
+                  })()}
                 </div>
               </div>
             </div>
-
-            {/* Modal Footer */}
-            <div className="p-4 border-t border-slate-100 bg-slate-50/50 flex items-center justify-between">
-              <Link
-                to="/recruitment/vacancies"
-                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold text-primary-700 bg-primary-50 hover:bg-primary-100 border border-primary-200/80 transition-colors"
-              >
-                <Briefcase size={14} />
-                <span>Manage Vacancy Postings</span>
-              </Link>
-              <button
-                onClick={() => setSelectedVacancyModal(null)}
-                className="px-5 py-2.5 rounded-xl bg-slate-200 hover:bg-slate-300 text-slate-800 text-xs font-semibold transition-colors"
-              >
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
+        </RecruitmentModal>
       )}
 
       {/* Confirmation Modal: Remove Vacancy to Review History */}
       {confirmArchiveModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
-          <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-200 space-y-4">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center shrink-0">
-                <Archive size={22} />
-              </div>
-              <div>
-                <h3 className="text-base font-bold text-slate-900">Remove Vacancy</h3>
-                <p className="text-xs text-slate-500">Move vacancy to Review History</p>
-              </div>
-            </div>
+        <RecruitmentModal
+          open
+          title="Remove Vacancy"
+          subtitle="Move vacancy to Review History"
+          tone="danger"
+          onClose={() => setConfirmArchiveModal(null)}
+          size="sm"
+          footer={
+            <>
+              <ModalButton disabled={actionInProgress} onClick={() => setConfirmArchiveModal(null)}>Cancel</ModalButton>
+              <ModalButton variant="danger" disabled={actionInProgress} onClick={handleArchiveVacancy}>
+                {actionInProgress ? <Loader2 size={14} className="animate-spin" /> : <Archive size={14} />}
+                Confirm & Remove
+              </ModalButton>
+            </>
+          }
+        >
             <p className="text-xs text-slate-600 leading-relaxed">
               Are you sure you want to remove <span className="font-bold text-slate-900">{confirmArchiveModal.vacancy?.title}</span> from active reviews?
               This vacancy and its shortlisted candidates will be moved to the <span className="font-semibold text-primary-700">Review History</span> view.
             </p>
-            <div className="flex items-center justify-end gap-2.5 pt-2">
-              <button
-                type="button"
-                disabled={actionInProgress}
-                onClick={() => setConfirmArchiveModal(null)}
-                className="px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 transition-colors cursor-pointer"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                disabled={actionInProgress}
-                onClick={handleArchiveVacancy}
-                className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-semibold text-white bg-rose-600 hover:bg-rose-700 transition-colors shadow-sm cursor-pointer disabled:opacity-50"
-              >
-                {actionInProgress ? <Loader2 size={14} className="animate-spin" /> : <Archive size={14} />}
-                <span>Confirm & Remove</span>
-              </button>
-            </div>
-          </div>
-        </div>
+        </RecruitmentModal>
       )}
 
     </PageLayout>
