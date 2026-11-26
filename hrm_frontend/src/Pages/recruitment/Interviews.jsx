@@ -34,10 +34,10 @@ import {
   RefreshCw,
   Check,
   Save,
-  Info,
 } from "lucide-react";
 import { PageLayout } from "../../components/PageLayout";
 import StatCard, { StatCardGrid } from "../../components/StatCard";
+import FilterBar from "./components/FilterBar";
 import VacancyGroupCard from "./VacancyGroupCard";
 import { recruitmentApi } from "../../services/api";
 import { avatarColorClass } from "../../utils/avatarColor";
@@ -1738,68 +1738,24 @@ export default function RecruitmentInterviews() {
 
           {mode === "list" && (
             <>
-              <div className="bg-white rounded-xl border border-slate-200 shadow-sm px-4 py-3">
-                <div className="flex flex-wrap items-center gap-3">
-                  <div className="relative flex-1 min-w-[220px]">
-                    <Search
-                      size={17}
-                      className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
-                    />
-                    <input
-                      value={search}
-                      onChange={(event) => setSearch(event.target.value)}
-                      placeholder="Search interviews..."
-                      className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50 pl-9 pr-3 text-sm text-slate-800 placeholder-slate-400 focus:border-primary-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary-100"
-                    />
-                  </div>
-                  <span
-                    title="Search and filter scheduled interviews by status or round."
-                    className="inline-flex shrink-0 text-slate-400"
-                  >
-                    <Info size={14} />
-                  </span>
-                  <span className="text-sm font-semibold text-slate-600">
-                    Status:
-                  </span>
-                  <div className="flex flex-wrap items-center gap-1">
-                    {["All", ...STATUSES].map((status) => (
-                      <button
-                        key={status}
-                        type="button"
-                        aria-pressed={statusFilter === status}
-                        onClick={() => setStatusFilter(status)}
-                        className={`rounded-full border px-3 py-1.5 text-sm font-semibold transition-colors ${
-                          statusFilter === status
-                            ? "border-primary-600 bg-primary-600 text-white shadow-sm"
-                            : "border-slate-300 bg-white text-slate-600 hover:bg-slate-50"
-                        }`}
-                      >
-                        {status}
-                      </button>
-                    ))}
-                  </div>
-                  <span className="text-sm font-semibold text-slate-600">
-                    Round:
-                  </span>
-                  <div className="flex flex-wrap items-center gap-1">
-                    {["All", ...ROUNDS].map((round) => (
-                      <button
-                        key={round}
-                        type="button"
-                        aria-pressed={roundFilter === round}
-                        onClick={() => setRoundFilter(round)}
-                        className={`rounded-full border px-3 py-1.5 text-sm font-semibold transition-colors ${
-                          roundFilter === round
-                            ? "border-primary-600 bg-primary-600 text-white shadow-sm"
-                            : "border-slate-300 bg-white text-slate-600 hover:bg-slate-50"
-                        }`}
-                      >
-                        {round}
-                      </button>
-                    ))}
-                  </div>
-                  <div className="flex items-center rounded-xl border border-slate-200 bg-slate-50 p-0.5">
+              <FilterBar
+                search={search}
+                onSearchChange={setSearch}
+                searchPlaceholder="Search interviews..."
+                filters={[
+                  {
+                    id: "round",
+                    label: "Round",
+                    value: roundFilter,
+                    onChange: setRoundFilter,
+                    allLabel: "All rounds",
+                    options: ROUNDS,
+                  },
+                ]}
+                extras={
+                  <div className="flex h-10 items-center rounded-xl border border-slate-200 bg-slate-50 p-0.5">
                     <button
+                      type="button"
                       onClick={() => setMode("list")}
                       className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-semibold ${
                         mode === "list"
@@ -1810,6 +1766,7 @@ export default function RecruitmentInterviews() {
                       <List size={14} /> List
                     </button>
                     <button
+                      type="button"
                       onClick={() => setMode("calendar")}
                       className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-semibold ${
                         mode === "calendar"
@@ -1820,31 +1777,33 @@ export default function RecruitmentInterviews() {
                       <CalendarRange size={14} /> Calendar
                     </button>
                   </div>
-                  <span className="ml-auto text-xs text-slate-500">
-                    {filtered.length} interview
-                    {filtered.length !== 1 ? "s" : ""} found
-                  </span>
-                  {vacancyGroups.length > 0 && (
-                    <div className="flex items-center gap-1 border-l border-slate-200 pl-3">
-                      <button
-                        type="button"
-                        onClick={expandAllGroups}
-                        className="rounded-lg px-2 py-1 text-sm font-semibold text-slate-500 hover:bg-slate-50 hover:text-primary-600"
-                      >
-                        Expand All
-                      </button>
-                      <span className="h-4 w-px bg-slate-200" />
-                      <button
-                        type="button"
-                        onClick={collapseAllGroups}
-                        className="rounded-lg px-2 py-1 text-sm font-semibold text-slate-500 hover:bg-slate-50 hover:text-primary-600"
-                      >
-                        Collapse All
-                      </button>
-                    </div>
-                  )}
-                </div>
-              </div>
+                }
+                pills={{
+                  value: statusFilter,
+                  onChange: setStatusFilter,
+                  items: [
+                    { value: "All", label: "All", count: interviews.length },
+                    ...STATUSES.map((status) => ({
+                      value: status,
+                      label: status,
+                      count: interviews.filter((item) => item.status === status)
+                        .length,
+                    })),
+                  ],
+                }}
+                count={filtered.length}
+                countLabel="interview"
+                onExpandAll={vacancyGroups.length > 0 ? expandAllGroups : undefined}
+                onCollapseAll={vacancyGroups.length > 0 ? collapseAllGroups : undefined}
+                hasActiveFilters={
+                  search !== "" || statusFilter !== "All" || roundFilter !== "All"
+                }
+                onReset={() => {
+                  setSearch("");
+                  setStatusFilter("All");
+                  setRoundFilter("All");
+                }}
+              />
 
               <div className="space-y-6">
                 {vacancyGroups.length ? (

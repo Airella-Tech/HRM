@@ -9,7 +9,6 @@ import React, {
 } from "react";
 import {
   Search,
-  Filter,
   ClipboardCheck,
   Clock,
   CheckCircle2,
@@ -25,10 +24,10 @@ import {
   Users,
   TrendingUp,
   AlertCircle,
-  Info,
 } from "lucide-react";
 import PageLayout from "../../components/PageLayout";
 import StatCard, { StatCardGrid } from "../../components/StatCard";
+import FilterBar from "./components/FilterBar";
 import VacancyGroupCard from "./VacancyGroupCard";
 import { recruitmentApi } from "../../services/api";
 import { avatarColorClass } from "../../utils/avatarColor";
@@ -742,7 +741,6 @@ export default function InterviewProgress() {
   const [statusFilter, setStatusFilter] = useState("All");
   const [roundFilter, setRoundFilter] = useState("All");
   const [jobFilter, setJobFilter] = useState("All");
-  const [showFilters, setShowFilters] = useState(false);
   const [selectedCandidate, setSelectedCandidate] = useState(null);
   const [collapsedGroups, setCollapsedGroups] = useState({});
 
@@ -1229,144 +1227,46 @@ export default function InterviewProgress() {
           </section>
 
           <div className="space-y-6">
-            <div className="bg-white rounded-xl border border-slate-200 shadow-sm px-4 py-3">
-              <div className="flex flex-wrap items-center gap-3">
-              <div className="relative flex-1 min-w-[220px]">
-                <Search
-                  size={17}
-                  className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
-                />
-                <input
-                  type="search"
-                  value={searchTerm}
-                  onChange={(event) => setSearchTerm(event.target.value)}
-                  placeholder="Search candidates..."
-                  aria-label="Search candidates"
-                  className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50 pl-9 pr-3 text-sm text-slate-800 placeholder-slate-400 focus:border-primary-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary-100"
-                />
-              </div>
-              <span
-                title="Search candidates and filter by status, current interview round, or job position."
-                className="inline-flex shrink-0 text-slate-400"
-              >
-                <Info size={14} />
-              </span>
-              <div className="flex items-center">
-                <button
-                  type="button"
-                  onClick={() => setShowFilters((value) => !value)}
-                  aria-expanded={showFilters}
-                  className="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-slate-200 px-4 text-sm font-semibold text-slate-700 hover:bg-slate-50"
-                >
-                  <Filter size={16} /> Filters
-                </button>
-              </div>
-              <span className="ml-auto text-xs text-slate-500">
-                {loading
-                  ? "Loading candidates..."
-                  : `${filteredCandidates.length} candidate${filteredCandidates.length !== 1 ? "s" : ""} found`}
-              </span>
-              {vacancyGroups.length > 0 && (
-                <div className="flex items-center gap-1 border-l border-slate-200 pl-3">
-                  <button
-                    type="button"
-                    onClick={expandAllGroups}
-                    className="rounded-lg px-2 py-1 text-sm font-semibold text-slate-500 hover:bg-slate-50 hover:text-primary-600"
-                  >
-                    Expand All
-                  </button>
-                  <span className="h-4 w-px bg-slate-200" />
-                  <button
-                    type="button"
-                    onClick={collapseAllGroups}
-                    className="rounded-lg px-2 py-1 text-sm font-semibold text-slate-500 hover:bg-slate-50 hover:text-primary-600"
-                  >
-                    Collapse All
-                  </button>
-                </div>
-              )}
-            </div>
-
-            {showFilters && (
-              <div className="mt-3 flex flex-wrap items-center gap-3 border-t border-slate-200 pt-3">
-                <div className="flex items-center gap-2">
-                  <label
-                    htmlFor="progress-status-filter"
-                    className="text-sm font-semibold text-slate-600"
-                  >
-                    Status:
-                  </label>
-                  <select
-                    id="progress-status-filter"
-                    value={statusFilter}
-                    onChange={(event) => setStatusFilter(event.target.value)}
-                    className="h-10 w-auto rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-800 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100"
-                  >
-                    <option value="All">All</option>
-                    {STATUS_OPTIONS.map((status) => (
-                      <option key={status} value={status}>
-                        {status}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <label
-                    htmlFor="progress-round-filter"
-                    className="text-sm font-semibold text-slate-600"
-                  >
-                    Round:
-                  </label>
-                  <select
-                    id="progress-round-filter"
-                    value={roundFilter}
-                    onChange={(event) => setRoundFilter(event.target.value)}
-                    className="h-10 w-auto rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-800 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100"
-                  >
-                    <option value="All">All</option>
-                    {ROUNDS.map((round) => (
-                      <option key={round} value={round}>
-                        {round}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <label
-                    htmlFor="progress-job-filter"
-                    className="text-sm font-semibold text-slate-600"
-                  >
-                    Position:
-                  </label>
-                  <select
-                    id="progress-job-filter"
-                    value={jobFilter}
-                    onChange={(event) => setJobFilter(event.target.value)}
-                    className="h-10 w-auto rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-800 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100"
-                  >
-                    <option value="All">All</option>
-                    {jobTitles.map((job) => (
-                      <option key={job} value={job}>
-                        {job}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="flex items-center">
-                  <button
-                    type="button"
-                    onClick={resetFilters}
-                    className="h-10 rounded-xl border border-slate-200 bg-white px-4 text-sm font-medium text-slate-600 hover:bg-slate-50"
-                  >
-                    Clear Filters
-                  </button>
-                </div>
-              </div>
-            )}
-            </div>
+            <FilterBar
+              search={searchTerm}
+              onSearchChange={setSearchTerm}
+              searchPlaceholder="Search candidates..."
+              filters={[
+                {
+                  id: "status",
+                  label: "Status",
+                  value: statusFilter,
+                  onChange: setStatusFilter,
+                  options: STATUS_OPTIONS,
+                },
+                {
+                  id: "round",
+                  label: "Round",
+                  value: roundFilter,
+                  onChange: setRoundFilter,
+                  options: ROUNDS,
+                },
+                {
+                  id: "position",
+                  label: "Position",
+                  value: jobFilter,
+                  onChange: setJobFilter,
+                  options: jobTitles,
+                },
+              ]}
+              count={filteredCandidates.length}
+              countLabel="candidate"
+              loading={loading}
+              onExpandAll={vacancyGroups.length > 0 ? expandAllGroups : undefined}
+              onCollapseAll={vacancyGroups.length > 0 ? collapseAllGroups : undefined}
+              hasActiveFilters={
+                searchTerm !== "" ||
+                statusFilter !== "All" ||
+                roundFilter !== "All" ||
+                jobFilter !== "All"
+              }
+              onReset={resetFilters}
+            />
 
             <div className="space-y-6">
               {loading ? (
