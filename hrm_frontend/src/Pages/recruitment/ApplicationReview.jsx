@@ -58,6 +58,7 @@ import {
   FolderKanban,
   Hourglass,
   PauseCircle,
+  Search,
 } from "lucide-react";
 
 const AVATAR_GRADIENTS = [
@@ -616,6 +617,7 @@ export default function RecruitmentApplicationReview() {
 
   // Active vacancy groups displayed
   const displayedVacancyGroups = activeVacancyGroups;
+  const filtersActive = search !== "" || selectedVacancyFilter !== "ALL" || statusTab !== "ALL";
 
   // KPI Metrics & Counts for all readiness recommendation categories
   const totalConfirmed = candidates.length;
@@ -655,7 +657,7 @@ export default function RecruitmentApplicationReview() {
         </div>
       }
     >
-      <div className="p-6 space-y-6 max-w-7xl mx-auto">
+      <div className="space-y-6 max-w-7xl mx-auto">
         {/* Toast Alert Banner */}
         {toastMessage && (
           <div className="p-3.5 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs flex items-center justify-between gap-3 shadow-xs animate-in fade-in">
@@ -738,7 +740,7 @@ export default function RecruitmentApplicationReview() {
             <h4 className="font-bold text-slate-800 text-sm">Loading Confirmed Candidates...</h4>
             <p className="text-xs text-slate-400 mt-1">Retrieving candidates confirmed from shortlist</p>
           </div>
-        ) : displayedVacancyGroups.length === 0 ? (
+        ) : displayedVacancyGroups.length === 0 && !filtersActive ? (
           <div className="bg-white rounded-3xl p-16 text-center border border-slate-200/80 shadow-xs max-w-md mx-auto space-y-3">
             <div className="w-14 h-14 bg-primary-50 text-primary-600 rounded-2xl flex items-center justify-center mx-auto mb-3">
               <UserCheck size={28} />
@@ -757,12 +759,23 @@ export default function RecruitmentApplicationReview() {
               </Link>
             )}
           </div>
-        ) : filteredCandidates.length === 0 ? (
-          /* Empty state for search / tab filters */
-          <div className="bg-white rounded-3xl p-12 text-center border border-slate-200/80 shadow-xs">
-            <p className="text-xs text-slate-400 font-medium">
-              No confirmed candidates match the selected filters or search criteria.
-            </p>
+        ) : displayedVacancyGroups.length === 0 ? (
+          <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-12 text-center max-w-md mx-auto space-y-3">
+            <div className="w-12 h-12 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center mx-auto">
+              <Search size={22} />
+            </div>
+            <h4 className="text-base font-semibold text-slate-800">No candidates found</h4>
+            <p className="text-xs text-slate-500">Try changing your search or filters.</p>
+            <button
+              onClick={() => {
+                setSearch("");
+                setSelectedVacancyFilter("ALL");
+                setStatusTab("ALL");
+              }}
+              className="mt-2 inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-primary-50 text-primary-600 hover:bg-primary-100 transition-colors"
+            >
+              Reset filters
+            </button>
           </div>
         ) : (
           <div className="space-y-6">

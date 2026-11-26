@@ -62,6 +62,7 @@ import {
   History,
   FolderKanban,
   ExternalLink,
+  Search,
 } from "lucide-react";
 
 /**
@@ -917,6 +918,36 @@ export default function RecruitmentCandidateShortlist() {
     setCollapsedGroups(all);
   };
 
+  // Number of candidates matching the search AND the chosen status (all vacancies)
+  const matchedCandidateTotal = displayedVacancyGroups.reduce((total, group) => {
+    const vacKey = group.vacancyKey;
+    const cfg =
+      screeningConfigs[group.vacancyId] ||
+      screeningConfigs[String(group.vacancyId)] ||
+      screeningConfigs[vacKey];
+    const minScore = cfg?.minimumScore ?? 75;
+    const stagedSet = getStagedSet(vacKey);
+    const q = search.trim().toLowerCase();
+    return (
+      total +
+      group.candidates.filter((c) => {
+        const matchesSearch =
+          !q ||
+          (c.candidateName || "").toLowerCase().includes(q) ||
+          (c.email || "").toLowerCase().includes(q) ||
+          (Array.isArray(c.skills) && c.skills.some((sk) => sk.toLowerCase().includes(q)));
+        if (!matchesSearch) return false;
+        if (globalStatusFilter === "ALL") return true;
+        if (globalStatusFilter === "SUITABLE") return getCandidateSuitability(c, minScore).isSuitable;
+        if (globalStatusFilter === "NOT_SUITABLE") return !getCandidateSuitability(c, minScore).isSuitable;
+        if (globalStatusFilter === "SHORTLISTED") return c.status === "SHORTLISTED";
+        if (globalStatusFilter === "STAGED") return stagedSet.has(c.id);
+        if (globalStatusFilter === "REJECTED") return c.status === "REJECTED";
+        return true;
+      }).length
+    );
+  }, 0);
+
   return (
     <PageLayout
       role="recruiter"
@@ -944,7 +975,7 @@ export default function RecruitmentCandidateShortlist() {
         </div>
       }
     >
-      <div className="p-6 space-y-6 max-w-7xl mx-auto">
+      <div className="space-y-6 max-w-7xl mx-auto">
         {/* ── Action Notice ── */}
         {actionNotice && (
           <div className="p-3.5 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center justify-between text-xs text-emerald-800 font-medium shadow-xs">
@@ -1072,6 +1103,24 @@ export default function RecruitmentCandidateShortlist() {
               </Link>
             )}
           </div>
+        ) : matchedCandidateTotal === 0 && (globalStatusFilter !== "ALL" || search.trim() !== "") ? (
+          <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-12 text-center max-w-md mx-auto space-y-3">
+            <div className="w-12 h-12 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center mx-auto">
+              <Search size={22} />
+            </div>
+            <h4 className="text-base font-semibold text-slate-800">No candidates found</h4>
+            <p className="text-xs text-slate-500">Try changing your search or filters.</p>
+            <button
+              onClick={() => {
+                setSearch("");
+                setSelectedVacancyFilter("ALL");
+                setGlobalStatusFilter("ALL");
+              }}
+              className="mt-2 inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-primary-50 text-primary-600 hover:bg-primary-100 transition-colors"
+            >
+              Reset filters
+            </button>
+          </div>
         ) : (
           <div className="space-y-6">
             {displayedVacancyGroups.map((group) => {
@@ -1123,6 +1172,9 @@ export default function RecruitmentCandidateShortlist() {
                   const suitB = getCandidateSuitability(b, minScore).isSuitable ? 1 : 0;
                   return suitB - suitA;
                 });
+
+              // Hide vacancies with nothing to show for the current search or status
+              if ((statusFilter !== "ALL" || search.trim() !== "") && filteredVacancyCandidates.length === 0) return null;
 
               // Status and Suitability count breakdowns
               const vacTotal = group.candidates.length;

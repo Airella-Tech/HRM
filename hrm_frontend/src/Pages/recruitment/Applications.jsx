@@ -489,6 +489,12 @@ export default function RecruitmentApplications() {
     return displayedVacancyGroups.reduce((acc, g) => acc + g.searchMatchedApplications.length, 0);
   }, [displayedVacancyGroups]);
 
+  // Number of applications matching the search AND the chosen status
+  const statusMatchedTotal = useMemo(() => {
+    const all = displayedVacancyGroups.flatMap((g) => g.searchMatchedApplications);
+    return statusFilter === "ALL" ? all.length : all.filter((a) => a.status === statusFilter).length;
+  }, [displayedVacancyGroups, statusFilter]);
+
   // Resume Download Handler
   const handleDownloadResume = async (app, e) => {
     if (e) e.stopPropagation();
@@ -741,24 +747,22 @@ export default function RecruitmentApplications() {
               </Link>
             )}
           </div>
-        ) : totalSearchMatched === 0 ? (
-          /* Empty State: No Matches for Current Search Query */
-          <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-12 text-center max-w-md mx-auto space-y-3">
+        ) : statusMatchedTotal === 0 ? (
+          <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-12 text-center max-w-md mx-auto space-y-3">
             <div className="w-12 h-12 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center mx-auto">
               <Search size={22} />
             </div>
-            <h4 className="text-base font-semibold text-slate-800">No matching applications</h4>
-            <p className="text-xs text-slate-400">
-              No candidate applications match your current search query.
-            </p>
+            <h4 className="text-base font-semibold text-slate-800">No applications found</h4>
+            <p className="text-xs text-slate-500">Try changing your search or filters.</p>
             <button
               onClick={() => {
                 setSearch("");
                 setSelectedVacancyId("ALL");
+                setStatusFilter("ALL");
               }}
-              className="mt-2 inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold bg-primary-50 text-primary-600 hover:bg-primary-100 transition-colors"
+              className="mt-2 inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-primary-50 text-primary-600 hover:bg-primary-100 transition-colors"
             >
-              Reset Search Filter
+              Reset filters
             </button>
           </div>
         ) : viewMode === "grouped" ? (
@@ -783,6 +787,9 @@ export default function RecruitmentApplications() {
                 currentStatus === "ALL"
                   ? groupApps
                   : groupApps.filter((a) => a.status === currentStatus);
+
+              // Hide positions with nothing to show for the current search or status
+              if ((currentStatus !== "ALL" || search.trim() !== "") && displayedApps.length === 0) return null;
 
               return (
                 <div
