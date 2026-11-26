@@ -140,10 +140,10 @@ const AdminDashboard = () => {
                 <Building2 size={15} className="text-primary-300" />
                 {totalCompanies} Registered Companies
               </span>
-              <span className="px-4 py-2.5 rounded-xl bg-white/10 text-white text-xs font-semibold backdrop-blur-md flex items-center gap-2 border border-white/10 shadow-xs">
-                <Clock size={15} className="text-primary-300" />
-                {pendingCompanies.length} Pending Review
-              </span>
+                <span className="px-4 py-2.5 rounded-xl bg-white/10 text-white text-xs font-semibold backdrop-blur-md flex items-center gap-2 border border-white/10 shadow-xs">
+                  <Clock size={15} className="text-primary-300" />
+                  {pendingCompanies.length} Pending Review
+                </span>
             </div>
           </div>
         </div>

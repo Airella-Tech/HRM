@@ -112,20 +112,20 @@ const ProfilePage = ({ role = "admin" }) => {
   );
 
   const tabs = isAdmin
-    ? [
-      ["personal", "Personal Information"],
-      ["security", "Security & System Access"],
-    ]
+    ?[
+  ["personal", "Personal Information"],
+  ["security", "Security & System Access"],
+]
     : [
-      ["personal", "Personal Information"],
-      ["employment", "Employment Record"],
-      ["qualifications", "Qualifications & Skills"],
-      ["settings", "Preferences & Security"],
-    ];
+  ["personal", "Personal Information"],
+  ["employment", "Employment Record"],
+  ["qualifications", "Qualifications & Skills"],
+  ["settings", "Preferences & Security"],
+];
 
-  if (!user) return null;
+if (!user) return null;
 
-  return (
+return (
     <PageLayout
       role={role}
       activePage="Profile"

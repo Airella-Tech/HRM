@@ -49,10 +49,10 @@ const AdminAttendance = () => {
     ).toFixed(1),
   };
   const filtered = departmentData.filter(
-    (d) =>
-      d.department.toLowerCase().includes(searchTerm.toLowerCase()) &&
-      (filterDepartment === "all" || d.department === filterDepartment)
-  );
+      (d) =>
+        d.department.toLowerCase().includes(searchTerm.toLowerCase()) &&
+        (filterDepartment === "all" || d.department === filterDepartment)
+    );
 
   if (!user) return null;
   return (

@@ -116,10 +116,10 @@ const AdminSystemConfig = () => {
   };
 
   const severityStyle = (s) =>
-    ({
-      error: "bg-rose-50 text-rose-700 border border-rose-200",
-      warning: "bg-amber-50 text-amber-700 border border-amber-200",
-    }[s] || "bg-sky-50 text-sky-700 border border-sky-200");
+  ({
+    error: "bg-rose-50 text-rose-700 border border-rose-200",
+    warning: "bg-amber-50 text-amber-700 border border-amber-200",
+  }[s] || "bg-sky-50 text-sky-700 border border-sky-200");
 
   const barColor = (v) => (v >= 90 ? "bg-emerald-500" : v >= 60 ? "bg-amber-500" : "bg-rose-500");
 
@@ -132,48 +132,47 @@ const AdminSystemConfig = () => {
   ];
 
   return (
-    <PageLayout
-      role="admin"
-      activePage="System Config"
-      title="System Configuration"
-      subtitle="Manage global settings, monitor system health, and review audit logs"
-    >
-      <div className="space-y-6 max-w-7xl mx-auto">
-        {/* Tab bar */}
-        <div className="flex gap-1.5 bg-white p-1.5 rounded-2xl shadow-[0_2px_12px_rgba(15,23,42,0.035)] border border-slate-200/90 w-fit">
-          {tabs.map((t) => (
-            <button
-              key={t.key}
-              onClick={() => setActiveTab(t.key)}
-              className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-xs transition-all ${
-                activeTab === t.key
-                  ? "bg-primary-600 text-white shadow-xs"
-                  : "text-slate-600 hover:bg-slate-50"
-              }`}
-            >
-              <t.icon size={15} /> {t.label}
-            </button>
-          ))}
-        </div>
+        <PageLayout
+          role="admin"
+          activePage="System Config"
+          title="System Configuration"
+          subtitle="Manage global settings, monitor system health, and review audit logs"
+        >
+          <div className="space-y-6 max-w-7xl mx-auto">
+            {/* Tab bar */}
+                  <div className="flex gap-1.5 bg-white p-1.5 rounded-2xl shadow-[0_2px_12px_rgba(15,23,42,0.035)] border border-slate-200/90 w-fit">
+                    {tabs.map((t) => (
+                      <button
+                        key={t.key}
+                        onClick={() => setActiveTab(t.key)}
+                        className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-xs transition-all ${activeTab === t.key
+                            ? "bg-primary-600 text-white shadow-xs"
+                            : "text-slate-600 hover:bg-slate-50"
+                          }`}
+                      >
+                        <t.icon size={15} /> {t.label}
+                      </button>
+                    ))}
+                  </div>
 
-        {/* Settings Tab */}
-        {activeTab === "settings" && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div className="bg-white rounded-2xl shadow-[0_2px_12px_rgba(15,23,42,0.035)] border border-slate-200/90 p-6">
-              <h3 className="text-base font-bold text-slate-800 flex items-center gap-2 mb-5">
-                <span className="w-8 h-8 bg-primary-50 text-primary-600 rounded-xl flex items-center justify-center">
-                  <FileText size={16} />
-                </span>
-                Default Leave Policy
-              </h3>
-              <div className="space-y-4">
-                {[
-                  ["Annual Leave (days)", "annualLeaveDays"],
-                  ["Sick Leave (days)", "sickLeaveDays"],
-                  ["Casual Leave (days)", "casualLeaveDays"],
-                  ["Emergency Leave (days)", "emergencyLeaveDays"],
-                  ["Max Carry-Forward Days", "maxCarryForwardDays"],
-                ].map(([label, key]) => (
+                  {/* Settings Tab */}
+                  {activeTab === "settings" && (
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                          <div className="bg-white rounded-2xl shadow-[0_2px_12px_rgba(15,23,42,0.035)] border border-slate-200/90 p-6">
+                            <h3 className="text-base font-bold text-slate-800 flex items-center gap-2 mb-5">
+                              <span className="w-8 h-8 bg-primary-50 text-primary-600 rounded-xl flex items-center justify-center">
+                                <FileText size={16} />
+                              </span>
+                              Default Leave Policy
+                            </h3>
+                            <div className="space-y-4">
+                              {[
+                                ["Annual Leave (days)", "annualLeaveDays"],
+                                ["Sick Leave (days)", "sickLeaveDays"],
+                                ["Casual Leave (days)", "casualLeaveDays"],
+                                ["Emergency Leave (days)", "emergencyLeaveDays"],
+                                ["Max Carry-Forward Days", "maxCarryForwardDays"],
+                              ].map(([label, key]) => (
                   <div key={key} className="flex items-center justify-between text-xs">
                     <label className="text-slate-600 font-medium">{label}</label>
                     <input
