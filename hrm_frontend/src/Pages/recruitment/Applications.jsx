@@ -484,11 +484,6 @@ export default function RecruitmentApplications() {
     return all.filter((a) => a.status === masterStatusFilter);
   }, [displayedVacancyGroups, masterStatusFilter]);
 
-  // Total count matching active search across current display groups
-  const totalSearchMatched = useMemo(() => {
-    return displayedVacancyGroups.reduce((acc, g) => acc + g.searchMatchedApplications.length, 0);
-  }, [displayedVacancyGroups]);
-
   // Number of applications matching the search AND the chosen status
   const statusMatchedTotal = useMemo(() => {
     const all = displayedVacancyGroups.flatMap((g) => g.searchMatchedApplications);
@@ -669,9 +664,8 @@ export default function RecruitmentApplications() {
                   <button
                     type="button"
                     onClick={() => setViewMode("grouped")}
-                    className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-semibold ${
-                      viewMode === "grouped" ? "bg-white text-primary-700 shadow-sm" : "text-slate-600"
-                    }`}
+                    className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-semibold ${viewMode === "grouped" ? "bg-white text-primary-700 shadow-sm" : "text-slate-600"
+                      }`}
                     title="Separate applicant tables according to applied vacancy"
                   >
                     <FolderKanban size={14} /> Separated by Role
@@ -679,9 +673,8 @@ export default function RecruitmentApplications() {
                   <button
                     type="button"
                     onClick={() => setViewMode("list")}
-                    className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-semibold ${
-                      viewMode === "list" ? "bg-white text-primary-700 shadow-sm" : "text-slate-600"
-                    }`}
+                    className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-semibold ${viewMode === "list" ? "bg-white text-primary-700 shadow-sm" : "text-slate-600"
+                      }`}
                     title="View all candidates in one combined master table"
                   >
                     <List size={14} /> Master List
@@ -968,7 +961,7 @@ export default function RecruitmentApplications() {
                                   AVATAR_GRADIENTS[(groupIdx + appIdx) % AVATAR_GRADIENTS.length];
 
                                 return (
-                                                                    <tr
+                                  <tr
                                     key={app.id || appIdx}
                                     className="hover:bg-primary-50/30 transition-colors"
                                   >
@@ -1159,7 +1152,7 @@ export default function RecruitmentApplications() {
                     const jobName = app.jobTitle || app.vacancyTitle || "General Role";
 
                     return (
-                                            <tr
+                      <tr
                         key={app.id || index}
                         className="hover:bg-slate-50/80 transition-colors"
                       >
@@ -1332,176 +1325,176 @@ export default function RecruitmentApplications() {
             </>
           }
         >
-            <div className="space-y-6">
-              {/* Contact details grid */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-4 bg-slate-50 rounded-2xl text-xs text-slate-600 border border-slate-100">
-                <div className="flex items-center gap-2.5">
-                  <Mail size={15} className="text-slate-400 shrink-0" />
-                  <span className="font-medium text-slate-800 truncate">{selectedApp.email}</span>
-                </div>
-                <div className="flex items-center gap-2.5">
-                  <Phone size={15} className="text-slate-400 shrink-0" />
-                  <span className="font-medium text-slate-800">{selectedApp.phone || "Not provided"}</span>
-                </div>
-                <div className="flex items-center gap-2.5">
-                  <MapPin size={15} className="text-slate-400 shrink-0" />
-                  <span className="font-medium text-slate-800">
-                    {selectedApp.location || "Remote / Not specified"}
-                  </span>
-                </div>
-                <div className="flex items-center gap-2.5">
-                  <Calendar size={15} className="text-slate-400 shrink-0" />
-                  <span>
-                    Applied on{" "}
-                    {selectedApp.appliedDate ||
-                      (selectedApp.createdAt ? String(selectedApp.createdAt).slice(0, 10) : "Recently")}
-                  </span>
-                </div>
+          <div className="space-y-6">
+            {/* Contact details grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-4 bg-slate-50 rounded-2xl text-xs text-slate-600 border border-slate-100">
+              <div className="flex items-center gap-2.5">
+                <Mail size={15} className="text-slate-400 shrink-0" />
+                <span className="font-medium text-slate-800 truncate">{selectedApp.email}</span>
               </div>
-
-              {/* Status & Experience */}
-              <div className="flex items-center justify-between p-4 bg-white border border-slate-200/80 rounded-2xl shadow-sm">
-                <div>
-                  <span className="text-xs text-slate-400 font-semibold uppercase">Current Status</span>
-                  <div className="mt-1 flex items-center gap-2">
-                    {(() => {
-                      const st = STATUS_CONFIG[selectedApp.status] || STATUS_CONFIG.NEW;
-                      return (
-                        <span
-                          className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border ${st.bg} ${st.text} ${st.border}`}
-                        >
-                          <span className={`w-1.5 h-1.5 rounded-full ${st.dot}`}></span>
-                          {st.label}
-                        </span>
-                      );
-                    })()}
-
-                    {selectedApp.eligibilityStatus && (
-                      <span className="text-[11px] font-semibold px-2.5 py-0.5 rounded-lg bg-slate-100 text-slate-600 border border-slate-200">
-                        Eligibility: {selectedApp.eligibilityStatus}
-                      </span>
-                    )}
-                  </div>
-                </div>
-
-                <div className="text-right">
-                  <span className="text-xs text-slate-400 font-semibold uppercase">Experience</span>
-                  <div className="mt-1 text-sm font-bold text-slate-800">
-                    {selectedApp.experienceYears ?? 0} Years
-                  </div>
-                </div>
+              <div className="flex items-center gap-2.5">
+                <Phone size={15} className="text-slate-400 shrink-0" />
+                <span className="font-medium text-slate-800">{selectedApp.phone || "Not provided"}</span>
               </div>
-
-              {/* Professional Summary */}
-              {selectedApp.summary && (
-                <div>
-                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">
-                    Candidate Overview
-                  </h4>
-                  <p className="text-sm text-slate-700 leading-relaxed bg-slate-50/70 p-4 rounded-2xl border border-slate-100">
-                    {selectedApp.summary}
-                  </p>
-                </div>
-              )}
-
-              {/* Education */}
-              {selectedApp.education && (
-                <div>
-                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">
-                    Education
-                  </h4>
-                  <div className="flex items-center gap-2.5 p-3.5 bg-slate-50/70 rounded-2xl border border-slate-100 text-sm text-slate-800">
-                    <GraduationCap size={18} className="text-primary-600 shrink-0" />
-                    <span>{selectedApp.education}</span>
-                  </div>
-                </div>
-              )}
-
-              {/* Skills Tags */}
-              {selectedApp.skills && selectedApp.skills.length > 0 && (
-                <div>
-                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">
-                    Key Skills
-                  </h4>
-                  <div className="flex flex-wrap gap-2">
-                    {selectedApp.skills.map((skill) => (
-                      <span
-                        key={skill}
-                        className="px-3 py-1 rounded-xl text-xs font-semibold bg-primary-50 text-primary-700 border border-primary-100"
-                      >
-                        {skill}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Resume Document Card & Extracted Plaintext Inspection */}
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500">
-                    Resume Document
-                  </h4>
-                  {selectedApp.resumeText && (
-                    <button
-                      onClick={() => setShowResumeText(!showResumeText)}
-                      className="text-xs font-semibold text-primary-600 hover:text-primary-800 inline-flex items-center gap-1"
-                    >
-                      <span>{showResumeText ? "Hide Resume Text" : "View Extracted Text"}</span>
-                      <ChevronRight
-                        size={14}
-                        className={`transition-transform ${showResumeText ? "rotate-90" : ""}`}
-                      />
-                    </button>
-                  )}
-                </div>
-
-                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-200/80 gap-3">
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div className="w-10 h-10 rounded-xl bg-primary-100 text-primary-600 flex items-center justify-center shrink-0">
-                      <FileText size={20} />
-                    </div>
-                    <div className="min-w-0">
-                      <div className="text-sm font-semibold text-slate-800 truncate">
-                        {selectedApp.resumeFileName || "Candidate_Resume.pdf"}
-                      </div>
-                      <div className="text-xs text-slate-400">
-                        {selectedApp.resumeFileSize || "PDF Document"}
-                        {selectedApp.downloadCount > 0 && ` • Downloaded ${selectedApp.downloadCount} times`}
-                      </div>
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => handleDownloadResume(selectedApp)}
-                    disabled={downloadingId === selectedApp.id}
-                    className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-primary-600 hover:bg-primary-700 text-white text-xs font-semibold shadow-sm transition-all shrink-0 disabled:opacity-50"
-                  >
-                    {downloadingId === selectedApp.id ? (
-                      <Loader2 size={14} className="animate-spin text-white" />
-                    ) : (
-                      <Download size={14} />
-                    )}
-                    <span>Download PDF</span>
-                  </button>
-                </div>
-
-                {/* Extracted plain text parsed via Apache PDFBox */}
-                {showResumeText && selectedApp.resumeText && (
-                  <div className="p-4 bg-slate-900 text-slate-100 rounded-2xl text-xs font-mono leading-relaxed max-h-56 overflow-y-auto border border-slate-800 space-y-2 animate-fadeIn">
-                    <div className="flex items-center justify-between text-[11px] text-slate-400 border-b border-slate-800 pb-2">
-                      <span className="flex items-center gap-1.5 font-sans font-semibold text-primary-400">
-                        <Sparkles size={13} />
-                        Apache PDFBox ATS Text Extraction
-                      </span>
-                      <span>{selectedApp.resumeText.length} characters</span>
-                    </div>
-                    <pre className="whitespace-pre-wrap font-mono text-[11px] text-slate-300">
-                      {selectedApp.resumeText}
-                    </pre>
-                  </div>
-                )}
+              <div className="flex items-center gap-2.5">
+                <MapPin size={15} className="text-slate-400 shrink-0" />
+                <span className="font-medium text-slate-800">
+                  {selectedApp.location || "Remote / Not specified"}
+                </span>
+              </div>
+              <div className="flex items-center gap-2.5">
+                <Calendar size={15} className="text-slate-400 shrink-0" />
+                <span>
+                  Applied on{" "}
+                  {selectedApp.appliedDate ||
+                    (selectedApp.createdAt ? String(selectedApp.createdAt).slice(0, 10) : "Recently")}
+                </span>
               </div>
             </div>
+
+            {/* Status & Experience */}
+            <div className="flex items-center justify-between p-4 bg-white border border-slate-200/80 rounded-2xl shadow-sm">
+              <div>
+                <span className="text-xs text-slate-400 font-semibold uppercase">Current Status</span>
+                <div className="mt-1 flex items-center gap-2">
+                  {(() => {
+                    const st = STATUS_CONFIG[selectedApp.status] || STATUS_CONFIG.NEW;
+                    return (
+                      <span
+                        className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border ${st.bg} ${st.text} ${st.border}`}
+                      >
+                        <span className={`w-1.5 h-1.5 rounded-full ${st.dot}`}></span>
+                        {st.label}
+                      </span>
+                    );
+                  })()}
+
+                  {selectedApp.eligibilityStatus && (
+                    <span className="text-[11px] font-semibold px-2.5 py-0.5 rounded-lg bg-slate-100 text-slate-600 border border-slate-200">
+                      Eligibility: {selectedApp.eligibilityStatus}
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              <div className="text-right">
+                <span className="text-xs text-slate-400 font-semibold uppercase">Experience</span>
+                <div className="mt-1 text-sm font-bold text-slate-800">
+                  {selectedApp.experienceYears ?? 0} Years
+                </div>
+              </div>
+            </div>
+
+            {/* Professional Summary */}
+            {selectedApp.summary && (
+              <div>
+                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">
+                  Candidate Overview
+                </h4>
+                <p className="text-sm text-slate-700 leading-relaxed bg-slate-50/70 p-4 rounded-2xl border border-slate-100">
+                  {selectedApp.summary}
+                </p>
+              </div>
+            )}
+
+            {/* Education */}
+            {selectedApp.education && (
+              <div>
+                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">
+                  Education
+                </h4>
+                <div className="flex items-center gap-2.5 p-3.5 bg-slate-50/70 rounded-2xl border border-slate-100 text-sm text-slate-800">
+                  <GraduationCap size={18} className="text-primary-600 shrink-0" />
+                  <span>{selectedApp.education}</span>
+                </div>
+              </div>
+            )}
+
+            {/* Skills Tags */}
+            {selectedApp.skills && selectedApp.skills.length > 0 && (
+              <div>
+                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">
+                  Key Skills
+                </h4>
+                <div className="flex flex-wrap gap-2">
+                  {selectedApp.skills.map((skill) => (
+                    <span
+                      key={skill}
+                      className="px-3 py-1 rounded-xl text-xs font-semibold bg-primary-50 text-primary-700 border border-primary-100"
+                    >
+                      {skill}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Resume Document Card & Extracted Plaintext Inspection */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                  Resume Document
+                </h4>
+                {selectedApp.resumeText && (
+                  <button
+                    onClick={() => setShowResumeText(!showResumeText)}
+                    className="text-xs font-semibold text-primary-600 hover:text-primary-800 inline-flex items-center gap-1"
+                  >
+                    <span>{showResumeText ? "Hide Resume Text" : "View Extracted Text"}</span>
+                    <ChevronRight
+                      size={14}
+                      className={`transition-transform ${showResumeText ? "rotate-90" : ""}`}
+                    />
+                  </button>
+                )}
+              </div>
+
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-200/80 gap-3">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-10 h-10 rounded-xl bg-primary-100 text-primary-600 flex items-center justify-center shrink-0">
+                    <FileText size={20} />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="text-sm font-semibold text-slate-800 truncate">
+                      {selectedApp.resumeFileName || "Candidate_Resume.pdf"}
+                    </div>
+                    <div className="text-xs text-slate-400">
+                      {selectedApp.resumeFileSize || "PDF Document"}
+                      {selectedApp.downloadCount > 0 && ` • Downloaded ${selectedApp.downloadCount} times`}
+                    </div>
+                  </div>
+                </div>
+                <button
+                  onClick={() => handleDownloadResume(selectedApp)}
+                  disabled={downloadingId === selectedApp.id}
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-primary-600 hover:bg-primary-700 text-white text-xs font-semibold shadow-sm transition-all shrink-0 disabled:opacity-50"
+                >
+                  {downloadingId === selectedApp.id ? (
+                    <Loader2 size={14} className="animate-spin text-white" />
+                  ) : (
+                    <Download size={14} />
+                  )}
+                  <span>Download PDF</span>
+                </button>
+              </div>
+
+              {/* Extracted plain text parsed via Apache PDFBox */}
+              {showResumeText && selectedApp.resumeText && (
+                <div className="p-4 bg-slate-900 text-slate-100 rounded-2xl text-xs font-mono leading-relaxed max-h-56 overflow-y-auto border border-slate-800 space-y-2 animate-fadeIn">
+                  <div className="flex items-center justify-between text-[11px] text-slate-400 border-b border-slate-800 pb-2">
+                    <span className="flex items-center gap-1.5 font-sans font-semibold text-primary-400">
+                      <Sparkles size={13} />
+                      Apache PDFBox ATS Text Extraction
+                    </span>
+                    <span>{selectedApp.resumeText.length} characters</span>
+                  </div>
+                  <pre className="whitespace-pre-wrap font-mono text-[11px] text-slate-300">
+                    {selectedApp.resumeText}
+                  </pre>
+                </div>
+              )}
+            </div>
+          </div>
         </RecruitmentModal>
       )}
       {/* ── Job Vacancy Details Modal (Styled like Public Career Page Added Vacancy Details) ── */}
@@ -1526,166 +1519,165 @@ export default function RecruitmentApplications() {
             </>
           }
         >
-            <div className="space-y-6">
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
-                {/* Left/Main Column (2 cols): Description, Qualifications, Skills */}
-                <div className="lg:col-span-2 space-y-6">
-                  {/* About the Role / Description */}
-                  <div>
-                    <h4 className="text-sm font-bold text-slate-900 tracking-tight uppercase flex items-center gap-2 mb-2">
-                      <Briefcase size={16} className="text-primary-600" />
-                      About the Role / Job Description
-                    </h4>
-                    <div className="text-sm text-slate-600 leading-relaxed bg-slate-50 p-4 rounded-2xl border border-slate-200/80 whitespace-pre-line">
-                      {selectedVacancyModal.description ||
-                        "No detailed role description provided for this vacancy position."}
-                    </div>
-                  </div>
-
-                  {/* Requirements & Qualifications */}
-                  <div>
-                    <h4 className="text-sm font-bold text-slate-900 tracking-tight uppercase flex items-center gap-2 mb-2">
-                      <GraduationCap size={16} className="text-primary-600" />
-                      Requirements & Qualifications
-                    </h4>
-                    <div className="text-sm text-slate-600 leading-relaxed bg-slate-50 p-4 rounded-2xl border border-slate-200/80 whitespace-pre-line">
-                      {selectedVacancyModal.qualifications ||
-                        "No specific qualifications listed. Candidates are evaluated based on role competencies."}
-                    </div>
-                  </div>
-
-                  {/* Required Skills */}
-                  <div>
-                    <h4 className="text-sm font-bold text-slate-900 tracking-tight uppercase flex items-center gap-2 mb-2">
-                      <Sparkles size={16} className="text-amber-500" />
-                      Required Skills & Competencies
-                    </h4>
-                    {Array.isArray(selectedVacancyModal.requiredSkills) &&
-                    selectedVacancyModal.requiredSkills.length > 0 ? (
-                      <div className="flex flex-wrap gap-2">
-                        {selectedVacancyModal.requiredSkills.map((sk) => (
-                          <span
-                            key={sk}
-                            className="px-3 py-1 rounded-xl text-xs font-semibold bg-primary-50 text-primary-700 border border-primary-200/80 shadow-2xs"
-                          >
-                            {sk}
-                          </span>
-                        ))}
-                      </div>
-                    ) : typeof selectedVacancyModal.skills === "string" && selectedVacancyModal.skills ? (
-                      <div className="flex flex-wrap gap-2">
-                        {selectedVacancyModal.skills.split(",").map((sk) => (
-                          <span
-                            key={sk.trim()}
-                            className="px-3 py-1 rounded-xl text-xs font-semibold bg-primary-50 text-primary-700 border border-primary-200/80 shadow-2xs"
-                          >
-                            {sk.trim()}
-                          </span>
-                        ))}
-                      </div>
-                    ) : (
-                      <span className="text-xs text-slate-400 italic">No specific skills tagged</span>
-                    )}
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+              {/* Left/Main Column (2 cols): Description, Qualifications, Skills */}
+              <div className="lg:col-span-2 space-y-6">
+                {/* About the Role / Description */}
+                <div>
+                  <h4 className="text-sm font-bold text-slate-900 tracking-tight uppercase flex items-center gap-2 mb-2">
+                    <Briefcase size={16} className="text-primary-600" />
+                    About the Role / Job Description
+                  </h4>
+                  <div className="text-sm text-slate-600 leading-relaxed bg-slate-50 p-4 rounded-2xl border border-slate-200/80 whitespace-pre-line">
+                    {selectedVacancyModal.description ||
+                      "No detailed role description provided for this vacancy position."}
                   </div>
                 </div>
 
-                {/* Right Facts Column (1 col): Styled like CareerJob.jsx aside */}
-                <div className="space-y-4 bg-slate-50 p-5 rounded-2xl border border-slate-200/80">
-                  {/* Deadline & Countdown */}
-                  {selectedVacancyModal.deadline && (
-                    <div className="pb-4 border-b border-slate-200/80">
-                      <DeadlineMeter
-                        deadline={selectedVacancyModal.deadline}
-                        publishedAt={selectedVacancyModal.publishedAt}
-                      />
-                    </div>
-                  )}
-
-                  {/* Facts list */}
-                  <div className="space-y-3.5">
-                    <div className="flex items-start gap-3">
-                      <Users size={16} className="mt-0.5 text-slate-400 shrink-0" />
-                      <div>
-                        <p className="text-xs text-slate-500">Available Openings</p>
-                        <p className="text-sm font-semibold text-slate-800">
-                          {selectedVacancyModal.vacancyCount || 1}{" "}
-                          {(selectedVacancyModal.vacancyCount || 1) === 1 ? "Position" : "Positions"}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-start gap-3">
-                      <Award size={16} className="mt-0.5 text-slate-400 shrink-0" />
-                      <div>
-                        <p className="text-xs text-slate-500">Experience Level</p>
-                        <p className="text-sm font-semibold text-slate-800">
-                          {selectedVacancyModal.experienceLevel || "All Levels"}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-start gap-3">
-                      <Banknote size={16} className="mt-0.5 text-slate-400 shrink-0" />
-                      <div>
-                        <p className="text-xs text-slate-500">Salary Range</p>
-                        <p className="text-sm font-semibold text-slate-800">
-                          {formatSalary(selectedVacancyModal.salaryMin, selectedVacancyModal.salaryMax) ||
-                            "Competitive / Undisclosed"}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-start gap-3">
-                      <Calendar size={16} className="mt-0.5 text-slate-400 shrink-0" />
-                      <div>
-                        <p className="text-xs text-slate-500">Application Deadline</p>
-                        <p className="text-sm font-semibold text-slate-800">
-                          {selectedVacancyModal.deadline
-                            ? formatDate(selectedVacancyModal.deadline)
-                            : "Open until filled"}
-                        </p>
-                      </div>
-                    </div>
+                {/* Requirements & Qualifications */}
+                <div>
+                  <h4 className="text-sm font-bold text-slate-900 tracking-tight uppercase flex items-center gap-2 mb-2">
+                    <GraduationCap size={16} className="text-primary-600" />
+                    Requirements & Qualifications
+                  </h4>
+                  <div className="text-sm text-slate-600 leading-relaxed bg-slate-50 p-4 rounded-2xl border border-slate-200/80 whitespace-pre-line">
+                    {selectedVacancyModal.qualifications ||
+                      "No specific qualifications listed. Candidates are evaluated based on role competencies."}
                   </div>
+                </div>
 
-                  {/* Public Career link button if ID exists */}
-                  {selectedVacancyModal.id && (() => {
-                    const comp =
-                      selectedVacancyModal.companyRef ||
-                      selectedVacancyModal.company ||
-                      (() => {
-                        try {
-                          const u = JSON.parse(localStorage.getItem("user") || "{}");
-                          return (
-                            u.companyRegistrationNumber ||
-                            u.companyRef ||
-                            u.companyName ||
-                            (u.companyId ? String(u.companyId) : "") ||
-                            ""
-                          );
-                        } catch {
-                          return "";
-                        }
-                      })();
-                    const careerUrl = `/careers/jobs/${selectedVacancyModal.id}${
-                      comp ? `?company=${encodeURIComponent(comp)}` : ""
-                    }`;
-                    return (
-                      <div className="pt-3 border-t border-slate-200/80">
-                        <Link
-                          to={careerUrl}
-                          target="_blank"
-                          className="w-full inline-flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-primary-600 hover:bg-primary-700 text-white text-xs font-semibold shadow-sm transition-all"
+                {/* Required Skills */}
+                <div>
+                  <h4 className="text-sm font-bold text-slate-900 tracking-tight uppercase flex items-center gap-2 mb-2">
+                    <Sparkles size={16} className="text-amber-500" />
+                    Required Skills & Competencies
+                  </h4>
+                  {Array.isArray(selectedVacancyModal.requiredSkills) &&
+                    selectedVacancyModal.requiredSkills.length > 0 ? (
+                    <div className="flex flex-wrap gap-2">
+                      {selectedVacancyModal.requiredSkills.map((sk) => (
+                        <span
+                          key={sk}
+                          className="px-3 py-1 rounded-xl text-xs font-semibold bg-primary-50 text-primary-700 border border-primary-200/80 shadow-2xs"
                         >
-                          <ExternalLink size={13} />
-                          <span>View on Public Careers</span>
-                        </Link>
-                      </div>
-                    );
-                  })()}
+                          {sk}
+                        </span>
+                      ))}
+                    </div>
+                  ) : typeof selectedVacancyModal.skills === "string" && selectedVacancyModal.skills ? (
+                    <div className="flex flex-wrap gap-2">
+                      {selectedVacancyModal.skills.split(",").map((sk) => (
+                        <span
+                          key={sk.trim()}
+                          className="px-3 py-1 rounded-xl text-xs font-semibold bg-primary-50 text-primary-700 border border-primary-200/80 shadow-2xs"
+                        >
+                          {sk.trim()}
+                        </span>
+                      ))}
+                    </div>
+                  ) : (
+                    <span className="text-xs text-slate-400 italic">No specific skills tagged</span>
+                  )}
                 </div>
               </div>
+
+              {/* Right Facts Column (1 col): Styled like CareerJob.jsx aside */}
+              <div className="space-y-4 bg-slate-50 p-5 rounded-2xl border border-slate-200/80">
+                {/* Deadline & Countdown */}
+                {selectedVacancyModal.deadline && (
+                  <div className="pb-4 border-b border-slate-200/80">
+                    <DeadlineMeter
+                      deadline={selectedVacancyModal.deadline}
+                      publishedAt={selectedVacancyModal.publishedAt}
+                    />
+                  </div>
+                )}
+
+                {/* Facts list */}
+                <div className="space-y-3.5">
+                  <div className="flex items-start gap-3">
+                    <Users size={16} className="mt-0.5 text-slate-400 shrink-0" />
+                    <div>
+                      <p className="text-xs text-slate-500">Available Openings</p>
+                      <p className="text-sm font-semibold text-slate-800">
+                        {selectedVacancyModal.vacancyCount || 1}{" "}
+                        {(selectedVacancyModal.vacancyCount || 1) === 1 ? "Position" : "Positions"}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-3">
+                    <Award size={16} className="mt-0.5 text-slate-400 shrink-0" />
+                    <div>
+                      <p className="text-xs text-slate-500">Experience Level</p>
+                      <p className="text-sm font-semibold text-slate-800">
+                        {selectedVacancyModal.experienceLevel || "All Levels"}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-3">
+                    <Banknote size={16} className="mt-0.5 text-slate-400 shrink-0" />
+                    <div>
+                      <p className="text-xs text-slate-500">Salary Range</p>
+                      <p className="text-sm font-semibold text-slate-800">
+                        {formatSalary(selectedVacancyModal.salaryMin, selectedVacancyModal.salaryMax) ||
+                          "Competitive / Undisclosed"}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-3">
+                    <Calendar size={16} className="mt-0.5 text-slate-400 shrink-0" />
+                    <div>
+                      <p className="text-xs text-slate-500">Application Deadline</p>
+                      <p className="text-sm font-semibold text-slate-800">
+                        {selectedVacancyModal.deadline
+                          ? formatDate(selectedVacancyModal.deadline)
+                          : "Open until filled"}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Public Career link button if ID exists */}
+                {selectedVacancyModal.id && (() => {
+                  const comp =
+                    selectedVacancyModal.companyRef ||
+                    selectedVacancyModal.company ||
+                    (() => {
+                      try {
+                        const u = JSON.parse(localStorage.getItem("user") || "{}");
+                        return (
+                          u.companyRegistrationNumber ||
+                          u.companyRef ||
+                          u.companyName ||
+                          (u.companyId ? String(u.companyId) : "") ||
+                          ""
+                        );
+                      } catch {
+                        return "";
+                      }
+                    })();
+                  const careerUrl = `/careers/jobs/${selectedVacancyModal.id}${comp ? `?company=${encodeURIComponent(comp)}` : ""
+                    }`;
+                  return (
+                    <div className="pt-3 border-t border-slate-200/80">
+                      <Link
+                        to={careerUrl}
+                        target="_blank"
+                        className="w-full inline-flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-primary-600 hover:bg-primary-700 text-white text-xs font-semibold shadow-sm transition-all"
+                      >
+                        <ExternalLink size={13} />
+                        <span>View on Public Careers</span>
+                      </Link>
+                    </div>
+                  );
+                })()}
+              </div>
             </div>
+          </div>
         </RecruitmentModal>
       )}
 
@@ -1708,10 +1700,10 @@ export default function RecruitmentApplications() {
             </>
           }
         >
-            <p className="text-xs text-slate-600 leading-relaxed">
-              Are you sure you want to remove <span className="font-bold text-slate-900">{confirmArchiveModal.vacancy?.title}</span> from active applications?
-              This vacancy and all its submitted applications will be moved to the <span className="font-semibold text-primary-700">Applications History</span> view.
-            </p>
+          <p className="text-xs text-slate-600 leading-relaxed">
+            Are you sure you want to remove <span className="font-bold text-slate-900">{confirmArchiveModal.vacancy?.title}</span> from active applications?
+            This vacancy and all its submitted applications will be moved to the <span className="font-semibold text-primary-700">Applications History</span> view.
+          </p>
         </RecruitmentModal>
       )}
 
