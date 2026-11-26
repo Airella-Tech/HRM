@@ -60,6 +60,8 @@ import {
   RotateCcw,
   History,
   FolderKanban,
+  Calendar,
+  ExternalLink,
 } from "lucide-react";
 
 /**
@@ -867,15 +869,21 @@ export default function RecruitmentCandidateShortlist() {
           : cand.jobTitle || "Other Applications";
 
       if (!groupsMap.has(key)) {
+        const matchedVac = vacancies.find(
+          (v) =>
+            (cand.vacancyId && cand.vacancyId !== "unassigned" && String(v.id) === String(cand.vacancyId)) ||
+            (cand.jobTitle && v.title && v.title.toLowerCase() === cand.jobTitle.toLowerCase())
+        );
+
         groupsMap.set(key, {
-          vacancyId: cand.vacancyId,
+          vacancyId: matchedVac?.id || cand.vacancyId,
           vacancyKey: key,
-          title: cand.jobTitle || "Job Opening",
-          department: cand.department || "General",
-          jobType: "Position Opening",
-          vacancyCount: null,
-          status: "ACTIVE",
-          rawVacancy: { id: cand.vacancyId, title: cand.jobTitle },
+          title: matchedVac?.title || cand.jobTitle || "Job Opening",
+          department: matchedVac?.department || cand.department || "General",
+          jobType: matchedVac?.jobType || "Position Opening",
+          vacancyCount: matchedVac?.vacancyCount ?? null,
+          status: matchedVac?.status || "ACTIVE",
+          rawVacancy: matchedVac || { id: cand.vacancyId, title: cand.jobTitle },
           candidates: [],
         });
       }
@@ -1186,7 +1194,20 @@ export default function RecruitmentCandidateShortlist() {
                         {/* 0. Job Vacancy Details Button */}
                         <button
                           type="button"
-                          onClick={() => setSelectedVacancyModal(group.rawVacancy || { id: group.vacancyId, title: group.title, department: group.department })}
+                          onClick={() => {
+                            const matched =
+                              group.rawVacancy ||
+                              vacancies.find(
+                                (v) =>
+                                  (group.vacancyId && String(v.id) === String(group.vacancyId)) ||
+                                  (group.title && v.title && v.title.toLowerCase() === group.title.toLowerCase())
+                              ) || {
+                                id: group.vacancyId,
+                                title: group.title,
+                                department: group.department,
+                              };
+                            setSelectedVacancyModal(matched);
+                          }}
                           className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-slate-200 bg-white text-slate-700 text-sm font-semibold hover:bg-slate-50 transition-colors cursor-pointer"
                           title="Display job vacancy details like public career page"
                         >
