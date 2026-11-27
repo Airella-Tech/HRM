@@ -768,11 +768,7 @@ export default function RecruitmentApplications() {
               const groupApps = group.searchMatchedApplications;
               const totalForGroup = groupApps.length;
 
-              // Compute counts for this specific vacancy position
-              const newCount = groupApps.filter((a) => a.status === "NEW").length;
-              const reviewCount = groupApps.filter((a) => a.status === "UNDER_REVIEW").length;
-              const shortlistedCount = groupApps.filter((a) => a.status === "SHORTLISTED").length;
-              const rejectedCount = groupApps.filter((a) => a.status === "REJECTED").length;
+              
 
               // Active status filter for this specific position
               const currentStatus = getGroupStatus(group.key);
@@ -805,12 +801,7 @@ export default function RecruitmentApplications() {
                             group.department,
                             group.jobType,
                             group.deadline ? `Closes ${formatDate(group.deadline)}` : null,
-                            [
-                              newCount > 0 ? `${newCount} new` : null,
-                              reviewCount > 0 ? `${reviewCount} under review` : null,
-                              shortlistedCount > 0 ? `${shortlistedCount} shortlisted` : null,
-                              rejectedCount > 0 ? `${rejectedCount} rejected` : null,
-                            ].filter(Boolean).join(" · ") || null,
+                          
                           ]
                             .filter(Boolean)
                             .join(" · ")}
