@@ -1017,7 +1017,8 @@ export default function RecruitmentVacancies({ mode }) {
       <RefreshCw size={16} /> Refresh
     </button>
   );
-
+  // Public careers page needs the company in the link, like the job links do
+  const careersUrl = `${window.location.origin}/careers?company=${encodeURIComponent(companyRef || "1")}`;
   return (
     <PageLayout
       role="recruiter"
@@ -1028,7 +1029,7 @@ export default function RecruitmentVacancies({ mode }) {
         <div className="flex items-center gap-2">
           {mode === "publish" && (
             <a
-              href="/careers"
+              href={careersUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-sm font-semibold shadow-sm"
