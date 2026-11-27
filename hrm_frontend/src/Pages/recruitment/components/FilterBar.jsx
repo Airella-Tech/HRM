@@ -6,7 +6,9 @@ import { Search, ChevronDown, RefreshCw } from "lucide-react";
  *
  * Layout (always the same):
  *   Row 1: Search -> dropdown filters -> extras (e.g. List/Calendar toggle)
- *          -> "N found" + Expand all / Collapse all on the right
+ *          -> one block on the right: Reset filters, "N found",
+ *          Expand all / Collapse all. If it does not fit, the whole block
+ *          drops to a second row, right-aligned.
  *   Row 2: (optional) status pills with count bubbles
  *
  * Props
@@ -20,6 +22,7 @@ import { Search, ChevronDown, RefreshCw } from "lucide-react";
  *  count / countLabel / countPlural / loading   -> "7 candidates found"
  *               (countPlural only when "s" is wrong, e.g. vacancy -> vacancies)
  *  onExpandAll / onCollapseAll    -> buttons only show when both are given
+ *                                    and there is at least one result
  *  onReset / hasActiveFilters     -> "Reset filters" shows only when active
  */
 
@@ -111,12 +114,14 @@ export default function FilterBar({
   onReset,
   hasActiveFilters = false,
 }) {
-  const showExpand = Boolean(onExpandAll && onCollapseAll);
+  const showExpand = Boolean(onExpandAll && onCollapseAll) && count !== 0;
+  const showReset = Boolean(hasActiveFilters && onReset);
+  const showRight = showReset || count != null || showExpand;
 
   return (
     <div className="space-y-3 rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
       <div className="flex flex-wrap items-center gap-3">
-        <div className="relative min-w-[220px] flex-1">
+        <div className="relative min-w-[260px] flex-1">
           <Search
             size={17}
             className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
@@ -137,44 +142,45 @@ export default function FilterBar({
 
         {extras}
 
-        {hasActiveFilters && onReset && (
-          <button
-            type="button"
-            onClick={onReset}
-            className="inline-flex shrink-0 items-center gap-1 text-xs font-semibold text-primary-600 hover:text-primary-800"
-          >
-            <RefreshCw size={12} /> Reset filters
-          </button>
+        {showRight && (
+          <div className="ml-auto flex shrink-0 items-center gap-3">
+            {showReset && (
+              <button
+                type="button"
+                onClick={onReset}
+                className="inline-flex shrink-0 items-center gap-1 whitespace-nowrap text-xs font-semibold text-primary-600 hover:text-primary-800"
+              >
+                <RefreshCw size={12} /> Reset filters
+              </button>
+            )}
+            {count != null && (
+              <span className="whitespace-nowrap text-xs text-slate-500">
+                {loading
+                  ? "Loading..."
+                  : `${count} ${count === 1 ? countLabel : countPlural || `${countLabel}s`} found`}
+              </span>
+            )}
+            {showExpand && (
+              <div className="flex items-center gap-1 border-l border-slate-200 pl-3">
+                <button
+                  type="button"
+                  onClick={onExpandAll}
+                  className="rounded-lg px-2 py-1 text-sm font-semibold text-slate-500 hover:bg-slate-50 hover:text-primary-600"
+                >
+                  Expand all
+                </button>
+                <span className="h-4 w-px bg-slate-200" />
+                <button
+                  type="button"
+                  onClick={onCollapseAll}
+                  className="rounded-lg px-2 py-1 text-sm font-semibold text-slate-500 hover:bg-slate-50 hover:text-primary-600"
+                >
+                  Collapse all
+                </button>
+              </div>
+            )}
+          </div>
         )}
-
-        <div className="ml-auto flex items-center gap-3">
-          {count != null && (
-            <span className="whitespace-nowrap text-xs text-slate-500">
-              {loading
-                ? "Loading..."
-                : `${count} ${count === 1 ? countLabel : countPlural || `${countLabel}s`} found`}
-            </span>
-          )}
-          {showExpand && (
-            <div className="flex items-center gap-1 border-l border-slate-200 pl-3">
-              <button
-                type="button"
-                onClick={onExpandAll}
-                className="rounded-lg px-2 py-1 text-sm font-semibold text-slate-500 hover:bg-slate-50 hover:text-primary-600"
-              >
-                Expand all
-              </button>
-              <span className="h-4 w-px bg-slate-200" />
-              <button
-                type="button"
-                onClick={onCollapseAll}
-                className="rounded-lg px-2 py-1 text-sm font-semibold text-slate-500 hover:bg-slate-50 hover:text-primary-600"
-              >
-                Collapse all
-              </button>
-            </div>
-          )}
-        </div>
       </div>
 
       {pills && <FilterPills {...pills} />}
