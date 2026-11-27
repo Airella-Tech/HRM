@@ -1,12 +1,11 @@
 import RecruitmentModal, { ModalButton } from "./components/RecruitmentModal";
 import ViewButton from "./components/ViewButton";
+import FilterBar from "./components/FilterBar";
 
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ArrowLeft,
   Mail,
-  Search,
-  Filter,
   RefreshCw,
   X,
   CalendarDays,
@@ -669,79 +668,45 @@ export default function InterviewEmails() {
           })}
         </StatCardGrid>
 
+        <div className="mb-4">
+          <FilterBar
+            search={search}
+            onSearchChange={setSearch}
+            searchPlaceholder="Search candidate, recipient, subject..."
+            filters={[
+              {
+                id: "status",
+                label: "Status",
+                value: statusFilter,
+                onChange: setStatusFilter,
+                allLabel: "All statuses",
+                options: ["Pending", "Sent", "Failed"],
+              },
+            ]}
+            pills={{
+              value: activeTab,
+              onChange: setActiveTab,
+              items: tabs.map((tab) => ({
+                value: tab.value,
+                label: tab.label,
+                count: tab.count,
+              })),
+            }}
+            count={filteredLogs.length}
+            countLabel="email"
+            loading={loading && logs.length === 0}
+            hasActiveFilters={
+              search !== "" || statusFilter !== "All" || activeTab !== "All"
+            }
+            onReset={() => {
+              setSearch("");
+              setStatusFilter("All");
+              setActiveTab("All");
+            }}
+          />
+        </div>
+
         <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-          <div className="border-b border-slate-200 p-5 sm:p-6">
-            <div className="mb-4">
-              <h2 className="text-lg font-bold text-slate-800">
-                Email sending history
-              </h2>
-              <p className="mt-1 text-sm text-slate-500">
-                Choose a recipient group to view the corresponding email
-                records.
-              </p>
-            </div>
-
-            <div className="mb-5 flex flex-wrap gap-2 border-b border-slate-100">
-              {tabs.map((tab) => (
-                <button
-                  key={tab.value}
-                  type="button"
-                  onClick={() => setActiveTab(tab.value)}
-                  className={`-mb-px inline-flex items-center gap-2 border-b-2 px-3 py-3 text-sm font-semibold transition ${
-                    activeTab === tab.value
-                      ? "border-primary-600 text-primary-700"
-                      : "border-transparent text-slate-500 hover:text-slate-800"
-                  }`}
-                >
-                  {tab.label}
-                  <span
-                    className={`rounded-full px-2 py-0.5 text-xs ${
-                      activeTab === tab.value
-                        ? "bg-primary-50 text-primary-700"
-                        : "bg-slate-100 text-slate-600"
-                    }`}
-                  >
-                    {tab.count}
-                  </span>
-                </button>
-              ))}
-            </div>
-
-            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-              <div className="relative">
-                <Search
-                  size={18}
-                  className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
-                />
-                <input
-                  type="search"
-                  value={search}
-                  onChange={(event) => setSearch(event.target.value)}
-                  placeholder="Search candidate, recipient, subject..."
-                  aria-label="Search email notifications"
-                  className="w-full rounded-xl border border-slate-200 py-2.5 pl-10 pr-4 text-sm outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-100"
-                />
-              </div>
-
-              <div className="relative">
-                <Filter
-                  size={16}
-                  className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
-                />
-                <select
-                  value={statusFilter}
-                  onChange={(event) => setStatusFilter(event.target.value)}
-                  aria-label="Filter by email status"
-                  className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-9 pr-3 text-sm outline-none focus:border-primary-500"
-                >
-                  <option value="All">All statuses</option>
-                  <option value="Pending">Pending</option>
-                  <option value="Sent">Sent</option>
-                  <option value="Failed">Failed</option>
-                </select>
-              </div>
-            </div>
-          </div>
 
           <div className="overflow-x-auto">
             <table className="w-full min-w-[1000px] text-left">
@@ -784,7 +749,7 @@ export default function InterviewEmails() {
                   filteredLogs.map((email) => (
                     <tr key={email.id} className="hover:bg-slate-50/80">
                       <td className="px-5 py-4">
-                        <p className="font-semibold text-slate-800">
+                        <p className="whitespace-nowrap font-semibold text-slate-800">
                           {email.candidate}
                         </p>
                         <p className="mt-1 text-xs text-slate-500">

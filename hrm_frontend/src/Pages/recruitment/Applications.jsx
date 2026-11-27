@@ -768,11 +768,7 @@ export default function RecruitmentApplications() {
               const groupApps = group.searchMatchedApplications;
               const totalForGroup = groupApps.length;
 
-              // Compute counts for this specific vacancy position
-              const newCount = groupApps.filter((a) => a.status === "NEW").length;
-              const reviewCount = groupApps.filter((a) => a.status === "UNDER_REVIEW").length;
-              const shortlistedCount = groupApps.filter((a) => a.status === "SHORTLISTED").length;
-              const rejectedCount = groupApps.filter((a) => a.status === "REJECTED").length;
+              
 
               // Active status filter for this specific position
               const currentStatus = getGroupStatus(group.key);
@@ -805,6 +801,7 @@ export default function RecruitmentApplications() {
                             group.department,
                             group.jobType,
                             group.deadline ? `Closes ${formatDate(group.deadline)}` : null,
+                          
                           ]
                             .filter(Boolean)
                             .join(" · ")}
@@ -812,42 +809,13 @@ export default function RecruitmentApplications() {
                       </div>
                     </div>
 
-                    {totalForGroup > 0 && (
-                      <div className="hidden xl:block w-48 shrink-0">
-                        <div className="flex h-1.5 rounded-full overflow-hidden bg-white/70">
-                          {[
-                            { n: newCount, c: "bg-primary-500" },
-                            { n: reviewCount, c: "bg-amber-500" },
-                            { n: shortlistedCount, c: "bg-emerald-500" },
-                            { n: rejectedCount, c: "bg-red-500" },
-                          ].map((seg) => (
-                            <div
-                              key={seg.c}
-                              className={seg.c}
-                              style={{ width: `${(seg.n / totalForGroup) * 100}%` }}
-                            />
-                          ))}
-                        </div>
-                        <p className="text-sm text-slate-600 mt-1.5">
-                          {[
-                            newCount > 0 ? `${newCount} new` : null,
-                            reviewCount > 0 ? `${reviewCount} under review` : null,
-                            shortlistedCount > 0 ? `${shortlistedCount} shortlisted` : null,
-                            rejectedCount > 0 ? `${rejectedCount} rejected` : null,
-                          ]
-                            .filter(Boolean)
-                            .join(" · ")}
-                        </p>
-                      </div>
-                    )}
-
                     <div className="flex flex-wrap items-center gap-2 self-end lg:self-auto" onClick={(e) => e.stopPropagation()}>
                       {/* Job Offer Status Badge */}
                       {(() => {
                         const offerInfo = getVacancyOfferInfo(group);
                         return offerInfo.hasOffer ? (
                           <span
-                            className="px-3 py-1.5 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-semibold flex items-center gap-1.5"
+                            className="px-3 py-1.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-semibold flex items-center gap-1.5"
                             title="Job offer created for this opening"
                           >
                             <CheckCircle2 size={14} />
@@ -855,7 +823,7 @@ export default function RecruitmentApplications() {
                           </span>
                         ) : (
                           <span
-                            className="px-3 py-1.5 rounded-xl bg-amber-50 text-amber-700 border border-amber-200 text-xs font-semibold flex items-center gap-1.5"
+                            className="px-3 py-1.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200 text-xs font-semibold flex items-center gap-1.5"
                             title="No job offer has been created yet"
                           >
                             <Clock size={14} />
@@ -888,7 +856,7 @@ export default function RecruitmentApplications() {
                         <span>Vacancy Details</span>
                       </button>
 
-                      <span className="px-3 py-1.5 rounded-xl bg-primary-50 text-primary-700 text-xs font-semibold flex items-center gap-1.5">
+                      <span className="px-3 py-1.5 rounded-full bg-white text-primary-700 border border-[#cfd5ee] text-xs font-semibold flex items-center gap-1.5">
                         <Users size={14} />
                         <span>{totalForGroup} {totalForGroup === 1 ? "Applicant" : "Applicants"}</span>
                       </span>
@@ -910,11 +878,21 @@ export default function RecruitmentApplications() {
                       </button>
 
                       <button
+                        type="button"
                         onClick={() => toggleGroup(group.key)}
-                        className="p-2 rounded-xl text-slate-500 hover:bg-slate-100 transition-colors"
-                        title={isCollapsed ? "Expand table" : "Collapse table"}
+                        className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-[#cfd5ee] bg-white text-slate-700 text-sm font-semibold hover:bg-slate-50 cursor-pointer"
                       >
-                        {isCollapsed ? <ChevronDown size={18} /> : <ChevronUp size={18} />}
+                        {isCollapsed ? (
+                          <>
+                            <ChevronDown size={16} />
+                            <span>Expand</span>
+                          </>
+                        ) : (
+                          <>
+                            <ChevronUp size={16} />
+                            <span>Collapse</span>
+                          </>
+                        )}
                       </button>
                     </div>
                   </div>
@@ -1110,19 +1088,6 @@ export default function RecruitmentApplications() {
                     </div>
                   )}
 
-                  {/* Vacancy footer summary */}
-                  <div className="px-6 py-3 bg-slate-50/50 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
-                    <span>
-                      Showing <strong>{displayedApps.length}</strong> of <strong>{totalForGroup}</strong>{" "}
-                      candidate(s) for <strong>{group.title}</strong>
-                    </span>
-                    <button
-                      onClick={() => toggleGroup(group.key)}
-                      className="text-xs font-semibold text-primary-600 hover:text-primary-800"
-                    >
-                      {isCollapsed ? "Show Table" : "Hide Table"}
-                    </button>
-                  </div>
                 </div>
               );
             })}

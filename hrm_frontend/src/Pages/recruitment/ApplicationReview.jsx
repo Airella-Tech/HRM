@@ -843,7 +843,7 @@ export default function RecruitmentApplicationReview() {
                         const offerInfo = getVacancyOfferInfo(group);
                         return offerInfo.hasOffer ? (
                           <span
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-semibold"
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-semibold"
                             title="Job offer created for this position"
                           >
                             <CheckCircle2 size={14} className="shrink-0" />
@@ -851,7 +851,7 @@ export default function RecruitmentApplicationReview() {
                           </span>
                         ) : (
                           <span
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-50 text-amber-700 border border-amber-200 text-xs font-semibold"
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200 text-xs font-semibold"
                             title="No job offer created yet for this position"
                           >
                             <Clock size={14} className="shrink-0" />
