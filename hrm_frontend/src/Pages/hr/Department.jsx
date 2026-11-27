@@ -611,22 +611,7 @@ const Department = () => {
           p-5 sm:p-6
           "
         >
-          {/* Decorative circles */}
-          <div
-            className="
-      absolute -right-10 -top-12
-      h-36 w-36 rounded-full
-      bg-sky-200/40
-    "
-          />
 
-          <div
-            className="
-      absolute right-24 -bottom-16
-      h-32 w-32 rounded-full
-      bg-sky-300/20
-    "
-          />
 
           <div className="relative flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="flex items-start gap-4">
@@ -1797,63 +1782,43 @@ const Department = () => {
   );
 };
 
+
 // =============================================================
 // SUMMARY CARD
 // =============================================================
 
-const SummaryCard = ({ icon, title, value, description, className = "" }) => {
+const SummaryCard = ({
+  icon,
+  title,
+  value,
+  description,
+  className = "",
+}) => {
   return (
     <div
       className={`
-    relative overflow-hidden
-    rounded-2xl
-    border border-white/10
-    p-5
-    shadow-sm
-    hover:shadow-md
-    transition-all duration-200
-    text-white
-    ${className || "bg-gradient-to-br from-sky-600 to-sky-700"}
-  `}
+        rounded-2xl
+        border border-white/10
+        p-5
+        shadow-sm
+        hover:shadow-md
+        transition-all duration-200
+        text-white
+        ${className || "bg-gradient-to-br from-sky-600 to-sky-700"}
+      `}
     >
-      {/* Decorative circles */}
-      <div className="absolute -right-8 -top-10 h-32 w-32 rounded-full bg-white/10" />
-      <div className="absolute -right-3 -bottom-16 h-28 w-28 rounded-full bg-white/10" />
-      <div
-        className={`relative z-10 ${icon ? "flex items-start justify-between" : ""}`}
-      >
+      <div className="flex items-start justify-between gap-4">
         <div>
-          <p
-            className="
-            text-xs
-            font-semibold
-            uppercase
-            tracking-wider
-            text-white
-          "
-          >
+          <p className="text-xs font-semibold uppercase tracking-wider text-white">
             {title}
           </p>
 
-          <p
-            className="
-            mt-2
-            text-2xl
-            font-bold
-            text-white
-          "
-          >
+          <p className="mt-2 text-2xl font-bold text-white">
             {value}
           </p>
 
           {description && (
-            <p
-              className="
-              mt-1
-              text-xs
-              text-white/80
-            "
-            >
+            <p className="mt-1 text-xs text-white/80">
               {description}
             </p>
           )}
@@ -1862,13 +1827,13 @@ const SummaryCard = ({ icon, title, value, description, className = "" }) => {
         {icon && (
           <div
             className="
-            h-10 w-10
-            rounded-xl
-            bg-white/20
-            text-white
-            flex items-center
-            justify-center
-          "
+              h-10 w-10
+              shrink-0
+              rounded-xl
+              bg-white/20
+              text-white
+              flex items-center justify-center
+            "
           >
             {icon}
           </div>
@@ -1877,6 +1842,7 @@ const SummaryCard = ({ icon, title, value, description, className = "" }) => {
     </div>
   );
 };
+
 
 // =============================================================
 // TABLE HEADER

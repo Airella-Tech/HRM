@@ -63,7 +63,7 @@ import RecruitmentRouteGuard from "./Pages/recruitment/RecruitmentRouteGuard";
 import AssignInterviewers from "./Pages/recruitment/AssignInterviewers";
 import InterviewEvaluationReview from "./Pages/recruitment/InterviewEvaluationReview";
 import RecruitmentProfile from "./Pages/recruitment/Profile.jsx";
-
+import PhysicalLocations from "./Pages/recruitment/PhysicalLocations.jsx";
 
 function App() {
   return (
@@ -138,7 +138,16 @@ function App() {
       <Route path="/recruitment/shortlisted-candidates" element={<RecruitmentRouteGuard requiredAny={["APPLICATION_SHORTLIST", "APPLICATION_VIEW", "INTERVIEW_SCHEDULE"]}><ShortlistedCandidates /></RecruitmentRouteGuard>} />
       <Route path="/recruitment/offers" element={<RecruitmentRouteGuard requiredAny={["OFFER_MANAGE"]}><RecruitmentOffers /></RecruitmentRouteGuard>}/>
       <Route path="/recruitment/assign-interviewers" element={<RecruitmentRouteGuard requiredAny={["INTERVIEW_ASSIGN", "INTERVIEW_SCHEDULE"]}><AssignInterviewers /></RecruitmentRouteGuard>}/>
-
+      <Route
+        path="/recruitment/interviews/physical-locations"
+        element={
+        <RecruitmentRouteGuard
+         requiredAny={["INTERVIEW_SCHEDULE", "INTERVIEW_ASSIGN"]}
+          >
+         <PhysicalLocations />
+           </RecruitmentRouteGuard>
+      }
+       />
       <Route path="/recruitment/roles-permissions" element={<RecruitmentRolesPermissions />}/>
       <Route
         path="/recruitment/audit-log"

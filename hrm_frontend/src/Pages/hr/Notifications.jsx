@@ -112,9 +112,7 @@ const Notifications = () => {
                   shadow-sm hover:shadow-lg transition-all duration-300
                   hover:-translate-y-1 ${active ? "ring-2 ring-offset-2 ring-slate-400" : ""}`}
               >
-                {/* Decorative circles */}
-                <div className="absolute -right-5 -top-5 w-24 h-24 rounded-full bg-white/10" />
-                <div className="absolute -right-2 -bottom-8 w-20 h-20 rounded-full bg-white/10" />
+                
 
                 <div className="relative z-10 flex items-start justify-between">
                   <div>

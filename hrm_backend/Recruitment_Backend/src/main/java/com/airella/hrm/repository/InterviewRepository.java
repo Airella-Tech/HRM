@@ -27,6 +27,7 @@ public interface InterviewRepository extends JpaRepository<Interview, Long> {
     List<Interview> findByCompanyIdAndStatusOrderByInterviewDateAscInterviewTimeAsc(
             Long companyId,
             String status
+
     );
 
     // Get interviews scheduled for a specific date.
@@ -60,6 +61,14 @@ public interface InterviewRepository extends JpaRepository<Interview, Long> {
     List<Interview>
     findByCompanyIdAndInterviewDateBetweenOrderByInterviewDateAscInterviewTimeAsc(
             Long companyId,
+            LocalDate startDate,
+            LocalDate endDate
+    );
+
+    List<Interview>
+    findByCompanyIdAndPhysicalLocation_IdAndInterviewDateBetweenOrderByInterviewDateAscInterviewTimeAsc(
+            Long companyId,
+            Long physicalLocationId,
             LocalDate startDate,
             LocalDate endDate
     );

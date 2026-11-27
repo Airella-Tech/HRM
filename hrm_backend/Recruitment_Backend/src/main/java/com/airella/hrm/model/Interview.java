@@ -93,6 +93,10 @@ public class Interview {
     @Column(name = "location", length = 500)
     private String location;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "physical_location_id")
+    private PhysicalLocation physicalLocation;
+
     @Column(name = "status", nullable = false, length = 30)
     private String status = "Scheduled";
 

@@ -353,9 +353,7 @@ const HRAttendance = () => {
               key={s.label}
               className={`${s.color} relative overflow-hidden p-5 rounded-2xl text-white shadow-sm hover:shadow-lg transition-all duration-300 min-h-[140px]`}
             >
-              {/* Decorative background circles */}
-              <div className="absolute -right-5 -top-5 w-24 h-24 rounded-full bg-white/10" />
-              <div className="absolute -right-2 -bottom-10 w-28 h-28 rounded-full bg-white/10" />
+              
 
               <div className="relative z-10 flex items-start justify-between">
                 <div>

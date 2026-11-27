@@ -1249,9 +1249,7 @@ const RecruitmentRolesPermissions = () => {
         <ShieldCheck size={26} />
       </div>
     </div>
-    {layoutRole === "hr" && (
-      <div className="pointer-events-none absolute -bottom-8 -right-5 h-28 w-28 rounded-full bg-white/10" />
-    )}
+    
   </div>
 
   {/* Staff with Access */}
@@ -1273,9 +1271,7 @@ const RecruitmentRolesPermissions = () => {
         <Users size={26} />
       </div>
     </div>
-    {layoutRole === "hr" && (
-      <div className="pointer-events-none absolute -bottom-8 -right-5 h-28 w-28 rounded-full bg-white/10" />
-    )}
+   
   </div>
 
   {/* Total Employees */}
@@ -1297,9 +1293,7 @@ const RecruitmentRolesPermissions = () => {
         <UserRound size={26} />
       </div>
     </div>
-    {layoutRole === "hr" && (
-      <div className="pointer-events-none absolute -bottom-8 -right-5 h-28 w-28 rounded-full bg-white/10" />
-    )}
+   
   </div>
 
 </section>

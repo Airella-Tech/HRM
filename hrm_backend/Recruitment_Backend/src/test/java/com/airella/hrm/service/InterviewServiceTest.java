@@ -1,4 +1,3 @@
-
 package com.airella.hrm.service;
 
 import com.airella.hrm.dto.InterviewDTO;
@@ -68,6 +67,10 @@ class InterviewServiceTest {
 
     @Mock
     private RecruitmentNotificationService notificationService;
+
+    // NEW: Mock the interviewer leave validation service.
+    @Mock
+    private InterviewerLeaveValidationService interviewerLeaveValidationService;
 
     @InjectMocks
     private InterviewService interviewService;
@@ -144,6 +147,16 @@ class InterviewServiceTest {
                 anyLong(),
                 anyLong()
         )).thenReturn(List.of());
+
+        // NEW: Allow approved-leave validation by default in normal tests.
+        // Individual leave-validation tests can override this behaviour.
+        lenient().doNothing()
+                .when(interviewerLeaveValidationService)
+                .validateNoApprovedLeave(
+                        anyList(),
+                        eq(COMPANY_ID),
+                        any(LocalDate.class)
+                );
     }
 
     // ------------------------------------------------------------
@@ -1443,7 +1456,6 @@ class InterviewServiceTest {
         );
     }
 
-
     // ------------------------------------------------------------
     // INTERVIEWER SCHEDULING CONFLICT VALIDATION
     // ------------------------------------------------------------
@@ -1591,7 +1603,6 @@ class InterviewServiceTest {
         );
     }
 
-
     // ------------------------------------------------------------
     // HELPER METHODS
     // ------------------------------------------------------------
@@ -1669,3 +1680,5 @@ class InterviewServiceTest {
         );
     }
 }
+
+add all changes and give full corrected code for this file

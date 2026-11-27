@@ -67,8 +67,14 @@ const blankForm = {
   interviewType: "Online",
   meetingLink: "",
   location: "",
+  physicalLocationId: "",
   notes: "",
 };
+
+const formatPhysicalLocation = (location = {}) =>
+  [location.name, location.building, location.roomNumber]
+    .filter(Boolean)
+    .join(" - ");
 
 const invitationStyle = {
   Sent: "bg-green-50 text-green-700 border-green-200",
@@ -307,6 +313,10 @@ const fromApiInterview = (dto = {}) => {
       dto.interviewType || (dto.meetingLink ? "Online" : "Physical"),
     meetingLink: dto.meetingLink || "",
     location: dto.location || "",
+    physicalLocationId:
+      toNumericIdOrNull(dto.physicalLocationId) != null
+        ? String(dto.physicalLocationId)
+        : "",
     notes: dto.notes || "",
     status: dto.status || "Scheduled",
     invitationStatus: dto.invitationStatus || "Not sent",
@@ -330,6 +340,10 @@ const toApiInterview = (item) => ({
   interviewType: item.interviewType,
   meetingLink: item.interviewType === "Online" ? item.meetingLink : "",
   location: item.interviewType === "Physical" ? item.location : "",
+  physicalLocationId:
+    item.interviewType === "Physical"
+      ? toNumericIdOrNull(item.physicalLocationId)
+      : null,
   notes: item.notes || "",
 });
 
@@ -445,6 +459,10 @@ export default function RecruitmentInterviews() {
   const [conflictError, setConflictError] = useState("");
   const [statusError, setStatusError] = useState("");
   const [notice, setNotice] = useState("");
+
+  const [physicalLocations, setPhysicalLocations] = useState([]);
+  const [physicalLocationsLoading, setPhysicalLocationsLoading] = useState(false);
+  const [physicalLocationsError, setPhysicalLocationsError] = useState("");
 
   const today = dateKey();
 
@@ -569,6 +587,48 @@ export default function RecruitmentInterviews() {
   useEffect(() => {
     loadInterviews();
   }, [loadInterviews]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadPhysicalLocations = async () => {
+      if (typeof recruitmentApi.getPhysicalLocations !== "function") {
+        setPhysicalLocationsError(
+          "Physical location API is not configured. Add getPhysicalLocations() in services/api.js.",
+        );
+        return;
+      }
+
+      setPhysicalLocationsLoading(true);
+      setPhysicalLocationsError("");
+
+      try {
+        const response = await recruitmentApi.getPhysicalLocations("Active");
+        const locations = extractList(response).filter(
+          (location) =>
+            String(location.status || "Active").toLowerCase() === "active",
+        );
+
+        if (!cancelled) setPhysicalLocations(locations);
+      } catch (error) {
+        console.error("Unable to load physical interview locations:", error);
+        if (!cancelled) {
+          setPhysicalLocations([]);
+          setPhysicalLocationsError(
+            error?.message || "Could not load physical interview locations.",
+          );
+        }
+      } finally {
+        if (!cancelled) setPhysicalLocationsLoading(false);
+      }
+    };
+
+    loadPhysicalLocations();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   // Open the scheduling form when navigating from Shortlisted Candidates.
   // Supports both a blank schedule and a candidate-specific next-stage schedule.
@@ -904,7 +964,7 @@ export default function RecruitmentInterviews() {
         </td>
         <td className="min-w-[180px] whitespace-nowrap px-3 py-3.5">
           <div className="flex items-center gap-1">
-                        <ViewButton
+            <ViewButton
               title="View details"
               aria-label={`View details for ${item.candidate}`}
               onClick={() => {
@@ -959,6 +1019,13 @@ export default function RecruitmentInterviews() {
 
     const people = normalizePeople(item);
     const existingIds = normalizeInterviewerIds(item);
+    const matchedPhysicalLocation = physicalLocations.find(
+      (location) =>
+        formatPhysicalLocation(location) === (item.location || ""),
+    );
+    const existingPhysicalLocationId =
+      toNumericIdOrNull(item.physicalLocationId) ??
+      toNumericIdOrNull(matchedPhysicalLocation?.id);
 
     setForm({
       ...blankForm,
@@ -987,6 +1054,9 @@ export default function RecruitmentInterviews() {
       interviewType: getInterviewType(item),
       meetingLink: item.meetingLink || "",
       location: item.location || "",
+      physicalLocationId: existingPhysicalLocationId
+        ? String(existingPhysicalLocationId)
+        : "",
       notes: item.notes || "",
     });
 
@@ -1023,6 +1093,7 @@ export default function RecruitmentInterviews() {
         interviewType: value,
         meetingLink: "",
         location: "",
+        physicalLocationId: "",
       }));
     } else {
       setForm((old) => ({ ...old, [name]: value }));
@@ -1199,8 +1270,11 @@ export default function RecruitmentInterviews() {
       }
     }
 
-    if (form.interviewType === "Physical" && !form.location.trim()) {
-      setFormError("Enter the physical interview location.");
+    if (
+      form.interviewType === "Physical" &&
+      !toNumericIdOrNull(form.physicalLocationId)
+    ) {
+      setFormError("Select an active physical interview room.");
       return;
     }
 
@@ -1222,6 +1296,14 @@ export default function RecruitmentInterviews() {
       return;
     }
 
+    const selectedPhysicalLocation =
+      form.interviewType === "Physical"
+        ? physicalLocations.find(
+            (location) =>
+              String(location.id) === String(form.physicalLocationId),
+          )
+        : null;
+
     const item = {
       ...(oldItem || {}),
       ...form,
@@ -1237,7 +1319,15 @@ export default function RecruitmentInterviews() {
       stageOrder: ROUNDS.indexOf(form.round) + 1,
       meetingLink:
         form.interviewType === "Online" ? form.meetingLink.trim() : "",
-      location: form.interviewType === "Physical" ? form.location.trim() : "",
+      location:
+        form.interviewType === "Physical"
+          ? formatPhysicalLocation(selectedPhysicalLocation) ||
+            form.location.trim()
+          : "",
+      physicalLocationId:
+        form.interviewType === "Physical"
+          ? String(form.physicalLocationId)
+          : "",
       status: oldItem?.status || "Scheduled",
       invitationStatus: oldItem?.invitationStatus || "Not sent",
     };
@@ -1378,16 +1468,36 @@ export default function RecruitmentInterviews() {
         setNotice("Interview scheduled successfully.");
         closeForm();
       }
+
     } catch (error) {
       console.error("Unable to save interview:", error);
-      setFormError(
+
+      const message =
         error?.response?.data?.message ||
-          error?.message ||
-          "Could not save the interview. Check the backend and try again.",
-      );
+        error?.response?.data?.error ||
+        error?.message ||
+        "Could not save the interview. Please try again.";
+
+      const lowerMessage = message.toLowerCase();
+
+      const isConflict =
+        lowerMessage.includes("approved leave") ||
+        lowerMessage.includes("conflict") ||
+        lowerMessage.includes("already assigned") ||
+        lowerMessage.includes("unavailable interviewer") ||
+        lowerMessage.startsWith("409:");
+
+      if (isConflict) {
+        setFormError("");
+        setConflictError(message.replace(/^\d+:\s*/, ""));
+      } else {
+        setConflictError("");
+        setFormError(message);
+      }
     } finally {
       setSaving(false);
     }
+
   };
 
   const updateStatus = async (id, status) => {
@@ -1435,9 +1545,10 @@ export default function RecruitmentInterviews() {
       // candidate, vacancy, date, interviewer, or other interview details.
       const response = await recruitmentApi.updateInterviewStatus(id, status);
       const dto = response?.data?.data ?? response?.data ?? response;
-      const mapped = dto && typeof dto === "object" && dto.id != null
-        ? fromApiInterview(dto)
-        : {};
+      const mapped =
+        dto && typeof dto === "object" && dto.id != null
+          ? fromApiInterview(dto)
+          : {};
 
       // Merge the server result with the existing item to preserve fields that
       // may not be included in the status endpoint's response.
@@ -1902,182 +2013,187 @@ export default function RecruitmentInterviews() {
               <div className="hidden overflow-hidden rounded-xl border border-slate-200 bg-white">
                 <div className="overflow-x-auto">
                   <table className="w-full min-w-[1150px] text-left text-sm text-slate-600">
-                  <thead className="border-b border-slate-200 bg-slate-50/80 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
-                    <tr>
-                      {[
-                        "Candidate",
-                        "Round",
-                        "Date & Time",
-                        "Interviewers",
-                        "Mode",
-                        "Invitation",
-                        "Status",
-                        "Actions",
-                      ].map((heading) => (
-                        <th
-                          key={heading}
-                          className="whitespace-nowrap px-3 py-3"
-                        >
-                          {heading}
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100">
-                    {filtered.map((item) => {
-                      const online = getInterviewType(item) === "Online";
-                      return (
-                        <tr key={item.id} className="transition-colors duration-150 hover:bg-slate-50/80">
-                          <td className="whitespace-nowrap px-3 py-3.5">
-                            <div className="flex items-center gap-3">
-                              <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-tr ${avatarColorClass(item.candidate || item.id)} text-xs font-bold text-white shadow-sm`}>
-                                {initials(item.candidate)}
+                    <thead className="border-b border-slate-200 bg-slate-50/80 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+                      <tr>
+                        {[
+                          "Candidate",
+                          "Round",
+                          "Date & Time",
+                          "Interviewers",
+                          "Mode",
+                          "Invitation",
+                          "Status",
+                          "Actions",
+                        ].map((heading) => (
+                          <th
+                            key={heading}
+                            className="whitespace-nowrap px-3 py-3"
+                          >
+                            {heading}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {filtered.map((item) => {
+                        const online = getInterviewType(item) === "Online";
+                        return (
+                          <tr
+                            key={item.id}
+                            className="transition-colors duration-150 hover:bg-slate-50/80"
+                          >
+                            <td className="whitespace-nowrap px-3 py-3.5">
+                              <div className="flex items-center gap-3">
+                                <div
+                                  className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-tr ${avatarColorClass(item.candidate || item.id)} text-xs font-bold text-white shadow-sm`}
+                                >
+                                  {initials(item.candidate)}
+                                </div>
+                                <div>
+                                  <p className="font-semibold text-slate-900">
+                                    {item.candidate}
+                                  </p>
+                                  <p className="mt-1 text-xs text-slate-500">
+                                    {item.email}
+                                  </p>
+                                </div>
                               </div>
-                              <div>
-                                <p className="font-semibold text-slate-900">
-                                  {item.candidate}
-                                </p>
-                                <p className="mt-1 text-xs text-slate-500">
-                                  {item.email}
-                                </p>
-                              </div>
-                            </div>
-                          </td>
-                          <td className="whitespace-nowrap px-3 py-3.5">
-                            <span className="mt-1 inline-flex rounded-md bg-primary-50 px-2 py-1 text-xs text-primary-700">
-                              {item.round}
-                            </span>
-                          </td>
-                          <td className="whitespace-nowrap px-3 py-3.5">
-                            <p className="whitespace-nowrap text-sm font-medium">
-                              {formatDate(item.date)}
-                            </p>
-                            <p className="mt-1 text-xs text-slate-500">
-                              {formatTime(item.time)} · {item.duration} min
-                            </p>
-                          </td>
-                          <td className="max-w-64 px-3 py-3.5">
-                            <div className="flex items-start gap-2 text-sm text-slate-700">
-                              <Users
-                                size={16}
-                                className="mt-0.5 shrink-0 text-slate-400"
-                              />
-                              <span>{normalizePeople(item).join(", ")}</span>
-                            </div>
-                          </td>
-                          <td className="px-3 py-3.5">
-                            <span
-                              className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ${online ? "bg-primary-50 text-primary-700" : "bg-slate-100 text-slate-700"}`}
-                            >
-                              {online ? (
-                                <Video size={14} />
-                              ) : (
-                                <MapPin size={14} />
-                              )}
-                              {getInterviewType(item)}
-                            </span>
-                            {online && item.meetingLink ? (
-                              <a
-                                href={item.meetingLink}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="mt-2 flex max-w-40 items-center gap-1 break-words text-xs text-primary-600"
-                              >
-                                <LinkIcon size={13} /> Open meeting link
-                              </a>
-                            ) : (
-                              <p className="mt-2 max-w-40 text-xs text-slate-500">
-                                {item.location || "Not provided"}
+                            </td>
+                            <td className="whitespace-nowrap px-3 py-3.5">
+                              <span className="mt-1 inline-flex rounded-md bg-primary-50 px-2 py-1 text-xs text-primary-700">
+                                {item.round}
+                              </span>
+                            </td>
+                            <td className="whitespace-nowrap px-3 py-3.5">
+                              <p className="whitespace-nowrap text-sm font-medium">
+                                {formatDate(item.date)}
                               </p>
-                            )}
-                          </td>
-                          <td className="whitespace-nowrap px-3 py-3.5">
-                            <span
-                              className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-bold shadow-xs ${invitationStyle[item.invitationStatus || "Not sent"] || invitationStyle["Not sent"]}`}
-                            >
-                              <span className="h-1.5 w-1.5 rounded-full bg-current" />
-                              {item.invitationStatus || "Not sent"}
-                            </span>
-                          </td>
-                          <td className="whitespace-nowrap px-3 py-3.5">
-                            <span
-                              className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-bold shadow-xs ${statusStyle[item.status] || "bg-slate-100 text-slate-600 border-slate-200"}`}
-                            >
-                              <span className="h-1.5 w-1.5 rounded-full bg-current" />
-                              {item.status}
-                            </span>
-                          </td>
-
-                          <td className="min-w-[180px] whitespace-nowrap px-3 py-3.5">
-                            <div className="flex items-center gap-1">
-                              {/* View interview details */}
-                                                            <ViewButton
-                                title="View details"
-                                aria-label={`View details for ${item.candidate}`}
-                                onClick={() => {
-                                  setSelected(item);
-                                  setDetailsEditMode(false);
-                                  setEditingId(null);
-                                  setStatusError("");
-                                  setFormError("");
-                                  setConflictError("");
-                                }}
-                              />
-
-                              {/* Edit or reschedule the interview */}
-                              <button
-                                type="button"
-                                onClick={() => openEdit(item)}
-                                title="Edit / Reschedule"
-                                aria-label={`Edit or reschedule interview for ${item.candidate}`}
-                                className="rounded-xl bg-slate-100 p-2 text-slate-700 hover:bg-slate-200"
+                              <p className="mt-1 text-xs text-slate-500">
+                                {formatTime(item.time)} · {item.duration} min
+                              </p>
+                            </td>
+                            <td className="max-w-64 px-3 py-3.5">
+                              <div className="flex items-start gap-2 text-sm text-slate-700">
+                                <Users
+                                  size={16}
+                                  className="mt-0.5 shrink-0 text-slate-400"
+                                />
+                                <span>{normalizePeople(item).join(", ")}</span>
+                              </div>
+                            </td>
+                            <td className="px-3 py-3.5">
+                              <span
+                                className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ${online ? "bg-primary-50 text-primary-700" : "bg-slate-100 text-slate-700"}`}
                               >
-                                <Pencil size={17} />
-                              </button>
-
-                              {/* Delete the interview */}
-                              <button
-                                type="button"
-                                onClick={() => setDeleteTarget(item)}
-                                title="Delete"
-                                aria-label={`Delete interview for ${item.candidate}`}
-                                className="rounded-xl bg-slate-100 p-2 text-slate-700 hover:bg-slate-200"
+                                {online ? (
+                                  <Video size={14} />
+                                ) : (
+                                  <MapPin size={14} />
+                                )}
+                                {getInterviewType(item)}
+                              </span>
+                              {online && item.meetingLink ? (
+                                <a
+                                  href={item.meetingLink}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="mt-2 flex max-w-40 items-center gap-1 break-words text-xs text-primary-600"
+                                >
+                                  <LinkIcon size={13} /> Open meeting link
+                                </a>
+                              ) : (
+                                <p className="mt-2 max-w-40 text-xs text-slate-500">
+                                  {item.location || "Not provided"}
+                                </p>
+                              )}
+                            </td>
+                            <td className="whitespace-nowrap px-3 py-3.5">
+                              <span
+                                className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-bold shadow-xs ${invitationStyle[item.invitationStatus || "Not sent"] || invitationStyle["Not sent"]}`}
                               >
-                                <Trash2 size={17} />
-                              </button>
-                            </div>
+                                <span className="h-1.5 w-1.5 rounded-full bg-current" />
+                                {item.invitationStatus || "Not sent"}
+                              </span>
+                            </td>
+                            <td className="whitespace-nowrap px-3 py-3.5">
+                              <span
+                                className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-bold shadow-xs ${statusStyle[item.status] || "bg-slate-100 text-slate-600 border-slate-200"}`}
+                              >
+                                <span className="h-1.5 w-1.5 rounded-full bg-current" />
+                                {item.status}
+                              </span>
+                            </td>
+
+                            <td className="min-w-[180px] whitespace-nowrap px-3 py-3.5">
+                              <div className="flex items-center gap-1">
+                                {/* View interview details */}
+                                <ViewButton
+                                  title="View details"
+                                  aria-label={`View details for ${item.candidate}`}
+                                  onClick={() => {
+                                    setSelected(item);
+                                    setDetailsEditMode(false);
+                                    setEditingId(null);
+                                    setStatusError("");
+                                    setFormError("");
+                                    setConflictError("");
+                                  }}
+                                />
+
+                                {/* Edit or reschedule the interview */}
+                                <button
+                                  type="button"
+                                  onClick={() => openEdit(item)}
+                                  title="Edit / Reschedule"
+                                  aria-label={`Edit or reschedule interview for ${item.candidate}`}
+                                  className="rounded-xl bg-slate-100 p-2 text-slate-700 hover:bg-slate-200"
+                                >
+                                  <Pencil size={17} />
+                                </button>
+
+                                {/* Delete the interview */}
+                                <button
+                                  type="button"
+                                  onClick={() => setDeleteTarget(item)}
+                                  title="Delete"
+                                  aria-label={`Delete interview for ${item.candidate}`}
+                                  className="rounded-xl bg-slate-100 p-2 text-slate-700 hover:bg-slate-200"
+                                >
+                                  <Trash2 size={17} />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                      {!filtered.length && (
+                        <tr>
+                          <td colSpan={8} className="px-5 py-14 text-center">
+                            <CalendarDays
+                              size={34}
+                              className="mx-auto mb-3 text-slate-300"
+                            />
+                            <p className="font-semibold text-slate-700">
+                              No interviews found
+                            </p>
+                            <p className="mt-1 text-sm text-slate-500">
+                              Try changing your search or filters.
+                            </p>
                           </td>
                         </tr>
-                      );
-                    })}
-                    {!filtered.length && (
-                      <tr>
-                        <td colSpan={8} className="px-5 py-14 text-center">
-                          <CalendarDays
-                            size={34}
-                            className="mx-auto mb-3 text-slate-300"
-                          />
-                          <p className="font-semibold text-slate-700">
-                            No interviews found
-                          </p>
-                          <p className="mt-1 text-sm text-slate-500">
-                            Try changing your search or filters.
-                          </p>
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
+                      )}
+                    </tbody>
                   </table>
                 </div>
                 <div className="flex flex-col gap-2 border-t px-4 py-3.5 text-sm text-slate-500 sm:flex-row sm:justify-between">
-                <span>
-                  Showing {filtered.length} of {interviews.length} interviews
-                </span>
-                <span>
-                  {backendConnected
-                    ? " "
-                    : "Backend unavailable — no sample data shown"}
-                </span>
+                  <span>
+                    Showing {filtered.length} of {interviews.length} interviews
+                  </span>
+                  <span>
+                    {backendConnected
+                      ? " "
+                      : "Backend unavailable — no sample data shown"}
+                  </span>
                 </div>
               </div>
             </>
@@ -2092,100 +2208,100 @@ export default function RecruitmentInterviews() {
             subtitle="Select a candidate to schedule an interview."
             onClose={() => setPickerOpen(false)}
             size="2xl"
-            footer={<ModalButton onClick={() => setPickerOpen(false)}>Close</ModalButton>}
+            footer={
+              <ModalButton onClick={() => setPickerOpen(false)}>
+                Close
+              </ModalButton>
+            }
           >
-              <div className="border-b p-5">
-                <input
-                  value={candidateSearch}
-                  onChange={(event) => setCandidateSearch(event.target.value)}
-                  placeholder="Search name, email, or vacancy..."
-                  className="w-full rounded-xl border px-4 py-2.5 sm:max-w-md"
-                />
-              </div>
-              <div className="max-h-[55vh] overflow-auto">
-                {candidatesLoading ? (
-                  <p className="p-8 text-center text-sm text-slate-500">
-                    Loading shortlisted candidates from backend...
-                  </p>
-                ) : candidateLoadError ? (
-                  <p
-                    role="alert"
-                    className="p-8 text-center text-sm text-red-600"
-                  >
-                    {candidateLoadError}
-                  </p>
-                ) : filteredCandidates.length === 0 ? (
-                  <p className="p-8 text-center text-sm text-slate-500">
-                    No shortlisted candidates returned by the backend.
-                  </p>
-                ) : (
-                  <table className="w-full min-w-[700px] text-left">
-                    <thead className="bg-slate-50">
-                      <tr>
-                        {[
-                          "Candidate",
-                          "Email",
-                          "Vacancy",
-                          "Status",
-                          "Action",
-                        ].map((heading) => (
-                          <th
-                            key={heading}
-                            className="px-5 py-4 text-xs uppercase text-slate-500"
-                          >
-                            {heading}
-                          </th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y">
-                      {filteredCandidates.map((candidate) => (
-                        <tr key={candidate.id}>
-                          <td className="px-5 py-4 font-semibold">
-                            {candidate.name}
-                          </td>
-                          <td className="px-5 py-4 text-sm">
-                            {candidate.email}
-                          </td>
-                          <td className="px-5 py-4">{candidate.vacancy}</td>
-                          <td className="px-5 py-4">
-                            <span className="rounded-full bg-green-50 px-3 py-1 text-xs text-green-700">
-                              {candidate.applicationStatus}
-                            </span>
-                          </td>
-                          <td className="px-5 py-4">
-                            <button
-                              onClick={() => {
-                                setForm({
-                                  ...blankForm,
-                                  applicationId:
-                                    toNumericIdOrNull(
-                                      candidate.applicationId,
-                                    ) ?? "",
-                                  vacancyId:
-                                    toNumericIdOrNull(candidate.vacancyId) ??
-                                    "",
-                                  candidate: candidate.name,
-                                  email: candidate.email,
-                                  vacancy: candidate.vacancy,
-                                });
-                                setEditingId(null);
-                                setPickerOpen(false);
-                                setInterviewerSearch("");
-                                setInterviewerPickerOpen(false);
-                                setModalOpen(true);
-                              }}
-                              className="rounded-lg bg-primary-600 px-3 py-2 text-xs font-semibold text-white"
-                            >
-                              Schedule Interview
-                            </button>
-                          </td>
-                        </tr>
+            <div className="border-b p-5">
+              <input
+                value={candidateSearch}
+                onChange={(event) => setCandidateSearch(event.target.value)}
+                placeholder="Search name, email, or vacancy..."
+                className="w-full rounded-xl border px-4 py-2.5 sm:max-w-md"
+              />
+            </div>
+            <div className="max-h-[55vh] overflow-auto">
+              {candidatesLoading ? (
+                <p className="p-8 text-center text-sm text-slate-500">
+                  Loading shortlisted candidates from backend...
+                </p>
+              ) : candidateLoadError ? (
+                <p
+                  role="alert"
+                  className="p-8 text-center text-sm text-red-600"
+                >
+                  {candidateLoadError}
+                </p>
+              ) : filteredCandidates.length === 0 ? (
+                <p className="p-8 text-center text-sm text-slate-500">
+                  No shortlisted candidates returned by the backend.
+                </p>
+              ) : (
+                <table className="w-full min-w-[700px] text-left">
+                  <thead className="bg-slate-50">
+                    <tr>
+                      {[
+                        "Candidate",
+                        "Email",
+                        "Vacancy",
+                        "Status",
+                        "Action",
+                      ].map((heading) => (
+                        <th
+                          key={heading}
+                          className="px-5 py-4 text-xs uppercase text-slate-500"
+                        >
+                          {heading}
+                        </th>
                       ))}
-                    </tbody>
-                  </table>
-                )}
-              </div>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y">
+                    {filteredCandidates.map((candidate) => (
+                      <tr key={candidate.id}>
+                        <td className="px-5 py-4 font-semibold">
+                          {candidate.name}
+                        </td>
+                        <td className="px-5 py-4 text-sm">{candidate.email}</td>
+                        <td className="px-5 py-4">{candidate.vacancy}</td>
+                        <td className="px-5 py-4">
+                          <span className="rounded-full bg-green-50 px-3 py-1 text-xs text-green-700">
+                            {candidate.applicationStatus}
+                          </span>
+                        </td>
+                        <td className="px-5 py-4">
+                          <button
+                            onClick={() => {
+                              setForm({
+                                ...blankForm,
+                                applicationId:
+                                  toNumericIdOrNull(candidate.applicationId) ??
+                                  "",
+                                vacancyId:
+                                  toNumericIdOrNull(candidate.vacancyId) ?? "",
+                                candidate: candidate.name,
+                                email: candidate.email,
+                                vacancy: candidate.vacancy,
+                              });
+                              setEditingId(null);
+                              setPickerOpen(false);
+                              setInterviewerSearch("");
+                              setInterviewerPickerOpen(false);
+                              setModalOpen(true);
+                            }}
+                            className="rounded-lg bg-primary-600 px-3 py-2 text-xs font-semibold text-white"
+                          >
+                            Schedule Interview
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
           </RecruitmentModal>
         )}
 
@@ -2193,412 +2309,498 @@ export default function RecruitmentInterviews() {
         {modalOpen && editingId == null && (
           <RecruitmentModal
             open={true}
-            title={editingId !== null ? "Edit / Reschedule Interview" : "Schedule Interview"}
+            title={
+              editingId !== null
+                ? "Edit / Reschedule Interview"
+                : "Schedule Interview"
+            }
             subtitle="Assign the interview stage and one or more interviewers."
             onClose={closeForm}
             size="lg"
             footer={
               <>
-                <ModalButton onClick={closeForm} disabled={saving}>Cancel</ModalButton>
-                <ModalButton variant="primary" type="submit" form="interview-form" disabled={saving}>
+                <ModalButton onClick={closeForm} disabled={saving}>
+                  Cancel
+                </ModalButton>
+                <ModalButton
+                  variant="primary"
+                  type="submit"
+                  form="interview-form"
+                  disabled={saving}
+                >
                   <CalendarCheck size={17} />
-                  {saving ? "Saving..." : editingId !== null ? "Save Changes" : "Schedule Interview"}
+                  {saving
+                    ? "Saving..."
+                    : editingId !== null
+                      ? "Save Changes"
+                      : "Schedule Interview"}
                 </ModalButton>
               </>
             }
           >
-              <form id="interview-form" onSubmit={submit}>
-                <div className="grid max-h-[68vh] grid-cols-1 gap-5 overflow-y-auto p-5 sm:grid-cols-2 sm:p-6">
-                  <label className="text-sm font-medium text-slate-700">
-                    Candidate name *
-                    <input
-                      name="candidate"
-                      value={form.candidate}
-                      onChange={changeForm}
-                      required
-                      className="mt-2 w-full rounded-xl border px-3 py-2.5 font-normal"
-                    />
-                  </label>
-                  <label className="text-sm font-medium text-slate-700">
-                    Candidate email *
-                    <input
-                      name="email"
-                      type="email"
-                      value={form.email}
-                      onChange={changeForm}
-                      required
-                      className="mt-2 w-full rounded-xl border px-3 py-2.5 font-normal"
-                    />
-                  </label>
-                  <label className="text-sm font-medium text-slate-700">
-                    Job vacancy *
-                    <input
-                      name="vacancy"
-                      value={form.vacancy}
-                      onChange={changeForm}
-                      required
-                      className="mt-2 w-full rounded-xl border px-3 py-2.5 font-normal"
-                    />
-                  </label>
-                  <label className="text-sm font-medium text-slate-700">
-                    Interview stage *
-                    <select
-                      name="round"
-                      value={form.round}
-                      onChange={changeForm}
-                      className="mt-2 w-full rounded-xl border bg-white px-3 py-2.5 font-normal"
+            <form id="interview-form" onSubmit={submit}>
+              <div className="grid max-h-[68vh] grid-cols-1 gap-5 overflow-y-auto p-5 sm:grid-cols-2 sm:p-6">
+                <label className="text-sm font-medium text-slate-700">
+                  Candidate name *
+                  <input
+                    name="candidate"
+                    value={form.candidate}
+                    onChange={changeForm}
+                    required
+                    className="mt-2 w-full rounded-xl border px-3 py-2.5 font-normal"
+                  />
+                </label>
+                <label className="text-sm font-medium text-slate-700">
+                  Candidate email *
+                  <input
+                    name="email"
+                    type="email"
+                    value={form.email}
+                    onChange={changeForm}
+                    required
+                    className="mt-2 w-full rounded-xl border px-3 py-2.5 font-normal"
+                  />
+                </label>
+                <label className="text-sm font-medium text-slate-700">
+                  Job vacancy *
+                  <input
+                    name="vacancy"
+                    value={form.vacancy}
+                    onChange={changeForm}
+                    required
+                    className="mt-2 w-full rounded-xl border px-3 py-2.5 font-normal"
+                  />
+                </label>
+                <label className="text-sm font-medium text-slate-700">
+                  Interview stage *
+                  <select
+                    name="round"
+                    value={form.round}
+                    onChange={changeForm}
+                    className="mt-2 w-full rounded-xl border bg-white px-3 py-2.5 font-normal"
+                  >
+                    {ROUNDS.map((round) => (
+                      <option key={round}>{round}</option>
+                    ))}
+                  </select>
+                </label>
+                <label className="text-sm font-medium text-slate-700">
+                  Date *
+                  <input
+                    name="date"
+                    type="date"
+                    min={today}
+                    value={form.date}
+                    onChange={changeForm}
+                    required
+                    className="mt-2 w-full rounded-xl border px-3 py-2.5 font-normal"
+                  />
+                </label>
+                <label className="text-sm font-medium text-slate-700">
+                  Start time *
+                  <input
+                    name="time"
+                    type="time"
+                    value={form.time}
+                    onChange={changeForm}
+                    required
+                    className="mt-2 w-full rounded-xl border px-3 py-2.5 font-normal"
+                  />
+                </label>
+                <label className="text-sm font-medium text-slate-700">
+                  Duration *
+                  <select
+                    name="duration"
+                    value={form.duration}
+                    onChange={changeForm}
+                    className="mt-2 w-full rounded-xl border bg-white px-3 py-2.5 font-normal"
+                  >
+                    {["30", "45", "60", "90", "120"].map((value) => (
+                      <option key={value} value={value}>
+                        {value} minutes
+                      </option>
+                    ))}
+                  </select>
+                </label>
+
+                <div
+                  className="relative sm:col-span-2"
+                  ref={interviewerPickerRef}
+                >
+                  <div className="mb-2 flex items-center justify-between gap-3">
+                    <label
+                      id="interviewer-picker-label"
+                      className="text-sm font-medium text-slate-700"
                     >
-                      {ROUNDS.map((round) => (
-                        <option key={round}>{round}</option>
-                      ))}
-                    </select>
-                  </label>
-                  <label className="text-sm font-medium text-slate-700">
-                    Date *
-                    <input
-                      name="date"
-                      type="date"
-                      min={today}
-                      value={form.date}
-                      onChange={changeForm}
-                      required
-                      className="mt-2 w-full rounded-xl border px-3 py-2.5 font-normal"
+                      Assigned interviewers *
+                    </label>
+                    <span className="text-xs text-slate-500">
+                      Select one or more employees
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    aria-labelledby="interviewer-picker-label"
+                    aria-haspopup="listbox"
+                    aria-expanded={interviewerPickerOpen}
+                    onClick={() => {
+                      setInterviewerPickerOpen((open) => !open);
+                      setInterviewerSearch("");
+                    }}
+                    className={`flex min-h-[50px] w-full flex-wrap items-center gap-2 rounded-xl border bg-white px-3 py-2.5 text-left transition ${interviewerPickerOpen ? "border-primary-500 ring-2 ring-primary-100" : "border-slate-300 hover:border-slate-400"}`}
+                  >
+                    {form.interviewers.length ? (
+                      <div className="flex flex-1 flex-wrap items-center gap-2">
+                        {form.interviewers.map((person) => (
+                          <span
+                            key={person}
+                            className="inline-flex max-w-full items-center gap-1.5 rounded-lg border border-primary-100 bg-primary-50 py-1 pl-2.5 pr-1.5 text-sm font-medium text-primary-700"
+                          >
+                            <UserRound size={14} className="shrink-0" />
+                            <span className="truncate">{person}</span>
+                            <span
+                              role="button"
+                              tabIndex={0}
+                              aria-label={`Remove ${person}`}
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                removeInterviewer(person);
+                              }}
+                              onKeyDown={(event) => {
+                                if (
+                                  event.key === "Enter" ||
+                                  event.key === " "
+                                ) {
+                                  event.preventDefault();
+                                  event.stopPropagation();
+                                  removeInterviewer(person);
+                                }
+                              }}
+                              className="ml-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-md text-primary-500 hover:bg-primary-200 hover:text-primary-800"
+                            >
+                              <X size={13} />
+                            </span>
+                          </span>
+                        ))}
+                      </div>
+                    ) : (
+                      <span className="flex-1 text-sm text-slate-400">
+                        Search assigned interviewers...
+                      </span>
+                    )}
+                    <ChevronRight
+                      size={18}
+                      className={`ml-auto shrink-0 text-slate-400 transition-transform ${interviewerPickerOpen ? "rotate-90" : ""}`}
                     />
-                  </label>
-                  <label className="text-sm font-medium text-slate-700">
-                    Start time *
-                    <input
-                      name="time"
-                      type="time"
-                      value={form.time}
-                      onChange={changeForm}
-                      required
-                      className="mt-2 w-full rounded-xl border px-3 py-2.5 font-normal"
-                    />
-                  </label>
-                  <label className="text-sm font-medium text-slate-700">
-                    Duration *
-                    <select
-                      name="duration"
-                      value={form.duration}
-                      onChange={changeForm}
-                      className="mt-2 w-full rounded-xl border bg-white px-3 py-2.5 font-normal"
+                  </button>
+
+                  {interviewerPickerOpen && (
+                    <div className="absolute left-0 right-0 top-full z-[70] mt-2 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl">
+                      <div className="border-b border-slate-100 p-3">
+                        <div className="relative">
+                          <Search
+                            size={17}
+                            className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+                          />
+                          <input
+                            ref={interviewerSearchRef}
+                            value={interviewerSearch}
+                            onChange={(event) =>
+                              setInterviewerSearch(event.target.value)
+                            }
+                            onKeyDown={(event) =>
+                              event.key === "Escape" &&
+                              setInterviewerPickerOpen(false)
+                            }
+                            placeholder="Search employees..."
+                            aria-label="Search employees"
+                            className="w-full rounded-lg border border-slate-200 py-2.5 pl-9 pr-3 text-sm outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-100"
+                          />
+                        </div>
+                        <div className="mt-3 flex items-center justify-between gap-3">
+                          <span className="text-xs font-medium text-slate-500">
+                            {form.interviewers.length} selected
+                          </span>
+                          {form.interviewers.length > 0 && (
+                            <button
+                              type="button"
+                              onClick={clearInterviewers}
+                              className="text-xs font-semibold text-primary-600 hover:text-primary-800"
+                            >
+                              Clear selection
+                            </button>
+                          )}
+                        </div>
+                      </div>
+
+                      <div
+                        role="listbox"
+                        aria-multiselectable="true"
+                        aria-label="Available interviewers"
+                        className="max-h-56 overflow-y-auto p-1.5"
+                      >
+                        {employeesLoading && (
+                          <div className="px-4 py-8 text-center text-sm text-slate-500">
+                            Loading employees...
+                          </div>
+                        )}
+                        {!employeesLoading &&
+                          employeeLoadError &&
+                          employees.length === 0 && (
+                            <div className="px-4 py-6 text-center">
+                              <p className="text-sm font-medium text-amber-700">
+                                Unable to load employees
+                              </p>
+                              <p className="mt-1 text-xs text-slate-500">
+                                {employeeLoadError}
+                              </p>
+                            </div>
+                          )}
+                        {filteredInterviewers.map((person) => {
+                          const isSelected = form.interviewerIds.some(
+                            (id) => String(id) === String(person.id),
+                          );
+
+                          return (
+                            <button
+                              key={person.id}
+                              type="button"
+                              role="option"
+                              aria-selected={isSelected}
+                              onClick={() => toggleInterviewer(person)}
+                              className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left transition ${isSelected ? "bg-primary-50 text-primary-800" : "text-slate-700 hover:bg-slate-50"}`}
+                            >
+                              <span
+                                className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-bold ${isSelected ? "bg-primary-100 text-primary-700" : "bg-slate-100 text-slate-600"}`}
+                              >
+                                {initials(person.name)}
+                              </span>
+                              <span className="min-w-0 flex-1">
+                                <span className="block truncate text-sm font-medium">
+                                  {person.name}
+                                </span>
+                                <span className="mt-0.5 block truncate text-xs text-slate-500">
+                                  {[person.email, person.role]
+                                    .filter(Boolean)
+                                    .join(" · ") || "Employee"}
+                                </span>
+                              </span>
+                              <span
+                                className={`flex h-5 w-5 shrink-0 items-center justify-center rounded border ${isSelected ? "border-primary-600 bg-primary-600 text-white" : "border-slate-300 bg-white text-transparent"}`}
+                              >
+                                <Check size={13} strokeWidth={3} />
+                              </span>
+                            </button>
+                          );
+                        })}
+                        {!employeesLoading &&
+                          !employeeLoadError &&
+                          filteredInterviewers.length === 0 && (
+                            <div className="px-4 py-8 text-center">
+                              <Users
+                                size={25}
+                                className="mx-auto mb-2 text-slate-300"
+                              />
+                              <p className="text-sm font-medium text-slate-700">
+                                No employees found
+                              </p>
+                              <p className="mt-1 text-xs text-slate-500">
+                                Try another name.
+                              </p>
+                            </div>
+                          )}
+                      </div>
+
+                      <div className="flex items-center justify-between gap-3 border-t border-slate-100 bg-slate-50 px-3 py-2.5">
+                        <span className="text-xs text-slate-500">
+                          {form.interviewers.length
+                            ? `${form.interviewers.length} interviewer${form.interviewers.length === 1 ? "" : "s"} assigned`
+                            : "Select at least one interviewer"}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => setInterviewerPickerOpen(false)}
+                          className="rounded-lg bg-primary-600 px-4 py-2 text-xs font-semibold text-white hover:bg-primary-700"
+                        >
+                          Done
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                  <p className="mt-2 text-xs leading-5 text-slate-500">
+                    The frontend checks overlapping bookings for each selected
+                    interviewer. Backend validation is still needed to prevent
+                    conflicts across different browsers.
+                  </p>
+                </div>
+
+                <div className="sm:col-span-2">
+                  <p className="mb-2 text-sm font-medium">Interview type *</p>
+                  <div className="grid grid-cols-2 gap-3">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        changeForm({
+                          target: { name: "interviewType", value: "Online" },
+                        })
+                      }
+                      className={`rounded-xl border p-3 text-sm font-semibold ${form.interviewType === "Online" ? "border-primary-500 bg-primary-50 text-primary-700" : "border-slate-200"}`}
                     >
-                      {["30", "45", "60", "90", "120"].map((value) => (
-                        <option key={value} value={value}>
-                          {value} minutes
+                      <Video className="mr-2 inline" size={17} />
+                      Online
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        changeForm({
+                          target: {
+                            name: "interviewType",
+                            value: "Physical",
+                          },
+                        })
+                      }
+                      className={`rounded-xl border p-3 text-sm font-semibold ${form.interviewType === "Physical" ? "border-primary-500 bg-primary-50 text-primary-700" : "border-slate-200"}`}
+                    >
+                      <MapPin className="mr-2 inline" size={17} />
+                      Physical
+                    </button>
+                  </div>
+                </div>
+
+                {form.interviewType === "Online" ? (
+                  <label className="sm:col-span-2 text-sm font-medium text-slate-700">
+                    Meeting URL *
+                    <input
+                      name="meetingLink"
+                      type="url"
+                      value={form.meetingLink}
+                      onChange={changeForm}
+                      required
+                      placeholder="https://meet.google.com/..."
+                      className="mt-2 w-full rounded-xl border px-3 py-2.5 font-normal"
+                    />
+                    <span className="mt-1 block text-xs font-normal text-slate-500">
+                      Saving a meeting URL does not automatically email the
+                      candidate.
+                    </span>
+                  </label>
+                ) : (
+                  <label className="sm:col-span-2 text-sm font-medium text-slate-700">
+                    Physical location *
+                    <select
+                      name="physicalLocationId"
+                      value={form.physicalLocationId}
+                      onChange={changeForm}
+                      required
+                      disabled={physicalLocationsLoading}
+                      className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 font-normal disabled:bg-slate-100"
+                    >
+                      <option value="">
+                        {physicalLocationsLoading
+                          ? "Loading physical locations..."
+                          : "Select a physical location"}
+                      </option>
+
+                      {physicalLocations.map((room) => (
+                        <option key={room.id} value={String(room.id)}>
+                          {formatPhysicalLocation(room)}
+                          {room.capacity ? ` (Capacity: ${room.capacity})` : ""}
                         </option>
                       ))}
                     </select>
-                  </label>
-
-                  <div
-                    className="relative sm:col-span-2"
-                    ref={interviewerPickerRef}
-                  >
-                    <div className="mb-2 flex items-center justify-between gap-3">
-                      <label
-                        id="interviewer-picker-label"
-                        className="text-sm font-medium text-slate-700"
-                      >
-                        Assigned interviewers *
-                      </label>
-                      <span className="text-xs text-slate-500">
-                        Select one or more employees
-                      </span>
-                    </div>
                     <button
                       type="button"
-                      aria-labelledby="interviewer-picker-label"
-                      aria-haspopup="listbox"
-                      aria-expanded={interviewerPickerOpen}
-                      onClick={() => {
-                        setInterviewerPickerOpen((open) => !open);
-                        setInterviewerSearch("");
-                      }}
-                      className={`flex min-h-[50px] w-full flex-wrap items-center gap-2 rounded-xl border bg-white px-3 py-2.5 text-left transition ${interviewerPickerOpen ? "border-primary-500 ring-2 ring-primary-100" : "border-slate-300 hover:border-slate-400"}`}
+                      onClick={() =>
+                        navigate("/recruitment/interviews/physical-locations")
+                      }
+                      className="mt-2 text-sm font-semibold text-primary-600 hover:text-primary-700"
                     >
-                      {form.interviewers.length ? (
-                        <div className="flex flex-1 flex-wrap items-center gap-2">
-                          {form.interviewers.map((person) => (
-                            <span
-                              key={person}
-                              className="inline-flex max-w-full items-center gap-1.5 rounded-lg border border-primary-100 bg-primary-50 py-1 pl-2.5 pr-1.5 text-sm font-medium text-primary-700"
-                            >
-                              <UserRound size={14} className="shrink-0" />
-                              <span className="truncate">{person}</span>
-                              <span
-                                role="button"
-                                tabIndex={0}
-                                aria-label={`Remove ${person}`}
-                                onClick={(event) => {
-                                  event.stopPropagation();
-                                  removeInterviewer(person);
-                                }}
-                                onKeyDown={(event) => {
-                                  if (
-                                    event.key === "Enter" ||
-                                    event.key === " "
-                                  ) {
-                                    event.preventDefault();
-                                    event.stopPropagation();
-                                    removeInterviewer(person);
-                                  }
-                                }}
-                                className="ml-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-md text-primary-500 hover:bg-primary-200 hover:text-primary-800"
-                              >
-                                <X size={13} />
-                              </span>
-                            </span>
-                          ))}
-                        </div>
-                      ) : (
-                        <span className="flex-1 text-sm text-slate-400">
-                          Search assigned interviewers...
-                        </span>
-                      )}
-                      <ChevronRight
-                        size={18}
-                        className={`ml-auto shrink-0 text-slate-400 transition-transform ${interviewerPickerOpen ? "rotate-90" : ""}`}
-                      />
+                      + Manage physical locations
                     </button>
+                    {physicalLocationsError ? (
+                      <span className="mt-1 block text-xs font-normal text-red-600">
+                        {physicalLocationsError}
+                      </span>
+                    ) : (
+                      physicalLocations.length === 0 &&
+                      !physicalLocationsLoading && (
+                        <span className="mt-1 block text-xs font-normal text-amber-600">
+                          No active physical locations available. Please add a
+                          location first.
+                        </span>
+                      )
+                    )}
+                  </label>
+                )}
 
-                    {interviewerPickerOpen && (
-                      <div className="absolute left-0 right-0 top-full z-[70] mt-2 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl">
-                        <div className="border-b border-slate-100 p-3">
-                          <div className="relative">
-                            <Search
-                              size={17}
-                              className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
-                            />
-                            <input
-                              ref={interviewerSearchRef}
-                              value={interviewerSearch}
-                              onChange={(event) =>
-                                setInterviewerSearch(event.target.value)
-                              }
-                              onKeyDown={(event) =>
-                                event.key === "Escape" &&
-                                setInterviewerPickerOpen(false)
-                              }
-                              placeholder="Search employees..."
-                              aria-label="Search employees"
-                              className="w-full rounded-lg border border-slate-200 py-2.5 pl-9 pr-3 text-sm outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-100"
-                            />
-                          </div>
-                          <div className="mt-3 flex items-center justify-between gap-3">
-                            <span className="text-xs font-medium text-slate-500">
-                              {form.interviewers.length} selected
-                            </span>
-                            {form.interviewers.length > 0 && (
-                              <button
-                                type="button"
-                                onClick={clearInterviewers}
-                                className="text-xs font-semibold text-primary-600 hover:text-primary-800"
-                              >
-                                Clear selection
-                              </button>
-                            )}
-                          </div>
-                        </div>
+                <label className="sm:col-span-2 text-sm font-medium text-slate-700">
+                  Notes
+                  <textarea
+                    name="notes"
+                    value={form.notes}
+                    onChange={changeForm}
+                    rows={3}
+                    className="mt-2 w-full rounded-xl border px-3 py-2.5 font-normal"
+                    placeholder="Optional interview notes"
+                  />
+                </label>
 
-                        <div
-                          role="listbox"
-                          aria-multiselectable="true"
-                          aria-label="Available interviewers"
-                          className="max-h-56 overflow-y-auto p-1.5"
-                        >
-                          {employeesLoading && (
-                            <div className="px-4 py-8 text-center text-sm text-slate-500">
-                              Loading employees...
-                            </div>
-                          )}
-                          {!employeesLoading &&
-                            employeeLoadError &&
-                            employees.length === 0 && (
-                              <div className="px-4 py-6 text-center">
-                                <p className="text-sm font-medium text-amber-700">
-                                  Unable to load employees
-                                </p>
-                                <p className="mt-1 text-xs text-slate-500">
-                                  {employeeLoadError}
-                                </p>
-                              </div>
-                            )}
-                          {filteredInterviewers.map((person) => {
-                            const isSelected = form.interviewerIds.some(
-                              (id) => String(id) === String(person.id),
-                            );
 
-                            return (
-                              <button
-                                key={person.id}
-                                type="button"
-                                role="option"
-                                aria-selected={isSelected}
-                                onClick={() => toggleInterviewer(person)}
-                                className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left transition ${isSelected ? "bg-primary-50 text-primary-800" : "text-slate-700 hover:bg-slate-50"}`}
-                              >
-                                <span
-                                  className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-bold ${isSelected ? "bg-primary-100 text-primary-700" : "bg-slate-100 text-slate-600"}`}
-                                >
-                                  {initials(person.name)}
-                                </span>
-                                <span className="min-w-0 flex-1">
-                                  <span className="block truncate text-sm font-medium">
-                                    {person.name}
-                                  </span>
-                                  <span className="mt-0.5 block truncate text-xs text-slate-500">
-                                    {[person.email, person.role]
-                                      .filter(Boolean)
-                                      .join(" · ") || "Employee"}
-                                  </span>
-                                </span>
-                                <span
-                                  className={`flex h-5 w-5 shrink-0 items-center justify-center rounded border ${isSelected ? "border-primary-600 bg-primary-600 text-white" : "border-slate-300 bg-white text-transparent"}`}
-                                >
-                                  <Check size={13} strokeWidth={3} />
-                                </span>
-                              </button>
-                            );
-                          })}
-                          {!employeesLoading &&
-                            !employeeLoadError &&
-                            filteredInterviewers.length === 0 && (
-                              <div className="px-4 py-8 text-center">
-                                <Users
-                                  size={25}
-                                  className="mx-auto mb-2 text-slate-300"
-                                />
-                                <p className="text-sm font-medium text-slate-700">
-                                  No employees found
-                                </p>
-                                <p className="mt-1 text-xs text-slate-500">
-                                  Try another name.
-                                </p>
-                              </div>
-                            )}
-                        </div>
+                {conflictError && (
+                  <div
+                    role="alert"
+                    className="sm:col-span-2 overflow-hidden rounded-xl border border-amber-200 bg-amber-50 shadow-sm"
+                  >
+                    <div className="flex items-start gap-3 p-4">
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-amber-100">
+                        <CircleAlert
+                          size={21}
+                          className="text-amber-600"
+                        />
+                      </div>
 
-                        <div className="flex items-center justify-between gap-3 border-t border-slate-100 bg-slate-50 px-3 py-2.5">
-                          <span className="text-xs text-slate-500">
-                            {form.interviewers.length
-                              ? `${form.interviewers.length} interviewer${form.interviewers.length === 1 ? "" : "s"} assigned`
-                              : "Select at least one interviewer"}
-                          </span>
-                          <button
-                            type="button"
-                            onClick={() => setInterviewerPickerOpen(false)}
-                            className="rounded-lg bg-primary-600 px-4 py-2 text-xs font-semibold text-white hover:bg-primary-700"
-                          >
-                            Done
-                          </button>
+                      <div className="min-w-0 flex-1">
+                        <h3 className="text-sm font-bold text-amber-900">
+                          Interview Scheduling Conflict
+                        </h3>
+
+                        <p className="mt-1 text-sm leading-6 text-amber-800">
+                          {conflictError}
+                        </p>
+
+                        <div className="mt-3 rounded-lg border border-amber-200/70 bg-white/70 p-3">
+                          <p className="text-xs font-semibold text-amber-900">
+                            How to resolve this
+                          </p>
+                          <p className="mt-1 text-xs leading-5 text-amber-800">
+                            Select another available interviewer or choose a
+                            different interview date.
+                          </p>
                         </div>
                       </div>
-                    )}
-                    <p className="mt-2 text-xs leading-5 text-slate-500">
-                      The frontend checks overlapping bookings for each selected
-                      interviewer. Backend validation is still needed to prevent
-                      conflicts across different browsers.
-                    </p>
-                  </div>
 
-                  <div className="sm:col-span-2">
-                    <p className="mb-2 text-sm font-medium">Interview type *</p>
-                    <div className="grid grid-cols-2 gap-3">
                       <button
                         type="button"
-                        onClick={() =>
-                          changeForm({
-                            target: { name: "interviewType", value: "Online" },
-                          })
-                        }
-                        className={`rounded-xl border p-3 text-sm font-semibold ${form.interviewType === "Online" ? "border-primary-500 bg-primary-50 text-primary-700" : "border-slate-200"}`}
+                        onClick={() => setConflictError("")}
+                        aria-label="Dismiss conflict message"
+                        className="rounded-lg p-1 text-amber-600 transition hover:bg-amber-100"
                       >
-                        <Video className="mr-2 inline" size={17} />
-                        Online
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() =>
-                          changeForm({
-                            target: {
-                              name: "interviewType",
-                              value: "Physical",
-                            },
-                          })
-                        }
-                        className={`rounded-xl border p-3 text-sm font-semibold ${form.interviewType === "Physical" ? "border-primary-500 bg-primary-50 text-primary-700" : "border-slate-200"}`}
-                      >
-                        <MapPin className="mr-2 inline" size={17} />
-                        Physical
+                        <X size={18} />
                       </button>
                     </div>
                   </div>
+                )}
 
-                  {form.interviewType === "Online" ? (
-                    <label className="sm:col-span-2 text-sm font-medium text-slate-700">
-                      Meeting URL *
-                      <input
-                        name="meetingLink"
-                        type="url"
-                        value={form.meetingLink}
-                        onChange={changeForm}
-                        required
-                        placeholder="https://meet.google.com/..."
-                        className="mt-2 w-full rounded-xl border px-3 py-2.5 font-normal"
-                      />
-                      <span className="mt-1 block text-xs font-normal text-slate-500">
-                        Saving a meeting URL does not automatically email the
-                        candidate.
-                      </span>
-                    </label>
-                  ) : (
-                    <label className="sm:col-span-2 text-sm font-medium text-slate-700">
-                      Physical location *
-                      <input
-                        name="location"
-                        value={form.location}
-                        onChange={changeForm}
-                        required
-                        placeholder="Office / meeting room"
-                        className="mt-2 w-full rounded-xl border px-3 py-2.5 font-normal"
-                      />
-                    </label>
-                  )}
-
-                  <label className="sm:col-span-2 text-sm font-medium text-slate-700">
-                    Notes
-                    <textarea
-                      name="notes"
-                      value={form.notes}
-                      onChange={changeForm}
-                      rows={3}
-                      className="mt-2 w-full rounded-xl border px-3 py-2.5 font-normal"
-                      placeholder="Optional interview notes"
-                    />
-                  </label>
-
-                  {conflictError && (
-                    <div
-                      role="alert"
-                      className="sm:col-span-2 flex gap-2 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800"
-                    >
-                      <CircleAlert size={18} className="shrink-0" />
-                      {conflictError}
-                    </div>
-                  )}
-                  {formError && (
-                    <div
-                      role="alert"
-                      className="sm:col-span-2 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700"
-                    >
-                      {formError}
-                    </div>
-                  )}
-                </div>
-
-              </form>
+                {formError && (
+                  <div
+                    role="alert"
+                    className="sm:col-span-2 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700"
+                  >
+                    {formError}
+                  </div>
+                )}
+              </div>
+            </form>
           </RecruitmentModal>
         )}
 
@@ -2606,358 +2808,451 @@ export default function RecruitmentInterviews() {
         {selected && (
           <RecruitmentModal
             open={true}
-            title={detailsEditMode ? "Edit Interview Details" : "Interview Details"}
+            title={
+              detailsEditMode ? "Edit Interview Details" : "Interview Details"
+            }
             subtitle={selected.round}
             onClose={() => setSelected(null)}
             size="lg"
             footer={
               detailsEditMode ? (
                 <>
-                  <ModalButton onClick={() => { setDetailsEditMode(false); setEditingId(null); setFormError(""); setConflictError(""); setStatusError(""); setInterviewerSearch(""); setInterviewerPickerOpen(false); }} disabled={saving}>Cancel</ModalButton>
-                  <ModalButton variant="primary" type="submit" form="interview-details-form" disabled={saving}><Save size={15} />{saving ? "Saving..." : "Save Changes"}</ModalButton>
+                  <ModalButton
+                    onClick={() => {
+                      setDetailsEditMode(false);
+                      setEditingId(null);
+                      setFormError("");
+                      setConflictError("");
+                      setStatusError("");
+                      setInterviewerSearch("");
+                      setInterviewerPickerOpen(false);
+                    }}
+                    disabled={saving}
+                  >
+                    Cancel
+                  </ModalButton>
+                  <ModalButton
+                    variant="primary"
+                    type="submit"
+                    form="interview-details-form"
+                    disabled={saving}
+                  >
+                    <Save size={15} />
+                    {saving ? "Saving..." : "Save Changes"}
+                  </ModalButton>
                 </>
               ) : (
                 <>
-                  <ModalButton onClick={() => setSelected(null)}>Close</ModalButton>
-                  <ModalButton variant="danger" onClick={() => setDeleteTarget(selected)}><Trash2 size={15} />Delete</ModalButton>
+                  <ModalButton onClick={() => setSelected(null)}>
+                    Close
+                  </ModalButton>
+                  <ModalButton
+                    variant="danger"
+                    onClick={() => setDeleteTarget(selected)}
+                  >
+                    <Trash2 size={15} />
+                    Delete
+                  </ModalButton>
                 </>
               )
             }
           >
-
-              <div className="max-h-[72vh] space-y-5 overflow-y-auto p-5">
-                {detailsEditMode ? (
-                  <form id="interview-details-form" onSubmit={submit} className="space-y-4">
-                    <p className="text-sm text-slate-500">
-                      Edit the interview details below. Changes will be saved
-                      without opening a separate scheduling form.
-                    </p>
-                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                      <label className="text-sm font-medium text-slate-700">
-                        Candidate name *
-                        <input
-                          name="candidate"
-                          value={form.candidate}
-                          onChange={changeForm}
-                          required
-                          className="mt-1.5 w-full rounded-xl border px-3 py-2.5 font-normal"
-                        />
-                      </label>
-                      <label className="text-sm font-medium text-slate-700">
-                        Candidate email *
-                        <input
-                          name="email"
-                          type="email"
-                          value={form.email}
-                          onChange={changeForm}
-                          required
-                          className="mt-1.5 w-full rounded-xl border px-3 py-2.5 font-normal"
-                        />
-                      </label>
-                      <label className="text-sm font-medium text-slate-700">
-                        Job vacancy *
-                        <input
-                          name="vacancy"
-                          value={form.vacancy}
-                          onChange={changeForm}
-                          required
-                          className="mt-1.5 w-full rounded-xl border px-3 py-2.5 font-normal"
-                        />
-                      </label>
-                      <label className="text-sm font-medium text-slate-700">
-                        Interview stage *
-                        <select
-                          name="round"
-                          value={form.round}
-                          onChange={changeForm}
-                          required
-                          className="mt-1.5 w-full rounded-xl border bg-white px-3 py-2.5 font-normal"
-                        >
-                          {ROUNDS.map((round) => (
-                            <option key={round} value={round}>
-                              {round}
-                            </option>
-                          ))}
-                        </select>
-                      </label>
-                      <label className="text-sm font-medium text-slate-700">
-                        Date *
-                        <input
-                          name="date"
-                          type="date"
-                          value={form.date}
-                          onChange={changeForm}
-                          required
-                          className="mt-1.5 w-full rounded-xl border px-3 py-2.5 font-normal"
-                        />
-                      </label>
-                      <label className="text-sm font-medium text-slate-700">
-                        Start time *
-                        <input
-                          name="time"
-                          type="time"
-                          value={form.time}
-                          onChange={changeForm}
-                          required
-                          className="mt-1.5 w-full rounded-xl border px-3 py-2.5 font-normal"
-                        />
-                      </label>
-                      <label className="text-sm font-medium text-slate-700">
-                        Duration *
-                        <select
-                          name="duration"
-                          value={form.duration}
-                          onChange={changeForm}
-                          required
-                          className="mt-1.5 w-full rounded-xl border bg-white px-3 py-2.5 font-normal"
-                        >
-                          {["30", "45", "60", "90", "120"].map((value) => (
-                            <option key={value} value={value}>
-                              {value} minutes
-                            </option>
-                          ))}
-                        </select>
-                      </label>
-                      <label className="text-sm font-medium text-slate-700">
-                        Interview type *
-                        <select
-                          name="interviewType"
-                          value={form.interviewType}
-                          onChange={changeForm}
-                          required
-                          className="mt-1.5 w-full rounded-xl border bg-white px-3 py-2.5 font-normal"
-                        >
-                          <option value="Online">Online</option>
-                          <option value="Physical">Physical</option>
-                        </select>
-                      </label>
-                      <label className="text-sm font-medium text-slate-700 sm:col-span-2">
-                        Assigned interviewers *
-                        <input
-                          value={form.interviewers.join(", ")}
-                          onChange={(event) => {
-                            const people = event.target.value
-                              .split(",")
-                              .map((name) => name.trim())
-                              .filter(Boolean);
-                            setForm((old) => ({
-                              ...old,
-                              interviewers: people,
-                              interviewerIds: people
-                                .map(
-                                  (name) =>
-                                    employees.find(
-                                      (employee) =>
-                                        employee.name.toLowerCase() ===
-                                        name.toLowerCase(),
-                                    )?.id,
-                                )
-                                .filter(Boolean),
-                            }));
-                          }}
-                          required
-                          className="mt-1.5 w-full rounded-xl border px-3 py-2.5 font-normal"
-                          placeholder="Enter names separated by commas"
-                        />
-                        <span className="mt-1 block text-xs font-normal text-slate-500">
-                          Separate interviewer names with commas.
-                        </span>
-                      </label>
-                      {form.interviewType === "Online" ? (
-                        <label className="text-sm font-medium text-slate-700 sm:col-span-2">
-                          Meeting link *
-                          <input
-                            name="meetingLink"
-                            type="url"
-                            value={form.meetingLink}
-                            onChange={changeForm}
-                            required
-                            className="mt-1.5 w-full rounded-xl border px-3 py-2.5 font-normal"
-                            placeholder="https://..."
-                          />
-                        </label>
-                      ) : (
-                        <label className="text-sm font-medium text-slate-700 sm:col-span-2">
-                          Physical location *
-                          <input
-                            name="location"
-                            value={form.location}
-                            onChange={changeForm}
-                            required
-                            className="mt-1.5 w-full rounded-xl border px-3 py-2.5 font-normal"
-                            placeholder="Office / meeting room"
-                          />
-                        </label>
-                      )}
-                      <label className="text-sm font-medium text-slate-700 sm:col-span-2">
-                        Notes
-                        <textarea
-                          name="notes"
-                          value={form.notes}
-                          onChange={changeForm}
-                          rows={3}
-                          className="mt-1.5 w-full rounded-xl border px-3 py-2.5 font-normal"
-                          placeholder="Optional interview notes"
-                        />
-                      </label>
-                    </div>
-                    {conflictError && (
-                      <div
-                        role="alert"
-                        className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800"
+            <div className="max-h-[72vh] space-y-5 overflow-y-auto p-5">
+              {detailsEditMode ? (
+                <form
+                  id="interview-details-form"
+                  onSubmit={submit}
+                  className="space-y-4"
+                >
+                  <p className="text-sm text-slate-500">
+                    Edit the interview details below. Changes will be saved
+                    without opening a separate scheduling form.
+                  </p>
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <label className="text-sm font-medium text-slate-700">
+                      Candidate name *
+                      <input
+                        name="candidate"
+                        value={form.candidate}
+                        onChange={changeForm}
+                        required
+                        className="mt-1.5 w-full rounded-xl border px-3 py-2.5 font-normal"
+                      />
+                    </label>
+                    <label className="text-sm font-medium text-slate-700">
+                      Candidate email *
+                      <input
+                        name="email"
+                        type="email"
+                        value={form.email}
+                        onChange={changeForm}
+                        required
+                        className="mt-1.5 w-full rounded-xl border px-3 py-2.5 font-normal"
+                      />
+                    </label>
+                    <label className="text-sm font-medium text-slate-700">
+                      Job vacancy *
+                      <input
+                        name="vacancy"
+                        value={form.vacancy}
+                        onChange={changeForm}
+                        required
+                        className="mt-1.5 w-full rounded-xl border px-3 py-2.5 font-normal"
+                      />
+                    </label>
+                    <label className="text-sm font-medium text-slate-700">
+                      Interview stage *
+                      <select
+                        name="round"
+                        value={form.round}
+                        onChange={changeForm}
+                        required
+                        className="mt-1.5 w-full rounded-xl border bg-white px-3 py-2.5 font-normal"
                       >
-                        {conflictError}
-                      </div>
-                    )}
-                    {formError && (
-                      <div
-                        role="alert"
-                        className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700"
-                      >
-                        {formError}
-                      </div>
-                    )}
-                  </form>
-                ) : (
-                  <>
-                    <div>
-                      <p className="text-xs text-slate-500">Candidate</p>
-                      <p className="mt-1 font-semibold">{selected.candidate}</p>
-                      <p className="text-sm text-slate-500">{selected.email}</p>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <p className="text-xs text-slate-500">Vacancy</p>
-                        <p className="mt-1 font-medium">{selected.vacancy}</p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-slate-500">Status</p>
-                        <span
-                          className={`mt-1 inline-block rounded-full px-3 py-1 text-xs ${statusStyle[selected.status] || ""}`}
-                        >
-                          {selected.status}
-                        </span>
-                      </div>
-                      <div>
-                        <p className="text-xs text-slate-500">Date and time</p>
-                        <p className="mt-1 font-medium">
-                          {formatDate(selected.date)} ·{" "}
-                          {formatTime(selected.time)}
-                        </p>
-                        <p className="text-xs text-slate-500">
-                          {selected.duration} minutes
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-slate-500">Interviewers</p>
-                        <p className="mt-1 text-sm font-medium">
-                          {normalizePeople(selected).join(", ")}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="rounded-xl border bg-slate-50 p-4">
-                      <p className="font-semibold">Location / meeting</p>
-                      {getInterviewType(selected) === "Online" ? (
-                        selected.meetingLink ? (
-                          <a
-                            href={selected.meetingLink}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="mt-2 flex items-center gap-2 break-all text-sm text-primary-600"
-                          >
-                            <LinkIcon size={16} />
-                            {selected.meetingLink}
-                            <ExternalLink size={14} />
-                          </a>
-                        ) : (
-                          <p className="mt-2 text-sm text-slate-500">
-                            No meeting link provided.
-                          </p>
-                        )
-                      ) : (
-                        <p className="mt-2 text-sm">
-                          {selected.location || "No location provided."}
-                        </p>
-                      )}
-                      {selected.notes && (
-                        <p className="mt-3 whitespace-pre-wrap text-sm text-slate-600">
-                          {selected.notes}
-                        </p>
-                      )}
-                    </div>
-                    <div className="rounded-xl border bg-slate-50 p-4">
-                      <div className="flex items-start gap-3">
-                        <Mail className="text-slate-500" />
-                        <div>
-                          <p className="font-semibold">Email invitation</p>
-                          <p className="mt-1 text-xs text-slate-500">
-                            Email sending and invitation status are shown only
-                            when supported by the backend. This page does not
-                            create mock email records or simulate sending.
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                    <div>
-                      <p className="mb-2 text-sm font-semibold">
-                        Update status
-                      </p>
-                      <div className="flex flex-wrap gap-2">
-                        {STATUSES.map((status) => (
-                          <button
-                            key={status}
-                            onClick={() => updateStatus(selected.id, status)}
-                            className={`rounded-lg border px-3 py-2 text-xs font-semibold ${selected.status === status ? "border-primary-600 bg-primary-50 text-primary-700" : "border-slate-200"}`}
-                          >
-                            {status}
-                          </button>
+                        {ROUNDS.map((round) => (
+                          <option key={round} value={round}>
+                            {round}
+                          </option>
                         ))}
-                      </div>
-                      {statusError && (
-                        <p role="alert" className="mt-2 text-sm text-red-600">
-                          {statusError}
-                        </p>
-                      )}
-                    </div>
-                    <div className="border-t pt-4">
-                      <div className="mb-3 flex items-center gap-2 font-semibold">
-                        <History size={17} />
-                        Recent changes
-                      </div>
-                      {history
-                        .filter(
-                          (entry) =>
-                            String(entry.interviewId) === String(selected.id),
-                        )
-                        .slice(0, 4)
-                        .map((entry) => (
-                          <div
-                            key={entry.id}
-                            className="mb-3 pl-3"
-                          >
-                            <p className="text-sm font-semibold">
-                              {entry.action}
+                      </select>
+                    </label>
+                    <label className="text-sm font-medium text-slate-700">
+                      Date *
+                      <input
+                        name="date"
+                        type="date"
+                        value={form.date}
+                        onChange={changeForm}
+                        required
+                        className="mt-1.5 w-full rounded-xl border px-3 py-2.5 font-normal"
+                      />
+                    </label>
+                    <label className="text-sm font-medium text-slate-700">
+                      Start time *
+                      <input
+                        name="time"
+                        type="time"
+                        value={form.time}
+                        onChange={changeForm}
+                        required
+                        className="mt-1.5 w-full rounded-xl border px-3 py-2.5 font-normal"
+                      />
+                    </label>
+                    <label className="text-sm font-medium text-slate-700">
+                      Duration *
+                      <select
+                        name="duration"
+                        value={form.duration}
+                        onChange={changeForm}
+                        required
+                        className="mt-1.5 w-full rounded-xl border bg-white px-3 py-2.5 font-normal"
+                      >
+                        {["30", "45", "60", "90", "120"].map((value) => (
+                          <option key={value} value={value}>
+                            {value} minutes
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    <label className="text-sm font-medium text-slate-700">
+                      Interview type *
+                      <select
+                        name="interviewType"
+                        value={form.interviewType}
+                        onChange={changeForm}
+                        required
+                        className="mt-1.5 w-full rounded-xl border bg-white px-3 py-2.5 font-normal"
+                      >
+                        <option value="Online">Online</option>
+                        <option value="Physical">Physical</option>
+                      </select>
+                    </label>
+                    <label className="text-sm font-medium text-slate-700 sm:col-span-2">
+                      Assigned interviewers *
+                      <input
+                        value={form.interviewers.join(", ")}
+                        onChange={(event) => {
+                          const people = event.target.value
+                            .split(",")
+                            .map((name) => name.trim())
+                            .filter(Boolean);
+                          setForm((old) => ({
+                            ...old,
+                            interviewers: people,
+                            interviewerIds: people
+                              .map(
+                                (name) =>
+                                  employees.find(
+                                    (employee) =>
+                                      employee.name.toLowerCase() ===
+                                      name.toLowerCase(),
+                                  )?.id,
+                              )
+                              .filter(Boolean),
+                          }));
+                        }}
+                        required
+                        className="mt-1.5 w-full rounded-xl border px-3 py-2.5 font-normal"
+                        placeholder="Enter names separated by commas"
+                      />
+                      <span className="mt-1 block text-xs font-normal text-slate-500">
+                        Separate interviewer names with commas.
+                      </span>
+                    </label>
+                    {form.interviewType === "Online" ? (
+                      <label className="text-sm font-medium text-slate-700 sm:col-span-2">
+                        Meeting link *
+                        <input
+                          name="meetingLink"
+                          type="url"
+                          value={form.meetingLink}
+                          onChange={changeForm}
+                          required
+                          className="mt-1.5 w-full rounded-xl border px-3 py-2.5 font-normal"
+                          placeholder="https://..."
+                        />
+                      </label>
+                    ) : (
+                      <label className="text-sm font-medium text-slate-700 sm:col-span-2">
+                        Physical location *
+                        <select
+                          name="physicalLocationId"
+                          value={form.physicalLocationId}
+                          onChange={changeForm}
+                          required
+                          disabled={physicalLocationsLoading}
+                          className="mt-1.5 w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 font-normal disabled:bg-slate-100"
+                        >
+                          <option value="">
+                            {physicalLocationsLoading
+                              ? "Loading physical locations..."
+                              : "Select a physical location"}
+                          </option>
+
+                          {physicalLocations.map((room) => (
+                            <option key={room.id} value={String(room.id)}>
+                              {formatPhysicalLocation(room)}
+                              {room.capacity
+                                ? ` (Capacity: ${room.capacity})`
+                                : ""}
+                            </option>
+                          ))}
+                        </select>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            navigate(
+                              "/recruitment/interviews/physical-locations",
+                            )
+                          }
+                          className="mt-2 text-sm font-semibold text-primary-600 hover:text-primary-700"
+                        >
+                          + Manage physical locations
+                        </button>
+                      </label>
+                    )}
+                    <label className="text-sm font-medium text-slate-700 sm:col-span-2">
+                      Notes
+                      <textarea
+                        name="notes"
+                        value={form.notes}
+                        onChange={changeForm}
+                        rows={3}
+                        className="mt-1.5 w-full rounded-xl border px-3 py-2.5 font-normal"
+                        placeholder="Optional interview notes"
+                      />
+                    </label>
+                  </div>
+
+                  {conflictError && (
+                    <div
+                      role="alert"
+                      className="overflow-hidden rounded-xl border border-amber-200 bg-amber-50 shadow-sm"
+                    >
+                      <div className="flex items-start gap-3 p-4">
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-amber-100">
+                          <CircleAlert
+                            size={21}
+                            className="text-amber-600"
+                          />
+                        </div>
+
+                        <div className="min-w-0 flex-1">
+                          <h3 className="text-sm font-bold text-amber-900">
+                            Interview Scheduling Conflict
+                          </h3>
+
+                          <p className="mt-1 text-sm leading-6 text-amber-800">
+                            {conflictError}
+                          </p>
+
+                          <div className="mt-3 rounded-lg border border-amber-200/70 bg-white/70 p-3">
+                            <p className="text-xs font-semibold text-amber-900">
+                              How to resolve this
                             </p>
-                            <p className="text-xs text-slate-500">
-                              {entry.description}
-                            </p>
-                            <p className="mt-1 text-xs text-slate-400">
-                              {new Date(entry.dateTime).toLocaleString()}
+                            <p className="mt-1 text-xs leading-5 text-amber-800">
+                              Select another available interviewer or choose a
+                              different interview date.
                             </p>
                           </div>
-                        ))}
-                      {!history.some(
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => setConflictError("")}
+                          aria-label="Dismiss conflict message"
+                          className="rounded-lg p-1 text-amber-600 transition hover:bg-amber-100"
+                        >
+                          <X size={18} />
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {formError && (
+                    <div
+                      role="alert"
+                      className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700"
+                    >
+                      {formError}
+                    </div>
+                  )}
+                </form>
+              ) : (
+                <>
+                  <div>
+                    <p className="text-xs text-slate-500">Candidate</p>
+                    <p className="mt-1 font-semibold">{selected.candidate}</p>
+                    <p className="text-sm text-slate-500">{selected.email}</p>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-xs text-slate-500">Vacancy</p>
+                      <p className="mt-1 font-medium">{selected.vacancy}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-slate-500">Status</p>
+                      <span
+                        className={`mt-1 inline-block rounded-full px-3 py-1 text-xs ${statusStyle[selected.status] || ""}`}
+                      >
+                        {selected.status}
+                      </span>
+                    </div>
+                    <div>
+                      <p className="text-xs text-slate-500">Date and time</p>
+                      <p className="mt-1 font-medium">
+                        {formatDate(selected.date)} ·{" "}
+                        {formatTime(selected.time)}
+                      </p>
+                      <p className="text-xs text-slate-500">
+                        {selected.duration} minutes
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-slate-500">Interviewers</p>
+                      <p className="mt-1 text-sm font-medium">
+                        {normalizePeople(selected).join(", ")}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="rounded-xl border bg-slate-50 p-4">
+                    <p className="font-semibold">Location / meeting</p>
+                    {getInterviewType(selected) === "Online" ? (
+                      selected.meetingLink ? (
+                        <a
+                          href={selected.meetingLink}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="mt-2 flex items-center gap-2 break-all text-sm text-primary-600"
+                        >
+                          <LinkIcon size={16} />
+                          {selected.meetingLink}
+                          <ExternalLink size={14} />
+                        </a>
+                      ) : (
+                        <p className="mt-2 text-sm text-slate-500">
+                          No meeting link provided.
+                        </p>
+                      )
+                    ) : (
+                      <p className="mt-2 text-sm">
+                        {selected.location || "No location provided."}
+                      </p>
+                    )}
+                    {selected.notes && (
+                      <p className="mt-3 whitespace-pre-wrap text-sm text-slate-600">
+                        {selected.notes}
+                      </p>
+                    )}
+                  </div>
+                  <div className="rounded-xl border bg-slate-50 p-4">
+                    <div className="flex items-start gap-3">
+                      <Mail className="text-slate-500" />
+                      <div>
+                        <p className="font-semibold">Email invitation</p>
+                        <p className="mt-1 text-xs text-slate-500">
+                          Email sending and invitation status are shown only
+                          when supported by the backend. This page does not
+                          create mock email records or simulate sending.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                  <div>
+                    <p className="mb-2 text-sm font-semibold">Update status</p>
+                    <div className="flex flex-wrap gap-2">
+                      {STATUSES.map((status) => (
+                        <button
+                          key={status}
+                          onClick={() => updateStatus(selected.id, status)}
+                          className={`rounded-lg border px-3 py-2 text-xs font-semibold ${selected.status === status ? "border-primary-600 bg-primary-50 text-primary-700" : "border-slate-200"}`}
+                        >
+                          {status}
+                        </button>
+                      ))}
+                    </div>
+                    {statusError && (
+                      <p role="alert" className="mt-2 text-sm text-red-600">
+                        {statusError}
+                      </p>
+                    )}
+                  </div>
+                  <div className="border-t pt-4">
+                    <div className="mb-3 flex items-center gap-2 font-semibold">
+                      <History size={17} />
+                      Recent changes
+                    </div>
+                    {history
+                      .filter(
                         (entry) =>
                           String(entry.interviewId) === String(selected.id),
-                      ) && (
-                        <p className="text-sm text-slate-500">
-                          No changes recorded in this session.
-                        </p>
-                      )}
-                    </div>
-                  </>
-                )}
-              </div>
+                      )
+                      .slice(0, 4)
+                      .map((entry) => (
+                        <div key={entry.id} className="mb-3 pl-3">
+                          <p className="text-sm font-semibold">
+                            {entry.action}
+                          </p>
+                          <p className="text-xs text-slate-500">
+                            {entry.description}
+                          </p>
+                          <p className="mt-1 text-xs text-slate-400">
+                            {new Date(entry.dateTime).toLocaleString()}
+                          </p>
+                        </div>
+                      ))}
+                    {!history.some(
+                      (entry) =>
+                        String(entry.interviewId) === String(selected.id),
+                    ) && (
+                      <p className="text-sm text-slate-500">
+                        No changes recorded in this session.
+                      </p>
+                    )}
+                  </div>
+                </>
+              )}
+            </div>
           </RecruitmentModal>
         )}
 
@@ -2969,66 +3264,70 @@ export default function RecruitmentInterviews() {
             subtitle="Changes recorded during this page session."
             onClose={() => setHistoryOpen(false)}
             size="lg"
-            footer={<ModalButton onClick={() => setHistoryOpen(false)}>Close</ModalButton>}
+            footer={
+              <ModalButton onClick={() => setHistoryOpen(false)}>
+                Close
+              </ModalButton>
+            }
           >
-              <div className="border-b p-4">
-                <select
-                  value={historyFilter}
-                  onChange={(event) => setHistoryFilter(event.target.value)}
-                  className="w-full rounded-xl border px-3 py-2.5 sm:max-w-xs"
-                >
-                  <option>All</option>
-                  {[
-                    "Scheduled",
-                    "Rescheduled",
-                    "Updated",
-                    "Status changed",
-                    "Cancelled",
-                    "Invitation status updated",
-                    "Deleted",
-                  ].map((action) => (
-                    <option key={action}>{action}</option>
-                  ))}
-                </select>
-              </div>
-              <div className="max-h-[60vh] space-y-4 overflow-y-auto p-5">
-                {history
-                  .filter(
-                    (entry) =>
-                      historyFilter === "All" || entry.action === historyFilter,
-                  )
-                  .map((entry) => (
-                    <div key={entry.id} className="flex gap-3 border-b pb-4">
-                      <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary-50 text-primary-600">
-                        <History size={18} />
-                      </div>
-                      <div>
-                        <p className="font-semibold">
-                          {entry.action}
-                          <span className="ml-1 rounded-full bg-slate-100 px-2 py-1 text-xs font-normal">
-                            {entry.candidate}
-                          </span>
-                        </p>
-                        <p className="mt-1 text-sm text-slate-600">
-                          {entry.description}
-                        </p>
-                        <p className="mt-2 text-xs text-slate-400">
-                          {new Date(entry.dateTime).toLocaleString()} ·{" "}
-                          {entry.actor}
-                        </p>
-                      </div>
+            <div className="border-b p-4">
+              <select
+                value={historyFilter}
+                onChange={(event) => setHistoryFilter(event.target.value)}
+                className="w-full rounded-xl border px-3 py-2.5 sm:max-w-xs"
+              >
+                <option>All</option>
+                {[
+                  "Scheduled",
+                  "Rescheduled",
+                  "Updated",
+                  "Status changed",
+                  "Cancelled",
+                  "Invitation status updated",
+                  "Deleted",
+                ].map((action) => (
+                  <option key={action}>{action}</option>
+                ))}
+              </select>
+            </div>
+            <div className="max-h-[60vh] space-y-4 overflow-y-auto p-5">
+              {history
+                .filter(
+                  (entry) =>
+                    historyFilter === "All" || entry.action === historyFilter,
+                )
+                .map((entry) => (
+                  <div key={entry.id} className="flex gap-3 border-b pb-4">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary-50 text-primary-600">
+                      <History size={18} />
                     </div>
-                  ))}
-                {!history.length && (
-                  <p className="py-10 text-center text-sm text-slate-500">
-                    No changes recorded during this session.
-                  </p>
-                )}
-              </div>
-              <div className="border-t bg-slate-50 p-4 text-xs text-slate-500">
-                This history is session-only; backend audit history is not
-                configured in this page.
-              </div>
+                    <div>
+                      <p className="font-semibold">
+                        {entry.action}
+                        <span className="ml-1 rounded-full bg-slate-100 px-2 py-1 text-xs font-normal">
+                          {entry.candidate}
+                        </span>
+                      </p>
+                      <p className="mt-1 text-sm text-slate-600">
+                        {entry.description}
+                      </p>
+                      <p className="mt-2 text-xs text-slate-400">
+                        {new Date(entry.dateTime).toLocaleString()} ·{" "}
+                        {entry.actor}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              {!history.length && (
+                <p className="py-10 text-center text-sm text-slate-500">
+                  No changes recorded during this session.
+                </p>
+              )}
+            </div>
+            <div className="border-t bg-slate-50 p-4 text-xs text-slate-500">
+              This history is session-only; backend audit history is not
+              configured in this page.
+            </div>
           </RecruitmentModal>
         )}
 
@@ -3043,20 +3342,23 @@ export default function RecruitmentInterviews() {
             tone="danger"
             footer={
               <>
-                <ModalButton onClick={() => setDeleteTarget(null)}>Cancel</ModalButton>
-                <ModalButton variant="danger" onClick={confirmDelete}>Delete interview</ModalButton>
+                <ModalButton onClick={() => setDeleteTarget(null)}>
+                  Cancel
+                </ModalButton>
+                <ModalButton variant="danger" onClick={confirmDelete}>
+                  Delete interview
+                </ModalButton>
               </>
             }
           >
-              <div className="flex items-center gap-3 text-red-600">
-                <Trash2 size={24} />
-                <p className="text-sm font-semibold">Confirm deletion</p>
-              </div>
-              <p className="mt-3 text-sm leading-6 text-slate-600">
-                Are you sure you want to delete the interview for{" "}
-                <strong>{deleteTarget.candidate}</strong>? This cannot be
-                undone.
-              </p>
+            <div className="flex items-center gap-3 text-red-600">
+              <Trash2 size={24} />
+              <p className="text-sm font-semibold">Confirm deletion</p>
+            </div>
+            <p className="mt-3 text-sm leading-6 text-slate-600">
+              Are you sure you want to delete the interview for{" "}
+              <strong>{deleteTarget.candidate}</strong>? This cannot be undone.
+            </p>
           </RecruitmentModal>
         )}
       </div>
