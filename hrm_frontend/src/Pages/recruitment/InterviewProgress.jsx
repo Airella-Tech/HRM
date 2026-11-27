@@ -1491,41 +1491,6 @@ export default function InterviewProgress() {
 
           </div>
 
-          <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-            <h2 className="font-semibold text-slate-900">Stage Status Guide</h2>
-            <div className="mt-4 flex flex-wrap gap-4">
-              {[
-                { label: "Completed", icon: CheckCircle2 },
-                { label: "In Progress", icon: Clock },
-                { label: "Pending", icon: Circle },
-                { label: "Rejected", icon: XCircle },
-              ].map(({ label, icon: Icon }) => (
-                <div key={label} className="flex items-center gap-2">
-                  <Icon
-                    size={17}
-                    className={
-                      label === "Completed"
-                        ? "text-green-600"
-                        : label === "In Progress"
-                          ? "text-primary-600"
-                          : label === "Rejected"
-                            ? "text-red-600"
-                            : "text-slate-400"
-                    }
-                  />
-                  <span className="text-sm text-slate-600">{label}</span>
-                </div>
-              ))}
-            </div>
-
-            {stats.rejected > 0 && (
-              <p className="mt-4 text-xs text-slate-500">
-                {stats.rejected} candidate
-                {stats.rejected !== 1 ? "s have" : " has"} stopped progressing
-                through the interview pipeline.
-              </p>
-            )}
-          </section>
         </div>
       </div>
 
