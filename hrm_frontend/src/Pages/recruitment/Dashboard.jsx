@@ -197,6 +197,16 @@ const Sparkline = ({ data, color }) => {
   );
 };
 
+// Columns by number of visible cards, so a row never ends half empty
+const KPI_COLS = {
+  1: "xl:grid-cols-1",
+  2: "xl:grid-cols-2",
+  3: "xl:grid-cols-3",
+  4: "xl:grid-cols-4",
+  5: "xl:grid-cols-5",
+};
+const ROW_COLS = { 1: "lg:grid-cols-1", 2: "lg:grid-cols-2", 3: "lg:grid-cols-3" };
+
 const KpiCard = ({
   icon: Icon,
   label,
@@ -205,8 +215,48 @@ const KpiCard = ({
   gradient = "bg-gradient-to-br from-primary-600 to-primary-700",
   footnote,
   loading,
+  wide = false,
 }) => {
   const positive = metric?.delta >= 0;
+
+  if (wide) {
+    return (
+      <Card className={`group relative overflow-hidden border-0 ${gradient} p-5 text-white`}>
+        <div className="relative flex flex-wrap items-center justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white/20 text-white">
+              <Icon size={22} />
+            </div>
+            <div>
+              <p className="text-xs font-semibold text-white/85">{label}</p>
+              <p className="text-3xl font-bold tabular-nums text-white">{loading ? "—" : value ?? 0}</p>
+            </div>
+          </div>
+          {metric ? (
+            <div className="flex items-center gap-3">
+              <Sparkline data={metric.spark} color="rgba(255,255,255,0.6)" />
+              {metric.delta === null ? (
+                <span className="text-[11px] text-white/80">
+                  {metric.current ? "No previous period data" : "No activity in this period"}
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-white/20 px-2.5 py-1 text-xs font-semibold text-white">
+                  {positive ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
+                  {positive ? "+" : ""}
+                  {metric.delta}%
+                  <span className="font-normal text-white/80">vs previous period</span>
+                </span>
+              )}
+            </div>
+          ) : (
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-white/20 px-3 py-1 text-xs font-semibold text-white">
+              {footnote || "Active"}
+            </span>
+          )}
+        </div>
+      </Card>
+    );
+  }
 
   return (
     <Card className={`group relative overflow-hidden border-0 ${gradient} p-5 text-white transition-all duration-300 hover:-translate-y-1 hover:shadow-md`}>
@@ -329,7 +379,7 @@ const Donut = ({ data, label }) => {
   let offset = 0;
   if (!total) return <Empty text="No data yet." />;
   return (
-    <div className="flex items-center gap-5 pt-4">
+    <div className="flex items-center justify-center gap-6 pt-4">
       <div className="relative h-32 w-32 shrink-0">
         <svg viewBox="0 0 100 100" className="h-full w-full -rotate-90" role="img" aria-label={label}>
           <circle cx="50" cy="50" r={R} fill="none" stroke="#f1f5f9" strokeWidth="11" />
@@ -350,7 +400,7 @@ const Donut = ({ data, label }) => {
           <span className="text-[11px] text-slate-500">{label}</span>
         </div>
       </div>
-      <ul className="min-w-0 flex-1 space-y-1.5">
+      <ul className="min-w-0 max-w-xs flex-1 space-y-1.5">
         {data.map((d) => (
           <li key={d.label} className="flex items-center gap-2 text-sm">
             <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: d.color }} />
@@ -447,6 +497,7 @@ const Dashboard = () => {
   const canInterviews = canInterviewsAll || canInterviewsMine;
   const canOffers = ready && has(...P.offers);
   const anything = canVacancies || canApplications || canInterviews || canOffers;
+  const kpiCount = (canVacancies ? 1 : 0) + (canApplications ? 2 : 0) + (canInterviews ? 1 : 0) + (canOffers ? 1 : 0);
 
   const vacancies = useList(canVacancies, () => recruitmentApi.getVacancies());
   const applications = useList(canApplications, () => recruitmentApi.getApplications());
@@ -599,30 +650,30 @@ const Dashboard = () => {
 
         {/* KPIs */}
         {anything && (
-          <div className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-5">
+          <div className={`mt-5 grid grid-cols-1 gap-4 ${kpiCount > 1 ? "md:grid-cols-2" : ""} ${KPI_COLS[kpiCount] || KPI_COLS[5]}`}>
             {canVacancies && (
-              <KpiCard icon={BriefcaseBusiness} label="Open vacancies"
+              <KpiCard wide={kpiCount <= 2} icon={BriefcaseBusiness} label="Open vacancies"
                 value={vacancies.loading ? "-" : vacancyCounts.PUBLISHED || 0}
                 gradient="bg-gradient-to-br from-primary-600 to-primary-700"
                 footnote={`${vacancyCounts.PENDING_APPROVAL || 0} pending approval`} />
             )}
             {canApplications && (
-              <KpiCard icon={FileText} label="Applications"
+              <KpiCard wide={kpiCount <= 2} icon={FileText} label="Applications"
                 value={applications.loading ? "-" : m.apps.current} metric={m.apps}
                 gradient="bg-gradient-to-br from-primary-700 to-primary-800" />
             )}
             {canApplications && (
-              <KpiCard icon={Users} label="Shortlisted"
+              <KpiCard wide={kpiCount <= 2} icon={Users} label="Shortlisted"
                 value={applications.loading ? "-" : m.shortlisted.current} metric={m.shortlisted}
                 gradient="bg-gradient-to-br from-primary-800 to-primary-900" />
             )}
             {canInterviews && (
-              <KpiCard icon={CalendarDays} label={canInterviewsMine ? "My interviews" : "Interviews"}
+              <KpiCard wide={kpiCount <= 2} icon={CalendarDays} label={canInterviewsMine ? "My interviews" : "Interviews"}
                 value={interviews.loading ? "-" : m.interviews.current} metric={m.interviews}
                 gradient="bg-gradient-to-br from-primary-600 to-primary-700" />
             )}
             {canOffers && (
-              <KpiCard icon={Handshake} label="Offers"
+              <KpiCard wide={kpiCount <= 2} icon={Handshake} label="Offers"
                 value={offers.loading ? "-" : m.offers.current} metric={m.offers}
                 gradient="bg-gradient-to-br from-primary-700 to-primary-800" />
             )}
@@ -676,7 +727,7 @@ const Dashboard = () => {
 
         {/* Funnel, vacancies, top vacancies */}
         {(funnel.length > 1 || canVacancies || canApplications) && (
-          <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+          <div className={`grid grid-cols-1 gap-4 ${ROW_COLS[(funnel.length > 1 ? 1 : 0) + (canVacancies ? 1 : 0) + (canApplications ? 1 : 0)] || ROW_COLS[3]}`}>
             {funnel.length > 1 && (
               <Card>
                 <CardHead title="Hiring funnel" subtitle={`Last ${days} days, % moved on from previous stage`} />
