@@ -254,16 +254,22 @@ hr: {
   hover: "hover:bg-sky-50",
 },
   admin: {
-    from: "rgba(99,102,241,0.8)",
-    to: "rgba(79,70,229,0.6)",
-    shadow: "rgba(99,102,241,0.35)",
-    avatarFrom: "from-indigo-500",
-    avatarTo: "to-violet-600",
+    from: "rgba(63,77,153,0.95)",
+    to: "rgba(43,53,102,0.9)",
+    shadow: "rgba(27,33,66,0.35)",
+    avatarFrom: "from-primary-600",
+    avatarTo: "to-primary-800",
     label: "Administrator",
-    surface: "bg-gray-50",
-    topbar: "border-gray-100",
-    title: "text-gray-900",
-    hover: "hover:bg-gray-100",
+    surface: "bg-slate-50",
+    sidebarBg: "linear-gradient(180deg, #121731 0%, #1b2142 100%)",
+    activeBg: "rgba(63,77,153,0.45)",
+    activeBorder: "border-primary-300",
+    activeIcon: "text-primary-300",
+    menuBg: "bg-primary-900",
+    ringClass: "ring-primary-900",
+    topbar: "border-slate-200",
+    title: "text-slate-900",
+    hover: "hover:bg-primary-50",
   },
   recruiter: {
     from: "rgba(85,99,176,0.9)",
@@ -620,7 +626,7 @@ export const PageLayout = ({
                 </span>
               )}
             </button>
-            {role === "hr" || role === "employee" || role === "recruiter" ? (
+            {role === "hr" || role === "employee" || role === "recruiter" || role === "admin" ? (
               <button
                 type="button"
                 onClick={() =>
@@ -629,7 +635,9 @@ export const PageLayout = ({
                       ? "/hr/profile"
                       : role === "recruiter"
                         ? "/recruitment/profile"
-                        : "/employee/profile",
+                        : role === "admin"
+                          ? "/admin/profile"
+                          : "/employee/profile",
                   )
                 }
                 title="My Profile"

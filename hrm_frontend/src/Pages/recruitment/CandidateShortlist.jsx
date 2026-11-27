@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { PageLayout } from "../../components/PageLayout";
 import StatCard, { StatCardGrid } from "../../components/StatCard";
+import FilterBar from "./components/FilterBar";
 import { recruitmentApi } from "../../services/api";
 import { DeadlineMeter } from "../careers/careersShared";
 import { formatSalary, formatDate } from "../../utils/careersFormat";
@@ -18,7 +19,6 @@ import {
   setRemovedFromShortlist,
 } from "../../utils/vacancyRemovalStorage";
 import {
-  Search,
   CheckCircle2,
   Sparkles,
   Zap,
@@ -60,6 +60,9 @@ import {
   RotateCcw,
   History,
   FolderKanban,
+  Calendar,
+  ExternalLink,
+  Search,
 } from "lucide-react";
 
 /**
@@ -228,7 +231,7 @@ export default function RecruitmentCandidateShortlist() {
 
   // Per-vacancy UI state
   const [collapsedGroups, setCollapsedGroups] = useState({});
-  const [groupStatusFilters, setGroupStatusFilters] = useState({});
+  const [globalStatusFilter, setGlobalStatusFilter] = useState("ALL");
   const [stagedShortlists, setStagedShortlists] = useState({});
   const [runningAutoForVacancy, setRunningAutoForVacancy] = useState({});
   const [confirmingVacancy, setConfirmingVacancy] = useState({});
@@ -576,10 +579,7 @@ export default function RecruitmentCandidateShortlist() {
   };
 
   // Per-vacancy state helpers
-  const getStatusFilterForVacancy = (vacKey) => groupStatusFilters[vacKey] || "ALL";
-  const setStatusFilterForVacancy = (vacKey, status) => {
-    setGroupStatusFilters((prev) => ({ ...prev, [vacKey]: status }));
-  };
+  const getStatusFilterForVacancy = () => globalStatusFilter;
 
   const toggleCollapse = (vacKey) => {
     setCollapsedGroups((prev) => ({ ...prev, [vacKey]: !prev[vacKey] }));
@@ -867,15 +867,21 @@ export default function RecruitmentCandidateShortlist() {
           : cand.jobTitle || "Other Applications";
 
       if (!groupsMap.has(key)) {
+        const matchedVac = vacancies.find(
+          (v) =>
+            (cand.vacancyId && cand.vacancyId !== "unassigned" && String(v.id) === String(cand.vacancyId)) ||
+            (cand.jobTitle && v.title && v.title.toLowerCase() === cand.jobTitle.toLowerCase())
+        );
+
         groupsMap.set(key, {
-          vacancyId: cand.vacancyId,
+          vacancyId: matchedVac?.id || cand.vacancyId,
           vacancyKey: key,
-          title: cand.jobTitle || "Job Opening",
-          department: cand.department || "General",
-          jobType: "Position Opening",
-          vacancyCount: null,
-          status: "ACTIVE",
-          rawVacancy: { id: cand.vacancyId, title: cand.jobTitle },
+          title: matchedVac?.title || cand.jobTitle || "Job Opening",
+          department: matchedVac?.department || cand.department || "General",
+          jobType: matchedVac?.jobType || "Position Opening",
+          vacancyCount: matchedVac?.vacancyCount ?? null,
+          status: matchedVac?.status || "ACTIVE",
+          rawVacancy: matchedVac || { id: cand.vacancyId, title: cand.jobTitle },
           candidates: [],
         });
       }
@@ -918,6 +924,36 @@ export default function RecruitmentCandidateShortlist() {
     setCollapsedGroups(all);
   };
 
+  // Number of candidates matching the search AND the chosen status (all vacancies)
+  const matchedCandidateTotal = displayedVacancyGroups.reduce((total, group) => {
+    const vacKey = group.vacancyKey;
+    const cfg =
+      screeningConfigs[group.vacancyId] ||
+      screeningConfigs[String(group.vacancyId)] ||
+      screeningConfigs[vacKey];
+    const minScore = cfg?.minimumScore ?? 75;
+    const stagedSet = getStagedSet(vacKey);
+    const q = search.trim().toLowerCase();
+    return (
+      total +
+      group.candidates.filter((c) => {
+        const matchesSearch =
+          !q ||
+          (c.candidateName || "").toLowerCase().includes(q) ||
+          (c.email || "").toLowerCase().includes(q) ||
+          (Array.isArray(c.skills) && c.skills.some((sk) => sk.toLowerCase().includes(q)));
+        if (!matchesSearch) return false;
+        if (globalStatusFilter === "ALL") return true;
+        if (globalStatusFilter === "SUITABLE") return getCandidateSuitability(c, minScore).isSuitable;
+        if (globalStatusFilter === "NOT_SUITABLE") return !getCandidateSuitability(c, minScore).isSuitable;
+        if (globalStatusFilter === "SHORTLISTED") return c.status === "SHORTLISTED";
+        if (globalStatusFilter === "STAGED") return stagedSet.has(c.id);
+        if (globalStatusFilter === "REJECTED") return c.status === "REJECTED";
+        return true;
+      }).length
+    );
+  }, 0);
+
   return (
     <PageLayout
       role="recruiter"
@@ -945,7 +981,7 @@ export default function RecruitmentCandidateShortlist() {
         </div>
       }
     >
-      <div className="p-6 space-y-6 max-w-7xl mx-auto">
+      <div className="space-y-6 max-w-7xl mx-auto">
         {/* ── Action Notice ── */}
         {actionNotice && (
           <div className="p-3.5 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center justify-between text-xs text-emerald-800 font-medium shadow-xs">
@@ -972,50 +1008,80 @@ export default function RecruitmentCandidateShortlist() {
         </StatCardGrid>
 
         {/* ── Global Search & Position Filter Bar ── */}
-        <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm flex flex-col md:flex-row justify-between items-center gap-4">
-          <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto flex-1">
-            <div className="relative w-full sm:w-80">
-              <Search className="absolute left-3.5 top-3 text-slate-400" size={17} />
-              <input
-                type="text"
-                placeholder="Search candidate name, email, or skill..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:bg-white"
-              />
-            </div>
-
-            <div className="w-full sm:w-64">
-              <select
-                value={selectedVacancyFilter}
-                onChange={(e) => setSelectedVacancyFilter(e.target.value)}
-                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:bg-white cursor-pointer"
-              >
-                <option value="ALL">All Vacancies ({displayedVacancyGroups.length})</option>
-                {displayedVacancyGroups.map((g) => (
-                  <option key={g.vacancyKey} value={g.vacancyKey}>
-                    {g.title} ({g.candidates.length})
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2 self-end md:self-center">
-            <button
-              onClick={expandAll}
-              className="px-3 py-1.5 text-xs font-medium text-slate-600 hover:text-primary-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition-all cursor-pointer"
-            >
-              Expand All
-            </button>
-            <button
-              onClick={collapseAll}
-              className="px-3 py-1.5 text-xs font-medium text-slate-600 hover:text-primary-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition-all cursor-pointer"
-            >
-              Collapse All
-            </button>
-          </div>
-        </div>
+        {(() => {
+          const q = search.trim().toLowerCase();
+          const rows = displayedVacancyGroups.flatMap((group) => {
+            const vacKey = group.vacancyKey;
+            const vacConfig =
+              screeningConfigs[group.vacancyId] ||
+              screeningConfigs[String(group.vacancyId)] ||
+              screeningConfigs[vacKey];
+            const minScore = vacConfig?.minimumScore ?? 75;
+            const stagedSet = getStagedSet(vacKey);
+            return group.candidates
+              .filter(
+                (c) =>
+                  !q ||
+                  (c.candidateName || "").toLowerCase().includes(q) ||
+                  (c.email || "").toLowerCase().includes(q) ||
+                  (Array.isArray(c.skills) && c.skills.some((s) => s.toLowerCase().includes(q))),
+              )
+              .map((c) => ({ c, minScore, staged: stagedSet.has(c.id) }));
+          });
+          const matches = ({ c, minScore, staged }, status) => {
+            if (status === "ALL") return true;
+            if (status === "SUITABLE") return getCandidateSuitability(c, minScore).isSuitable;
+            if (status === "NOT_SUITABLE") return !getCandidateSuitability(c, minScore).isSuitable;
+            if (status === "SHORTLISTED") return c.status === "SHORTLISTED";
+            if (status === "STAGED") return staged;
+            if (status === "REJECTED") return c.status === "REJECTED";
+            return true;
+          };
+          const countOf = (status) => rows.filter((row) => matches(row, status)).length;
+          return (
+            <FilterBar
+              search={search}
+              onSearchChange={setSearch}
+              searchPlaceholder="Search candidate name, email, or skill..."
+              filters={[
+                {
+                  id: "vacancy",
+                  label: "Vacancy",
+                  value: selectedVacancyFilter,
+                  onChange: setSelectedVacancyFilter,
+                  allLabel: "All vacancies",
+                  allValue: "ALL",
+                  options: displayedVacancyGroups.map((g) => ({
+                    value: g.vacancyKey,
+                    label: `${g.title} (${g.candidates.length})`,
+                  })),
+                },
+              ]}
+              pills={{
+                value: globalStatusFilter,
+                onChange: setGlobalStatusFilter,
+                items: [
+                  { value: "ALL", label: "All ranked", count: countOf("ALL") },
+                  { value: "SUITABLE", label: "Suitable", count: countOf("SUITABLE") },
+                  { value: "NOT_SUITABLE", label: "Not suitable", count: countOf("NOT_SUITABLE") },
+                  { value: "SHORTLISTED", label: "Shortlisted", count: countOf("SHORTLISTED") },
+                  { value: "STAGED", label: "Staged", count: countOf("STAGED") },
+                  { value: "REJECTED", label: "Rejected", count: countOf("REJECTED") },
+                ],
+              }}
+              count={countOf(globalStatusFilter)}
+              countLabel="candidate"
+              onExpandAll={displayedVacancyGroups.length > 0 ? expandAll : undefined}
+              onCollapseAll={displayedVacancyGroups.length > 0 ? collapseAll : undefined}
+              hasActiveFilters={search !== "" || selectedVacancyFilter !== "ALL" || globalStatusFilter !== "ALL"}
+              onReset={() => {
+                setSearch("");
+                setSelectedVacancyFilter("ALL");
+                setGlobalStatusFilter("ALL");
+              }}
+            />
+          );
+        })()}
 
         {/* ── Vacancy Separated Shortlist Sections ── */}
         {loading ? (
@@ -1042,6 +1108,24 @@ export default function RecruitmentCandidateShortlist() {
                 <span>View Shortlist History ({historyVacancyGroups.length})</span>
               </Link>
             )}
+          </div>
+        ) : matchedCandidateTotal === 0 && (globalStatusFilter !== "ALL" || search.trim() !== "") ? (
+          <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-12 text-center max-w-md mx-auto space-y-3">
+            <div className="w-12 h-12 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center mx-auto">
+              <Search size={22} />
+            </div>
+            <h4 className="text-base font-semibold text-slate-800">No candidates found</h4>
+            <p className="text-xs text-slate-500">Try changing your search or filters.</p>
+            <button
+              onClick={() => {
+                setSearch("");
+                setSelectedVacancyFilter("ALL");
+                setGlobalStatusFilter("ALL");
+              }}
+              className="mt-2 inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-primary-50 text-primary-600 hover:bg-primary-100 transition-colors"
+            >
+              Reset filters
+            </button>
           </div>
         ) : (
           <div className="space-y-6">
@@ -1095,12 +1179,11 @@ export default function RecruitmentCandidateShortlist() {
                   return suitB - suitA;
                 });
 
+              // Hide vacancies with nothing to show for the current search or status
+              if ((statusFilter !== "ALL" || search.trim() !== "") && filteredVacancyCandidates.length === 0) return null;
+
               // Status and Suitability count breakdowns
               const vacTotal = group.candidates.length;
-              const vacSuitable = group.candidates.filter((c) => getCandidateSuitability(c, minScore).isSuitable).length;
-              const vacNotSuitable = group.candidates.filter((c) => !getCandidateSuitability(c, minScore).isSuitable).length;
-              const vacShortlisted = group.candidates.filter((c) => c.status === "SHORTLISTED").length;
-              const vacRejected = group.candidates.filter((c) => c.status === "REJECTED").length;
 
               return (
                 <div
@@ -1186,7 +1269,20 @@ export default function RecruitmentCandidateShortlist() {
                         {/* 0. Job Vacancy Details Button */}
                         <button
                           type="button"
-                          onClick={() => setSelectedVacancyModal(group.rawVacancy || { id: group.vacancyId, title: group.title, department: group.department })}
+                          onClick={() => {
+                            const matched =
+                              group.rawVacancy ||
+                              vacancies.find(
+                                (v) =>
+                                  (group.vacancyId && String(v.id) === String(group.vacancyId)) ||
+                                  (group.title && v.title && v.title.toLowerCase() === group.title.toLowerCase())
+                              ) || {
+                                id: group.vacancyId,
+                                title: group.title,
+                                department: group.department,
+                              };
+                            setSelectedVacancyModal(matched);
+                          }}
                           className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-slate-200 bg-white text-slate-700 text-sm font-semibold hover:bg-slate-50 transition-colors cursor-pointer"
                           title="Display job vacancy details like public career page"
                         >
@@ -1360,41 +1456,11 @@ export default function RecruitmentCandidateShortlist() {
 
                   {/* ── Vacancy Content (When not collapsed) ── */}
                   {!isCollapsed && (
-                    <div className="p-5 sm:p-6 space-y-5">
-                      {/* Per-Vacancy Status Filter Tabs */}
-                      <div className="flex flex-wrap items-center justify-between gap-3 pb-2 border-b border-slate-100">
-                        <div className="flex flex-wrap gap-1.5 sm:gap-2">
-                          {[
-                            { id: "ALL", label: `All Ranked (${vacTotal})` },
-                            { id: "SUITABLE", label: `Suitable (${vacSuitable})`, icon: Check, highlight: vacSuitable > 0 },
-                            { id: "NOT_SUITABLE", label: `Not Suitable (${vacNotSuitable})`, icon: X },
-                            { id: "SHORTLISTED", label: `Shortlisted (${vacShortlisted})` },
-                            {
-                              id: "STAGED",
-                              label: `Staged (${stagedCount})`,
-                              icon: Sparkles,
-                              highlight: stagedCount > 0,
-                            },
-                            { id: "REJECTED", label: `Rejected (${vacRejected})` },
-                          ].map((t) => (
-                            <button
-                              key={t.id}
-                              onClick={() => setStatusFilterForVacancy(vacKey, t.id)}
-                              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
-                                statusFilter === t.id
-                                  ? t.highlight
-                                    ? "bg-amber-500 text-slate-950 shadow-sm"
-                                    : "bg-primary-600 text-white shadow-sm"
-                                  : t.highlight
-                                  ? "bg-amber-50 text-amber-800 border border-amber-200 hover:bg-amber-100"
-                                  : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-                              }`}
-                            >
-                              {t.icon && <t.icon size={14} />}
-                              {t.label}
-                            </button>
-                          ))}
-                        </div>
+                    <div>
+                      {/* Staged candidates: confirm for this vacancy */}
+{/* layout-aligned */}
+                      {stagedCount > 0 && (
+                        <div className="flex flex-wrap items-center justify-end gap-3 px-6 py-3 bg-slate-50/70 border-b border-slate-200/70">
 
                         {stagedCount > 0 && (
                           <div className="flex items-center gap-2">
@@ -1420,10 +1486,11 @@ export default function RecruitmentCandidateShortlist() {
                           </div>
                         )}
                       </div>
+                      )}
 
                       {/* ── Candidate Cards Grid for this Vacancy ── */}
                       {filteredVacancyCandidates.length === 0 ? (
-                        <div className="py-10 text-center bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+                        <div className="py-10 text-center">
                           <p className="text-xs text-slate-400 font-medium">
                             {vacTotal === 0
                               ? "No candidate applications submitted for this vacancy yet."
@@ -1431,7 +1498,7 @@ export default function RecruitmentCandidateShortlist() {
                           </p>
                         </div>
                       ) : (
-                        <div className="overflow-hidden bg-white rounded-2xl border border-slate-200 shadow-sm">
+                        <div>
                           <div className="overflow-x-auto">
                             <table className="w-full text-left text-sm text-slate-600">
                               <thead className="bg-slate-50/80 border-b border-slate-200 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
@@ -2591,16 +2658,38 @@ export default function RecruitmentCandidateShortlist() {
           footer={
             <>
               <ModalButton onClick={() => setSelectedVacancyModal(null)}>Close</ModalButton>
-              {selectedVacancyModal.id && (
-                <Link
-                  to={`/careers/jobs/${selectedVacancyModal.id}`}
-                  target="_blank"
-                  className="inline-flex items-center justify-center gap-1.5 h-10 px-5 rounded-xl text-sm font-semibold bg-primary-600 text-white hover:bg-primary-700 shadow-sm"
-                >
-                  <ExternalLink size={13} />
-                  <span>View on Public Careers</span>
-                </Link>
-              )}
+              {selectedVacancyModal.id && (() => {
+                const comp =
+                  selectedVacancyModal.companyRef ||
+                  selectedVacancyModal.company ||
+                  (() => {
+                    try {
+                      const u = JSON.parse(localStorage.getItem("user") || "{}");
+                      return (
+                        u.companyRegistrationNumber ||
+                        u.companyRef ||
+                        u.companyName ||
+                        (u.companyId ? String(u.companyId) : "") ||
+                        ""
+                      );
+                    } catch {
+                      return "";
+                    }
+                  })();
+                const careerUrl = `/careers/jobs/${selectedVacancyModal.id}${
+                  comp ? `?company=${encodeURIComponent(comp)}` : ""
+                }`;
+                return (
+                  <Link
+                    to={careerUrl}
+                    target="_blank"
+                    className="inline-flex items-center justify-center gap-1.5 h-10 px-5 rounded-xl text-sm font-semibold bg-primary-600 text-white hover:bg-primary-700 shadow-sm"
+                  >
+                    <ExternalLink size={13} />
+                    <span>View on Public Careers</span>
+                  </Link>
+                );
+              })()}
             </>
           }
         >
@@ -2726,18 +2815,40 @@ export default function RecruitmentCandidateShortlist() {
                     </div>
                   </div>
                   {/* Public Career link button if ID exists */}
-                  {selectedVacancyModal.id && (
-                    <div className="pt-3 border-t border-slate-200/80">
-                      <Link
-                        to={`/careers/jobs/${selectedVacancyModal.id}`}
-                        target="_blank"
-                        className="w-full inline-flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-primary-600 hover:bg-primary-700 text-white text-xs font-semibold shadow-sm transition-all"
-                      >
-                        <ExternalLink size={13} />
-                        <span>View on Public Careers</span>
-                      </Link>
-                    </div>
-                  )}
+                  {selectedVacancyModal.id && (() => {
+                    const comp =
+                      selectedVacancyModal.companyRef ||
+                      selectedVacancyModal.company ||
+                      (() => {
+                        try {
+                          const u = JSON.parse(localStorage.getItem("user") || "{}");
+                          return (
+                            u.companyRegistrationNumber ||
+                            u.companyRef ||
+                            u.companyName ||
+                            (u.companyId ? String(u.companyId) : "") ||
+                            ""
+                          );
+                        } catch {
+                          return "";
+                        }
+                      })();
+                    const careerUrl = `/careers/jobs/${selectedVacancyModal.id}${
+                      comp ? `?company=${encodeURIComponent(comp)}` : ""
+                    }`;
+                    return (
+                      <div className="pt-3 border-t border-slate-200/80">
+                        <Link
+                          to={careerUrl}
+                          target="_blank"
+                          className="w-full inline-flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-primary-600 hover:bg-primary-700 text-white text-xs font-semibold shadow-sm transition-all"
+                        >
+                          <ExternalLink size={13} />
+                          <span>View on Public Careers</span>
+                        </Link>
+                      </div>
+                    );
+                  })()}
                 </div>
               </div>
         </RecruitmentModal>

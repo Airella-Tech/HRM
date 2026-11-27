@@ -2,7 +2,6 @@ import RecruitmentModal, { ModalButton } from "./components/RecruitmentModal";
 import ViewButton from "./components/ViewButton";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
-  Search,
   RefreshCw,
   X,
   CheckCircle2,
@@ -16,10 +15,10 @@ import {
   ClipboardCheck,
   ChevronDown,
   ChevronUp,
-  Info,
 } from "lucide-react";
 import PageLayout from "../../components/PageLayout";
 import StatCard, { StatCardGrid } from "../../components/StatCard";
+import FilterBar from "./components/FilterBar";
 import VacancyGroupCard from "./VacancyGroupCard";
 import { recruitmentApi } from "../../services/api";
 import { avatarColorClass } from "../../utils/avatarColor";
@@ -1014,69 +1013,31 @@ export default function InterviewEvaluationReview() {
           </StatCardGrid>
 
           {/* Filters */}
-          <div className="bg-white rounded-xl border border-slate-200 shadow-sm px-4 py-3">
-            <div className="flex flex-wrap items-center gap-3">
-              <div className="relative flex-1 min-w-[220px]">
-                <Search
-                  size={17}
-                  className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
-                />
-
-                <input
-                  type="text"
-                  value={search}
-                  onChange={(event) => setSearch(event.target.value)}
-                  placeholder="Search candidate or vacancy..."
-                  className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50 pl-9 pr-3 text-sm text-slate-800 placeholder-slate-400 focus:border-primary-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary-100"
-                />
-              </div>
-              <span
-                title="Review all submitted evaluations before making a decision."
-                className="inline-flex shrink-0 text-slate-400"
-              >
-                <Info size={14} />
-              </span>
-              <span className="text-sm font-semibold text-slate-600">
-                Round:
-              </span>
-              <select
-                value={roundFilter}
-                onChange={(event) => setRoundFilter(event.target.value)}
-                className="h-10 w-auto rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-800 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100"
-              >
-                <option value="ALL">All Interview Rounds</option>
-
-                {ROUND_ORDER.map((round) => (
-                  <option key={round} value={round}>
-                    {round}
-                  </option>
-                ))}
-              </select>
-              <span className="ml-auto text-xs text-slate-500">
-                {filteredInterviews.length} interview
-                {filteredInterviews.length !== 1 ? "s" : ""} found
-              </span>
-              {filteredInterviews.length > 0 && (
-                <div className="flex items-center gap-1 border-l border-slate-200 pl-3">
-                  <button
-                    type="button"
-                    onClick={expandAllGroups}
-                    className="rounded-lg px-2 py-1 text-sm font-semibold text-slate-500 hover:bg-slate-50 hover:text-primary-600"
-                  >
-                    Expand All
-                  </button>
-                  <span className="h-4 w-px bg-slate-200" />
-                  <button
-                    type="button"
-                    onClick={collapseAllGroups}
-                    className="rounded-lg px-2 py-1 text-sm font-semibold text-slate-500 hover:bg-slate-50 hover:text-primary-600"
-                  >
-                    Collapse All
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
+          <FilterBar
+            search={search}
+            onSearchChange={setSearch}
+            searchPlaceholder="Search candidate or vacancy..."
+            filters={[
+              {
+                id: "round",
+                label: "Round",
+                value: roundFilter,
+                onChange: setRoundFilter,
+                allLabel: "All rounds",
+                allValue: "ALL",
+                options: ROUND_ORDER,
+              },
+            ]}
+            count={filteredInterviews.length}
+            countLabel="interview"
+            onExpandAll={filteredInterviews.length > 0 ? expandAllGroups : undefined}
+            onCollapseAll={filteredInterviews.length > 0 ? collapseAllGroups : undefined}
+            hasActiveFilters={search !== "" || roundFilter !== "ALL"}
+            onReset={() => {
+              setSearch("");
+              setRoundFilter("ALL");
+            }}
+          />
 
           {/* Interview list */}
           <div>

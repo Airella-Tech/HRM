@@ -4,10 +4,10 @@ import ViewButton from "./components/ViewButton";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import PageLayout from "../../components/PageLayout";
 import StatCard, { StatCardGrid } from "../../components/StatCard";
+import FilterBar from "./components/FilterBar";
 import VacancyGroupCard from "./VacancyGroupCard";
 import { recruitmentApi } from "../../services/api";
 import {
-  Search,
   Plus,
   FileText,
   Clock,
@@ -21,14 +21,12 @@ import {
   BriefcaseBusiness,
   DollarSign,
   UserRound,
-  Filter,
   RefreshCw,
   AlertCircle,
   Mail,
   Trash2,
   Users,
   UserCheck,
-  Info,
 } from "lucide-react";
 import { avatarColorClass } from "../../utils/avatarColor";
 
@@ -868,91 +866,39 @@ export default function JobOffers() {
         </div>
 
         {/* OFFERS TABLE */}
-        <div className="bg-white rounded-xl border border-slate-200 shadow-sm px-4 py-3">
-            <div className="flex flex-wrap items-center gap-3">
-              <div className="relative min-w-[220px] flex-1">
-                <div className="relative">
-                  <Search
-                    size={17}
-                    className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
-                  />
-
-                  <input
-                    value={search}
-                    onChange={(event) => setSearch(event.target.value)}
-                    placeholder="Search candidates..."
-                    className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50 pl-9 pr-3 text-sm text-slate-800 placeholder-slate-400 focus:border-primary-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary-100"
-                  />
-                </div>
-              </div>
-              <span
-                title="Search and filter the offers shown below."
-                className="inline-flex shrink-0 text-slate-400"
-              >
-                <Info size={14} />
-              </span>
-              <span className="text-sm font-semibold text-slate-600">
-                Status:
-              </span>
-              <div className="relative">
-                <Filter
-                  size={15}
-                  className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
-                />
-
-                <select
-                  value={statusFilter}
-                  onChange={(event) => setStatusFilter(event.target.value)}
-                  className="h-10 w-auto appearance-none rounded-xl border border-slate-200 bg-white px-3.5 pl-9 text-sm text-slate-800 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100"
-                >
-                  <option value="All">All statuses</option>
-                  <option value="Draft">Draft</option>
-                  <option value="Sent">Sent</option>
-                  <option value="Pending">Pending</option>
-                  <option value="Accepted">Accepted</option>
-                  <option value="Rejected">Rejected</option>
-                  <option value="Withdrawn">Withdrawn</option>
-                </select>
-              </div>
-              <span className="text-sm font-semibold text-slate-600">
-                Type:
-              </span>
-              <select
-                value={typeFilter}
-                onChange={(event) => setTypeFilter(event.target.value)}
-                className="h-10 w-auto rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-800 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100"
-              >
-                <option value="All">All employment types</option>
-                <option value="Full-time">Full-time</option>
-                <option value="Part-time">Part-time</option>
-                <option value="Contract">Contract</option>
-                <option value="Internship">Internship</option>
-              </select>
-              <span className="ml-auto text-xs text-slate-500">
-                {filteredOffers.length} offer
-                {filteredOffers.length !== 1 ? "s" : ""} found
-              </span>
-              {filteredOffers.length > 0 && (
-                <div className="flex items-center gap-1 border-l border-slate-200 pl-3">
-                  <button
-                    type="button"
-                    onClick={expandAllGroups}
-                    className="rounded-lg px-2 py-1 text-sm font-semibold text-slate-500 hover:bg-slate-50 hover:text-primary-600"
-                  >
-                    Expand All
-                  </button>
-                  <span className="h-4 w-px bg-slate-200" />
-                  <button
-                    type="button"
-                    onClick={collapseAllGroups}
-                    className="rounded-lg px-2 py-1 text-sm font-semibold text-slate-500 hover:bg-slate-50 hover:text-primary-600"
-                  >
-                    Collapse All
-                  </button>
-                </div>
-              )}
-            </div>
-        </div>
+        <FilterBar
+          search={search}
+          onSearchChange={setSearch}
+          searchPlaceholder="Search candidates..."
+          filters={[
+            {
+              id: "status",
+              label: "Status",
+              value: statusFilter,
+              onChange: setStatusFilter,
+              allLabel: "All statuses",
+              options: ["Draft", "Sent", "Pending", "Accepted", "Rejected", "Withdrawn"],
+            },
+            {
+              id: "type",
+              label: "Type",
+              value: typeFilter,
+              onChange: setTypeFilter,
+              allLabel: "All types",
+              options: ["Full-time", "Part-time", "Contract", "Internship"],
+            },
+          ]}
+          count={filteredOffers.length}
+          countLabel="offer"
+          onExpandAll={filteredOffers.length > 0 ? expandAllGroups : undefined}
+          onCollapseAll={filteredOffers.length > 0 ? collapseAllGroups : undefined}
+          hasActiveFilters={search !== "" || statusFilter !== "All" || typeFilter !== "All"}
+          onReset={() => {
+            setSearch("");
+            setStatusFilter("All");
+            setTypeFilter("All");
+          }}
+        />
 
         <div className="space-y-6">
 

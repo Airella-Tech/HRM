@@ -112,13 +112,12 @@ const Toast = ({ toasts, removeToast }) => (
       <div
         key={t.id}
         className={`flex items-center gap-2 px-4 py-3 rounded-xl shadow-lg text-sm font-medium
-        ${
-          t.type === "success"
+        ${t.type === "success"
             ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
             : t.type === "error"
               ? "bg-red-50 text-red-700 border border-red-200"
               : "bg-blue-50 text-blue-700 border border-blue-200"
-        }`}
+          }`}
       >
         {t.type === "success" ? (
           <CheckCircle size={15} />
@@ -181,11 +180,11 @@ const DeptFormModal = ({ open, onClose, onSave, initDept, initRoles }) => {
       setRoles(
         initRoles?.length
           ? initRoles.map((r) => ({
-              _k: String(r.id || Math.random()),
-              id: r.id,
-              title: r.title || "",
-              description: r.description || "",
-            }))
+            _k: String(r.id || Math.random()),
+            id: r.id,
+            title: r.title || "",
+            description: r.description || "",
+          }))
           : [newRole()],
       );
     } else {
@@ -199,287 +198,287 @@ const DeptFormModal = ({ open, onClose, onSave, initDept, initRoles }) => {
       setRoles([newRole()]);
     }
     setErrs({});
-  }, [open, initDept]);
+}, [open, initDept, initRoles]);
 
-  if (!open) return null;
+if (!open) return null;
 
-  const setRole = (i, f, v) =>
-    setRoles((p) => p.map((r, idx) => (idx === i ? { ...r, [f]: v } : r)));
-  const addRole = () => setRoles((p) => [...p, newRole()]);
-  const rmRole = (i) => setRoles((p) => p.filter((_, idx) => idx !== i));
-  const clrErr = (k) =>
-    setErrs((p) => {
-      const n = { ...p };
-      delete n[k];
-      return n;
-    });
+const setRole = (i, f, v) =>
+  setRoles((p) => p.map((r, idx) => (idx === i ? { ...r, [f]: v } : r)));
+const addRole = () => setRoles((p) => [...p, newRole()]);
+const rmRole = (i) => setRoles((p) => p.filter((_, idx) => idx !== i));
+const clrErr = (k) =>
+  setErrs((p) => {
+    const n = { ...p };
+    delete n[k];
+    return n;
+  });
 
-  const validate = () => {
-    const e = {};
-    if (!dept.name.trim()) e.name = "Department name is required";
-    roles.forEach((r, i) => {
-      if (!r.title.trim()) e[`t${i}`] = "Job title is required";
-    });
-    setErrs(e);
-    return !Object.keys(e).length;
-  };
+const validate = () => {
+  const e = {};
+  if (!dept.name.trim()) e.name = "Department name is required";
+  roles.forEach((r, i) => {
+    if (!r.title.trim()) e[`t${i}`] = "Job title is required";
+  });
+  setErrs(e);
+  return !Object.keys(e).length;
+};
 
-  const handleSave = async () => {
-    if (!validate()) return;
-    setSaving(true);
-    try {
-      await onSave(
-        {
-          name: dept.name.trim(),
-          description: dept.description.trim() || null,
-          managerId: dept.managerId ? +dept.managerId : null,
-          managerName: dept.managerName?.trim() || null,
-          active: dept.active,
-        },
-        roles
-          .filter((r) => r.title.trim())
-          .map((r) => ({
-            ...(r.id ? { id: r.id } : {}),
-            title: r.title.trim(),
-            description: r.description.trim() || null,
-            active: true,
-          })),
-      );
-    } finally {
-      setSaving(false);
-    }
-  };
+const handleSave = async () => {
+  if (!validate()) return;
+  setSaving(true);
+  try {
+    await onSave(
+      {
+        name: dept.name.trim(),
+        description: dept.description.trim() || null,
+        managerId: dept.managerId ? +dept.managerId : null,
+        managerName: dept.managerName?.trim() || null,
+        active: dept.active,
+      },
+      roles
+        .filter((r) => r.title.trim())
+        .map((r) => ({
+          ...(r.id ? { id: r.id } : {}),
+          title: r.title.trim(),
+          description: r.description.trim() || null,
+          active: true,
+        })),
+    );
+  } finally {
+    setSaving(false);
+  }
+};
 
-  const isEdit = !!initDept;
-  const filled = roles.filter((r) => r.title.trim()).length;
+const isEdit = !!initDept;
+const filled = roles.filter((r) => r.title.trim()).length;
 
-  // Same input/label classes as AddEmployeePanel
-  const ic =
-    "w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 focus:bg-white transition";
-  const icErr =
-    "w-full px-3 py-2 border border-red-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-400 bg-red-50 transition";
-  const lc = "block text-xs font-semibold text-gray-600 mb-1";
+// Same input/label classes as AddEmployeePanel
+const ic =
+  "w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 focus:bg-white transition";
+const icErr =
+  "w-full px-3 py-2 border border-red-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-400 bg-red-50 transition";
+const lc = "block text-xs font-semibold text-gray-600 mb-1";
 
-  return (
-    <div className="fixed inset-0 z-40 flex items-center justify-center p-4">
-      <div
-        className="absolute inset-0 bg-black/40 backdrop-blur-sm"
-        onClick={onClose}
-      />
-      <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col z-10">
-        {/* ── HEADER ── */}
-        <div className="bg-gradient-to-r from-blue-600 to-blue-700 p-5 flex items-center justify-between flex-shrink-0 rounded-t-2xl">
-          <div className="flex items-center gap-3">
-            <div className="bg-white/20 p-2 rounded-lg">
-              <Building2 className="text-white" size={20} />
+return (
+  <div className="fixed inset-0 z-40 flex items-center justify-center p-4">
+    <div
+      className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+      onClick={onClose}
+    />
+    <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col z-10">
+      {/* ── HEADER ── */}
+      <div className="bg-gradient-to-r from-blue-600 to-blue-700 p-5 flex items-center justify-between flex-shrink-0 rounded-t-2xl">
+        <div className="flex items-center gap-3">
+          <div className="bg-white/20 p-2 rounded-lg">
+            <Building2 className="text-white" size={20} />
+          </div>
+          <div>
+            <h2 className="text-white font-bold text-lg">
+              {isEdit ? "Edit Department" : "Add New Department"}
+            </h2>
+            <p className="text-blue-100 text-xs">
+              {isEdit
+                ? "Update department details and job roles"
+                : "Fill in the details below"}
+            </p>
+          </div>
+        </div>
+        <button
+          onClick={onClose}
+          className="bg-white/20 hover:bg-white/30 p-2 rounded-lg transition"
+        >
+          <X className="text-white" size={18} />
+        </button>
+      </div>
+
+      {/* ── BODY ── */}
+      <div className="flex-1 overflow-y-auto p-6">
+        {/* Department Info */}
+        <div className="mb-5">
+          <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+            <Building2 size={12} /> Department Info
+          </h3>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="col-span-2">
+              <label className={lc}>
+                Department Name <span className="text-red-500">*</span>
+              </label>
+              <input
+                value={dept.name}
+                onChange={(e) => {
+                  setDept((p) => ({ ...p, name: e.target.value }));
+                  clrErr("name");
+                }}
+                placeholder="e.g. Engineering, Sales, Human Resources"
+                className={errs.name ? icErr : ic}
+              />
+              {errs.name && (
+                <p className="text-xs text-red-500 mt-1 flex items-center gap-1">
+                  <AlertCircle size={10} />
+                  {errs.name}
+                </p>
+              )}
             </div>
+
+            <div className="col-span-2">
+              <label className={lc}>Description</label>
+              <textarea
+                value={dept.description}
+                onChange={(e) =>
+                  setDept((p) => ({ ...p, description: e.target.value }))
+                }
+                placeholder="Purpose, key responsibilities, goals of this department…"
+                rows={3}
+                className={ic + " resize-none"}
+              />
+            </div>
+
             <div>
-              <h2 className="text-white font-bold text-lg">
-                {isEdit ? "Edit Department" : "Add New Department"}
-              </h2>
-              <p className="text-blue-100 text-xs">
-                {isEdit
-                  ? "Update department details and job roles"
-                  : "Fill in the details below"}
-              </p>
+              <label className={lc}>Manager</label>
+              <input
+                value={dept.managerName ?? ""}
+                onChange={(e) =>
+                  setDept((p) => ({
+                    ...p,
+                    managerName: e.target.value,
+                    managerId: "",
+                  }))
+                }
+                placeholder="e.g. John Silva"
+                className={ic}
+              />
+            </div>
+
+            <div>
+              <label className={lc}>Status</label>
+              <select
+                value={dept.active ? "active" : "inactive"}
+                onChange={(e) =>
+                  setDept((p) => ({
+                    ...p,
+                    active: e.target.value === "active",
+                  }))
+                }
+                className={ic}
+              >
+                <option value="active">Active</option>
+                <option value="inactive">Inactive</option>
+              </select>
             </div>
           </div>
-          <button
-            onClick={onClose}
-            className="bg-white/20 hover:bg-white/30 p-2 rounded-lg transition"
-          >
-            <X className="text-white" size={18} />
-          </button>
         </div>
 
-        {/* ── BODY ── */}
-        <div className="flex-1 overflow-y-auto p-6">
-          {/* Department Info */}
-          <div className="mb-5">
-            <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3 flex items-center gap-2">
-              <Building2 size={12} /> Department Info
-            </h3>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="col-span-2">
-                <label className={lc}>
-                  Department Name <span className="text-red-500">*</span>
-                </label>
-                <input
-                  value={dept.name}
-                  onChange={(e) => {
-                    setDept((p) => ({ ...p, name: e.target.value }));
-                    clrErr("name");
-                  }}
-                  placeholder="e.g. Engineering, Sales, Human Resources"
-                  className={errs.name ? icErr : ic}
-                />
-                {errs.name && (
-                  <p className="text-xs text-red-500 mt-1 flex items-center gap-1">
-                    <AlertCircle size={10} />
-                    {errs.name}
-                  </p>
+        {/* Job Roles */}
+        <div>
+          <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+            <Briefcase size={12} /> Job Roles
+            {filled > 0 && (
+              <span className="bg-blue-100 text-blue-700 border border-blue-200 rounded-full px-2 py-0.5 text-xs font-semibold">
+                {filled} defined
+              </span>
+            )}
+          </h3>
+
+          {roles.map((role, i) => (
+            <div
+              key={role._k}
+              className="bg-gray-50 border border-gray-200 rounded-xl p-4 mb-3"
+            >
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-xs font-bold text-blue-600 uppercase tracking-wider flex items-center gap-1.5">
+                  <span className="w-5 h-5 rounded bg-blue-100 border border-blue-200 flex items-center justify-center text-blue-700 font-bold text-xs">
+                    {i + 1}
+                  </span>
+                  Role #{i + 1}
+                </span>
+                {roles.length > 1 && (
+                  <button
+                    type="button"
+                    onClick={() => rmRole(i)}
+                    className="p-1.5 bg-red-50 border border-red-200 rounded-lg text-red-400 hover:bg-red-100 hover:text-red-600 transition"
+                    title="Remove role"
+                  >
+                    <Trash2 size={13} />
+                  </button>
                 )}
               </div>
 
-              <div className="col-span-2">
-                <label className={lc}>Description</label>
-                <textarea
-                  value={dept.description}
-                  onChange={(e) =>
-                    setDept((p) => ({ ...p, description: e.target.value }))
-                  }
-                  placeholder="Purpose, key responsibilities, goals of this department…"
-                  rows={3}
-                  className={ic + " resize-none"}
-                />
-              </div>
-
-              <div>
-                <label className={lc}>Manager</label>
-                <input
-                  value={dept.managerName ?? ""}
-                  onChange={(e) =>
-                    setDept((p) => ({
-                      ...p,
-                      managerName: e.target.value,
-                      managerId: "",
-                    }))
-                  }
-                  placeholder="e.g. John Silva"
-                  className={ic}
-                />
-              </div>
-
-              <div>
-                <label className={lc}>Status</label>
-                <select
-                  value={dept.active ? "active" : "inactive"}
-                  onChange={(e) =>
-                    setDept((p) => ({
-                      ...p,
-                      active: e.target.value === "active",
-                    }))
-                  }
-                  className={ic}
-                >
-                  <option value="active">Active</option>
-                  <option value="inactive">Inactive</option>
-                </select>
-              </div>
-            </div>
-          </div>
-
-          {/* Job Roles */}
-          <div>
-            <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3 flex items-center gap-2">
-              <Briefcase size={12} /> Job Roles
-              {filled > 0 && (
-                <span className="bg-blue-100 text-blue-700 border border-blue-200 rounded-full px-2 py-0.5 text-xs font-semibold">
-                  {filled} defined
-                </span>
-              )}
-            </h3>
-
-            {roles.map((role, i) => (
-              <div
-                key={role._k}
-                className="bg-gray-50 border border-gray-200 rounded-xl p-4 mb-3"
-              >
-                <div className="flex items-center justify-between mb-3">
-                  <span className="text-xs font-bold text-blue-600 uppercase tracking-wider flex items-center gap-1.5">
-                    <span className="w-5 h-5 rounded bg-blue-100 border border-blue-200 flex items-center justify-center text-blue-700 font-bold text-xs">
-                      {i + 1}
-                    </span>
-                    Role #{i + 1}
-                  </span>
-                  {roles.length > 1 && (
-                    <button
-                      type="button"
-                      onClick={() => rmRole(i)}
-                      className="p-1.5 bg-red-50 border border-red-200 rounded-lg text-red-400 hover:bg-red-100 hover:text-red-600 transition"
-                      title="Remove role"
-                    >
-                      <Trash2 size={13} />
-                    </button>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="col-span-2">
+                  <label className={lc}>
+                    Job Title <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    value={role.title}
+                    onChange={(e) => {
+                      setRole(i, "title", e.target.value);
+                      clrErr(`t${i}`);
+                    }}
+                    placeholder="e.g. Senior Software Engineer, Marketing Lead"
+                    className={errs[`t${i}`] ? icErr : ic}
+                  />
+                  {errs[`t${i}`] && (
+                    <p className="text-xs text-red-500 mt-1 flex items-center gap-1">
+                      <AlertCircle size={10} />
+                      {errs[`t${i}`]}
+                    </p>
                   )}
                 </div>
 
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="col-span-2">
-                    <label className={lc}>
-                      Job Title <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      value={role.title}
-                      onChange={(e) => {
-                        setRole(i, "title", e.target.value);
-                        clrErr(`t${i}`);
-                      }}
-                      placeholder="e.g. Senior Software Engineer, Marketing Lead"
-                      className={errs[`t${i}`] ? icErr : ic}
-                    />
-                    {errs[`t${i}`] && (
-                      <p className="text-xs text-red-500 mt-1 flex items-center gap-1">
-                        <AlertCircle size={10} />
-                        {errs[`t${i}`]}
-                      </p>
-                    )}
-                  </div>
-
-                  <div className="col-span-2">
-                    <label className={lc}>Role Description</label>
-                    <input
-                      value={role.description}
-                      onChange={(e) =>
-                        setRole(i, "description", e.target.value)
-                      }
-                      placeholder="Key responsibilities, required skills, seniority level…"
-                      className={ic}
-                    />
-                  </div>
+                <div className="col-span-2">
+                  <label className={lc}>Role Description</label>
+                  <input
+                    value={role.description}
+                    onChange={(e) =>
+                      setRole(i, "description", e.target.value)
+                    }
+                    placeholder="Key responsibilities, required skills, seniority level…"
+                    className={ic}
+                  />
                 </div>
               </div>
-            ))}
+            </div>
+          ))}
 
-            <button
-              type="button"
-              onClick={addRole}
-              className="w-full py-2.5 border-2 border-dashed border-gray-300 rounded-xl text-sm font-semibold text-gray-400 hover:border-blue-400 hover:text-blue-500 hover:bg-blue-50 transition flex items-center justify-center gap-2"
-            >
-              <Plus size={15} /> Add Another Job Role
-            </button>
-          </div>
-        </div>
-
-        {/* ── FOOTER ── */}
-        <div className="p-5 border-t bg-gray-50 flex gap-3 flex-shrink-0 rounded-b-2xl">
           <button
-            onClick={onClose}
             type="button"
-            className="flex-1 py-2.5 border border-gray-200 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-100 transition"
+            onClick={addRole}
+            className="w-full py-2.5 border-2 border-dashed border-gray-300 rounded-xl text-sm font-semibold text-gray-400 hover:border-blue-400 hover:text-blue-500 hover:bg-blue-50 transition flex items-center justify-center gap-2"
           >
-            Cancel
-          </button>
-          <button
-            onClick={handleSave}
-            disabled={saving}
-            className="flex-1 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white rounded-xl text-sm font-semibold transition flex items-center justify-center gap-2"
-          >
-            {saving ? (
-              <Loader className="animate-spin" size={16} />
-            ) : (
-              <Save size={16} />
-            )}
-            {saving
-              ? "Saving..."
-              : isEdit
-                ? "Save Changes"
-                : "Create Department"}
+            <Plus size={15} /> Add Another Job Role
           </button>
         </div>
       </div>
+
+      {/* ── FOOTER ── */}
+      <div className="p-5 border-t bg-gray-50 flex gap-3 flex-shrink-0 rounded-b-2xl">
+        <button
+          onClick={onClose}
+          type="button"
+          className="flex-1 py-2.5 border border-gray-200 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-100 transition"
+        >
+          Cancel
+        </button>
+        <button
+          onClick={handleSave}
+          disabled={saving}
+          className="flex-1 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white rounded-xl text-sm font-semibold transition flex items-center justify-center gap-2"
+        >
+          {saving ? (
+            <Loader className="animate-spin" size={16} />
+          ) : (
+            <Save size={16} />
+          )}
+          {saving
+            ? "Saving..."
+            : isEdit
+              ? "Save Changes"
+              : "Create Department"}
+        </button>
+      </div>
     </div>
-  );
+  </div>
+);
 };
 
 // ─── CONFIRM DIALOG ───────────────────────────────────────────────────────────
@@ -1076,6 +1075,7 @@ const EmployeeSection = ({ toast, onAddClick, refreshKey }) => {
   const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const addToast = toast?.addToast;
 
   const fetchEmployees = useCallback(async () => {
     setLoading(true);
@@ -1086,292 +1086,292 @@ const EmployeeSection = ({ toast, onAddClick, refreshKey }) => {
         console.log("[Employee fields]", Object.keys(data[0]), data[0]);
       setEmployees(data);
     } catch {
-      toast.addToast("Failed to load employees", "error");
+      addToast?.("Failed to load employees", "error");
     } finally {
       setLoading(false);
     }
-  }, []);
+}, [addToast]);
 
-  useEffect(() => {
+useEffect(() => {
+  fetchEmployees();
+}, [fetchEmployees, refreshKey]);
+
+const handleDeactivate = async (id, name) => {
+  if (!window.confirm(`Deactivate ${name}?`)) return;
+  try {
+    await userApi.put(`/hr/employees/${id}/deactivate`);
+    addToast?.("Employee deactivated", "success");
     fetchEmployees();
-  }, [fetchEmployees, refreshKey]);
+  } catch {
+    addToast?.("Failed to deactivate", "error");
+  }
+};
 
-  const handleDeactivate = async (id, name) => {
-    if (!window.confirm(`Deactivate ${name}?`)) return;
-    try {
-      await userApi.put(`/hr/employees/${id}/deactivate`);
-      toast.addToast("Employee deactivated", "success");
-      fetchEmployees();
-    } catch {
-      toast.addToast("Failed to deactivate", "error");
-    }
+const filtered = employees.filter(
+  (e) =>
+    e.fullName?.toLowerCase().includes(search.toLowerCase()) ||
+    e.email?.toLowerCase().includes(search.toLowerCase()) ||
+    e.employeeId?.toLowerCase().includes(search.toLowerCase()) ||
+    e.department?.toLowerCase().includes(search.toLowerCase()) ||
+    e.departmentName?.toLowerCase().includes(search.toLowerCase()),
+);
+
+const active = employees.filter((e) => e.status === "ACTIVE").length;
+const inactive = employees.filter((e) => e.status === "INACTIVE").length;
+const terminated = employees.filter((e) => e.status === "TERMINATED").length;
+const fullTime = employees.filter((e) =>
+  (e.employmentType || e.employment_type || "")
+    .toUpperCase()
+    .includes("FULL"),
+).length;
+
+const statusBadge = (s) => {
+  const c = {
+    ACTIVE: "bg-emerald-100 text-emerald-700",
+    INACTIVE: "bg-gray-100 text-gray-600",
+    TERMINATED: "bg-red-100 text-red-700",
   };
-
-  const filtered = employees.filter(
-    (e) =>
-      e.fullName?.toLowerCase().includes(search.toLowerCase()) ||
-      e.email?.toLowerCase().includes(search.toLowerCase()) ||
-      e.employeeId?.toLowerCase().includes(search.toLowerCase()) ||
-      e.department?.toLowerCase().includes(search.toLowerCase()) ||
-      e.departmentName?.toLowerCase().includes(search.toLowerCase()),
-  );
-
-  const active = employees.filter((e) => e.status === "ACTIVE").length;
-  const inactive = employees.filter((e) => e.status === "INACTIVE").length;
-  const terminated = employees.filter((e) => e.status === "TERMINATED").length;
-  const fullTime = employees.filter((e) =>
-    (e.employmentType || e.employment_type || "")
-      .toUpperCase()
-      .includes("FULL"),
-  ).length;
-
-  const statusBadge = (s) => {
-    const c = {
-      ACTIVE: "bg-emerald-100 text-emerald-700",
-      INACTIVE: "bg-gray-100 text-gray-600",
-      TERMINATED: "bg-red-100 text-red-700",
-    };
-    return (
-      <span
-        className={`px-2.5 py-0.5 rounded-full text-xs font-semibold ${c[s] || "bg-gray-100 text-gray-600"}`}
-      >
-        {s}
-      </span>
-    );
-  };
-
-  const statCards = [
-    {
-      label: "Total Employees",
-      value: employees.length,
-      icon: Users,
-      from: "from-blue-500",
-      to: "to-blue-600",
-      sub: "All staff",
-    },
-    {
-      label: "Active",
-      value: active,
-      icon: UserCheck,
-      from: "from-green-500",
-      to: "to-emerald-600",
-      sub: "Currently working",
-    },
-    {
-      label: "Inactive",
-      value: inactive,
-      icon: Clock,
-      from: "from-yellow-500",
-      to: "to-orange-500",
-      sub: "On hold",
-    },
-    {
-      label: "Terminated",
-      value: terminated,
-      icon: UserX,
-      from: "from-red-500",
-      to: "to-red-600",
-      sub: "No longer active",
-    },
-    {
-      label: "Full Time",
-      value: fullTime,
-      icon: Award,
-      from: "from-indigo-500",
-      to: "to-indigo-600",
-      sub: "Full-time staff",
-    },
-    {
-      label: "Showing",
-      value: filtered.length,
-      icon: Search,
-      from: "from-purple-500",
-      to: "to-purple-600",
-      sub: "After filter",
-    },
-  ];
-
   return (
-    <div className="space-y-6">
-      {/* Page header */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <div className="bg-blue-100 p-3 rounded-xl">
-            <Users className="text-blue-600" size={28} />
+    <span
+      className={`px-2.5 py-0.5 rounded-full text-xs font-semibold ${c[s] || "bg-gray-100 text-gray-600"}`}
+    >
+      {s}
+    </span>
+  );
+};
+
+const statCards = [
+  {
+    label: "Total Employees",
+    value: employees.length,
+    icon: Users,
+    from: "from-blue-500",
+    to: "to-blue-600",
+    sub: "All staff",
+  },
+  {
+    label: "Active",
+    value: active,
+    icon: UserCheck,
+    from: "from-green-500",
+    to: "to-emerald-600",
+    sub: "Currently working",
+  },
+  {
+    label: "Inactive",
+    value: inactive,
+    icon: Clock,
+    from: "from-yellow-500",
+    to: "to-orange-500",
+    sub: "On hold",
+  },
+  {
+    label: "Terminated",
+    value: terminated,
+    icon: UserX,
+    from: "from-red-500",
+    to: "to-red-600",
+    sub: "No longer active",
+  },
+  {
+    label: "Full Time",
+    value: fullTime,
+    icon: Award,
+    from: "from-indigo-500",
+    to: "to-indigo-600",
+    sub: "Full-time staff",
+  },
+  {
+    label: "Showing",
+    value: filtered.length,
+    icon: Search,
+    from: "from-purple-500",
+    to: "to-purple-600",
+    sub: "After filter",
+  },
+];
+
+return (
+  <div className="space-y-6">
+    {/* Page header */}
+    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 flex items-center justify-between">
+      <div className="flex items-center gap-4">
+        <div className="bg-blue-100 p-3 rounded-xl">
+          <Users className="text-blue-600" size={28} />
+        </div>
+        <div>
+          <h2 className="text-2xl font-bold text-gray-800">
+            Employee Management
+          </h2>
+          <p className="text-sm text-gray-500 mt-0.5">
+            Manage all employees across your organization
+          </p>
+        </div>
+      </div>
+      <button
+        onClick={onAddClick}
+        className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-xl text-sm font-semibold transition shadow-md shadow-blue-200"
+      >
+        <UserPlus size={16} /> Add Employee
+      </button>
+    </div>
+
+    {/* Stat cards */}
+    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+      {statCards.map(({ label, value, icon: Icon, from, to, sub }) => (
+        <div
+          key={label}
+          className={`bg-gradient-to-br ${from} ${to} p-5 rounded-xl shadow-lg text-white hover:scale-105 transition-transform`}
+        >
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-white/80 text-xs font-medium">{label}</p>
+            <Icon size={18} className="opacity-80" />
           </div>
-          <div>
-            <h2 className="text-2xl font-bold text-gray-800">
-              Employee Management
-            </h2>
-            <p className="text-sm text-gray-500 mt-0.5">
-              Manage all employees across your organization
-            </p>
-          </div>
+          <p className="text-3xl font-bold">{value}</p>
+          <p className="text-white/70 text-xs mt-1">{sub}</p>
+        </div>
+      ))}
+    </div>
+
+    {/* Search + actions bar */}
+    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="relative">
+          <Search
+            size={15}
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+          />
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search by name, ID, dept…"
+            className="pl-9 pr-4 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 focus:bg-white transition w-64"
+          />
         </div>
         <button
-          onClick={onAddClick}
-          className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-xl text-sm font-semibold transition shadow-md shadow-blue-200"
+          onClick={fetchEmployees}
+          className="p-2.5 border border-gray-200 rounded-lg hover:bg-gray-50 transition text-gray-500"
         >
-          <UserPlus size={16} /> Add Employee
+          <RefreshCw size={15} />
         </button>
       </div>
+    </div>
 
-      {/* Stat cards */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-        {statCards.map(({ label, value, icon: Icon, from, to, sub }) => (
-          <div
-            key={label}
-            className={`bg-gradient-to-br ${from} ${to} p-5 rounded-xl shadow-lg text-white hover:scale-105 transition-transform`}
-          >
-            <div className="flex items-center justify-between mb-2">
-              <p className="text-white/80 text-xs font-medium">{label}</p>
-              <Icon size={18} className="opacity-80" />
-            </div>
-            <p className="text-3xl font-bold">{value}</p>
-            <p className="text-white/70 text-xs mt-1">{sub}</p>
-          </div>
-        ))}
-      </div>
-
-      {/* Search + actions bar */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="relative">
-            <Search
-              size={15}
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
-            />
-            <input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search by name, ID, dept…"
-              className="pl-9 pr-4 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 focus:bg-white transition w-64"
-            />
-          </div>
-          <button
-            onClick={fetchEmployees}
-            className="p-2.5 border border-gray-200 rounded-lg hover:bg-gray-50 transition text-gray-500"
-          >
-            <RefreshCw size={15} />
-          </button>
+    {/* Table */}
+    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+      {loading ? (
+        <div className="flex items-center justify-center h-48">
+          <Loader className="animate-spin text-blue-500" size={28} />
         </div>
-      </div>
-
-      {/* Table */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-        {loading ? (
-          <div className="flex items-center justify-center h-48">
-            <Loader className="animate-spin text-blue-500" size={28} />
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white text-sm">
-                  {[
-                    "Employee",
-                    "ID",
-                    "Department",
-                    "Designation",
-                    "Role",
-                    "Employment Type",
-                    "Joining Date",
-                    "Status",
-                    "Actions",
-                  ].map((h) => (
-                    <th key={h} className="text-left px-5 py-4 font-semibold">
-                      {h}
-                    </th>
-                  ))}
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead>
+              <tr className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white text-sm">
+                {[
+                  "Employee",
+                  "ID",
+                  "Department",
+                  "Designation",
+                  "Role",
+                  "Employment Type",
+                  "Joining Date",
+                  "Status",
+                  "Actions",
+                ].map((h) => (
+                  <th key={h} className="text-left px-5 py-4 font-semibold">
+                    {h}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-50">
+              {filtered.length === 0 ? (
+                <tr>
+                  <td colSpan={9} className="text-center py-16 text-gray-400">
+                    <Users size={36} className="mx-auto mb-2 opacity-20" />
+                    <p>No employees found</p>
+                  </td>
                 </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-50">
-                {filtered.length === 0 ? (
-                  <tr>
-                    <td colSpan={9} className="text-center py-16 text-gray-400">
-                      <Users size={36} className="mx-auto mb-2 opacity-20" />
-                      <p>No employees found</p>
+              ) : (
+                filtered.map((emp, i) => (
+                  <tr
+                    key={emp.id}
+                    className={`hover:bg-blue-50/40 transition-colors ${i % 2 === 1 ? "bg-gray-50/40" : ""}`}
+                  >
+                    <td className="px-5 py-3.5">
+                      <div className="flex items-center gap-3">
+                        <div className="h-9 w-9 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
+                          {emp.fullName?.charAt(0)}
+                        </div>
+                        <div>
+                          <p className="font-semibold text-sm text-gray-800">
+                            {emp.fullName}
+                          </p>
+                          <p className="text-xs text-gray-400">{emp.email}</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-5 py-3.5 text-sm font-mono text-gray-600">
+                      {emp.employeeId}
+                    </td>
+                    <td className="px-5 py-3.5 text-sm text-gray-600">
+                      {(() => {
+                        const d =
+                          emp.departmentName ||
+                          emp.department ||
+                          emp.dept ||
+                          emp.departmentTitle ||
+                          emp.department_name ||
+                          emp.deptName;
+                        return d ? (
+                          <span className="bg-indigo-50 text-indigo-700 px-2.5 py-0.5 rounded-full text-xs font-semibold border border-indigo-100">
+                            {d}
+                          </span>
+                        ) : (
+                          <span className="text-gray-400 text-xs">—</span>
+                        );
+                      })()}
+                    </td>
+                    <td className="px-5 py-3.5 text-sm text-gray-600">
+                      {emp.designation || "—"}
+                    </td>
+                    <td className="px-5 py-3.5">
+                      <span className="bg-blue-50 text-blue-700 px-2.5 py-0.5 rounded-full text-xs font-semibold">
+                        {emp.role}
+                      </span>
+                    </td>
+                    <td className="px-5 py-3.5">
+                      {employmentTypeBadge(
+                        emp.employmentType ||
+                        emp.employment_type ||
+                        emp.empType ||
+                        emp.type,
+                      )}
+                    </td>
+                    <td className="px-5 py-3.5 text-sm text-gray-500">
+                      {emp.joiningDate || "—"}
+                    </td>
+                    <td className="px-5 py-3.5">{statusBadge(emp.status)}</td>
+                    <td className="px-5 py-3.5">
+                      <button
+                        onClick={() => handleDeactivate(emp.id, emp.fullName)}
+                        className="p-1.5 hover:bg-orange-50 text-orange-500 rounded-lg transition"
+                        title="Deactivate"
+                      >
+                        <XCircle size={15} />
+                      </button>
                     </td>
                   </tr>
-                ) : (
-                  filtered.map((emp, i) => (
-                    <tr
-                      key={emp.id}
-                      className={`hover:bg-blue-50/40 transition-colors ${i % 2 === 1 ? "bg-gray-50/40" : ""}`}
-                    >
-                      <td className="px-5 py-3.5">
-                        <div className="flex items-center gap-3">
-                          <div className="h-9 w-9 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
-                            {emp.fullName?.charAt(0)}
-                          </div>
-                          <div>
-                            <p className="font-semibold text-sm text-gray-800">
-                              {emp.fullName}
-                            </p>
-                            <p className="text-xs text-gray-400">{emp.email}</p>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-5 py-3.5 text-sm font-mono text-gray-600">
-                        {emp.employeeId}
-                      </td>
-                      <td className="px-5 py-3.5 text-sm text-gray-600">
-                        {(() => {
-                          const d =
-                            emp.departmentName ||
-                            emp.department ||
-                            emp.dept ||
-                            emp.departmentTitle ||
-                            emp.department_name ||
-                            emp.deptName;
-                          return d ? (
-                            <span className="bg-indigo-50 text-indigo-700 px-2.5 py-0.5 rounded-full text-xs font-semibold border border-indigo-100">
-                              {d}
-                            </span>
-                          ) : (
-                            <span className="text-gray-400 text-xs">—</span>
-                          );
-                        })()}
-                      </td>
-                      <td className="px-5 py-3.5 text-sm text-gray-600">
-                        {emp.designation || "—"}
-                      </td>
-                      <td className="px-5 py-3.5">
-                        <span className="bg-blue-50 text-blue-700 px-2.5 py-0.5 rounded-full text-xs font-semibold">
-                          {emp.role}
-                        </span>
-                      </td>
-                      <td className="px-5 py-3.5">
-                        {employmentTypeBadge(
-                          emp.employmentType ||
-                            emp.employment_type ||
-                            emp.empType ||
-                            emp.type,
-                        )}
-                      </td>
-                      <td className="px-5 py-3.5 text-sm text-gray-500">
-                        {emp.joiningDate || "—"}
-                      </td>
-                      <td className="px-5 py-3.5">{statusBadge(emp.status)}</td>
-                      <td className="px-5 py-3.5">
-                        <button
-                          onClick={() => handleDeactivate(emp.id, emp.fullName)}
-                          className="p-1.5 hover:bg-orange-50 text-orange-500 rounded-lg transition"
-                          title="Deactivate"
-                        >
-                          <XCircle size={15} />
-                        </button>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
-  );
+  </div>
+);
 };
 
 // ─── ATTENDANCE SECTION ───────────────────────────────────────────────────────
@@ -2406,10 +2406,10 @@ const HRDashboard = () => {
                   style={
                     isActive
                       ? {
-                          background: "#075985",
-                          boxShadow: "0 2px 12px rgba(7,89,133,0.3)",
-                          borderLeft: "3px solid #38bdf8",
-                        }
+                        background: "#0369a1",
+                        boxShadow: "0 2px 12px rgba(7,89,133,0.3)",
+                        borderLeft: "3px solid #38bdf8",
+                      }
                       : {}
                   }
                   title={!isSidebarOpen ? item.name : undefined}
