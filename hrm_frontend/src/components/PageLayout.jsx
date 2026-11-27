@@ -204,6 +204,13 @@ const NAV = {
       path: "/recruitment/audit-log",
       requiresAny: ["AUDIT_VIEW"],
     },
+    // Recruiter Profile
+   {
+     name: "Profile",
+     icon: User,
+     path: "/recruitment/profile",
+     requiresAny: [],
+    },
   ],
 };
 
