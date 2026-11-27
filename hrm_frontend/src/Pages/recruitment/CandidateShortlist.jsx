@@ -1256,162 +1256,20 @@ export default function RecruitmentCandidateShortlist() {
                       <button
                         type="button"
                         onClick={() => toggleCollapse(vacKey)}
-                        className="w-9 h-9 rounded-xl bg-white hover:bg-slate-50 text-slate-500 border border-slate-200 flex items-center justify-center transition-colors cursor-pointer shrink-0"
-                        title={isCollapsed ? "Expand section" : "Collapse section"}
+                        className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-[#cfd5ee] bg-white text-slate-700 text-sm font-semibold hover:bg-slate-50 cursor-pointer"
                       >
-                        {isCollapsed ? <ChevronDown size={16} /> : <ChevronUp size={16} />}
-                      </button>
-                    </div>
-
-                    {/* Bottom: Dedicated Full-Width Action Controls Bar Under Vacancy Information */}
-                    <div className="mt-4 p-2.5 bg-slate-50 rounded-xl border border-slate-200 flex flex-wrap items-center justify-between gap-2.5">
-                      <div className="flex flex-wrap items-center gap-2">
-                        {/* 0. Job Vacancy Details Button */}
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const matched =
-                              group.rawVacancy ||
-                              vacancies.find(
-                                (v) =>
-                                  (group.vacancyId && String(v.id) === String(group.vacancyId)) ||
-                                  (group.title && v.title && v.title.toLowerCase() === group.title.toLowerCase())
-                              ) || {
-                                id: group.vacancyId,
-                                title: group.title,
-                                department: group.department,
-                              };
-                            setSelectedVacancyModal(matched);
-                          }}
-                          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-slate-200 bg-white text-slate-700 text-sm font-semibold hover:bg-slate-50 transition-colors cursor-pointer"
-                          title="Display job vacancy details like public career page"
-                        >
-                          <FileText size={16} className="text-slate-500 shrink-0" />
-                          <span>Job Vacancy Details</span>
-                        </button>
-
-                        {/* 1. Define Screening Rules Button */}
-                        <button
-                          type="button"
-                          onClick={() => handleOpenConfigModal(group.rawVacancy || { id: group.vacancyId, title: group.title })}
-                          disabled={loadingConfigFor === group.vacancyId}
-                          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-slate-200 bg-white text-slate-700 text-sm font-semibold hover:bg-slate-50 transition-colors cursor-pointer disabled:opacity-60"
-                          title="Define screening criteria, weights, mandatory rules, and thresholds for this vacancy"
-                        >
-                          <SlidersHorizontal size={16} className="text-slate-500 shrink-0" />
-                          <span>{loadingConfigFor === group.vacancyId ? "Loading..." : "Define Screening Rules"}</span>
-                        </button>
-
-                        {/* Remove Vacancy Button */}
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setConfirmArchiveModal({
-                              vacancy: group.rawVacancy || { id: group.vacancyId, title: group.title },
-                              candidates: group.candidates,
-                              unconfirmedCount: group.candidates.filter(
-                                (c) => c.status !== "SHORTLISTED" && c.status !== "REJECTED"
-                              ).length,
-                            })
-                          }
-                          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-red-200 bg-white text-red-700 text-sm font-semibold hover:bg-red-50 transition-colors cursor-pointer"
-                          title="Remove vacancy, move to Shortlist History, and reject unconfirmed candidates"
-                        >
-                          <Archive size={16} className="text-red-600 shrink-0" />
-                          <span>Remove Vacancy</span>
-                        </button>
-                      </div>
-
-                      <div className="flex flex-wrap items-center gap-2">
-                        {/* 2. Automated Screening Execution Button */}
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setPendingScreeningVacancy({
-                              vacKey,
-                              vacancyTitle: group.title,
-                              candidates: group.candidates,
-                              minScore,
-                              autoShortlistActive,
-                            })
-                          }
-                          disabled={isRunningAuto || vacTotal === 0}
-                          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-primary-600 hover:bg-primary-700 text-white text-sm font-semibold shadow-sm transition-colors disabled:opacity-60 cursor-pointer"
-                          title={`Evaluate applicants against vacancy rules ${autoShortlistActive ? "and auto-shortlist qualifying candidates" : ""}`}
-                        >
-                          {isRunningAuto ? (
-                            <>
-                              <Loader2 size={14} className="animate-spin text-white" />
-                              <span>Screening...</span>
-                            </>
-                          ) : (
-                            <>
-                              <Sparkles size={16} className="text-primary-100" />
-                              <span>{autoShortlistActive ? "Screen & Auto-Shortlist" : "Run Screening"}</span>
-                              <span className="px-1.5 py-0.5 rounded-md bg-white/20 text-[10px] font-bold text-white">
-                                ≥{minScore}%
-                              </span>
-                            </>
-                          )}
-                        </button>
-
-                        {/* 3. Confirm Shortlist Button (for staged candidates) */}
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setPendingConfirmVacancy({
-                              vacKey,
-                              vacancyTitle: group.title,
-                              stagedCount,
-                              candidates: group.candidates.filter((c) => stagedSet.has(c.id)),
-                            })
-                          }
-                          disabled={isConfirming || stagedCount === 0}
-                          className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-colors ${
-                            stagedCount > 0
-                              ? "bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm"
-                              : "bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed"
-                          }`}
-                          title={
-                            stagedCount > 0
-                              ? `Confirm shortlisting for ${stagedCount} staged candidates in ${group.title}`
-                              : "Select candidates to stage before confirming shortlist"
-                          }
-                        >
-                          {isConfirming ? (
-                            <>
-                              <Loader2 size={14} className="animate-spin text-white" />
-                              <span>Confirming...</span>
-                            </>
-                          ) : (
-                            <>
-                              <CheckCircle2 size={14} className={stagedCount > 0 ? "text-emerald-100" : "text-slate-400"} />
-                              <span>Confirm Shortlist</span>
-                              {stagedCount > 0 ? (
-                                <span className="px-1.5 py-0.5 bg-white/25 rounded-full text-[10px] font-bold text-white">
-                                  {stagedCount}
-                                </span>
-                              ) : (
-                                <span className="text-[10px] text-slate-500 font-medium">
-                                  (0)
-                                </span>
-                              )}
-                            </>
-                          )}
-                        </button>
-
-                        {/* Reset staging if candidates are staged */}
-                        {stagedCount > 0 && (
-                          <button
-                            type="button"
-                            onClick={() => handleClearStagingForVacancy(vacKey)}
-                            className="p-2 rounded-xl bg-white hover:bg-slate-50 text-slate-500 border border-slate-200 text-xs transition-colors cursor-pointer"
-                            title="Clear staged candidates"
-                          >
-                            <X size={14} />
-                          </button>
+                        {isCollapsed ? (
+                          <>
+                            <ChevronDown size={16} />
+                            <span>Expand</span>
+                          </>
+                        ) : (
+                          <>
+                            <ChevronUp size={16} />
+                            <span>Collapse</span>
+                          </>
                         )}
-                      </div>
+                      </button>
                     </div>
 
                     {/* Vacancy Alert Banner */}
@@ -1452,6 +1310,157 @@ export default function RecruitmentCandidateShortlist() {
                         </button>
                       </div>
                     )}
+                  </div>
+
+                  {/* Bottom: Dedicated Full-Width Action Controls Bar Under Vacancy Information */}
+                  <div className="px-6 py-2.5 bg-slate-50/70 border-b border-slate-200/70 flex flex-wrap items-center justify-between gap-2.5">
+                    <div className="flex flex-wrap items-center gap-2">
+                      {/* 0. Job Vacancy Details Button */}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const matched =
+                            group.rawVacancy ||
+                            vacancies.find(
+                              (v) =>
+                                (group.vacancyId && String(v.id) === String(group.vacancyId)) ||
+                                (group.title && v.title && v.title.toLowerCase() === group.title.toLowerCase())
+                            ) || {
+                              id: group.vacancyId,
+                              title: group.title,
+                              department: group.department,
+                            };
+                          setSelectedVacancyModal(matched);
+                        }}
+                        className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-slate-200 bg-white text-slate-700 text-sm font-semibold hover:bg-slate-50 transition-colors cursor-pointer"
+                        title="Display job vacancy details like public career page"
+                      >
+                        <FileText size={16} className="text-slate-500 shrink-0" />
+                        <span>Job Vacancy Details</span>
+                      </button>
+
+                      {/* 1. Define Screening Rules Button */}
+                      <button
+                        type="button"
+                        onClick={() => handleOpenConfigModal(group.rawVacancy || { id: group.vacancyId, title: group.title })}
+                        disabled={loadingConfigFor === group.vacancyId}
+                        className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-slate-200 bg-white text-slate-700 text-sm font-semibold hover:bg-slate-50 transition-colors cursor-pointer disabled:opacity-60"
+                        title="Define screening criteria, weights, mandatory rules, and thresholds for this vacancy"
+                      >
+                        <SlidersHorizontal size={16} className="text-slate-500 shrink-0" />
+                        <span>{loadingConfigFor === group.vacancyId ? "Loading..." : "Define Screening Rules"}</span>
+                      </button>
+
+                      {/* Remove Vacancy Button */}
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setConfirmArchiveModal({
+                            vacancy: group.rawVacancy || { id: group.vacancyId, title: group.title },
+                            candidates: group.candidates,
+                            unconfirmedCount: group.candidates.filter(
+                              (c) => c.status !== "SHORTLISTED" && c.status !== "REJECTED"
+                            ).length,
+                          })
+                        }
+                        className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-red-200 bg-white text-red-700 text-sm font-semibold hover:bg-red-50 transition-colors cursor-pointer"
+                        title="Remove vacancy, move to Shortlist History, and reject unconfirmed candidates"
+                      >
+                        <Archive size={16} className="text-red-600 shrink-0" />
+                        <span>Remove Vacancy</span>
+                      </button>
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-2">
+                      {/* 2. Automated Screening Execution Button */}
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setPendingScreeningVacancy({
+                            vacKey,
+                            vacancyTitle: group.title,
+                            candidates: group.candidates,
+                            minScore,
+                            autoShortlistActive,
+                          })
+                        }
+                        disabled={isRunningAuto || vacTotal === 0}
+                        className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-primary-600 hover:bg-primary-700 text-white text-sm font-semibold shadow-sm transition-colors disabled:opacity-60 cursor-pointer"
+                        title={`Evaluate applicants against vacancy rules ${autoShortlistActive ? "and auto-shortlist qualifying candidates" : ""}`}
+                      >
+                        {isRunningAuto ? (
+                          <>
+                            <Loader2 size={14} className="animate-spin text-white" />
+                            <span>Screening...</span>
+                          </>
+                        ) : (
+                          <>
+                            <Sparkles size={16} className="text-primary-100" />
+                            <span>{autoShortlistActive ? "Screen & Auto-Shortlist" : "Run Screening"}</span>
+                            <span className="px-1.5 py-0.5 rounded-md bg-white/20 text-[10px] font-bold text-white">
+                              ≥{minScore}%
+                            </span>
+                          </>
+                        )}
+                      </button>
+
+                      {/* 3. Confirm Shortlist Button (for staged candidates) */}
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setPendingConfirmVacancy({
+                            vacKey,
+                            vacancyTitle: group.title,
+                            stagedCount,
+                            candidates: group.candidates.filter((c) => stagedSet.has(c.id)),
+                          })
+                        }
+                        disabled={isConfirming || stagedCount === 0}
+                        className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-colors ${
+                          stagedCount > 0
+                            ? "bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm"
+                            : "bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed"
+                        }`}
+                        title={
+                          stagedCount > 0
+                            ? `Confirm shortlisting for ${stagedCount} staged candidates in ${group.title}`
+                            : "Select candidates to stage before confirming shortlist"
+                        }
+                      >
+                        {isConfirming ? (
+                          <>
+                            <Loader2 size={14} className="animate-spin text-white" />
+                            <span>Confirming...</span>
+                          </>
+                        ) : (
+                          <>
+                            <CheckCircle2 size={14} className={stagedCount > 0 ? "text-emerald-100" : "text-slate-400"} />
+                            <span>Confirm Shortlist</span>
+                            {stagedCount > 0 ? (
+                              <span className="px-1.5 py-0.5 bg-white/25 rounded-full text-[10px] font-bold text-white">
+                                {stagedCount}
+                              </span>
+                            ) : (
+                              <span className="text-[10px] text-slate-500 font-medium">
+                                (0)
+                              </span>
+                            )}
+                          </>
+                        )}
+                      </button>
+
+                      {/* Reset staging if candidates are staged */}
+                      {stagedCount > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => handleClearStagingForVacancy(vacKey)}
+                          className="p-2 rounded-xl bg-white hover:bg-slate-50 text-slate-500 border border-slate-200 text-xs transition-colors cursor-pointer"
+                          title="Clear staged candidates"
+                        >
+                          <X size={14} />
+                        </button>
+                      )}
+                    </div>
                   </div>
 
                   {/* ── Vacancy Content (When not collapsed) ── */}
