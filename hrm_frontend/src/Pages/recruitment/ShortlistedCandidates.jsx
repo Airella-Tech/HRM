@@ -21,6 +21,7 @@ import {
   ShieldCheck,
   Hourglass,
   XCircle,
+  Plus,
 } from "lucide-react";
 
 import { PageLayout } from "../../components/PageLayout";
@@ -1575,11 +1576,21 @@ export default function ShortlistedCandidates() {
     <PageLayout
       role="recruiter"
       activePage="Interviews"
-         activeNav="Schedule Interviews"
+      activeNav="Schedule Interviews"
       title="Shortlisted Candidates"
       subtitle="Review confirmed candidates and schedule their interviews"
       actions={
         <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={() =>
+              navigate("/recruitment/interviews/physical-locations")
+            }
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-primary-600 text-white text-sm font-semibold shadow-sm hover:bg-primary-700 transition"
+          >
+            <Plus size={16} />
+            Add Physical Location
+          </button>
           <button
             type="button"
             onClick={() => loadData(true)}
@@ -2077,7 +2088,10 @@ export default function ShortlistedCandidates() {
         {/* WORKFLOW INFORMATION */}
         <div className="mt-5 rounded-xl border border-primary-100 bg-primary-50/70 p-4">
           <div className="flex items-start gap-3">
-            <CircleAlert size={18} className="mt-0.5 shrink-0 text-primary-600" />
+            <CircleAlert
+              size={18}
+              className="mt-0.5 shrink-0 text-primary-600"
+            />
 
             <div>
               <p className="text-sm font-semibold text-primary-800">
@@ -2142,173 +2156,177 @@ export default function ShortlistedCandidates() {
                         ? "Already scheduled"
                         : "Schedule next stage"}
                 </ModalButton>
-                <ModalButton type="button" onClick={() => setSelectedCandidate(null)}>Close</ModalButton>
+                <ModalButton
+                  type="button"
+                  onClick={() => setSelectedCandidate(null)}
+                >
+                  Close
+                </ModalButton>
               </>
             }
           >
-              <div className="space-y-3">
-                {ROUNDS.map((round, index) => {
-                  const state = getRoundState(selectedCandidate, round);
+            <div className="space-y-3">
+              {ROUNDS.map((round, index) => {
+                const state = getRoundState(selectedCandidate, round);
 
-                  const completed = state === "passed";
-                  const evaluationPending = state === "evaluation-pending";
-                  const managerPending = state === "manager-pending";
-                  const scheduled = state === "scheduled";
-                  const rejected = state === "rejected";
+                const completed = state === "passed";
+                const evaluationPending = state === "evaluation-pending";
+                const managerPending = state === "manager-pending";
+                const scheduled = state === "scheduled";
+                const rejected = state === "rejected";
 
-                  const next = getNextRound(selectedCandidate) === round;
+                const next = getNextRound(selectedCandidate) === round;
 
-                  const latestInterview = getLatestRoundInterview(
-                    selectedCandidate,
-                    round,
-                  );
+                const latestInterview = getLatestRoundInterview(
+                  selectedCandidate,
+                  round,
+                );
 
-                  const evaluationProgress = latestInterview
-                    ? getEvaluationProgress(latestInterview)
-                    : null;
+                const evaluationProgress = latestInterview
+                  ? getEvaluationProgress(latestInterview)
+                  : null;
 
-                  const decisionComments = latestInterview
-                    ? getDecisionComments(latestInterview)
-                    : "";
+                const decisionComments = latestInterview
+                  ? getDecisionComments(latestInterview)
+                  : "";
 
-                  const decisionDate = latestInterview
-                    ? getDecisionDate(latestInterview)
-                    : "";
+                const decisionDate = latestInterview
+                  ? getDecisionDate(latestInterview)
+                  : "";
 
-                  const managerDecision = latestInterview
-                    ? getManagerDecision(latestInterview)
-                    : "";
+                const managerDecision = latestInterview
+                  ? getManagerDecision(latestInterview)
+                  : "";
 
-                  const stateStyle = completed
-                    ? "border-green-200 bg-green-50"
-                    : evaluationPending
-                      ? "border-orange-200 bg-orange-50"
-                      : managerPending
-                        ? "border-amber-200 bg-amber-50"
-                        : scheduled
-                          ? "border-primary-200 bg-primary-50"
-                          : rejected
-                            ? "border-red-200 bg-red-50"
-                            : next
-                              ? "border-primary-200 bg-primary-50"
-                              : "border-slate-200";
+                const stateStyle = completed
+                  ? "border-green-200 bg-green-50"
+                  : evaluationPending
+                    ? "border-orange-200 bg-orange-50"
+                    : managerPending
+                      ? "border-amber-200 bg-amber-50"
+                      : scheduled
+                        ? "border-primary-200 bg-primary-50"
+                        : rejected
+                          ? "border-red-200 bg-red-50"
+                          : next
+                            ? "border-primary-200 bg-primary-50"
+                            : "border-slate-200";
 
-                  const iconStyle = completed
-                    ? "bg-green-100 text-green-700"
-                    : evaluationPending
-                      ? "bg-orange-100 text-orange-700"
-                      : managerPending
-                        ? "bg-amber-100 text-amber-700"
-                        : scheduled
-                          ? "bg-primary-100 text-primary-700"
-                          : rejected
-                            ? "bg-red-100 text-red-700"
-                            : next
-                              ? "bg-primary-100 text-primary-700"
-                              : "bg-slate-100 text-slate-500";
+                const iconStyle = completed
+                  ? "bg-green-100 text-green-700"
+                  : evaluationPending
+                    ? "bg-orange-100 text-orange-700"
+                    : managerPending
+                      ? "bg-amber-100 text-amber-700"
+                      : scheduled
+                        ? "bg-primary-100 text-primary-700"
+                        : rejected
+                          ? "bg-red-100 text-red-700"
+                          : next
+                            ? "bg-primary-100 text-primary-700"
+                            : "bg-slate-100 text-slate-500";
 
-                  return (
-                    <div
-                      key={round}
-                      className={`rounded-xl border p-3 ${stateStyle}`}
-                    >
-                      <div className="flex items-center gap-3">
-                        <div
-                          className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${iconStyle}`}
-                        >
-                          {completed ? (
-                            <CheckCircle2 size={18} />
-                          ) : rejected ? (
-                            <XCircle size={18} />
-                          ) : managerPending ? (
-                            <Hourglass size={18} />
-                          ) : (
-                            index + 1
-                          )}
-                        </div>
-
-                        <div className="flex-1">
-                          <p className="text-sm font-semibold text-slate-800">
-                            {round}
-                          </p>
-
-                          <p className="mt-1 text-xs text-slate-500">
-                            {getRoundMessage(selectedCandidate, round)}
-                          </p>
-                        </div>
-
-                        {next &&
-                          !scheduled &&
-                          !evaluationPending &&
-                          !managerPending && (
-                            <span className="text-primary-600">
-                              <CalendarCheck size={17} />
-                            </span>
-                          )}
+                return (
+                  <div
+                    key={round}
+                    className={`rounded-xl border p-3 ${stateStyle}`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div
+                        className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${iconStyle}`}
+                      >
+                        {completed ? (
+                          <CheckCircle2 size={18} />
+                        ) : rejected ? (
+                          <XCircle size={18} />
+                        ) : managerPending ? (
+                          <Hourglass size={18} />
+                        ) : (
+                          index + 1
+                        )}
                       </div>
 
-                      {evaluationProgress &&
-                        evaluationProgress.hasAssignmentInformation && (
-                          <div className="ml-12 mt-2 text-xs text-slate-600">
-                            Evaluations submitted:{" "}
-                            <strong>
-                              {evaluationProgress.submittedCount}/
-                              {evaluationProgress.assignedCount}
-                            </strong>
-                          </div>
+                      <div className="flex-1">
+                        <p className="text-sm font-semibold text-slate-800">
+                          {round}
+                        </p>
+
+                        <p className="mt-1 text-xs text-slate-500">
+                          {getRoundMessage(selectedCandidate, round)}
+                        </p>
+                      </div>
+
+                      {next &&
+                        !scheduled &&
+                        !evaluationPending &&
+                        !managerPending && (
+                          <span className="text-primary-600">
+                            <CalendarCheck size={17} />
+                          </span>
                         )}
-
-                      {latestInterview && (
-                        <div className="ml-12 mt-2 text-xs text-slate-600">
-                          <p>
-                            <strong>Manager decision:</strong>{" "}
-                            {managerDecision || "Pending Review"}
-                          </p>
-
-                          {decisionDate && (
-                            <p className="mt-1">
-                              <strong>Decision date:</strong>{" "}
-                              {formatDate(decisionDate)}
-                            </p>
-                          )}
-                        </div>
-                      )}
-
-                      {decisionComments && (
-                        <div className="ml-12 mt-2 rounded-lg bg-white/70 p-2 text-xs text-slate-600">
-                          <strong>Manager comments:</strong> {decisionComments}
-                        </div>
-                      )}
-
-                      {completed && (
-                        <div className="ml-12 mt-2 flex items-center gap-1.5 text-xs font-semibold text-green-700">
-                          <ShieldCheck size={14} />
-                          Approved by Recruitment Manager
-                        </div>
-                      )}
-
-                      {rejected && (
-                        <div className="ml-12 mt-2 text-xs font-semibold text-red-700">
-                          Rejected by Recruitment Manager
-                        </div>
-                      )}
-
-                      {evaluationPending && (
-                        <div className="ml-12 mt-2 text-xs font-semibold text-orange-700">
-                          Waiting for all assigned interviewer evaluations
-                        </div>
-                      )}
-
-                      {managerPending && (
-                        <div className="ml-12 mt-2 text-xs font-semibold text-amber-700">
-                          Waiting for Recruitment Manager approval
-                        </div>
-                      )}
                     </div>
-                  );
-                })}
 
-              </div>
+                    {evaluationProgress &&
+                      evaluationProgress.hasAssignmentInformation && (
+                        <div className="ml-12 mt-2 text-xs text-slate-600">
+                          Evaluations submitted:{" "}
+                          <strong>
+                            {evaluationProgress.submittedCount}/
+                            {evaluationProgress.assignedCount}
+                          </strong>
+                        </div>
+                      )}
+
+                    {latestInterview && (
+                      <div className="ml-12 mt-2 text-xs text-slate-600">
+                        <p>
+                          <strong>Manager decision:</strong>{" "}
+                          {managerDecision || "Pending Review"}
+                        </p>
+
+                        {decisionDate && (
+                          <p className="mt-1">
+                            <strong>Decision date:</strong>{" "}
+                            {formatDate(decisionDate)}
+                          </p>
+                        )}
+                      </div>
+                    )}
+
+                    {decisionComments && (
+                      <div className="ml-12 mt-2 rounded-lg bg-white/70 p-2 text-xs text-slate-600">
+                        <strong>Manager comments:</strong> {decisionComments}
+                      </div>
+                    )}
+
+                    {completed && (
+                      <div className="ml-12 mt-2 flex items-center gap-1.5 text-xs font-semibold text-green-700">
+                        <ShieldCheck size={14} />
+                        Approved by Recruitment Manager
+                      </div>
+                    )}
+
+                    {rejected && (
+                      <div className="ml-12 mt-2 text-xs font-semibold text-red-700">
+                        Rejected by Recruitment Manager
+                      </div>
+                    )}
+
+                    {evaluationPending && (
+                      <div className="ml-12 mt-2 text-xs font-semibold text-orange-700">
+                        Waiting for all assigned interviewer evaluations
+                      </div>
+                    )}
+
+                    {managerPending && (
+                      <div className="ml-12 mt-2 text-xs font-semibold text-amber-700">
+                        Waiting for Recruitment Manager approval
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
           </RecruitmentModal>
         )}
       </div>

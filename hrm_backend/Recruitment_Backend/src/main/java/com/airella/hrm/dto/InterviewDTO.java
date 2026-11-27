@@ -27,9 +27,11 @@ public record InterviewDTO(
         Long createdBy,
         LocalDateTime createdAt,
         LocalDateTime updatedAt,
-        List<Long> interviewerIds
+        List<Long> interviewerIds,
+        Long physicalLocationId
 ) {
-    // Compatibility constructor for existing code and tests.
+
+    // Compatibility constructor without interviewer IDs.
     public InterviewDTO(
             Long id,
             Long applicationId,
@@ -73,7 +75,58 @@ public record InterviewDTO(
                 createdBy,
                 createdAt,
                 updatedAt,
-                List.of()
+                List.of(),
+                null
+        );
+    }
+
+    // Compatibility constructor with interviewer IDs.
+    public InterviewDTO(
+            Long id,
+            Long applicationId,
+            String candidateName,
+            String candidateEmail,
+            Long vacancyId,
+            String vacancyTitle,
+            String interviewRound,
+            LocalDate interviewDate,
+            LocalTime interviewTime,
+            Integer durationMinutes,
+            String interviewerName,
+            String interviewType,
+            String meetingLink,
+            String location,
+            String status,
+            String invitationStatus,
+            String notes,
+            Long createdBy,
+            LocalDateTime createdAt,
+            LocalDateTime updatedAt,
+            List<Long> interviewerIds
+    ) {
+        this(
+                id,
+                applicationId,
+                candidateName,
+                candidateEmail,
+                vacancyId,
+                vacancyTitle,
+                interviewRound,
+                interviewDate,
+                interviewTime,
+                durationMinutes,
+                interviewerName,
+                interviewType,
+                meetingLink,
+                location,
+                status,
+                invitationStatus,
+                notes,
+                createdBy,
+                createdAt,
+                updatedAt,
+                interviewerIds,
+                null
         );
     }
 }

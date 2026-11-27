@@ -682,10 +682,7 @@ const HRPayslip = () => {
                 key={s.label}
                 className={`relative overflow-hidden rounded-2xl bg-gradient-to-br ${s.gradient} p-5 text-white shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 min-h-[140px]`}
               >
-                {/* Decorative circles */}
-                <div className="absolute -right-5 -top-5 h-24 w-24 rounded-full bg-white/10" />
-                <div className="absolute -right-2 -bottom-10 h-28 w-28 rounded-full bg-white/10" />
-
+                
                 <div className="relative z-10 flex items-start justify-between gap-3">
                   <div className="min-w-0">
                     <p className="text-xs font-semibold uppercase tracking-wider text-white/90">

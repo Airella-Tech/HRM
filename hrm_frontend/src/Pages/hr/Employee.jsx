@@ -388,21 +388,7 @@ const Employee = () => {
            p-6 sm:p-7
 "
         >
-          <div
-            className="
-             absolute -right-10 -top-12
-             h-40 w-40 rounded-full
-             bg-sky-200/40
-             "
-          />
 
-          <div
-             className="
-               absolute right-24 -bottom-16
-               h-36 w-36 rounded-full
-              bg-sky-300/20
-               "
-          />
 
           <div className="relative flex flex-col sm:flex-row sm:items-center justify-between gap-5">
             <div className="flex items-start gap-4">
@@ -1942,22 +1928,18 @@ const SummaryCard = ({
         : undefined
     }
     className={`
-      relative overflow-hidden
+      relative
       rounded-2xl
       p-5
       text-white
       shadow-sm
       hover:shadow-lg
       transition-all duration-300
-           min-h-[140px]
+      min-h-[140px]
       ${className}
       ${onClick ? "cursor-pointer hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300" : ""}
     `}
   >
-    {/* Decorative background circles */}
-    <div className="absolute -right-5 -top-5 w-24 h-24 rounded-full bg-white/10" />
-    <div className="absolute -right-2 -bottom-10 w-28 h-28 rounded-full bg-white/10" />
-
     <div className="relative z-10 flex items-start justify-between">
       <div>
         <p className="text-xs font-semibold uppercase tracking-wider text-white/90">
@@ -1977,7 +1959,6 @@ const SummaryCard = ({
     </div>
   </div>
 );
-
 const DetailItem = ({ icon, label, value }) => (
   <div
     className="

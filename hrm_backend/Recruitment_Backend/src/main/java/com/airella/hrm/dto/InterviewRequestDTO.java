@@ -20,8 +20,10 @@ public record InterviewRequestDTO(
         String meetingLink,
         String location,
         String notes,
-        List<Long> interviewerIds
+        List<Long> interviewerIds,
+        Long physicalLocationId
 ) {
+
     // Compatibility constructor for existing code and tests.
     public InterviewRequestDTO(
             Long applicationId,
@@ -54,6 +56,45 @@ public record InterviewRequestDTO(
                 meetingLink,
                 location,
                 notes,
+                null,
+                null
+        );
+    }
+
+    // Compatibility constructor including interviewer IDs.
+    public InterviewRequestDTO(
+            Long applicationId,
+            String candidateName,
+            String candidateEmail,
+            Long vacancyId,
+            String vacancyTitle,
+            String interviewRound,
+            LocalDate interviewDate,
+            LocalTime interviewTime,
+            Integer durationMinutes,
+            String interviewerName,
+            String interviewType,
+            String meetingLink,
+            String location,
+            String notes,
+            List<Long> interviewerIds
+    ) {
+        this(
+                applicationId,
+                candidateName,
+                candidateEmail,
+                vacancyId,
+                vacancyTitle,
+                interviewRound,
+                interviewDate,
+                interviewTime,
+                durationMinutes,
+                interviewerName,
+                interviewType,
+                meetingLink,
+                location,
+                notes,
+                interviewerIds,
                 null
         );
     }

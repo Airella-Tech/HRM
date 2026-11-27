@@ -358,9 +358,7 @@ const grads = {
                     : ""
             }`}
         >
-            {/* Decorative background circles */}
-            <div className="absolute -right-6 -top-8 w-28 h-28 rounded-full bg-white/10 pointer-events-none" />
-            <div className="absolute -right-2 -bottom-12 w-24 h-24 rounded-full bg-white/10 pointer-events-none" />
+            
 
             <div className="relative flex items-center justify-between gap-2">
                 <span className="text-sm text-white/90 font-medium">

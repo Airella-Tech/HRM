@@ -756,6 +756,53 @@ getShortlistedApplications: () =>
       `${RECRUITMENT_URL}/recruitment/interview-emails/${id}/retry`,
     ),
 
+    // ============================================================
+// PHYSICAL INTERVIEW LOCATIONS
+// ============================================================
+
+// Get all physical locations.
+// Optional status: Active or Inactive.
+getPhysicalLocations: (status) => {
+  const query = status
+    ? `?status=${encodeURIComponent(status)}`
+    : "";
+
+  return request(
+    "GET",
+    `${RECRUITMENT_URL}/recruitment/physical-locations${query}`,
+  );
+},
+
+// Get one physical location.
+getPhysicalLocation: (id) =>
+  request(
+    "GET",
+    `${RECRUITMENT_URL}/recruitment/physical-locations/${id}`,
+  ),
+
+// Create a physical location.
+createPhysicalLocation: (data) =>
+  request(
+    "POST",
+    `${RECRUITMENT_URL}/recruitment/physical-locations`,
+    data,
+  ),
+
+// Update a physical location.
+updatePhysicalLocation: (id, data) =>
+  request(
+    "PUT",
+    `${RECRUITMENT_URL}/recruitment/physical-locations/${id}`,
+    data,
+  ),
+
+// Deactivate a physical location.
+deletePhysicalLocation: (id) =>
+  request(
+    "DELETE",
+    `${RECRUITMENT_URL}/recruitment/physical-locations/${id}`,
+  ),
+
   // ============================================================
   // INTERVIEW EVALUATIONS
   // ============================================================

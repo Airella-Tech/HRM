@@ -266,8 +266,7 @@ const LeaveManagement = ({ role = "hr" }) => {
         {/* Leave Management Introduction */}
         {isHR && (
           <div className="relative overflow-hidden rounded-2xl border border-sky-200 bg-gradient-to-r from-sky-100 via-sky-50 to-white p-6 sm:p-7">
-            <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-sky-200/40" />
-            <div className="absolute -bottom-12 right-28 h-32 w-32 rounded-full bg-sky-100/70" />
+
 
             <div className="relative flex flex-col sm:flex-row sm:items-center sm:justify-between gap-5">
               <div className="flex items-start gap-4">
@@ -407,13 +406,6 @@ const LeaveManagement = ({ role = "hr" }) => {
                     {s.icon}
                   </div>
                 </div>
-              )}
-
-              {isHR && (
-                <>
-                  <div className="absolute -right-8 -top-8 h-28 w-28 rounded-full bg-white/10 pointer-events-none" />
-                  <div className="absolute -right-2 -bottom-12 h-24 w-24 rounded-full bg-white/5 pointer-events-none" />
-                </>
               )}
             </div>
           ))}

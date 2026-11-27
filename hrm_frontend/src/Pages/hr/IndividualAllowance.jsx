@@ -420,10 +420,7 @@ const IndividualAllowance = () => {
 
         {/* Step 1 & 2: department, then employee */}
         <div className="mb-5 bg-gradient-to-br from-sky-700 via-sky-600 to-sky-800 rounded-2xl shadow-sm p-5 relative overflow-visible">
-          {/* Decorative circles */}
-          <div className="absolute -right-8 -top-10 w-36 h-36 rounded-full bg-white/10" />
-          <div className="absolute right-20 -bottom-16 w-32 h-32 rounded-full bg-white/10" />
-
+         
           <div className="relative z-10">
             {/* Header */}
             <div className="mb-6">

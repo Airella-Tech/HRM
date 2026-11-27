@@ -103,8 +103,7 @@ const NAV = {
       requiresAny: [],
     },
 
-  
-        // Job Vacancies (split into three pages)
+    // Job Vacancies (split into three pages)
     {
       name: "Create Vacancies",
       icon: FilePlus2,
@@ -129,7 +128,12 @@ const NAV = {
       name: "View Applications",
       icon: FileText,
       path: "/recruitment/applications",
-      requiresAny: ["APPLICATION_VIEW", "VIEW_APPLICATIONS", "RESUME_DOWNLOAD", "DOWNLOAD_RESUMES"],
+      requiresAny: [
+        "APPLICATION_VIEW",
+        "VIEW_APPLICATIONS",
+        "RESUME_DOWNLOAD",
+        "DOWNLOAD_RESUMES",
+      ],
     },
     {
       name: "Review Applications",
@@ -176,7 +180,6 @@ const NAV = {
       icon: CheckCircle2,
       path: "/recruitment/evaluation-review",
       requiresAny: ["INTERVIEW_DECIDE"],
-    
     },
 
     // Job Offers
@@ -195,12 +198,12 @@ const NAV = {
       requiresAny: ["RECRUITMENT_ROLE_ADMIN", "MANAGE_ROLES_PERMISSIONS"],
     },
     // Audit trail (needs AUDIT_VIEW, or full access)
-{
-  name: "Audit Log",
-  icon: Activity,
-  path: "/recruitment/audit-log",
-  requiresAny: ["AUDIT_VIEW"],
-},
+    {
+      name: "Audit Log",
+      icon: Activity,
+      path: "/recruitment/audit-log",
+      requiresAny: ["AUDIT_VIEW"],
+    },
   ],
 };
 
@@ -225,20 +228,31 @@ const ACCENT = {
     title: "text-slate-900",
     hover: "hover:bg-teal-50",
   },
-  hr: {
-    from: "rgba(3,105,161,1)",
-    to: "rgba(7,89,133,1)",
-    shadow: "rgba(3,105,161,0.35)",
-    avatarFrom: "from-sky-600",
-    avatarTo: "to-sky-800",
-    label: "HR Manager",
-    surface: "bg-gray-50",
-    topbar: "border-gray-100",
-    title: "text-gray-900",
-    hover: "hover:bg-gray-100",
-    activeBg: "#0369a1",
-    activeBorder: "border-sky-300",
-  },
+hr: {
+  from: "rgba(3,105,161,0.95)",
+  to: "rgba(7,89,133,0.95)",
+  shadow: "rgba(3,105,161,0.35)",
+  avatarFrom: "from-sky-600",
+  avatarTo: "to-sky-800",
+  label: "HR Manager",
+  surface: "bg-gray-50",
+
+  sidebarBg: "linear-gradient(180deg, #082f49 0%, #0c4a6e 55%, #075985 100%)",
+
+  activeBg: "rgba(2,132,199,0.35)",
+  activeBorder: "border-sky-400",
+  activeIcon: "text-sky-300",
+
+  menuBg: "bg-sky-950",
+  ringClass: "ring-sky-900",
+
+  sidebarBottomFade: "linear-gradient(to top, #075985, transparent)",
+
+  topbar: "border-gray-100",
+  title: "text-gray-900",
+
+  hover: "hover:bg-sky-50",
+},
   admin: {
     from: "rgba(99,102,241,0.8)",
     to: "rgba(79,70,229,0.6)",
@@ -347,10 +361,10 @@ export const PageLayout = ({
             return recruitmentAccess.fullAccess;
           }
 
-        // Everyone with recruitment access can see Overview.
-        if (item.name === "Overview") {
-          return true;
-        }
+          // Everyone with recruitment access can see Overview.
+          if (item.name === "Overview") {
+            return true;
+          }
 
           // Full-access users can see all other Recruitment pages.
           if (recruitmentAccess.fullAccess) {
@@ -459,7 +473,7 @@ export const PageLayout = ({
                 (item.name === "Evaluate Interviews" ||
                   item.name === "Evaluations")) ||
               (activePage === "Evaluation Review" &&
-                  item.name === "Evaluation Review") ||
+                item.name === "Evaluation Review") ||
               ((activePage === "Evaluation Review" ||
                 activePage === "Interview Evaluation Review") &&
                 item.name === "Evaluation Review") ||
@@ -474,14 +488,15 @@ export const PageLayout = ({
               item.path && !location.search && itemBase === currentBase,
             );
 
-              const isActive = activeNav
-     ? item.name === activeNav
-     : exactUrlMatches ||
-              (nameMatches &&
-                (location.search
-                  ? exactUrlMatches
-                  : baseUrlMatches || !item.path?.includes("?"))) ||
-              (baseUrlMatches && !navItems.some((n) => n.name === activePage));
+            const isActive = activeNav
+              ? item.name === activeNav
+              : exactUrlMatches ||
+                (nameMatches &&
+                  (location.search
+                    ? exactUrlMatches
+                    : baseUrlMatches || !item.path?.includes("?"))) ||
+                (baseUrlMatches &&
+                  !navItems.some((n) => n.name === activePage));
             return (
               <li key={item.name}>
                 <button
@@ -496,7 +511,7 @@ export const PageLayout = ({
                       isActive
                         ? "text-white"
                         : role === "hr"
-                          ? "text-slate-400 hover:text-white hover:bg-primary-800/40"
+                          ? "text-sky-200/70 hover:text-white hover:bg-sky-700/40"
                           : "text-gray-400 hover:text-white hover:bg-white/10"
                     }
                     ${collapsed ? "justify-center px-0" : ""}`}
@@ -512,15 +527,24 @@ export const PageLayout = ({
                   }
                   title={collapsed ? item.name : undefined}
                 >
-                  <item.icon size={18} className={`flex-shrink-0 ${isActive && accent.activeIcon ? accent.activeIcon : ""}`} />
+                  <item.icon
+                    size={18}
+                    className={`flex-shrink-0 ${isActive && accent.activeIcon ? accent.activeIcon : ""}`}
+                  />
                   {!collapsed && <span>{item.name}</span>}
                 </button>
               </li>
             );
           })}
         </ul>
-        <div className="pointer-events-none h-6 -mt-6 shrink-0" style={{ background: accent.sidebarBottomFade || "linear-gradient(to top, #1b2142, transparent)" }} />
-
+        <div
+          className="pointer-events-none h-6 -mt-6 shrink-0"
+          style={{
+            background:
+              accent.sidebarBottomFade ||
+              "linear-gradient(to top, #1b2142, transparent)",
+          }}
+        />
 
         {/* User + logout */}
         <div className="border-t border-white/10 p-3 space-y-2 flex-shrink-0">

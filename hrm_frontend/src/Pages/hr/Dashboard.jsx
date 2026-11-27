@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import {
   LayoutDashboard,
   Users,
@@ -2142,6 +2142,7 @@ const HRDashboard = () => {
   const [showDeptModal, setShowDeptModal] = useState(false);
   const [empRefresh, setEmpRefresh] = useState(0);
   const navigate = useNavigate();
+  const location = useLocation();
   const toast = useToast();
 
   useEffect(() => {
@@ -2271,8 +2272,6 @@ const HRDashboard = () => {
     (emp) => (emp.status || "").toUpperCase() === "ACTIVE",
   ).length;
 
-
-
   useEffect(() => {
     if (activeMenu === "Departments") {
       navigate("/hr/departments");
@@ -2281,7 +2280,7 @@ const HRDashboard = () => {
 
   // Same full menu as every other HR page, so nothing disappears on Overview
   const menuItems = [
-    { name: "Overview", icon: LayoutDashboard, path: null },
+    { name: "Overview", icon: LayoutDashboard, path: "/hr/dashboard" },
     { name: "Departments", icon: Building2, path: "/hr/departments" },
     { name: "Employees", icon: Users, path: "/hr/employees" },
     { name: "Attendance", icon: CalendarCheck, path: "/hr/attendance" },
@@ -2301,7 +2300,7 @@ const HRDashboard = () => {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="flex flex-col items-center gap-3">
-          <div className="w-10 h-10 border-4 border-teal-500 border-t-transparent rounded-full animate-spin" />
+          <div className="w-10 h-10 border-4 border-sky-600 border-t-transparent rounded-full animate-spin" />
           <p className="text-gray-500 text-sm">Loading…</p>
         </div>
       </div>
@@ -2364,7 +2363,8 @@ const HRDashboard = () => {
       <nav
         className={`flex flex-col transition-all duration-300 shadow-2xl flex-shrink-0 ${isSidebarOpen ? "w-64" : "w-20"}`}
         style={{
-          background: "linear-gradient(180deg, #0a1120 0%, #0f172a 100%)",
+          background:
+            "linear-gradient(180deg, #082f49 0%, #0c4a6e 55%, #075985 100%)",
         }}
       >
         <div className="flex items-center gap-3 px-4 h-16 border-b border-white/10 flex-shrink-0">
@@ -2387,24 +2387,26 @@ const HRDashboard = () => {
         </div>
         <ul className="flex-1 py-4 space-y-1 px-3 overflow-y-auto">
           {menuItems.map((item) => {
-            const isActive = activeMenu === item.name;
+            const isActive = location.pathname === item.path;
+
             return (
               <li key={item.name}>
                 <button
                   onClick={() => {
-                    if (item.path) {
-                      navigate(item.path);
-                    } else {
-                      setActiveMenu(item.name);
-                    }
+                    setActiveMenu(item.name);
+                    navigate(item.path);
                   }}
                   className={`flex items-center gap-3 w-full px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200
-                    ${isActive ? "text-white" : "text-gray-400 hover:text-white hover:bg-white/10"}
-                    ${!isSidebarOpen ? "justify-center px-0" : ""}`}
+          ${
+            isActive
+              ? "text-white"
+              : "text-gray-400 hover:text-white hover:bg-white/10"
+          }
+          ${!isSidebarOpen ? "justify-center px-0" : ""}`}
                   style={
                     isActive
                       ? {
-                          background: "#0369a1",
+                          background: "#075985",
                           boxShadow: "0 2px 12px rgba(7,89,133,0.3)",
                           borderLeft: "3px solid #38bdf8",
                         }
@@ -2430,7 +2432,7 @@ const HRDashboard = () => {
               .toUpperCase()}
             name={user.fullName}
             roleLabel="HR Manager"
-            accent={{ avatarFrom: "from-teal-400", avatarTo: "to-emerald-500" }}
+            accent={{ avatarFrom: "from-sky-600", avatarTo: "to-sky-800" }}
             collapsed={!isSidebarOpen}
           />
           <button
@@ -2501,9 +2503,6 @@ const HRDashboard = () => {
             <div className="space-y-6">
               {/* Introduction Banner */}
               <div className="relative overflow-hidden bg-gradient-to-r from-sky-600 to-sky-700 rounded-2xl p-6 md:p-8 text-white shadow-lg">
-                <div className="absolute -right-10 -top-10 w-48 h-48 bg-white/10 rounded-full" />
-                <div className="absolute right-24 -bottom-16 w-40 h-40 bg-white/10 rounded-full" />
-
                 <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
                   <div>
                     <p className="text-blue-100 text-sm font-medium mb-2">
@@ -2609,7 +2608,6 @@ const HRDashboard = () => {
                     }}
                     className={`bg-gradient-to-br ${from} ${to} p-6 rounded-xl shadow-xl text-white transform hover:scale-105 hover:shadow-2xl transition-all duration-300 cursor-pointer relative overflow-hidden`}
                   >
-                    <div className="absolute top-0 right-0 w-24 h-24 bg-white opacity-10 rounded-full -mr-12 -mt-12" />
                     <div className="flex items-center justify-between mb-3 relative z-10">
                       <div className="bg-white bg-opacity-20 p-3 rounded-lg">
                         <Icon size={28} />
