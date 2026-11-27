@@ -1468,16 +1468,36 @@ export default function RecruitmentInterviews() {
         setNotice("Interview scheduled successfully.");
         closeForm();
       }
+
     } catch (error) {
       console.error("Unable to save interview:", error);
-      setFormError(
+
+      const message =
         error?.response?.data?.message ||
-          error?.message ||
-          "Could not save the interview. Check the backend and try again.",
-      );
+        error?.response?.data?.error ||
+        error?.message ||
+        "Could not save the interview. Please try again.";
+
+      const lowerMessage = message.toLowerCase();
+
+      const isConflict =
+        lowerMessage.includes("approved leave") ||
+        lowerMessage.includes("conflict") ||
+        lowerMessage.includes("already assigned") ||
+        lowerMessage.includes("unavailable interviewer") ||
+        lowerMessage.startsWith("409:");
+
+      if (isConflict) {
+        setFormError("");
+        setConflictError(message.replace(/^\d+:\s*/, ""));
+      } else {
+        setConflictError("");
+        setFormError(message);
+      }
     } finally {
       setSaving(false);
     }
+
   };
 
   const updateStatus = async (id, status) => {
@@ -2766,15 +2786,52 @@ export default function RecruitmentInterviews() {
                   />
                 </label>
 
+
                 {conflictError && (
                   <div
                     role="alert"
-                    className="sm:col-span-2 flex gap-2 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800"
+                    className="sm:col-span-2 overflow-hidden rounded-xl border border-amber-200 bg-amber-50 shadow-sm"
                   >
-                    <CircleAlert size={18} className="shrink-0" />
-                    {conflictError}
+                    <div className="flex items-start gap-3 p-4">
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-amber-100">
+                        <CircleAlert
+                          size={21}
+                          className="text-amber-600"
+                        />
+                      </div>
+
+                      <div className="min-w-0 flex-1">
+                        <h3 className="text-sm font-bold text-amber-900">
+                          Interview Scheduling Conflict
+                        </h3>
+
+                        <p className="mt-1 text-sm leading-6 text-amber-800">
+                          {conflictError}
+                        </p>
+
+                        <div className="mt-3 rounded-lg border border-amber-200/70 bg-white/70 p-3">
+                          <p className="text-xs font-semibold text-amber-900">
+                            How to resolve this
+                          </p>
+                          <p className="mt-1 text-xs leading-5 text-amber-800">
+                            Select another available interviewer or choose a
+                            different interview date.
+                          </p>
+                        </div>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => setConflictError("")}
+                        aria-label="Dismiss conflict message"
+                        className="rounded-lg p-1 text-amber-600 transition hover:bg-amber-100"
+                      >
+                        <X size={18} />
+                      </button>
+                    </div>
                   </div>
                 )}
+
                 {formError && (
                   <div
                     role="alert"
@@ -3047,14 +3104,52 @@ export default function RecruitmentInterviews() {
                       />
                     </label>
                   </div>
+
                   {conflictError && (
                     <div
                       role="alert"
-                      className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800"
+                      className="overflow-hidden rounded-xl border border-amber-200 bg-amber-50 shadow-sm"
                     >
-                      {conflictError}
+                      <div className="flex items-start gap-3 p-4">
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-amber-100">
+                          <CircleAlert
+                            size={21}
+                            className="text-amber-600"
+                          />
+                        </div>
+
+                        <div className="min-w-0 flex-1">
+                          <h3 className="text-sm font-bold text-amber-900">
+                            Interview Scheduling Conflict
+                          </h3>
+
+                          <p className="mt-1 text-sm leading-6 text-amber-800">
+                            {conflictError}
+                          </p>
+
+                          <div className="mt-3 rounded-lg border border-amber-200/70 bg-white/70 p-3">
+                            <p className="text-xs font-semibold text-amber-900">
+                              How to resolve this
+                            </p>
+                            <p className="mt-1 text-xs leading-5 text-amber-800">
+                              Select another available interviewer or choose a
+                              different interview date.
+                            </p>
+                          </div>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => setConflictError("")}
+                          aria-label="Dismiss conflict message"
+                          className="rounded-lg p-1 text-amber-600 transition hover:bg-amber-100"
+                        >
+                          <X size={18} />
+                        </button>
+                      </div>
                     </div>
                   )}
+
                   {formError && (
                     <div
                       role="alert"

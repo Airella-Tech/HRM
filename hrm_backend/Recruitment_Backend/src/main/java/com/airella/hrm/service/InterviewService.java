@@ -57,6 +57,7 @@ public class InterviewService {
     private final InterviewEmailService interviewEmailService;
     private final InterviewEvaluationService interviewEvaluationService;
     private final RecruitmentNotificationService notificationService;
+    private final InterviewerLeaveValidationService interviewerLeaveValidationService;
 
     public InterviewService(
             InterviewRepository interviewRepository,
@@ -69,7 +70,8 @@ public class InterviewService {
             AuditService auditService,
             InterviewEmailService interviewEmailService,
             InterviewEvaluationService interviewEvaluationService,
-            RecruitmentNotificationService notificationService) {
+            RecruitmentNotificationService notificationService,
+            InterviewerLeaveValidationService interviewerLeaveValidationService) {
 
         this.interviewRepository = interviewRepository;
         this.assignmentRepository = assignmentRepository;
@@ -82,6 +84,7 @@ public class InterviewService {
         this.interviewEmailService = interviewEmailService;
         this.interviewEvaluationService = interviewEvaluationService;
         this.notificationService = notificationService;
+        this.interviewerLeaveValidationService = interviewerLeaveValidationService;
     }
 
     // ------------------------------------------------------------
@@ -100,6 +103,12 @@ public class InterviewService {
         validateRoundProgression(interview, companyId);
 
         validateNoInterviewerConflicts(
+                interview,
+                request.interviewerIds(),
+                companyId
+        );
+
+        validateNoInterviewerApprovedLeave(
                 interview,
                 request.interviewerIds(),
                 companyId
@@ -221,6 +230,12 @@ public class InterviewService {
         }
 
         validateNoInterviewerConflicts(
+                interview,
+                interviewerIdsToCheck,
+                companyId
+        );
+
+        validateNoInterviewerApprovedLeave(
                 interview,
                 interviewerIdsToCheck,
                 companyId
@@ -355,13 +370,11 @@ public class InterviewService {
 
         for (Interview existing : existingInterviews) {
 
-            // Do not compare the interview against itself during updates.
             if (interview.getId() != null
                     && interview.getId().equals(existing.getId())) {
                 continue;
             }
 
-            // Cancelled interviews do not reserve a room.
             if ("Cancelled".equalsIgnoreCase(existing.getStatus())) {
                 continue;
             }
@@ -561,6 +574,12 @@ public class InterviewService {
                 companyId
         );
 
+        validateNoInterviewerApprovedLeave(
+                interview,
+                employeeIds,
+                companyId
+        );
+
         Set<Long> existingIds =
                 assignmentRepository.findByCompanyIdAndInterviewId(
                                 companyId,
@@ -602,6 +621,37 @@ public class InterviewService {
         );
 
         return toDto(interview);
+    }
+
+    // ------------------------------------------------------------
+    // VALIDATE INTERVIEWER APPROVED LEAVE
+    // ------------------------------------------------------------
+
+    private void validateNoInterviewerApprovedLeave(
+            Interview interview,
+            List<Long> interviewerIds,
+            Long companyId) {
+
+        if (interview.getInterviewDate() == null
+                || interviewerIds == null
+                || interviewerIds.isEmpty()) {
+            return;
+        }
+
+        List<Long> validInterviewerIds = interviewerIds.stream()
+                .filter(Objects::nonNull)
+                .distinct()
+                .toList();
+
+        if (validInterviewerIds.isEmpty()) {
+            return;
+        }
+
+        interviewerLeaveValidationService.validateNoApprovedLeave(
+                validInterviewerIds,
+                companyId,
+                interview.getInterviewDate()
+        );
     }
 
     // ------------------------------------------------------------
@@ -1157,7 +1207,6 @@ public class InterviewService {
             interviewerName = blankToNull(interviewerName);
         }
 
-        // Resolve and validate the selected physical location.
         PhysicalLocation selectedPhysicalLocation = null;
 
         if ("Physical".equals(normalizedType)) {
@@ -1214,9 +1263,6 @@ public class InterviewService {
 
             interview.setMeetingLink(null);
             interview.setPhysicalLocation(selectedPhysicalLocation);
-
-            // Keep the existing text column populated for compatibility
-            // with older frontend code and email templates.
             interview.setLocation(buildLocationLabel(selectedPhysicalLocation));
         }
 
